@@ -202,6 +202,48 @@ class QiskitDevice(Device):
 
 
 class AerQiskitDevice(QiskitDevice):
+    """A PennyLane :code:`qiskit.aer` device for the `Qiskit Local Simulator` backend.
+
+    Args:
+       wires (int): The number of qubits of the device
+
+    Keyword Args:
+      backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
+
+    This device can, for example, be instantiated from PennyLane as follows:
+
+    .. code-block:: python
+
+        import pennylane as qml
+        dev = qml.device('qiskit.aer', wires=XXX)
+
+    Supported PennyLane Operations:
+      :class:`pennylane.PauliX`,
+      :class:`pennylane.PauliY`,
+      :class:`pennylane.PauliZ`,
+      :class:`pennylane.CNOT`,
+      :class:`pennylane.CZ`,
+      :class:`pennylane.SWAP`,
+      :class:`pennylane.RX`,
+      :class:`pennylane.RY`,
+      :class:`pennylane.RZ`,
+      :class:`pennylane.PhaseShift`,
+      :class:`pennylane.QubitStateVector`,
+      :class:`pennylane.Hadamard`,
+      :class:`pennylane.Rot`,
+      :class:`pennylane.QubitUnitary`,
+      :class:`pennylane.BasisState`
+
+    Supported PennyLane Expectations:
+      :class:`pennylane.PauliZ`
+
+    Extra Operations:
+      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
+
+    ..
+
+    """
     short_name = 'qiskit.aer'
 
     def __init__(self, wires, shots=1024, **kwargs):
@@ -212,13 +254,55 @@ class AerQiskitDevice(QiskitDevice):
 
 
 class IbmQQiskitDevice(QiskitDevice):
+    """A PennyLane :code:`qiskit.ibm` device for the `Qiskit Local Simulator` backend.
+
+    Args:
+       wires (int): The number of qubits of the device
+       ibmqx_token (str): The IBMQ API token
+
+    Keyword Args:
+      backend (str): the desired backend to run the code on. Default is :code:`ibmq_qasm_simulator`.
+
+    This device can, for example, be instantiated from PennyLane as follows:
+
+    .. code-block:: python
+
+        import pennylane as qml
+        dev = qml.device('qiskit.ibm', wires=XXX, ibmqx_token='XXX')
+
+    Supported PennyLane Operations:
+      :class:`pennylane.PauliX`,
+      :class:`pennylane.PauliY`,
+      :class:`pennylane.PauliZ`,
+      :class:`pennylane.CNOT`,
+      :class:`pennylane.CZ`,
+      :class:`pennylane.SWAP`,
+      :class:`pennylane.RX`,
+      :class:`pennylane.RY`,
+      :class:`pennylane.RZ`,
+      :class:`pennylane.PhaseShift`,
+      :class:`pennylane.QubitStateVector`,
+      :class:`pennylane.Hadamard`,
+      :class:`pennylane.Rot`,
+      :class:`pennylane.QubitUnitary`,
+      :class:`pennylane.BasisState`
+
+    Supported PennyLane Expectations:
+      :class:`pennylane.PauliZ`
+
+    Extra Operations:
+      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
+
+    ..
+    """
     short_name = 'qiskit.ibmq'
     _backend_kwargs = ['num_runs', 'verbose', 'backend', 'ibmqx_token']
 
     def __init__(self, wires, shots=1024, **kwargs):
         if 'ibmqx_token' not in kwargs:
             raise ValueError("IBMQX Token is missing!")
-        backend = kwargs.get('backend', 'qasm_simulator')
+        backend = kwargs.get('backend', 'ibmq_qasm_simulator')
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.IBMQ
         self._provider.enable_account(kwargs['ibmqx_token'])
