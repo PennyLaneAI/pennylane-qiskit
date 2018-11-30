@@ -9,7 +9,7 @@ PennyLane qiskit Plugin
     :alt: Codecov coverage
     :target: https://codecov.io/gh/carstenblank/pennylane-qiskit
 
-.. image:: https://img.shields.io/codacy/grade/09de983914f341f8bbe011602947571f.svg?style=for-the-badge
+.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=for-the-badge
     :alt: Codacy grade
     :target: https://www.codacy.com/app/carstenblank/pennylane-qiskit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=carstenblank/pennylane-qiskit&amp;utm_campaign=Badge_Grade
 
@@ -30,7 +30,9 @@ PennyLane qiskit Plugin
 `PennyLane <https://pennylane.readthedocs.io>`_ is a cross-platform Python library for quantum machine
 learning, automatic differentiation, and optimization of hybrid quantum-classical computations.
 
-`qiskit <https://qiskit.org/documentation/>`_ is an open-source compilation framework capable of targeting various types of hardware and a high-performance quantum computer simulator with emulation capabilities, and various compiler plug-ins.
+`qiskit <https://qiskit.org/documentation/>`_ is an open-source compilation framework capable of targeting various
+types of hardware and a high-performance quantum computer simulator with emulation capabilities, and various
+compiler plug-ins.
 
 This PennyLane plugin allows to use both the software and hardware backends of qiskit as devices for PennyLane.
 
@@ -38,9 +40,9 @@ This PennyLane plugin allows to use both the software and hardware backends of q
 Features
 ========
 
-* Provides two devices to be used with PennyLane: ``qiskit.aer`` and ``qiskit.ibm``. These provide access to the respective qiskit backends.
+* Provides two providers to be used with PennyLane: ``qiskit.aer`` and ``qiskit.ibm``. These provide access to the respective qiskit backends.
 
-* Supports a wide range of PennyLane operations and expectation values across the devices.
+* Supports a wide range of PennyLane operations and expectation values across the providers.
 
 * Combine qiskit high performance simulator and hardware backend support with PennyLane's automatic differentiation and optimization.
 
@@ -62,9 +64,15 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 
     $ make test
 
-in the source folder. Tests restricted to a specific device can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
+in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
 
-.. note:: Tests on the `ibm device <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#projectqibmbackend>`_ can only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ are configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_. If this is the case, running :code:`make test` also executes tests on the :code:`ibm` device. By default tests on the :code:`ibm` device run with :code:`hardware=False`. At the time of writing this means that the test are "free". Please verify that this is also the case for your account.
+.. note:: Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#ibmqqiskitdevice>`_
+can only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_
+are configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
+If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on
+the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`aer` provider are
+run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
+Please verify that this is also the case for your account.
 
 .. installation-end-inclusion-marker-do-not-remove
 .. gettingstarted-start-inclusion-marker-do-not-remove
@@ -72,14 +80,16 @@ in the source folder. Tests restricted to a specific device can be run by execut
 Getting started
 ===============
 
-You can instantiate a :code:`'qiskit.aer'` device for PennyLane with:
+You can instantiate a :code:`'qiskit.aer'` provider for PennyLane with:
 
 .. code-block:: python
 
     import pennylane as qml
     dev = qml.device('qiskit.aer', wires=2)
 
-This device can then be used just like other devices for the definition and evaluation of QNodes within PennyLane. A simple quantum function that returns the expectation value of a measurement and depends on three classical input parameters would look like:
+This device can then be used just like other devices for the definition and evaluation of QNodes within PennyLane.
+A simple quantum function that returns the expectation value of a measurement and depends on three classical input
+parameters would look like:
 
 .. code-block:: python
 
@@ -97,7 +107,8 @@ You can then execute the circuit like any other function to get the quantum mech
 
     circuit(0.2, 0.1, 0.3)
 
-Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the device above, you would instantiate a :code:`'qiskit.ibm'` device by giving your IBM Quantum Experience token:
+Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the
+provider above, you would instantiate a :code:`'qiskit.ibm'` provider by giving your IBM Quantum Experience token:
 
 .. code-block:: python
 
@@ -106,7 +117,8 @@ Running your code on an IBM Quantum Experience simulator or even a real hardware
 
 .. gettingstarted-end-inclusion-marker-do-not-remove
 
-Please refer to the `documentation of the PennyLane qiskit Plugin <https://pennylane-qiskit.readthedocs.io/>`_ as well as well as to the `documentation of PennyLane <https://pennylane.readthedocs.io/>`_ for further reference.
+Please refer to the `documentation of the PennyLane qiskit Plugin <https://pennylane-qiskit.readthedocs.io/>`_ as
+well as well as to the `documentation of PennyLane <https://pennylane.readthedocs.io/>`_ for further reference.
 
 .. howtocite-start-inclusion-marker-do-not-remove
 
