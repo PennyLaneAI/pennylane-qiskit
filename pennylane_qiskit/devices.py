@@ -80,66 +80,13 @@ QISKIT_OPERATION_MAP = {
 
 
 class QiskitDevice(Device):
-    """A PennyLane :code:`qiskit.Aer` device for the `Qiskit Local Simulator` backend.
-
-    Args:
-       wires (int): The number of qubits of the device
-
-    Keyword Args:
-      gate_fusion (bool): If True, operations are cached and only executed once a
-        certain number of operations has been reached (only has an effect for the c++ simulator).
-      rnd_seed (int): Random seed (uses random.randint(0, 4294967295) by default).
-
-    This device can, for example, be instantiated from PennyLane as follows:
-
-    .. code-block:: python
-
-        import pennylane as qml
-        dev = qml.device('projectq.simulator', wires=XXX)
-
-    Supported PennyLane Operations:
-      :class:`pennylane.PauliX`,
-      :class:`pennylane.PauliY`,
-      :class:`pennylane.PauliZ`,
-      :class:`pennylane.CNOT`,
-      :class:`pennylane.CZ`,
-      :class:`pennylane.SWAP`,
-      :class:`pennylane.RX`,
-      :class:`pennylane.RY`,
-      :class:`pennylane.RZ`,
-      :class:`pennylane.PhaseShift`,
-      :class:`pennylane.QubitStateVector`,
-      :class:`pennylane.Hadamard`,
-      :class:`pennylane.Rot`,
-      :class:`pennylane.QubitUnitary`,
-      :class:`pennylane.BasisState`
-
-    Supported PennyLane Expectations:
-      :class:`pennylane.PauliX`,
-      :class:`pennylane.PauliY`,
-      :class:`pennylane.PauliZ`
-
-    Extra Operations:
-      :class:`pennylane_pq.S <pennylane_pq.ops.S>`,
-      :class:`pennylane_pq.S <pennylane_pq.ops.S>`,
-      :class:`pennylane_pq.T <pennylane_pq.ops.T>`,
-      :class:`pennylane_pq.SqrtX <pennylane_pq.ops.SqrtX>`,
-      :class:`pennylane_pq.SqrtSwap <pennylane_pq.ops.SqrtSwap>`
-
-    ..
-       :class:`pennylane_pq.AllPauliZ <pennylane_pq.ops.AllPauliZ>`
-
-       Extra Expectations:
-         :class:`pennylane_pq.expval.AllPauliZ`
-
-    """
     name = 'Qiskit PennyLane plugin'
     short_name = 'qiskit'
     pennylane_requires = '0.1.0'
     version = '0.1.0'
     plugin_version = __version__
     author = 'Carsten Blank'
-    _capabilities: dict = {
+    _capabilities: Dict[str, any] = {
         'model': 'qubit'
     }
     _operation_map = QISKIT_OPERATION_MAP
