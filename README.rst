@@ -66,9 +66,9 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 
 in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
 
-.. note:: Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#ibmqqiskitdevice>`_
-can only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_
-are configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
+.. note:: Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#ibmqqiskitdevice>`_ can
+only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ are
+configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
 If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on
 the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`aer` provider are
 run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
