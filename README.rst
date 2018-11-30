@@ -50,13 +50,13 @@ Features
 Installation
 ============
 
-This plugin requires Python version 3.5 and above, as well as PennyLane and ProjectQ. Installation of this plugin, as well as all dependencies, can be done using pip:
+This plugin requires Python version 3.5 and above, as well as PennyLane and qiskit. Installation of this plugin, as well as all dependencies, can be done using pip:
 
 .. code-block:: bash
 
     $ python -m pip install pennylane_qiskit
 
-To test that the PennyLane ProjectQ plugin is working correctly you can run
+To test that the PennyLane qiskit plugin is working correctly you can run
 
 .. code-block:: bash
 
@@ -95,7 +95,7 @@ You can then execute the circuit like any other function to get the quantum mech
 
 .. code-block:: python
 
-	circuit(0.2, 0.1, 0.3)
+    circuit(0.2, 0.1, 0.3)
 
 Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the device above, you would instantiate a :code:`'qiskit.ibm'` device by giving your IBM Quantum Experience token:
 
