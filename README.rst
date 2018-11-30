@@ -107,6 +107,18 @@ You can then execute the circuit like any other function to get the quantum mech
 
     circuit(0.2, 0.1, 0.3)
 
+You can also change the default provider's backend with
+
+.. code-block:: python
+
+    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+
+To get a current overview what backends are available you can query this by
+
+.. code-block:: python
+
+    dev.capabilities()['backend']
+
 Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the
 provider above, you would instantiate a :code:`'qiskit.ibm'` provider by giving your IBM Quantum Experience token:
 
@@ -114,6 +126,12 @@ provider above, you would instantiate a :code:`'qiskit.ibm'` provider by giving 
 
     import pennylane as qml
     dev = qml.device('qiskit.ibm', wires=2, ibmqx_token="XXX")
+
+Per default the provider :code:`ibm` uses the simulator backend, but you can change that to be the real backend as given by
+
+.. code-block:: python
+
+    dev.capabilities()['backend']
 
 .. gettingstarted-end-inclusion-marker-do-not-remove
 
