@@ -151,8 +151,10 @@ class QiskitDevice(Device):
 
         if isinstance(operation, str):
             qureg = [("q", i) for i in wires]
-            self._dagcircuit.start_gate(operation, list(par), qureg)
-            self._dagcircuit.end_gate(operation, list(par), qureg)
+            import qiskit.qasm._node as node
+            real_params = [node.Real(p) for p in par]
+            self._dagcircuit.start_gate(operation, real_params, qureg)
+            self._dagcircuit.end_gate(operation, real_params, qureg)
         elif isinstance(operation, QiskitInstructions):
             op = operation  # type: QiskitInstructions
             qregs = [(self._reg, i) for i in wires]
