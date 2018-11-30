@@ -305,5 +305,6 @@ class IbmQQiskitDevice(QiskitDevice):
         backend = kwargs.get('backend', 'ibmq_qasm_simulator')
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.IBMQ
-        self._provider.enable_account(kwargs['ibmqx_token'])
+        if kwargs['ibmqx_token'] not in map(lambda e: e['token'], self._provider.active_accounts()):
+            self._provider.enable_account(kwargs['ibmqx_token'])
         self._capabilities['backend'] = [b.name() for b in self._provider.available_backends()]
