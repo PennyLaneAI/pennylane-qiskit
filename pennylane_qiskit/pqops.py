@@ -28,7 +28,8 @@ from qiskit.extensions.standard import x, rx, ry, rz
 
 class QiskitInstructions(object):
 
-    def apply(self, qregs: List[Tuple[QuantumRegister, int]], param: list, circuit: QuantumCircuit):
+    def apply(self, qregs, param, circuit):
+        # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         pass
 
 
@@ -61,7 +62,8 @@ class BasisState(QiskitInstructions):
     qiskit does not currently have a dedicated gate for this, so we implement it here.
     """
 
-    def apply(self, qregs: List[Tuple[QuantumRegister, int]], param: list, circuit: QuantumCircuit):
+    def apply(self, qregs, param, circuit):
+        # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
         for i, p in enumerate(param[0]):
@@ -77,7 +79,8 @@ class Rot(QiskitInstructions):
     assembled into a single gate from the constructor of this class.
     """
 
-    def apply(self, qregs: List[Tuple[QuantumRegister, int]], param: list, circuit: QuantumCircuit):
+    def apply(self, qregs, param, circuit):
+        # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
         for q in qregs:
@@ -94,7 +97,8 @@ class QubitUnitary(QiskitInstructions):
     assembled into a single gate from the constructor of this class.
     """
 
-    def apply(self, qregs: List[Tuple[QuantumRegister, int]], param: list, circuit: QuantumCircuit):
+    def apply(self, qregs, param, circuit):
+        # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
         raise Exception("Not Implemented!")
@@ -108,7 +112,8 @@ class QubitStateVector(QiskitInstructions):
     assembled into a single gate from the constructor of this class.
     """
 
-    def apply(self, qregs: List[Tuple[QuantumRegister, int]], param: list, circuit: QuantumCircuit):
+    def apply(self, qregs, param, circuit):
+        # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
         raise Exception("Not Implemented!")

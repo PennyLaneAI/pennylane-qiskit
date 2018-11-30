@@ -40,19 +40,18 @@ IbmQQiskitDevice
 
 """
 from time import sleep
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Union, Any, List
 
 import qiskit
 from pennylane import Device, DeviceError
 from qiskit import QuantumRegister, ClassicalRegister
-from qiskit.backends import BaseProvider, BaseBackend, BaseJob, JobStatus, JobError
-from qiskit.backends.aer import AerJob
+from qiskit.backends import BaseProvider, BaseBackend, BaseJob, JobStatus
 from qiskit.extensions.standard import (x, y, z)
 from qiskit.result import Result
 from qiskit.unroll import CircuitBackend
 
-from .pqops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
 from ._version import __version__
+from .pqops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
 
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
@@ -77,7 +76,7 @@ QISKIT_OPERATION_MAP = {
     # additional operations not native to PennyLane but present in qiskit
     'S': 's',
     'T': 't'
-}
+}  # type: Dict[str, Union[str, QiskitInstructions]]
 
 
 class QiskitDevice(Device):
@@ -87,9 +86,9 @@ class QiskitDevice(Device):
     version = '0.1.0'
     plugin_version = __version__
     author = 'Carsten Blank'
-    _capabilities: Dict[str, any] = {
+    _capabilities = {
         'model': 'qubit'
-    }
+    }  # type: Dict[str, any]
     _operation_map = QISKIT_OPERATION_MAP
     _expectation_map = {key: val for key, val in _operation_map.items()
                         if val in [x, y, z]}
@@ -118,9 +117,9 @@ class QiskitDevice(Device):
         # Inner state
         self._reg = QuantumRegister(wires, "q")
         self._creg = ClassicalRegister(wires, "c")
-        self._provider: BaseProvider = None
-        self._dagcircuit: CircuitBackend = CircuitBackend()
-        self._current_job: BaseJob = None
+        self._provider = None  # type: BaseProvider
+        self._dagcircuit = CircuitBackend()  # type: CircuitBackend
+        self._current_job = None  # type: BaseJob
         self._first_operation = True
         self.reset()
 
@@ -132,7 +131,8 @@ class QiskitDevice(Device):
     def expectations(self):
         return set(self._expectation_map.keys())
 
-    def apply(self, operation, wires: Sequence[int], par: list):
+    def apply(self, operation, wires, par):
+        # type: (Any, Sequence[int], List) -> None
         """Apply a quantum operation.
 
         For plugin developers: this function should apply the operation on the device.
@@ -154,20 +154,20 @@ class QiskitDevice(Device):
             self._dagcircuit.start_gate(operation, list(par), qureg)
             self._dagcircuit.end_gate(operation, list(par), qureg)
         elif isinstance(operation, QiskitInstructions):
-            op: QiskitInstructions = operation
+            op = operation  # type: QiskitInstructions
             qregs = [(self._reg, i) for i in wires]
             op.apply(qregs=qregs, param=list(par), circuit=self._dagcircuit.circuit)
         else:
             raise ValueError("The operation is not of an expected type. This is a software bug!")
 
     def pre_expval(self):
-        compile_backend: BaseBackend = self._provider.get_backend(self.compile_backend)
+        compile_backend = self._provider.get_backend(self.compile_backend)  # type: BaseBackend
         for qr, cr in zip(self._reg, self._creg):
             self._dagcircuit.circuit.measure(qr, cr)
         qobj = qiskit.compile(circuits=self._dagcircuit.circuit, backend=compile_backend, shots=self.shots)
-        backend: BaseBackend = self._provider.get_backend(self.backend)
+        backend = self._provider.get_backend(self.backend)  #type: BaseBackend
         try:
-            self._current_job: BaseJob = backend.run(qobj)
+            self._current_job = backend.run(qobj)  # type: BaseJob
             sleep(0.1)
             not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
             while self._current_job.status() in not_done:
@@ -176,7 +176,7 @@ class QiskitDevice(Device):
             raise Exception("Error during job execution: {}!".format(ex))
 
     def expval(self, expectation, wires, par):
-        result: Result = self._current_job.result()
+        result = self._current_job.result()  # type: Result
 
         probabilities = dict((state[::-1], count/self.shots) for state, count in result.get_counts().items())
 
@@ -196,7 +196,7 @@ class QiskitDevice(Device):
         return expval
 
     def reset(self):
-        self._dagcircuit: CircuitBackend = CircuitBackend()
+        self._dagcircuit = CircuitBackend()  #type: CircuitBackend
         self._dagcircuit.new_qreg(name="q", size=self.num_wires)
         self._dagcircuit.new_creg(name="c", size=self.num_wires)
         self._dagcircuit.set_basis(list(self._dagcircuit.circuit.definitions.keys()))
