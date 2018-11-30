@@ -34,7 +34,7 @@ class DeviceInitialization(BaseTest):
     devices = None
 
     def test_ibm_no_token(self):
-        if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
+        if self.args.provider == 'ibm' or self.args.provider == 'all':
             self.assertRaises(ValueError, IbmQQiskitDevice, wires=self.num_subsystems)
 
     def test_log_verbose(self):
@@ -43,7 +43,7 @@ class DeviceInitialization(BaseTest):
         self.assertEqual(dev.kwargs['log'], dev.kwargs['verbose'])
 
     def test_shots(self):
-        if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
+        if self.args.provider == 'ibmq_qasm_simulator' or self.args.provider == 'all':
             shots = 5
             dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev1.shots)

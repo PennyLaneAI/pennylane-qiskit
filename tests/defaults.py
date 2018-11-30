@@ -18,12 +18,12 @@ import pennylane_qiskit
 
 
 # defaults
-if 'DEVICE' in os.environ and os.environ['DEVICE'] is not None:
-    DEVICE = os.environ['DEVICE']
+if 'PROVIDER' in os.environ and os.environ['PROVIDER'] is not None:
+    PROVIDER = os.environ['PROVIDER']
 else:
-    DEVICE = "all"
+    PROVIDER = "all"
 OPTIMIZER = "GradientDescentOptimizer"
-if DEVICE == "all" or DEVICE == "ibm":
+if PROVIDER == "all" or PROVIDER == "ibm":
     TOLERANCE = 3e-2
 else:
     TOLERANCE = 1e-3
@@ -56,12 +56,12 @@ def get_commandline_args():
       argparse.Namespace: parsed arguments in a namespace container
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--device', type=str, default=DEVICE,
-                        help='Device(s) to use for tests.', choices=['simulator', 'ibm', 'classical', 'all'])
+    parser.add_argument('-p', '--provider', type=str, default=PROVIDER,
+                        help='Provider(s) to use for tests.', choices=['aer', 'ibm'])
     parser.add_argument('-t', '--tolerance', type=float, default=TOLERANCE,
                         help='Numerical tolerance for equality tests.')
     parser.add_argument("--ibmqx_token",
-                        help="IBM Quantum Experience token")
+                        help="IBM Quantum Experience token for use with the provider 'ibm'")
     parser.add_argument("--optimizer", default=OPTIMIZER, choices=pennylane.optimize.__all__,
                         help="optimizer to use")
 
