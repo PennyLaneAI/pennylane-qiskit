@@ -63,9 +63,10 @@ author = 'Carsten Blank'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import pennylane_qiskit
+# avoid qiskit dependency by directly importing the version
+from pennylane_qiskit._version import __version__
 # The full version, including alpha/beta/rc tags.
-release = pennylane_qiskit.__version__
+release = __version__
 
 # The short X.Y version.
 version = re.match(r'^(\d+\.\d+)', release).expand(r'\1')
