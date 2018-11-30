@@ -28,8 +28,9 @@ if DEVICE == "all" or DEVICE == "ibm":
 else:
     TOLERANCE = 1e-3
 
+IBMQX_TOKEN = ''
 if 'IBMQX_TOKEN' in os.environ and os.environ['IBMQX_TOKEN'] is not None:
-    TOKEN = os.environ['IBMQX_TOKEN']
+    IBMQX_TOKEN = os.environ['IBMQX_TOKEN']
 
 
 # set up logging

@@ -15,21 +15,20 @@
 Unit tests for the :mod:`pennylane_pq` devices.
 """
 
-import unittest
 import logging as log
-#import inspect
-#from unittest_data_provider import data_provider
-from pkg_resources import iter_entry_points
-from defaults import pennylane as qml, BaseTest
-from pennylane import Device
+import unittest
+
+import pennylane
 from pennylane import numpy as np
 from pennylane.plugins.default_qubit import DefaultQubit
-import pennylane
+
 import pennylane_qiskit
 import pennylane_qiskit.expval
+from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit.devices import AerQiskitDevice, IbmQQiskitDevice
 
 log.getLogger('defaults')
+
 
 class CompareWithDefaultQubitTest(BaseTest):
     """Compares the behavior of the ProjectQ plugin devices with the default qubit device.
@@ -37,6 +36,7 @@ class CompareWithDefaultQubitTest(BaseTest):
     num_subsystems = 3 #This should be as large as the largest gate/observable, but we cannot know that before instantiating the device. We thus check later that all gates/observables fit.
 
     devices = None
+
     def setUp(self):
         super().setUp()
 

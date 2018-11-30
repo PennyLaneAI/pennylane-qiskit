@@ -20,12 +20,11 @@ import unittest
 
 import pennylane
 
-# import inspect
-# from unittest_data_provider import data_provider
 from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit.devices import AerQiskitDevice, IbmQQiskitDevice
 
 log.getLogger('defaults')
+
 
 class UnsupportedOperationTest(BaseTest):
     """test that unsupported operations/expectations raise DeviceErrors.

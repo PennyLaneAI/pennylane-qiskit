@@ -20,7 +20,7 @@ import unittest
 
 from pennylane import DeviceError
 
-from defaults import pennylane as qml, BaseTest, TOKEN
+from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import IbmQQiskitDevice
 
 log.getLogger('defaults')
