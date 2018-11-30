@@ -57,7 +57,7 @@ def get_commandline_args():
                         help='Device(s) to use for tests.', choices=['simulator', 'ibm', 'classical', 'all'])
     parser.add_argument('-t', '--tolerance', type=float, default=TOLERANCE,
                         help='Numerical tolerance for equality tests.')
-    parser.add_argument("--token",
+    parser.add_argument("--ibmqx_token",
                         help="IBM Quantum Experience token")
     parser.add_argument("--optimizer", default=OPTIMIZER, choices=pennylane.optimize.__all__,
                         help="optimizer to use")
