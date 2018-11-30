@@ -8,7 +8,7 @@ env:
 install:
   - pip install -r requirements.txt
   - pip install pytest pytest-cov wheel codecov
-  - python3 setup.py bdist_wheel
+  - python setup.py bdist_wheel
   - pip install dist/PennyLane*.whl
 script:
   - make coverage
