@@ -168,7 +168,7 @@ class QiskitDevice(Device):
         backend: BaseBackend = self._provider.get_backend(self.backend)
         try:
             self._current_job: BaseJob = backend.run(qobj)
-            sleep(1)
+            sleep(0.1)
             not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
             while self._current_job.status() in not_done:
                 sleep(2)
