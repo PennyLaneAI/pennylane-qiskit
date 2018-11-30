@@ -28,10 +28,12 @@ if DEVICE == "all" or DEVICE == "ibm":
 else:
     TOLERANCE = 1e-3
 
-IBMQX_TOKEN = ''
-if 'IBMQX_TOKEN' in os.environ and os.environ['IBMQX_TOKEN'] is not None:
+IBMQX_TOKEN = None
+ibm_options = pennylane.default_config['qiskit.ibm']
+if 'ibmqx_token' in ibm_options:
+    IBMQX_TOKEN = ibm_options['ibmqx_token']
+elif 'IBMQX_TOKEN' in os.environ and os.environ['IBMQX_TOKEN'] is not None:
     IBMQX_TOKEN = os.environ['IBMQX_TOKEN']
-
 
 # set up logging
 if "LOGGING" in os.environ:

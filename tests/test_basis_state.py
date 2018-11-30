@@ -17,7 +17,7 @@ Unit tests for the :mod:`pennylane_qiskit` BasisState operation.
 
 import unittest
 import logging as log
-from defaults import pennylane as qml, BaseTest
+from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 import pennylane
 from pennylane import numpy as np
 from pennylane_qiskit import AerQiskitDevice, IbmQQiskitDevice
@@ -39,11 +39,12 @@ class BasisStateTest(BaseTest):
         if self.args.device == 'qasm_simulator' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
         if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
-            ibm_options = pennylane.default_config['projectq.ibm']
-            if "token" in ibm_options:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, use_hardware=False, num_runs=8*1024, token=ibm_options['token']))
+            if IBMQX_TOKEN is not None:
+                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, use_hardware=False, num_runs=8*1024,
+                                                     ibmqx_token=IBMQX_TOKEN))
             else:
-                log.warning("Skipping test of the ProjectQIBMBackend device because IBM login credentials could not be found in the PennyLane configuration file.")
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                            "found in the PennyLane configuration file.")
 
     def test_basis_state(self):
         """Test BasisState with preparations on the whole system."""

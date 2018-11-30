@@ -17,7 +17,7 @@ Unit tests for :mod:`pennylane_qiskit` simple circuits.
 
 import unittest
 import logging as log
-from defaults import pennylane as qml, BaseTest
+from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 import pennylane
 from pennylane import numpy as np
 from pennylane_qiskit import AerQiskitDevice, IbmQQiskitDevice
@@ -39,9 +39,8 @@ class SimpleCircuitsTest(BaseTest):
         if self.args.device == 'qasm_simulator' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
         if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
-            ibm_options = pennylane.default_config['qiskit.ibm']
-            if "ibmqx_token" in ibm_options:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=ibm_options['ibmqx_token']))
+            if IBMQX_TOKEN is not None:
+                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")

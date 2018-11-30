@@ -20,7 +20,7 @@ import unittest
 
 import pennylane
 
-from defaults import pennylane as qml, BaseTest
+from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit.devices import AerQiskitDevice, IbmQQiskitDevice
 
 log.getLogger('defaults')
@@ -40,9 +40,8 @@ class UnsupportedOperationTest(BaseTest):
         if self.args.device == 'qasm_simulator' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
         if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
-            ibm_options = pennylane.default_config['qiskit.ibm']
-            if "ibmqx_token" in ibm_options:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=ibm_options['ibmqx_token']))
+            if IBMQX_TOKEN is not None:
+                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
 
