@@ -46,6 +46,7 @@ import qiskit
 from pennylane import Device, DeviceError
 from qiskit import QuantumRegister, ClassicalRegister
 from qiskit.backends import BaseProvider, BaseBackend, BaseJob, JobStatus, JobError
+from qiskit.backends.aer import AerJob
 from qiskit.extensions.standard import (x, y, z)
 from qiskit.result import Result
 from qiskit.unroll import CircuitBackend
@@ -171,7 +172,11 @@ class QiskitDevice(Device):
             while self._current_job.status() in not_done:
                 sleep(2)
         except JobError as ex:
-            raise Exception("Error: {}, {}".format(ex, self._current_job._future))
+            if isinstance(self._current_job, AerJob):
+                aer_job: AerJob = self._current_job
+                raise Exception("Error: {}, {}".format(ex, aer_job._future))
+            else:
+                raise Exception("Error: {}!".format(ex))
 
     def expval(self, expectation, wires, par):
         result: Result = self._current_job.result()
