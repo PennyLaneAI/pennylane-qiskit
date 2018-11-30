@@ -168,15 +168,16 @@ class QiskitDevice(Device):
         backend: BaseBackend = self._provider.get_backend(self.backend)
         try:
             self._current_job: BaseJob = backend.run(qobj)
+            sleep(1)
             not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
             while self._current_job.status() in not_done:
                 sleep(2)
-        except JobError as ex:
+        except Exception as ex:
             if isinstance(self._current_job, AerJob):
                 aer_job: AerJob = self._current_job
-                raise Exception("Error: {}, {}".format(ex, aer_job._future))
+                raise Exception("Error during AER-job execution: {}, {}".format(ex, aer_job._future))
             else:
-                raise Exception("Error: {}!".format(ex))
+                raise Exception("Error during job execution: {}!".format(ex))
 
     def expval(self, expectation, wires, par):
         result: Result = self._current_job.result()
