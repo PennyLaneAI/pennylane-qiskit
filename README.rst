@@ -62,7 +62,7 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 
     $ make test
 
-in the source folder. Tests restricted to a specific device can be run by executing :code:`make test-simulator`, :code:`make test-ibm`, or :code:`make test-classical`.
+in the source folder. Tests restricted to a specific device can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
 
 .. note:: Tests on the `ibm device <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#projectqibmbackend>`_ can only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ are configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_. If this is the case, running :code:`make test` also executes tests on the :code:`ibm` device. By default tests on the :code:`ibm` device run with :code:`hardware=False`. At the time of writing this means that the test are "free". Please verify that this is also the case for your account.
 
@@ -138,8 +138,8 @@ Carsten Blank
 Support
 =======
 
-- **Source Code:** https://github.com/XanaduAI/pennylane-qiskit
-- **Issue Tracker:** https://github.com/XanaduAI/pennylane-qiskit/issues
+- **Source Code:** https://github.com/carstenblank/pennylane-qiskit
+- **Issue Tracker:** https://github.com/carstenblank/pennylane-qiskit/issues
 
 If you are having issues, please let us know by posting the issue on our Github issue tracker.
 
