@@ -50,7 +50,7 @@ from qiskit.extensions.standard import (x, y, z)
 from qiskit.result import Result
 from qiskit.unroll import CircuitBackend
 
-from pqops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
+from .pqops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
 from ._version import __version__
 
 QISKIT_OPERATION_MAP = {
