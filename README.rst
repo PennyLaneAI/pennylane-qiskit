@@ -9,9 +9,9 @@ PennyLane qiskit Plugin
     :alt: Codecov coverage
     :target: https://codecov.io/gh/carstenblank/pennylane-qiskit
 
-.. image:: https://img.shields.io/codacy/grade/6ed6d8397b814fbaa754757fed3ea536.svg?style=for-the-badge
+.. image:: https://img.shields.io/codacy/grade/09de983914f341f8bbe011602947571f.svg?style=for-the-badge
     :alt: Codacy grade
-    :target: https://app.codacy.com/app/carstenblank/pennylane-qiskit?utm_source=github.com&utm_medium=referral&utm_content=carstenblank/pennylane-qiskit&utm_campaign=badger
+    :target: https://www.codacy.com/app/carstenblank/pennylane-qiskit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=carstenblank/pennylane-qiskit&amp;utm_campaign=Badge_Grade
 
 .. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=for-the-badge
     :alt: Read the Docs
