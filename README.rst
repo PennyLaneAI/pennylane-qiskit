@@ -11,7 +11,7 @@ PennyLane qiskit Plugin
 
 .. image:: https://img.shields.io/codacy/grade/6ed6d8397b814fbaa754757fed3ea536.svg?style=for-the-badge
     :alt: Codacy grade
-    :target: https://app.codacy.com/app/XanaduAI/pennylane-qiskit?utm_source=github.com&utm_medium=referral&utm_content=XanaduAI/pennylane-qiskit&utm_campaign=badger
+    :target: https://app.codacy.com/app/carstenblank/pennylane-qiskit?utm_source=github.com&utm_medium=referral&utm_content=carstenblank/pennylane-qiskit&utm_campaign=badger
 
 .. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=for-the-badge
     :alt: Read the Docs
