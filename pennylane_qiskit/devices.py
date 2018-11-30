@@ -139,7 +139,7 @@ class QiskitDevice(Device):
     version = '0.1.0'
     plugin_version = __version__
     author = 'Carsten Blank'
-    _capabilities: Dict[str, any] = {
+    _capabilities: dict = {
         'model': 'qubit'
     }
     _operation_map = QISKIT_OPERATION_MAP
