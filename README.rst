@@ -1,13 +1,13 @@
 PennyLane qiskit Plugin
 #########################
 
-.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/travis/com/carstenblank/pennylane-qiskit/master.svg?style=for-the-badge
     :alt: Travis
-    :target: https://travis-ci.com/XanaduAI/pennylane-qiskit
+    :target: https://travis-ci.com/carstenblank/pennylane-qiskit
 
-.. image:: https://img.shields.io/codecov/c/github/xanaduai/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/codecov/c/github/carstenblank/pennylane-qiskit/master.svg?style=for-the-badge
     :alt: Codecov coverage
-    :target: https://codecov.io/gh/XanaduAI/pennylane-qiskit
+    :target: https://codecov.io/gh/carstenblank/pennylane-qiskit
 
 .. image:: https://img.shields.io/codacy/grade/6ed6d8397b814fbaa754757fed3ea536.svg?style=for-the-badge
     :alt: Codacy grade
