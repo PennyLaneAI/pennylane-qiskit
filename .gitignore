@@ -1,0 +1,15 @@
+venv/
+doc/_build/
+pennylane_pq.egg-info/
+build/
+dist/
+pennylane_pq/__pycache__/
+tests/__pycache__/
+.idea
+*.ipynp
+*.ipynb_checkpoints
+__pycache__
+PennyLane_PQ.egg-info/
+.pytest_cache/
+coverage_html_report/
+.coverage
