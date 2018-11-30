@@ -66,6 +66,24 @@ class SimpleCircuitsTest(BaseTest):
 
                 self.assertAllAlmostEqual([1]*self.num_subsystems-2*bits_to_flip, np.array(circuit()), delta=self.tol)
 
+    def test_rotations_cnot(self):
+        """Test BasisState with preparations on the whole system."""
+        if self.devices is None:
+            return
+        self.logTestName()
+
+        for device in self.devices:
+
+            @qml.qnode(device)
+            def circuit(x, y, z):
+                qml.RZ(z, wires=[0])
+                qml.RY(y, wires=[0])
+                qml.RX(x, wires=[0])
+                qml.CNOT(wires=[0, 1])
+                return qml.expval.PauliZ(wires=1)
+
+            self.assertAllAlmostEqual(0.96875, np.array(circuit(0.2, 0.1, 0.3)), delta=self.tol)
+
 
 if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')
