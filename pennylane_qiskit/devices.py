@@ -173,11 +173,7 @@ class QiskitDevice(Device):
             while self._current_job.status() in not_done:
                 sleep(2)
         except Exception as ex:
-            if isinstance(self._current_job, AerJob):
-                aer_job: AerJob = self._current_job
-                raise Exception("Error during AER-job execution: {}, {}".format(ex, aer_job._future))
-            else:
-                raise Exception("Error during job execution: {}!".format(ex))
+            raise Exception("Error during job execution: {}!".format(ex))
 
     def expval(self, expectation, wires, par):
         result: Result = self._current_job.result()
