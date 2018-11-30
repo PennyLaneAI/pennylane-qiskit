@@ -21,7 +21,7 @@ with open("pennylane_qiskit/_version.py") as f:
 
 with open("requirements.txt") as f:
     requirements = [
-        'qiskit>=0.4.1',
+        'qiskit',
         'pennylane'
     ]
 
