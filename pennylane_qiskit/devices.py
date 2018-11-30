@@ -45,7 +45,7 @@ from typing import Dict, Sequence
 import qiskit
 from pennylane import Device, DeviceError
 from qiskit import QuantumRegister, ClassicalRegister
-from qiskit.backends import BaseProvider, BaseBackend, BaseJob, JobStatus
+from qiskit.backends import BaseProvider, BaseBackend, BaseJob, JobStatus, JobError
 from qiskit.extensions.standard import (x, y, z)
 from qiskit.result import Result
 from qiskit.unroll import CircuitBackend
@@ -165,11 +165,13 @@ class QiskitDevice(Device):
             self._dagcircuit.circuit.measure(qr, cr)
         qobj = qiskit.compile(circuits=self._dagcircuit.circuit, backend=compile_backend, shots=self.shots)
         backend: BaseBackend = self._provider.get_backend(self.backend)
-        self._current_job: BaseJob = backend.run(qobj)
-
-        not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
-        while self._current_job.status() in not_done:
-            sleep(2)
+        try:
+            self._current_job: BaseJob = backend.run(qobj)
+            not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
+            while self._current_job.status() in not_done:
+                sleep(2)
+        except JobError as ex:
+            raise Exception("Error: {}, {}".format(ex, self._current_job._future))
 
     def expval(self, expectation, wires, par):
         result: Result = self._current_job.result()
