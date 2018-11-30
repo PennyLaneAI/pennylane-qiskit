@@ -38,22 +38,22 @@ class DeviceInitialization(BaseTest):
             self.assertRaises(ValueError, IbmQQiskitDevice, wires=self.num_subsystems)
 
     def test_log_verbose(self):
-        dev = IbmQQiskitDevice(wires=self.num_subsystems, log=True, ibmqx_token=TOKEN)
+        dev = IbmQQiskitDevice(wires=self.num_subsystems, log=True, ibmqx_token=IBMQX_TOKEN)
         self.assertEqual(dev.kwargs['log'], True)
         self.assertEqual(dev.kwargs['log'], dev.kwargs['verbose'])
 
     def test_shots(self):
         if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
             shots = 5
-            dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=TOKEN)
+            dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev1.shots)
             self.assertEqual(shots, dev1.kwargs['num_runs'])
 
-            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, num_runs=shots, ibmqx_token=TOKEN)
+            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, num_runs=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev2.shots)
             self.assertEqual(shots, dev2.kwargs['num_runs'])
 
-            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots+2, num_runs=shots, ibmqx_token=TOKEN)
+            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots+2, num_runs=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev2.shots)
             self.assertEqual(shots, dev2.kwargs['num_runs'])
 
@@ -63,7 +63,7 @@ class DeviceInitialization(BaseTest):
                 'qiskit.ibm'
         ]:
             try:
-                dev = dev = qml.device(short_name, wires=2, ibmqx_token=TOKEN)
+                dev = dev = qml.device(short_name, wires=2, ibmqx_token=IBMQX_TOKEN)
             except DeviceError:
                 raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
 

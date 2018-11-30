@@ -41,7 +41,7 @@ class SimpleCircuitsTest(BaseTest):
         if self.args.device == 'ibmq_qasm_simulator' or self.args.device == 'all':
             ibm_options = pennylane.default_config['qiskit.ibm']
             if "ibmqx_token" in ibm_options:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, token=ibm_options['ibmqx_token']))
+                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=ibm_options['ibmqx_token']))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
