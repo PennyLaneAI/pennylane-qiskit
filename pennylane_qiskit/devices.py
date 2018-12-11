@@ -39,6 +39,7 @@ IbmQQiskitDevice
 .. autoclass:: IbmQQiskitDevice
 
 """
+import os
 from time import sleep
 from typing import Dict, Sequence, Union, Any, List
 
@@ -306,11 +307,13 @@ class IbmQQiskitDevice(QiskitDevice):
     _backend_kwargs = ['num_runs', 'verbose', 'backend', 'ibmqx_token']
 
     def __init__(self, wires, shots=1024, **kwargs):
-        if 'ibmqx_token' not in kwargs:
+        token_from_env = os.getenv('IBMQX_TOKEN')
+        if 'ibmqx_token' not in kwargs and token_from_env is None:
             raise ValueError("IBMQX Token is missing!")
+        token = token_from_env or kwargs['ibmqx_token']
         backend = kwargs.get('backend', 'ibmq_qasm_simulator')
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.IBMQ
         if kwargs['ibmqx_token'] not in map(lambda e: e['token'], self._provider.active_accounts()):
-            self._provider.enable_account(kwargs['ibmqx_token'])
+            self._provider.enable_account(token)
         self._capabilities['backend'] = [b.name() for b in self._provider.available_backends()]
