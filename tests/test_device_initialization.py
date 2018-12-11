@@ -38,7 +38,7 @@ class DeviceInitialization(BaseTest):
         # if there is an IBMQX token, save it and unset it so that it doesn't interfere with this test
         token_from_environment = os.getenv('IBMQX_TOKEN')
         if token_from_environment is not None:
-            os.unsetenv('IBMQX_TOKEN')
+            del os.environ['IBMQX_TOKEN']
 
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             try:
@@ -47,7 +47,9 @@ class DeviceInitialization(BaseTest):
             except ValueError:
                 # put the IBMQX token back into place fo other tests to use
                 if token_from_environment is not None:
-                    os.putenv('IBMQX_TOKEN', token_from_environment)
+                    os.environ['IBMQX_TOKEN'] = token_from_environment
+                    token_from_environment_back = os.getenv('IBMQX_TOKEN')
+                    self.assertEqual(token_from_environment, token_from_environment_back)
 
     def test_log_verbose(self):
         dev = IbmQQiskitDevice(wires=self.num_subsystems, log=True, ibmqx_token=IBMQX_TOKEN)
