@@ -52,7 +52,8 @@ Features
 Installation
 ============
 
-This plugin requires Python version 3.5 and above, as well as PennyLane and qiskit. Installation of this plugin, as well as all dependencies, can be done using pip:
+This plugin requires Python version 3.5 and above, as well as PennyLane and qiskit.
+Installation of this plugin, as well as all dependencies, can be done using pip:
 
 .. code-block:: bash
 
@@ -66,14 +67,20 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 
 in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
 
-.. note:: Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#ibmqqiskitdevice>` can only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>` are configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_. If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`aer` provider are run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free". Please verify that this is also the case for your account.
+.. note:: Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#ibmqqiskitdevice>`_can
+only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_is
+configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
+If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on
+the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`aer` provider are
+run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
+Please verify that this is also the case for your account.
 .. installation-end-inclusion-marker-do-not-remove
 .. gettingstarted-start-inclusion-marker-do-not-remove
 
 Getting started
 ===============
 
-You can instantiate a :code:`'qiskit.aer'` provider for PennyLane with:
+You can instantiate a :code:`'qiskit.aer'` device for PennyLane with:
 
 .. code-block:: python
 
@@ -100,7 +107,7 @@ You can then execute the circuit like any other function to get the quantum mech
 
     circuit(0.2, 0.1, 0.3)
 
-You can also change the default provider's backend with
+You can also change the default device's backend with
 
 .. code-block:: python
 
@@ -113,14 +120,17 @@ To get a current overview what backends are available you can query this by
     dev.capabilities()['backend']
 
 Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the
-provider above, you would instantiate a :code:`'qiskit.ibm'` provider by giving your IBM Quantum Experience token:
+device above, you would instantiate a :code:`'qiskit.ibm'` device by giving your IBM Quantum Experience token:
 
 .. code-block:: python
 
     import pennylane as qml
     dev = qml.device('qiskit.ibm', wires=2, ibmqx_token="XXX")
 
-Per default the provider :code:`ibm` uses the simulator backend, but you can change that to be the real backend as given by
+In order to avoid any publishing of your token it is also possible to define an environment variable :code:`IBMQX_TOKEN`,
+which will be taken if non is provided.
+Per default the backend :code:`ibm` uses the simulator backend :code:`ibmq_qasm_simulator`, but you can change that
+to be any of the real backends as given by
 
 .. code-block:: python
 
@@ -146,7 +156,8 @@ Contributing
 ============
 
 We welcome contributions - simply fork the repository of this plugin, and then make a
-`pull request <https://help.github.com/articles/about-pull-requests/>`_ containing your contribution.  All contributers to this plugin will be listed as authors on the releases.
+`pull request <https://help.github.com/articles/about-pull-requests/>`_ containing your contribution.
+All contributers to this plugin will be listed as authors on the releases.
 
 We also encourage bug reports, suggestions for new features and enhancements, and even links to cool projects or applications built on PennyLane.
 
@@ -172,6 +183,7 @@ If you are having issues, please let us know by posting the issue on our Github 
 License
 =======
 
-The PennyLane qiskit plugin is **free** and **open source**, released under the `Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>`_.
+The PennyLane qiskit plugin is **free** and **open source**, released under
+the `Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>`_.
 
 .. license-end-inclusion-marker-do-not-remove
