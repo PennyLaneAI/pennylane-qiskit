@@ -16,6 +16,7 @@ Unit tests for the :mod:`pennylane_qiskit` device initialization
 """
 
 import logging as log
+import os
 import unittest
 
 from pennylane import DeviceError
@@ -34,8 +35,19 @@ class DeviceInitialization(BaseTest):
     devices = None
 
     def test_ibm_no_token(self):
+        # if there is an IBMQX token, save it and unset it so that it doesn't interfere with this test
+        token_from_environment = os.getenv('IBMQX_TOKEN')
+        if token_from_environment is not None:
+            os.unsetenv('IBMQX_TOKEN')
+
         if self.args.provider == 'ibm' or self.args.provider == 'all':
-            self.assertRaises(ValueError, IbmQQiskitDevice, wires=self.num_subsystems)
+            try:
+                IbmQQiskitDevice(wires = self.num_subsystems)
+                self.fail('Expected a ValueError if no IBMQX token is present.')
+            except ValueError:
+                # put the IBMQX token back into place fo other tests to use
+                if token_from_environment is not None:
+                    os.putenv('IBMQX_TOKEN', token_from_environment)
 
     def test_log_verbose(self):
         dev = IbmQQiskitDevice(wires=self.num_subsystems, log=True, ibmqx_token=IBMQX_TOKEN)
