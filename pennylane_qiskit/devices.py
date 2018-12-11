@@ -51,7 +51,7 @@ from qiskit.result import Result
 from qiskit.unroll import CircuitBackend
 
 from ._version import __version__
-from .pqops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
+from .qiskitops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
 
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
