@@ -1,2 +1,2 @@
-qiskit
+qiskit>=0.7.0
 pennylane
