@@ -49,6 +49,6 @@ Fixed
 - Update to qiskit 0.7.0 made changes necessary: import location have changes
 
 
-.. _UNRELEASED: https://github.com/Qiskit/qiskit-terra/compare/0.0.2...HEAD
+.. _UNRELEASED: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.2...HEAD
 .. _0.0.2: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.1...0.0.2
 .. _Keep a Changelog: http://keepachangelog.com/en/1.0.0/
