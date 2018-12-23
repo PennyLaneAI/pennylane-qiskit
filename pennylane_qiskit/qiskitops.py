@@ -144,7 +144,11 @@ class QubitUnitary(QiskitInstructions):
         if d != cmath.exp(1.0j*lam + 1.0j*phi)*cmath.cos(theta/2):
             raise Exception('Not a unitary.')
 
-        standard.u3(circuit, theta, phi, lam, qregs)
+        if isinstance(qregs, list):
+            for q in qregs:
+                standard.u3(circuit, theta, phi, lam, q)
+        else:
+            standard.u3(circuit, theta, phi, lam, qregs)
 
 
 class QubitStateVector(QiskitInstructions):
