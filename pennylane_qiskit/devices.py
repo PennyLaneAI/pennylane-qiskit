@@ -41,18 +41,20 @@ IbmQQiskitDevice
 """
 import os
 from time import sleep
-from typing import Dict, Sequence, Union, Any, List
+from typing import Dict, Sequence, Any, List, Union
 
 import qiskit
 from pennylane import Device, DeviceError
-from qiskit import QuantumRegister, ClassicalRegister
-from qiskit.backends import BaseProvider, BaseBackend, BaseJob, JobStatus
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
+from qiskit.circuit import Instruction
+from qiskit.circuit.measure import measure
+from qiskit.converters import dag_to_circuit, circuit_to_dag
 from qiskit.extensions.standard import (x, y, z)
+from qiskit.providers import BaseProvider, BaseJob, BaseBackend, JobStatus
 from qiskit.result import Result
-from qiskit.unroll import CircuitBackend
 
 from ._version import __version__
-from .qiskitops import BasisState, QiskitInstructions, Rot, QubitUnitary, QubitStateVector
+from .qiskitops import BasisState, Rot, QubitStateVector, QubitUnitary, QiskitInstructions
 
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
@@ -119,7 +121,7 @@ class QiskitDevice(Device):
         self._reg = QuantumRegister(wires, "q")
         self._creg = ClassicalRegister(wires, "c")
         self._provider = None  # type: BaseProvider
-        self._dagcircuit = CircuitBackend()  # type: CircuitBackend
+        self._circuit = None  # type: QuantumCircuit
         self._current_job = None  # type: BaseJob
         self._first_operation = True
         self.reset()
@@ -136,39 +138,42 @@ class QiskitDevice(Device):
         # type: (Any, Sequence[int], List) -> None
         """Apply a quantum operation.
 
-        For plugin developers: this function should apply the operation on the device.
-
         Args:
             operation (str): name of the operation
             wires (Sequence[int]): subsystems the operation is applied on
             par (tuple): parameters for the operation
         """
-        operation = self._operation_map[operation]
 
-        if isinstance(operation, BasisState) and not self._first_operation:
+        mapped_operation = self._operation_map[operation]
+
+        if isinstance(mapped_operation, BasisState) and not self._first_operation:
             raise DeviceError("Operation {} cannot be used after other Operations have already been applied "
                               "on a {} device.".format(operation, self.short_name))
         self._first_operation = False
 
-        if isinstance(operation, str):
-            qureg = [("q", i) for i in wires]
-            import qiskit.qasm._node as node
-            real_params = [node.Real(p) for p in par]
-            self._dagcircuit.start_gate(operation, real_params, qureg)
-            self._dagcircuit.end_gate(operation, real_params, qureg)
-        elif isinstance(operation, QiskitInstructions):
-            op = operation  # type: QiskitInstructions
-            qregs = [(self._reg, i) for i in wires]
-            op.apply(qregs=qregs, param=list(par), circuit=self._dagcircuit.circuit)
+        qregs = [(self._reg, i) for i in wires]
+
+        if isinstance(mapped_operation, str):
+            dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=''))
+            instruction = Instruction(mapped_operation, par, qregs, [], circuit=self._circuit)
+            dag.apply_operation_back(instruction)
+            qc = dag_to_circuit(dag)
+            self._circuit = self._circuit + qc
+        elif isinstance(mapped_operation, QiskitInstructions):
+            op = mapped_operation  # type: QiskitInstructions
+            op.apply(qregs=qregs, param=list(par), circuit=self._circuit)
         else:
             raise ValueError("The operation is not of an expected type. This is a software bug!")
 
     def pre_expval(self):
         compile_backend = self._provider.get_backend(self.compile_backend)  # type: BaseBackend
+
         for qr, cr in zip(self._reg, self._creg):
-            self._dagcircuit.circuit.measure(qr, cr)
-        qobj = qiskit.compile(circuits=self._dagcircuit.circuit, backend=compile_backend, shots=self.shots)
-        backend = self._provider.get_backend(self.backend)  #type: BaseBackend
+            measure(self._circuit, qr, cr)
+
+        qobj = qiskit.compile(circuits=self._circuit, backend=compile_backend, shots=self.shots)
+        backend = self._provider.get_backend(self.backend)  # type: BaseBackend
+
         try:
             self._current_job = backend.run(qobj)  # type: BaseJob
             sleep(0.1)
@@ -199,12 +204,7 @@ class QiskitDevice(Device):
         return expval
 
     def reset(self):
-        self._dagcircuit = CircuitBackend()  #type: CircuitBackend
-        self._dagcircuit.new_qreg(name="q", size=self.num_wires)
-        self._dagcircuit.new_creg(name="c", size=self.num_wires)
-        self._dagcircuit.set_basis(list(self._dagcircuit.circuit.definitions.keys()))
-        for name, definition in self._dagcircuit.circuit.definitions.items():
-            self._dagcircuit.define_gate(name, definition)
+        self._circuit = QuantumCircuit(self._reg, self._creg, name='temp')
         self._first_operation = True
 
 
