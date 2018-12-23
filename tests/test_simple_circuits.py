@@ -83,6 +83,26 @@ class SimpleCircuitsTest(BaseTest):
 
             self.assertAllAlmostEqual(0.96875, np.array(circuit(0.2, 0.1, 0.3)), delta=self.tol)
 
+    def test_arbitrary_state(self):
+        """Test BasisState with preparations on the whole system."""
+        if self.devices is None:
+            return
+        self.logTestName()
+
+        for device in self.devices:
+            for index in range(8):
+                state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+                state[index] = 1.0
+
+                @qml.qnode(device)
+                def circuit():
+                    qml.QubitStateVector(state, wires=[0, 1, 2])
+                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2)
+
+                result = np.array(circuit())
+                expected = np.array(list(map(lambda c: 1.0 if c == '0' else -1.0, "{:b}".format(index).zfill(3)[::-1])))
+                self.assertAllAlmostEqual(expected, result, delta=self.tol)
+
 
 if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')

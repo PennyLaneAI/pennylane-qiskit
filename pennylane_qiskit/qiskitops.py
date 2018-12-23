@@ -25,6 +25,8 @@ from typing import List, Tuple
 from qiskit import QuantumRegister, QuantumCircuit
 from qiskit.extensions.standard import x, rx, ry, rz
 
+from dc_qiskit_algorithms.MöttönenStatePrep import state_prep_möttönen
+
 
 class QiskitInstructions(object):
 
@@ -105,15 +107,18 @@ class QubitUnitary(QiskitInstructions):
 
 
 class QubitStateVector(QiskitInstructions):
-    """Class for the arbitrary single qubit rotation gate.
+    """Class for creating an arbitrary quantum state.
 
-    ProjectQ does not currently have an arbitrary single qubit rotation gate,
-    so we provide a class that return a suitable combination of rotation gates
-    assembled into a single gate from the constructor of this class.
+    Qiskit-terra does not currently have an arbitrary state gate,
+    so we provide a class that applies the state preparation by M\"ott\"onen et. al implemented
+    in dc-qiskit-algorithms.
     """
 
     def apply(self, qregs, param, circuit):
         # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
-        raise Exception("Not Implemented!")
+        if len(param) > 2**len(qregs):
+            raise Exception("Too many parameters for the amount of qubits")
+
+        state_prep_möttönen(circuit, param[0], qregs)
