@@ -16,6 +16,7 @@
 from ._version import __version__
 
 from .devices import BasicAerQiskitDevice
+from .devices import LegacySimulatorsQiskitDevice
 from .devices import IbmQQiskitDevice
 
 from .ops import *
