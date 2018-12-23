@@ -20,7 +20,8 @@ import logging as log
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 import pennylane
 from pennylane import numpy as np
-from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice
+
+from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice
 
 log.getLogger('defaults')
 
@@ -36,8 +37,10 @@ class BasisStateTest(BaseTest):
         super().setUp()
 
         self.devices = []
-        if self.args.provider == 'aer' or self.args.provider == 'all':
+        if self.args.provider == 'basicaer' or self.args.provider == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
+        if self.args.provider == 'legacy' or self.args.provider == 'all':
+            self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
