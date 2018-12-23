@@ -316,4 +316,4 @@ class IbmQQiskitDevice(QiskitDevice):
         self._provider = qiskit.IBMQ
         if token not in map(lambda e: e['token'], self._provider.active_accounts()):
             self._provider.enable_account(token)
-        self._capabilities['backend'] = [b.name() for b in self._provider.available_backends()]
+        self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
