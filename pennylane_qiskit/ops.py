@@ -62,3 +62,42 @@ class T(Operation):
     num_params = 0
     num_wires = 1
     par_domain = None
+
+
+class U1(Operation):
+    r"""T gate.
+
+    .. math:: T = \begin{bmatrix}1&0\\0&\exp(i \lambda)\end{bmatrix}
+
+    Args:
+        wires (int): the subsystem the gate acts on
+    """
+    num_params = 1
+    num_wires = 1
+    par_domain = None
+
+
+class U2(Operation):
+    r"""T gate.
+
+    .. math:: T = \begin{bmatrix} 1 & -\exp(i \lambda) \\ \exp(i \phi) & \exp(i (\phi + \lambda)) \end{bmatrix}
+
+    Args:
+        wires (int): the subsystem the gate acts on
+    """
+    num_params = 2
+    num_wires = 1
+    par_domain = None
+
+
+class U3(Operation):
+    r"""T gate.
+
+    .. math:: T = \begin{bmatrix} \cos(\theta/2) & -\exp(i \lambda)\sin(\theta/2) \\ \exp(i \phi)\sin(\theta/2) & \exp(i (\phi + \lambda))\cos(\theta/2) \end{bmatrix}
+
+    Args:
+        wires (int): the subsystem the gate acts on
+    """
+    num_params = 3
+    num_wires = 1
+    par_domain = None

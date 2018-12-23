@@ -78,7 +78,10 @@ QISKIT_OPERATION_MAP = {
 
     # additional operations not native to PennyLane but present in qiskit
     'S': 's',
-    'T': 't'
+    'T': 't',
+    'U1': 'u1',
+    'U2': 'u2',
+    'U3': 'u3'
 }  # type: Dict[str, Union[str, QiskitInstructions]]
 
 
