@@ -209,7 +209,7 @@ class QiskitDevice(Device):
 
 
 class BasicAerQiskitDevice(QiskitDevice):
-    """A PennyLane :code:`qiskit.aer` device for the `Qiskit Local Simulator` backend.
+    """A PennyLane :code:`qiskit.basicaer` device for the `Qiskit Local Simulator` backend.
 
     Args:
        wires (int): The number of qubits of the device
@@ -222,7 +222,7 @@ class BasicAerQiskitDevice(QiskitDevice):
     .. code-block:: python
 
         import pennylane as qml
-        dev = qml.device('qiskit.aer', wires=XXX)
+        dev = qml.device('qiskit.basicaer', wires=XXX)
 
     Supported PennyLane Operations:
       :class:`pennylane.PauliX`,
@@ -251,7 +251,7 @@ class BasicAerQiskitDevice(QiskitDevice):
     ..
 
     """
-    short_name = 'qiskit.aer'
+    short_name = 'qiskit.basicaer'
 
     def __init__(self, wires, shots=1024, **kwargs):
         backend = kwargs.get('backend', 'qasm_simulator')
