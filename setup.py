@@ -20,10 +20,7 @@ with open("pennylane_qiskit/_version.py") as f:
 
 
 with open("requirements.txt") as f:
-    requirements = [
-        'qiskit',
-        'pennylane'
-    ]
+    requirements = f.readlines()
 
 info = {
     'name': 'PennyLane-qiskit',
