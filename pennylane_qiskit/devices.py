@@ -23,15 +23,15 @@ corresponding PennyLane devices:
 .. autosummary::
    :nosignatures:
 
-   AerQiskitDevice
+   BasicAerQiskitDevice
    IbmQQiskitDevice
 
 See below for a description of the devices and the supported Operations and Expectations.
 
-AerQiskitDevice
+BasicAerQiskitDevice
 #################
 
-.. autoclass:: AerQiskitDevice
+.. autoclass:: BasicAerQiskitDevice
 
 IbmQQiskitDevice
 ##################
