@@ -40,7 +40,7 @@ This PennyLane plugin allows to use both the software and hardware backends of q
 Features
 ========
 
-* Provides two providers to be used with PennyLane: ``qiskit.aer`` and ``qiskit.ibm``. These provide access to the respective qiskit backends.
+* Provides two providers to be used with PennyLane: ``qiskit.basicaer`` and ``qiskit.ibm``. These provide access to the respective qiskit backends.
 
 * Supports a wide range of PennyLane operations and expectation values across the providers.
 
@@ -72,7 +72,7 @@ in the source folder. Tests restricted to a specific provider can be run by exec
     only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
     configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
     If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on
-    the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`aer` provider are
+    the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`basicaer` provider are
     run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
     Please verify that this is also the case for your account.
 .. installation-end-inclusion-marker-do-not-remove
@@ -81,12 +81,12 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 Getting started
 ===============
 
-You can instantiate a :code:`'qiskit.aer'` device for PennyLane with:
+You can instantiate a :code:`'qiskit.basicaer'` device for PennyLane with:
 
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.aer', wires=2)
+    dev = qml.device('qiskit.basicaer', wires=2)
 
 This device can then be used just like other devices for the definition and evaluation of QNodes within PennyLane.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
@@ -112,7 +112,7 @@ You can also change the default device's backend with
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+    dev = qml.device('qiskit.basicaer', wires=2, backend='unitary_simulator')
 
 To get a current overview what backends are available you can query this by
 
