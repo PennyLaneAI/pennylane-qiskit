@@ -14,7 +14,8 @@
 """
 Unit tests for :mod:`pennylane_qiskit` simple circuits.
 """
-
+import cmath
+import math
 import unittest
 import logging as log
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
@@ -39,14 +40,14 @@ class SimpleCircuitsTest(BaseTest):
         self.devices = []
         if self.args.provider == 'basicaer' or self.args.provider == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'legacy' or self.args.provider == 'all':
-            self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'ibm' or self.args.provider == 'all':
-            if IBMQX_TOKEN is not None:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
-            else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
-                            "found in the PennyLane configuration file.")
+        # if self.args.provider == 'legacy' or self.args.provider == 'all':
+        #     self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
+        # if self.args.provider == 'ibm' or self.args.provider == 'all':
+        #     if IBMQX_TOKEN is not None:
+        #         self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
+        #     else:
+        #         log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+        #                     "found in the PennyLane configuration file.")
 
     def test_basis_state(self):
         """Test BasisState with preparations on the whole system."""
@@ -105,6 +106,27 @@ class SimpleCircuitsTest(BaseTest):
                 result = np.array(circuit())
                 expected = np.array(list(map(lambda c: 1.0 if c == '0' else -1.0, "{:b}".format(index).zfill(3)[::-1])))
                 self.assertAllAlmostEqual(expected, result, delta=self.tol)
+
+    def test_arbitrary_unitary(self):
+        """Test BasisState with preparations on the whole system."""
+        if self.devices is None:
+            return
+        self.logTestName()
+
+        for device in self.devices:
+            test_input = [
+                np.array([1, 0, 0, 1]),
+                1/math.sqrt(2) * np.array([1, -cmath.exp(1.0j*cmath.pi/2), cmath.exp(1.0j*cmath.pi/4), cmath.exp(1.0j*(cmath.pi/2 + cmath.pi/4))]),
+                np.array([1, 0, 0, cmath.exp(1.0j*cmath.pi/4)]),
+            ]
+            for input in test_input:
+                @qml.qnode(device)
+                def circuit():
+                    qml.QubitUnitary(input, wires=[0])
+                    return qml.expval.PauliZ(0)
+
+                circuit()
+                # TODO 2018-12-23 Carsten Blank: create meaningful tests
 
 
 if __name__ == '__main__':
