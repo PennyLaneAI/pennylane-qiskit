@@ -208,7 +208,7 @@ class QiskitDevice(Device):
         self._first_operation = True
 
 
-class AerQiskitDevice(QiskitDevice):
+class BasicAerQiskitDevice(QiskitDevice):
     """A PennyLane :code:`qiskit.aer` device for the `Qiskit Local Simulator` backend.
 
     Args:
@@ -256,8 +256,8 @@ class AerQiskitDevice(QiskitDevice):
     def __init__(self, wires, shots=1024, **kwargs):
         backend = kwargs.get('backend', 'qasm_simulator')
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
-        self._provider = qiskit.Aer
-        self._capabilities['backend'] = [b.name() for b in self._provider.available_backends()]
+        self._provider = qiskit.BasicAer
+        self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 
 class IbmQQiskitDevice(QiskitDevice):
