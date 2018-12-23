@@ -5,3 +5,4 @@ pygments-github-lexers
 pybind11
 qiskit
 pennylane
+dc-qiskit-algorithms
