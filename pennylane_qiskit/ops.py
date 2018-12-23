@@ -65,9 +65,9 @@ class T(Operation):
 
 
 class U1(Operation):
-    r"""T gate.
+    r"""U1 gate.
 
-    .. math:: T = \begin{bmatrix}1&0\\0&\exp(i \lambda)\end{bmatrix}
+    .. math:: U1 = \begin{bmatrix}1&0\\0&\exp(i \lambda)\end{bmatrix}
 
     Args:
         wires (int): the subsystem the gate acts on
@@ -78,9 +78,9 @@ class U1(Operation):
 
 
 class U2(Operation):
-    r"""T gate.
+    r"""U2 gate.
 
-    .. math:: T = \begin{bmatrix} 1 & -\exp(i \lambda) \\ \exp(i \phi) & \exp(i (\phi + \lambda)) \end{bmatrix}
+    .. math:: U2 = \begin{bmatrix} 1 & -\exp(i \lambda) \\ \exp(i \phi) & \exp(i (\phi + \lambda)) \end{bmatrix}
 
     Args:
         wires (int): the subsystem the gate acts on
@@ -91,9 +91,9 @@ class U2(Operation):
 
 
 class U3(Operation):
-    r"""T gate.
+    r"""U3 gate.
 
-    .. math:: T = \begin{bmatrix} \cos(\theta/2) & -\exp(i \lambda)\sin(\theta/2) \\ \exp(i \phi)\sin(\theta/2) & \exp(i (\phi + \lambda))\cos(\theta/2) \end{bmatrix}
+    .. math:: U3 = \begin{bmatrix} \cos(\theta/2) & -\exp(i \lambda)\sin(\theta/2) \\ \exp(i \phi)\sin(\theta/2) & \exp(i (\phi + \lambda))\cos(\theta/2) \end{bmatrix}
 
     Args:
         wires (int): the subsystem the gate acts on
