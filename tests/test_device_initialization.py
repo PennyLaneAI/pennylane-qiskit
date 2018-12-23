@@ -77,7 +77,7 @@ class DeviceInitialization(BaseTest):
                 'qiskit.ibm'
         ]:
             try:
-                dev = dev = qml.device(short_name, wires=2, ibmqx_token=IBMQX_TOKEN)
+                qml.device(short_name, wires=2, ibmqx_token=IBMQX_TOKEN)
             except DeviceError:
                 raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
 
