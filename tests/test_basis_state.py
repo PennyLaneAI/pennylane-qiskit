@@ -91,10 +91,11 @@ class BasisStateTest(BaseTest):
             @qml.qnode(device)
             def circuit():
                 qml.PauliX(wires=[0])
-                qml.BasisState(np.array([0,1,0,1]), wires=list(range(self.num_subsystems)))
+                qml.BasisState(np.array([0, 1, 0, 1]), wires=list(range(self.num_subsystems)))
                 return qml.expval.PauliZ(0)
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
+
 
 if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')
