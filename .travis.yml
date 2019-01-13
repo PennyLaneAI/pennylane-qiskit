@@ -6,8 +6,8 @@ python:
 env:
   - LOGGING=info
 install:
-  - pip install -r requirements.txt
-  - pip install pytest pytest-cov wheel codecov
+  - pip install --upgrade -r requirements.txt
+  - pip install --upgrade pytest pytest-cov wheel codecov
   - python setup.py bdist_wheel
   - pip install dist/PennyLane*.whl
 script:
