@@ -23,10 +23,22 @@ corresponding PennyLane devices:
 .. autosummary::
    :nosignatures:
 
-   BasicAerQiskitDevice
-   IbmQQiskitDevice
+    AerQiskitDevice
+    LegacySimulatorsQiskitDevice
+    BasicAerQiskitDevice
+    IbmQQiskitDevice
 
 See below for a description of the devices and the supported Operations and Expectations.
+
+AerQiskitDevice
+#################
+
+.. autoclass:: AerQiskitDevice
+
+LegacySimulatorsQiskitDevice
+#############################
+
+.. autoclass:: LegacySimulatorsQiskitDevice
 
 BasicAerQiskitDevice
 #################
@@ -312,6 +324,58 @@ class BasicAerQiskitDevice(QiskitDevice):
         backend = kwargs.get('backend', 'qasm_simulator')
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.BasicAer
+        self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
+
+
+class AerQiskitDevice(QiskitDevice):
+    """A PennyLane :code:`qiskit.aer` device for the `Qiskit Simulator Aer (local)` backend.
+
+    Args:
+       wires (int): The number of qubits of the device
+
+    Keyword Args:
+      backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
+
+    This device can, for example, be instantiated from PennyLane as follows:
+
+    .. code-block:: python
+
+        import pennylane as qml
+        dev = qml.device('qiskit.aer', wires=XXX)
+
+    Supported PennyLane Operations:
+      :class:`pennylane.PauliX`,
+      :class:`pennylane.PauliY`,
+      :class:`pennylane.PauliZ`,
+      :class:`pennylane.CNOT`,
+      :class:`pennylane.CZ`,
+      :class:`pennylane.SWAP`,
+      :class:`pennylane.RX`,
+      :class:`pennylane.RY`,
+      :class:`pennylane.RZ`,
+      :class:`pennylane.PhaseShift`,
+      :class:`pennylane.QubitStateVector`,
+      :class:`pennylane.Hadamard`,
+      :class:`pennylane.Rot`,
+      :class:`pennylane.QubitUnitary`,
+      :class:`pennylane.BasisState`
+
+    Supported PennyLane Expectations:
+      :class:`pennylane.PauliZ`
+
+    Extra Operations:
+      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
+
+    ..
+
+    """
+    short_name = 'qiskit.basicaer'
+
+    def __init__(self, wires, shots=1024, **kwargs):
+        backend = kwargs.get('backend', 'qasm_simulator')
+        super().__init__(wires, backend=backend, shots=shots, **kwargs)
+        self._provider = qiskit.Aer
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 
