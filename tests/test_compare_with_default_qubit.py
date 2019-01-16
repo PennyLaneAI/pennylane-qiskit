@@ -25,7 +25,8 @@ from pennylane.plugins.default_qubit import DefaultQubit
 import pennylane_qiskit
 import pennylane_qiskit.expval
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
-from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice
+from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice, \
+    AerQiskitDevice
 
 log.getLogger('defaults')
 
@@ -43,6 +44,8 @@ class CompareWithDefaultQubitTest(BaseTest):
         self.devices = [DefaultQubit(wires=self.num_subsystems)]
         if self.args.provider == 'basicaer' or self.args.provider == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
+        if self.args.provider == 'aer' or self.args.provider == 'all':
+            self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'legacy' or self.args.provider == 'all':
             self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':

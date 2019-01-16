@@ -22,7 +22,7 @@ from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 import pennylane
 from pennylane import numpy as np
 
-from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice
+from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
 
@@ -40,14 +40,16 @@ class SimpleCircuitsTest(BaseTest):
         self.devices = []
         if self.args.provider == 'basicaer' or self.args.provider == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        # if self.args.provider == 'legacy' or self.args.provider == 'all':
-        #     self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
-        # if self.args.provider == 'ibm' or self.args.provider == 'all':
-        #     if IBMQX_TOKEN is not None:
-        #         self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
-        #     else:
-        #         log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
-        #                     "found in the PennyLane configuration file.")
+        if self.args.provider == 'aer' or self.args.provider == 'all':
+            self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
+        if self.args.provider == 'legacy' or self.args.provider == 'all':
+            self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
+        if self.args.provider == 'ibm' or self.args.provider == 'all':
+            if IBMQX_TOKEN is not None:
+                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
+            else:
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                            "found in the PennyLane configuration file.")
 
     def test_basis_state(self):
         """Test BasisState with preparations on the whole system."""
