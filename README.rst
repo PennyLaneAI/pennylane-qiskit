@@ -128,7 +128,7 @@ device above, you would instantiate a :code:`'qiskit.ibm'` device by giving your
     import pennylane as qml
     dev = qml.device('qiskit.ibm', wires=2, ibmqx_token="XXX")
 
-In order to avoid accidentally publishing your token, you should better specify it via the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_ by adding a section such as
+In order to avoid accidentally publishing your token, you should better specify it via the `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`_ by adding a section such as
 
 .. code::
 
