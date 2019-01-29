@@ -41,35 +41,20 @@ class DeviceInitialization(BaseTest):
             del os.environ['IBMQX_TOKEN']
 
         if self.args.provider == 'ibm' or self.args.provider == 'all':
-            try:
-                IbmQQiskitDevice(wires = self.num_subsystems)
-                self.fail('Expected a ValueError if no IBMQX token is present.')
-            except ValueError:
-                # put the IBMQX token back into place fo other tests to use
-                if token_from_environment is not None:
-                    os.environ['IBMQX_TOKEN'] = token_from_environment
-                    token_from_environment_back = os.getenv('IBMQX_TOKEN')
-                    self.assertEqual(token_from_environment, token_from_environment_back)
+            self.assertRaises(ValueError, IbmQQiskitDevice(wires = self.num_subsystems, msg='Expected a ValueError if no IBMQX token is present.')
 
-    def test_log_verbose(self):
-        dev = IbmQQiskitDevice(wires=self.num_subsystems, log=True, ibmqx_token=IBMQX_TOKEN)
-        self.assertEqual(dev.kwargs['log'], True)
-        self.assertEqual(dev.kwargs['log'], dev.kwargs['verbose'])
+        # put the IBMQX token back into place fo other tests to use
+        if token_from_environment is not None:
+            os.environ['IBMQX_TOKEN'] = token_from_environment
+            token_from_environment_back = os.getenv('IBMQX_TOKEN')
+            self.assertEqual(token_from_environment, token_from_environment_back)
 
     def test_shots(self):
         if self.args.provider == 'ibmq_qasm_simulator' or self.args.provider == 'all':
             shots = 5
             dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev1.shots)
-            self.assertEqual(shots, dev1.kwargs['num_runs'])
 
-            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, num_runs=shots, ibmqx_token=IBMQX_TOKEN)
-            self.assertEqual(shots, dev2.shots)
-            self.assertEqual(shots, dev2.kwargs['num_runs'])
-
-            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots+2, num_runs=shots, ibmqx_token=IBMQX_TOKEN)
-            self.assertEqual(shots, dev2.shots)
-            self.assertEqual(shots, dev2.kwargs['num_runs'])
 
     def test_initiatlization_via_pennylane(self):
         for short_name in [
