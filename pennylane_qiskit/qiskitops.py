@@ -165,5 +165,7 @@ class QubitStateVector(QiskitInstructions):
             raise Exception('Parameters are missing')
         if len(param) > 2**len(qregs):
             raise Exception("Too many parameters for the amount of qubits")
-
-        state_prep_möttönen(circuit, param[0], qregs)
+        from qiskit.extensions.quantum_initializer import InitializeGate
+        gate = InitializeGate(param[0], qregs, circ=circuit)
+        circuit._attach(gate)
+        #state_prep_möttönen(circuit, param[0], qregs)
