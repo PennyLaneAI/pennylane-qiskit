@@ -29,8 +29,6 @@ from qiskit import QuantumRegister, QuantumCircuit
 from qiskit.extensions import standard
 from qiskit.extensions.standard import x, rx, ry, rz
 
-from dc_qiskit_algorithms.MöttönenStatePrep import state_prep_möttönen
-
 
 class QiskitInstructions(object):
 
