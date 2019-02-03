@@ -168,4 +168,3 @@ class QubitStateVector(QiskitInstructions):
         from qiskit.extensions.quantum_initializer import InitializeGate
         gate = InitializeGate(param[0], qregs, circ=circuit)
         circuit._attach(gate)
-        #state_prep_möttönen(circuit, param[0], qregs)
