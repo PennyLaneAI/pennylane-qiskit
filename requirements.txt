@@ -1,2 +1,2 @@
 qiskit==0.7.0
-PennyLane=0.1.0
+PennyLane==0.1.0
