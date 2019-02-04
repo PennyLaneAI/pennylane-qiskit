@@ -25,6 +25,12 @@ quantum functions:
 .. autosummary::
    S
    T
+   U1
+   U2
+   U3
+
+For more details on how these gates work, please refer to the IBM Q user guide on
+`Advanced Single-Qubit Gates <https://quantumexperience.ng.bluemix.net/proxy/tutorial/full-user-guide/002-The_Weird_and_Wonderful_World_of_the_Qubit/004-advanced_qubit_gates.html>`_.
 
 .. note::
     For convenience, and to mirror the behavior of the operations built into
@@ -39,12 +45,13 @@ from pennylane.operation import Operation
 
 
 class S(Operation):
-    r"""S gate.
+    r"""S(wires)
+    S gate.
 
     .. math:: S = \begin{bmatrix} 1 & 0 \\ 0 & i \end{bmatrix}
 
     Args:
-        wires (int): the subsystem the gate acts on
+        wires (Sequence[int] or int): the subsystem the gate acts on
     """
     num_params = 0
     num_wires = 1
@@ -52,12 +59,13 @@ class S(Operation):
 
 
 class T(Operation):
-    r"""T gate.
+    r"""T(wires)
+    T gate.
 
     .. math:: T = \begin{bmatrix}1&0\\0&\exp(i \pi / 4)\end{bmatrix}
 
     Args:
-        wires (int): the subsystem the gate acts on
+        wires (Sequence[int] or int): the subsystem the gate acts on
     """
     num_params = 0
     num_wires = 1
@@ -65,12 +73,14 @@ class T(Operation):
 
 
 class U1(Operation):
-    r"""U1 gate.
+    r"""U1(lambda, wires)
+    U1 gate.
 
-    .. math:: U1 = \begin{bmatrix}1&0\\0&\exp(i \lambda)\end{bmatrix}
+    .. math:: u_1 = \begin{bmatrix}1&0\\0&\exp(i \lambda)\end{bmatrix}
 
     Args:
-        wires (int): the subsystem the gate acts on
+        lambda (float): quantum phase :math:`\lambda`
+        wires (Sequence[int] or int): the subsystem the gate acts on
     """
     num_params = 1
     num_wires = 1
@@ -78,12 +88,15 @@ class U1(Operation):
 
 
 class U2(Operation):
-    r"""U2 gate.
+    r"""U2(phi, lambda, wires)
+    U2 gate.
 
-    .. math:: U2 = \begin{bmatrix} 1 & -\exp(i \lambda) \\ \exp(i \phi) & \exp(i (\phi + \lambda)) \end{bmatrix}
+    .. math:: u_2 = \begin{bmatrix} 1 & -\exp(i \lambda) \\ \exp(i \phi) & \exp(i (\phi + \lambda)) \end{bmatrix}
 
     Args:
-        wires (int): the subsystem the gate acts on
+        phi (float): azimuthal angle :math:`\phi`
+        lambda (float): quantum phase :math:`\lambda`
+        wires (Sequence[int] or int): the subsystem the gate acts on
     """
     num_params = 2
     num_wires = 1
@@ -91,12 +104,16 @@ class U2(Operation):
 
 
 class U3(Operation):
-    r"""U3 gate.
+    r"""U3(theta, phi, lambda, wires)
+    U3 gate.
 
-    .. math:: U3 = \begin{bmatrix} \cos(\theta/2) & -\exp(i \lambda)\sin(\theta/2) \\ \exp(i \phi)\sin(\theta/2) & \exp(i (\phi + \lambda))\cos(\theta/2) \end{bmatrix}
+    .. math:: u_3 = \begin{bmatrix} \cos(\theta/2) & -\exp(i \lambda)\sin(\theta/2) \\ \exp(i \phi)\sin(\theta/2) & \exp(i (\phi + \lambda))\cos(\theta/2) \end{bmatrix}
 
     Args:
-        wires (int): the subsystem the gate acts on
+        theta (float): polar angle :math:`\theta`
+        phi (float): azimuthal angle :math:`\phi`
+        lambda (float): quantum phase :math:`\lambda`
+        wires (Sequence[int] or int): the subsystem the gate acts on
     """
     num_params = 3
     num_wires = 1
