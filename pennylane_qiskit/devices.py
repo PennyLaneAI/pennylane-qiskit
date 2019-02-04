@@ -100,8 +100,8 @@ QISKIT_OPERATION_MAP = {
 class QiskitDevice(Device):
     name = 'Qiskit PennyLane plugin'
     short_name = 'qiskit'
-    pennylane_requires = '<=0.2.0'
-    version = '0.2.0'
+    pennylane_requires = '>=0.1.0'
+    version = '0.1.0'
     plugin_version = __version__
     author = 'Carsten Blank'
     _capabilities = {
