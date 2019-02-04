@@ -14,7 +14,7 @@ from pennylane import numpy as np
 # where the tests reside, not e.g. from site-packages.
 # See https://docs.python-guide.org/en/latest/writing/structure/#test-suite
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import pennylane_qiskit
+import pennylane_qiskit #pylint: disable=wrong-import-position,unused-import
 
 
 # defaults
@@ -57,7 +57,7 @@ def get_commandline_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--provider', type=str, default=PROVIDER,
-                        help='Provider(s) to use for tests.', choices=['aer', 'basicaer', 'legacy', 'ibm'])
+                        help='Provider(s) to use for tests.', choices=['aer', 'basicaer', 'legacy', 'ibm', 'all'])
     parser.add_argument('-t', '--tolerance', type=float, default=TOLERANCE,
                         help='Numerical tolerance for equality tests.')
     parser.add_argument("--ibmqx_token",
