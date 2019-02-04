@@ -41,7 +41,7 @@ class DeviceInitialization(BaseTest):
             del os.environ['IBMQX_TOKEN']
 
         if self.args.provider == 'ibm' or self.args.provider == 'all':
-            self.assertRaises(ValueError, IbmQQiskitDevice(wires = self.num_subsystems, msg='Expected a ValueError if no IBMQX token is present.'))
+            self.assertRaises(ValueError, IbmQQiskitDevice, wires = self.num_subsystems, msg='Expected a ValueError if no IBMQX token is present.')
 
         # put the IBMQX token back into place fo other tests to use
         if token_from_environment is not None:
