@@ -110,21 +110,13 @@ class QiskitDevice(Device):
     _operation_map = QISKIT_OPERATION_MAP
     _expectation_map = {key: val for key, val in _operation_map.items()
                         if val in [x, y, z]}
-    _backend_kwargs = ['num_runs', 'verbose', 'backend']
+    _backend_kwargs = ['verbose', 'backend']
 
     def __init__(self, wires, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
-        # translate some arguments
-        for key, val in {'log': 'verbose'}.items():
-            if key in kwargs:
-                kwargs[val] = kwargs[key]
-
-        # clean some arguments
-        if 'num_runs' in kwargs and isinstance(kwargs['num_runs'], int) and kwargs['num_runs'] > 0:
-            self.shots = kwargs['num_runs']
-        else:
-            kwargs['num_runs'] = self.shots
+        if 'verbose' not in kwargs:
+            kwargs['verbose'] = False
 
         kwargs['backend'] = backend
         self.backend = kwargs['backend']
@@ -423,7 +415,7 @@ class IbmQQiskitDevice(QiskitDevice):
     ..
     """
     short_name = 'qiskit.ibmq'
-    _backend_kwargs = ['num_runs', 'verbose', 'backend', 'ibmqx_token']
+    _backend_kwargs = ['verbose', 'backend', 'ibmqx_token']
 
     def __init__(self, wires, shots=1024, **kwargs):
         token_from_env = os.getenv('IBMQX_TOKEN')
