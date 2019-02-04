@@ -52,7 +52,6 @@ IbmQQiskitDevice
 
 """
 import os
-from time import sleep
 from typing import Dict, Sequence, Any, List, Union
 
 import qiskit
@@ -183,10 +182,9 @@ class QiskitDevice(Device):
 
         try:
             self._current_job = backend.run(qobj)  # type: BaseJob
-            sleep(0.1)
             not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
-            while self._current_job.status() in not_done:
-                sleep(2)
+            self._current_job.result() #call result here once and discard it to trigger the actual computation
+
         except Exception as ex:
             raise Exception("Error during job execution: {}!".format(ex))
 
