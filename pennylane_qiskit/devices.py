@@ -415,13 +415,12 @@ class IbmQQiskitDevice(QiskitDevice):
     short_name = 'qiskit.ibmq'
     _backend_kwargs = ['verbose', 'backend', 'ibmqx_token']
 
-    def __init__(self, wires, shots=1024, **kwargs):
+    def __init__(self, wires, backend='ibmq_qasm_simulator', shots=1024, **kwargs):
         token_from_env = os.getenv('IBMQX_TOKEN')
         if 'ibmqx_token' not in kwargs and token_from_env is None:
             raise ValueError("IBMQX Token is missing!")
         token = token_from_env or kwargs['ibmqx_token']
-        backend = kwargs.get('backend', 'ibmq_qasm_simulator')
-        super().__init__(wires, backend=backend, shots=shots, **kwargs)
+        super().__init__(wires=wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.IBMQ
         if token not in map(lambda e: e['token'], self._provider.active_accounts()):
             self._provider.enable_account(token)
