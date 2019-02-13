@@ -258,8 +258,7 @@ class LegacySimulatorsQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.legacy'
 
-    def __init__(self, wires, shots=1024, **kwargs):
-        backend = kwargs.get('backend', 'qasm_simulator')
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.LegacySimulators
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
@@ -310,8 +309,7 @@ class BasicAerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, **kwargs):
-        backend = kwargs.get('backend', 'qasm_simulator')
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.BasicAer
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
@@ -362,8 +360,7 @@ class AerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, **kwargs):
-        backend = kwargs.get('backend', 'qasm_simulator')
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.Aer
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
