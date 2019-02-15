@@ -18,7 +18,6 @@ Unit tests for the :mod:`pennylane_pq` devices.
 import logging as log
 import unittest
 
-import pennylane
 from pennylane import numpy as np
 from pennylane.plugins.default_qubit import DefaultQubit
 

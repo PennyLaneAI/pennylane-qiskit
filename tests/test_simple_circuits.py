@@ -15,13 +15,13 @@
 Unit tests for :mod:`pennylane_qiskit` simple circuits.
 """
 import cmath
+import logging as log
 import math
 import unittest
-import logging as log
-from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
-import pennylane
+
 from pennylane import numpy as np
 
+from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
