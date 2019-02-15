@@ -41,7 +41,8 @@ class DeviceInitialization(BaseTest):
             del os.environ['IBMQX_TOKEN']
 
         if self.args.provider == 'ibm' or self.args.provider == 'all':
-            self.assertRaises(ValueError, IbmQQiskitDevice, wires = self.num_subsystems, msg='Expected a ValueError if no IBMQX token is present.')
+            self.assertRaises(ValueError, IbmQQiskitDevice, wires=self.num_subsystems,
+                              msg='Expected a ValueError if no IBMQX token is present.')
 
         # put the IBMQX token back into place fo other tests to use
         if token_from_environment is not None:
@@ -57,10 +58,10 @@ class DeviceInitialization(BaseTest):
 
     def test_initiatlization_via_pennylane(self):
         for short_name in [
-                'qiskit.aer',
-                'qiskit.legacy',
-                'qiskit.basicaer',
-                'qiskit.ibm'
+            'qiskit.aer',
+            'qiskit.legacy',
+            'qiskit.basicaer',
+            'qiskit.ibm'
         ]:
             try:
                 qml.device(short_name, wires=2, ibmqx_token=IBMQX_TOKEN)
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', device initialization.')
     # run the tests in this file
     suite = unittest.TestSuite()
-    for t in (DeviceInitialization, ):
+    for t in (DeviceInitialization,):
         ttt = unittest.TestLoader().loadTestsFromTestCase(t)
         suite.addTests(ttt)
 

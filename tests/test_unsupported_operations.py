@@ -46,9 +46,11 @@ class UnsupportedOperationTest(BaseTest):
             self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             if IBMQX_TOKEN is not None:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
+                self.devices.append(
+                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
             else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
+                log.warning(
+                    "Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
 
     def test_unsupported_operation(self):
         if self.devices is None:
@@ -58,7 +60,7 @@ class UnsupportedOperationTest(BaseTest):
         for device in self.devices:
             @qml.qnode(device)
             def circuit():
-                qml.Beamsplitter(0.2, 0.1, wires=[0,1]) #this expectation will never be supported
+                qml.Beamsplitter(0.2, 0.1, wires=[0, 1])  # this expectation will never be supported
                 return qml.expval.Homodyne(0.7, 0)
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
@@ -71,7 +73,7 @@ class UnsupportedOperationTest(BaseTest):
         for device in self.devices:
             @qml.qnode(device)
             def circuit():
-                return qml.expval.Homodyne(0.7, 0) #this expectation will never be supported
+                return qml.expval.Homodyne(0.7, 0)  # this expectation will never be supported
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
 
@@ -80,7 +82,7 @@ if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', unsupported operations.')
     # run the tests in this file
     suite = unittest.TestSuite()
-    for t in (UnsupportedOperationTest, ):
+    for t in (UnsupportedOperationTest,):
         ttt = unittest.TestLoader().loadTestsFromTestCase(t)
         suite.addTests(ttt)
 

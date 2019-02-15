@@ -113,23 +113,23 @@ class QubitUnitary(QiskitInstructions):
         c = param[0][2]  # type: complex
         d = param[0][3]  # type: complex
 
-        col1 = math.sqrt(abs(a)**2 + abs(c)**2)
-        col2 = math.sqrt(abs(b)**2 + abs(d)**2)
+        col1 = math.sqrt(abs(a) ** 2 + abs(c) ** 2)
+        col2 = math.sqrt(abs(b) ** 2 + abs(d) ** 2)
 
         if abs(col1 - 1.0) > 1e-3 or abs(col2 - 1.0) > 1e-3:
             raise Exception('Not a unitary.')
 
         global_phase = cmath.phase(a)
-        theta = 2*acos(a*cmath.exp(-global_phase))
+        theta = 2 * acos(a * cmath.exp(-global_phase))
 
         lam = None  # type: float
         phi = None  # type: float
         if abs(b) > 1e-6:
-            lam = -cmath.phase(b*cmath.exp(-global_phase))
+            lam = -cmath.phase(b * cmath.exp(-global_phase))
         if abs(c) > 1e-6:
-            phi = cmath.phase(c*cmath.exp(-global_phase))
+            phi = cmath.phase(c * cmath.exp(-global_phase))
 
-        lam_phi = cmath.phase(d*cmath.exp(-global_phase))
+        lam_phi = cmath.phase(d * cmath.exp(-global_phase))
 
         if lam is None and phi is None:
             lam = 0.0
@@ -139,7 +139,7 @@ class QubitUnitary(QiskitInstructions):
         elif lam is not None and phi is None:
             phi = lam_phi - lam
 
-        if d != cmath.exp(1.0j*lam + 1.0j*phi)*cmath.cos(theta/2):
+        if d != cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2):
             raise Exception('Not a unitary.')
 
         if isinstance(qregs, list):
@@ -161,7 +161,7 @@ class QubitStateVector(QiskitInstructions):
         # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
-        if len(param) > 2**len(qregs):
+        if len(param) > 2 ** len(qregs):
             raise Exception("Too many parameters for the amount of qubits")
         from qiskit.extensions.quantum_initializer import InitializeGate
         gate = InitializeGate(param[0], qregs, circ=circuit)

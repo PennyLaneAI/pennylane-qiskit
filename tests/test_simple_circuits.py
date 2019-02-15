@@ -46,7 +46,8 @@ class SimpleCircuitsTest(BaseTest):
             self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             if IBMQX_TOKEN is not None:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
+                self.devices.append(
+                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
@@ -69,7 +70,8 @@ class SimpleCircuitsTest(BaseTest):
                             qml.PauliX(wires=[i])
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
 
-                self.assertAllAlmostEqual([1]*self.num_subsystems-2*bits_to_flip, np.array(circuit()), delta=self.tol)
+                self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
+                                          delta=self.tol)
 
     def test_rotations_cnot(self):
         """Test BasisState with preparations on the whole system."""
@@ -78,7 +80,6 @@ class SimpleCircuitsTest(BaseTest):
         self.logTestName()
 
         for device in self.devices:
-
             @qml.qnode(device)
             def circuit(x, y, z):
                 qml.RZ(z, wires=[0])
@@ -118,8 +119,9 @@ class SimpleCircuitsTest(BaseTest):
         for device in self.devices:
             test_input = [
                 np.array([1, 0, 0, 1]),
-                1/math.sqrt(2) * np.array([1, -cmath.exp(1.0j*cmath.pi/2), cmath.exp(1.0j*cmath.pi/4), cmath.exp(1.0j*(cmath.pi/2 + cmath.pi/4))]),
-                np.array([1, 0, 0, cmath.exp(1.0j*cmath.pi/4)]),
+                1 / math.sqrt(2) * np.array([1, -cmath.exp(1.0j * cmath.pi / 2), cmath.exp(1.0j * cmath.pi / 4),
+                                             cmath.exp(1.0j * (cmath.pi / 2 + cmath.pi / 4))]),
+                np.array([1, 0, 0, cmath.exp(1.0j * cmath.pi / 4)]),
             ]
             for input in test_input:
                 @qml.qnode(device)
@@ -135,7 +137,7 @@ if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')
     # run the tests in this file
     suite = unittest.TestSuite()
-    for t in (SimpleCircuitsTest, ):
+    for t in (SimpleCircuitsTest,):
         ttt = unittest.TestLoader().loadTestsFromTestCase(t)
         suite.addTests(ttt)
 
