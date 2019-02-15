@@ -1,3 +1,2 @@
-qiskit>=0.7.0
-pennylane
-dc-qiskit-algorithms>=0.0.2
+qiskit>=0.7.0,<0.8.0
+PennyLane

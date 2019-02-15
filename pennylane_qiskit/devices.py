@@ -52,7 +52,6 @@ IbmQQiskitDevice
 
 """
 import os
-from time import sleep
 from typing import Dict, Sequence, Any, List, Union
 
 import qiskit
@@ -100,7 +99,7 @@ QISKIT_OPERATION_MAP = {
 class QiskitDevice(Device):
     name = 'Qiskit PennyLane plugin'
     short_name = 'qiskit'
-    pennylane_requires = '0.1.0'
+    pennylane_requires = '>=0.1.0'
     version = '0.1.0'
     plugin_version = __version__
     author = 'Carsten Blank'
@@ -110,21 +109,13 @@ class QiskitDevice(Device):
     _operation_map = QISKIT_OPERATION_MAP
     _expectation_map = {key: val for key, val in _operation_map.items()
                         if val in [x, y, z]}
-    _backend_kwargs = ['num_runs', 'verbose', 'backend']
+    _backend_kwargs = ['verbose', 'backend']
 
     def __init__(self, wires, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
-        # translate some arguments
-        for key, val in {'log': 'verbose'}.items():
-            if key in kwargs:
-                kwargs[val] = kwargs[key]
-
-        # clean some arguments
-        if 'num_runs' in kwargs and isinstance(kwargs['num_runs'], int) and kwargs['num_runs'] > 0:
-            self.shots = kwargs['num_runs']
-        else:
-            kwargs['num_runs'] = self.shots
+        if 'verbose' not in kwargs:
+            kwargs['verbose'] = False
 
         kwargs['backend'] = backend
         self.backend = kwargs['backend']
@@ -191,10 +182,9 @@ class QiskitDevice(Device):
 
         try:
             self._current_job = backend.run(qobj)  # type: BaseJob
-            sleep(0.1)
             not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
-            while self._current_job.status() in not_done:
-                sleep(2)
+            self._current_job.result()  # call result here once and discard it to trigger the actual computation
+
         except Exception as ex:
             raise Exception("Error during job execution: {}!".format(ex))
 
@@ -269,8 +259,7 @@ class LegacySimulatorsQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.legacy'
 
-    def __init__(self, wires, shots=1024, **kwargs):
-        backend = kwargs.get('backend', 'qasm_simulator')
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.LegacySimulators
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
@@ -322,8 +311,7 @@ class BasicAerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, **kwargs):
-        backend = kwargs.get('backend', 'qasm_simulator')
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.BasicAer
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
@@ -375,8 +363,7 @@ class AerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, **kwargs):
-        backend = kwargs.get('backend', 'qasm_simulator')
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.Aer
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
@@ -428,15 +415,14 @@ class IbmQQiskitDevice(QiskitDevice):
 
     """
     short_name = 'qiskit.ibmq'
-    _backend_kwargs = ['num_runs', 'verbose', 'backend', 'ibmqx_token']
+    _backend_kwargs = ['verbose', 'backend', 'ibmqx_token']
 
-    def __init__(self, wires, shots=1024, **kwargs):
+    def __init__(self, wires, backend='ibmq_qasm_simulator', shots=1024, **kwargs):
         token_from_env = os.getenv('IBMQX_TOKEN')
         if 'ibmqx_token' not in kwargs and token_from_env is None:
             raise ValueError("IBMQX Token is missing!")
         token = token_from_env or kwargs['ibmqx_token']
-        backend = kwargs.get('backend', 'ibmq_qasm_simulator')
-        super().__init__(wires, backend=backend, shots=shots, **kwargs)
+        super().__init__(wires=wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.IBMQ
         if token not in map(lambda e: e['token'], self._provider.active_accounts()):
             self._provider.enable_account(token)

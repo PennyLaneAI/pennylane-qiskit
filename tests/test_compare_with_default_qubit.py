@@ -111,13 +111,13 @@ class CompareWithDefaultQubitTest(BaseTest):
 
                         if observable_class.par_domain == 'N':
                             observable_pars = rnd_int_pool[:observable_class.num_params]
-                        if observable_class.par_domain == 'R':
+                        elif observable_class.par_domain == 'R':
                             observable_pars = np.abs(rnd_float_pool[:observable_class.num_params]) #todo: some operations/expectations fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
                         elif observable_class.par_domain == 'A':
                             if str(observable) == "Hermitian":
                                 observable_pars = [np.array([[1,1j],[-1j,0]])]
                             else:
-                                raise IgnoreOperationException('Skipping in automatic test because I don\'t know how to generate parameters for the observable '+observable)
+                                raise IgnoreOperationException('Skipping in automatic test because I don\'t know how to generate parameters for the observable '+observable+" with par_domain="+str(observable_class.par_domain))
                         else:
                             observable_pars = {}
 
@@ -128,20 +128,17 @@ class CompareWithDefaultQubitTest(BaseTest):
                         operation_class(*operation_pars, operation_wires)
                         return observable_class(*observable_pars, observable_wires)
 
-                    try:
-                        output = circuit()
-                        if (operation, observable) not in outputs:
-                            outputs[(operation, observable)] = {}
 
-                        outputs[(operation, observable)][type(dev)] = output
+                    output = circuit()
+                    if (operation, observable) not in outputs:
+                        outputs[(operation, observable)] = {}
 
-                    except IgnoreOperationException as e:
-                        log.info(e)
+                    outputs[(operation, observable)][str(type(dev).__name__)+"(shots="+str(dev.shots)+")"] = output
 
         #if we could run the circuit on more than one device assert that both should have given the same output
         for (key,val) in outputs.items():
             if len(val) >= 2:
-                self.assertAllElementsAlmostEqual(val.values(), delta=self.tol, msg="Outputs "+str(list(val.values()))+" of devices "+str(list(val.keys()))+" do not agree for a circuit consisting of a "+str(key[0])+" Operation followed by a "+str(key[0])+" Expectation." )
+                self.assertAllElementsAlmostEqual(val.values(), delta=self.tol, msg="Outputs "+str(list(val.values()))+" of devices ["+''.join(list(val.keys()))+"] do not agree for a circuit consisting of a "+str(key[0])+" Operation followed by a "+str(key[1])+" Expectation." )
 
 
 if __name__ == '__main__':

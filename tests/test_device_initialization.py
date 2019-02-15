@@ -19,7 +19,7 @@ import logging as log
 import os
 import unittest
 
-from pennylane import DeviceError
+from pennylane import DeviceError, Device
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import IbmQQiskitDevice
@@ -41,35 +41,19 @@ class DeviceInitialization(BaseTest):
             del os.environ['IBMQX_TOKEN']
 
         if self.args.provider == 'ibm' or self.args.provider == 'all':
-            try:
-                IbmQQiskitDevice(wires = self.num_subsystems)
-                self.fail('Expected a ValueError if no IBMQX token is present.')
-            except ValueError:
-                # put the IBMQX token back into place fo other tests to use
-                if token_from_environment is not None:
-                    os.environ['IBMQX_TOKEN'] = token_from_environment
-                    token_from_environment_back = os.getenv('IBMQX_TOKEN')
-                    self.assertEqual(token_from_environment, token_from_environment_back)
+            self.assertRaises(ValueError, IbmQQiskitDevice, wires = self.num_subsystems, msg='Expected a ValueError if no IBMQX token is present.')
 
-    def test_log_verbose(self):
-        dev = IbmQQiskitDevice(wires=self.num_subsystems, log=True, ibmqx_token=IBMQX_TOKEN)
-        self.assertEqual(dev.kwargs['log'], True)
-        self.assertEqual(dev.kwargs['log'], dev.kwargs['verbose'])
+        # put the IBMQX token back into place fo other tests to use
+        if token_from_environment is not None:
+            os.environ['IBMQX_TOKEN'] = token_from_environment
+            token_from_environment_back = os.getenv('IBMQX_TOKEN')
+            self.assertEqual(token_from_environment, token_from_environment_back)
 
     def test_shots(self):
         if self.args.provider == 'ibmq_qasm_simulator' or self.args.provider == 'all':
             shots = 5
             dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev1.shots)
-            self.assertEqual(shots, dev1.kwargs['num_runs'])
-
-            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, num_runs=shots, ibmqx_token=IBMQX_TOKEN)
-            self.assertEqual(shots, dev2.shots)
-            self.assertEqual(shots, dev2.kwargs['num_runs'])
-
-            dev2 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots+2, num_runs=shots, ibmqx_token=IBMQX_TOKEN)
-            self.assertEqual(shots, dev2.shots)
-            self.assertEqual(shots, dev2.kwargs['num_runs'])
 
     def test_initiatlization_via_pennylane(self):
         for short_name in [
@@ -80,6 +64,36 @@ class DeviceInitialization(BaseTest):
         ]:
             try:
                 qml.device(short_name, wires=2, ibmqx_token=IBMQX_TOKEN)
+            except DeviceError:
+                raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
+
+    def test_ibm_device(self):
+        if self.args.provider in ['ibm', 'all']:
+            import qiskit
+            qiskit.IBMQ.enable_account(token=IBMQX_TOKEN)
+            backends = qiskit.IBMQ.backends()
+            qiskit.IBMQ.disable_accounts()
+            try:
+                for backend in backends:
+                    qml.device('qiskit.ibm', wires=1, ibmqx_token=IBMQX_TOKEN, backend=backend)
+            except DeviceError:
+                raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
+
+    def test_aer_device(self):
+        if self.args.provider in ['aer', 'all']:
+            import qiskit
+            try:
+                for backend in qiskit.Aer.backends():
+                    qml.device('qiskit.aer', wires=1, backend=backend)
+            except DeviceError:
+                raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
+
+    def test_basicaer_device(self):
+        if self.args.provider in ['aer', 'all']:
+            import qiskit
+            try:
+                for backend in qiskit.BasicAer.backends():
+                    qml.device('qiskit.basicaer', wires=1, backend=backend)
             except DeviceError:
                 raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
 
