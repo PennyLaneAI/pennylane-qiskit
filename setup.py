@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 from setuptools import setup
 
 with open("pennylane_qiskit/_version.py") as f:
     version = f.readlines()[-1].split()[-1].strip("\"'")
 
+with open("README.rst", "r") as fh:
+    long_description = fh.read()
 
 with open("requirements.txt") as f:
     requirements = f.readlines()
@@ -38,10 +40,10 @@ info = {
             'qiskit.legacy = pennylane_qiskit:LegacySimulatorsQiskitDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerQiskitDevice',
             'qiskit.ibm = pennylane_qiskit:IbmQQiskitDevice',
-            ],
-        },
+        ],
+    },
     'description': 'PennyLane plugin for qiskit-terra',
-    'long_description': open('README.rst').read(),
+    'long_description': long_description,
     'provides': ["pennylane_qiskit"],
     'install_requires': requirements,
     # 'extras_require': extra_requirements,
