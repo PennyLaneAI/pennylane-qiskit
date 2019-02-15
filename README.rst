@@ -68,7 +68,7 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
 
 .. note::
-    Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html#ibmqqiskitdevice>`_ can
+    Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html>`_ can
     only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
     configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
     If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on
@@ -128,7 +128,7 @@ device above, you would instantiate a :code:`'qiskit.ibm'` device by giving your
     import pennylane as qml
     dev = qml.device('qiskit.ibm', wires=2, ibmqx_token="XXX")
 
-In order to avoid accidentally publishing your token, you should better specify it via the `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`_ by adding a section such as
+In order to avoid accidentally publishing your token, you should better specify it via the `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`__ by adding a section such as
 
 .. code::
 
