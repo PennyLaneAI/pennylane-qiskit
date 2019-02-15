@@ -121,10 +121,10 @@ class SimpleCircuitsTest(BaseTest):
                 1/math.sqrt(2) * np.array([1, -cmath.exp(1.0j*cmath.pi/2), cmath.exp(1.0j*cmath.pi/4), cmath.exp(1.0j*(cmath.pi/2 + cmath.pi/4))]),
                 np.array([1, 0, 0, cmath.exp(1.0j*cmath.pi/4)]),
             ]
-            for input in test_input:
+            for i in test_input:
                 @qml.qnode(device)
                 def circuit():
-                    qml.QubitUnitary(input, wires=[0])
+                    qml.QubitUnitary(i, wires=[0])
                     return qml.expval.PauliZ(0)
 
                 circuit()
