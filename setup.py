@@ -18,6 +18,8 @@ from setuptools import setup
 with open("pennylane_qiskit/_version.py") as f:
     version = f.readlines()[-1].split()[-1].strip("\"'")
 
+with open("README.rst", "r") as fh:
+    long_description = fh.read()
 
 with open("requirements.txt") as f:
     requirements = f.readlines()
