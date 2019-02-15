@@ -65,22 +65,27 @@ class DocumentationTest(BaseTest):
             documented_expectations = set([item for sublist in documented_expectations for item in sublist])
 
             supported_but_not_documented_operations = supp_operations.difference(documented_operations)
+
             self.assertFalse(supported_but_not_documented_operations,
-                             msg="For device " + dev.short_name + " the Operations " + str(
-                                 supported_but_not_documented_operations) + " are supported but not documented.")
+                             msg='For device {} the Operations {} are supported but not documented.'.format(
+                                 dev.short_name, supported_but_not_documented_operations))
+
             documented_but_not_supported_operations = documented_operations.difference(supp_operations)
+
             self.assertFalse(documented_but_not_supported_operations,
-                             msg="For device " + dev.short_name + " the Operations " + str(
-                                 documented_but_not_supported_operations) + " are documented but not actually supported.")
+                             msg='For device {} the Operations {} are documented but not actually supported.'.format(
+                                 dev.short_name, documented_but_not_supported_operations))
 
             supported_but_not_documented_expectations = supp_expectations.difference(documented_expectations)
+
             self.assertFalse(supported_but_not_documented_expectations,
-                             msg="For device " + dev.short_name + " the Expectations " + str(
-                                 supported_but_not_documented_expectations) + " are supported but not documented.")
+                             msg='For device {} the Expectations {} are supported but not documented.'.format(
+                                 dev.short_name, supported_but_not_documented_expectations))
             documented_but_not_supported_expectations = documented_expectations.difference(supp_expectations)
+
             self.assertFalse(documented_but_not_supported_expectations,
-                             msg="For device " + dev.short_name + " the Expectations " + str(
-                                 documented_but_not_supported_expectations) + " are documented but not actually supported.")
+                             msg='For device {} the Expectations {} are documented but not actually supported.'.format(
+                                 dev.short_name, documented_but_not_supported_expectations))
 
 
 if __name__ == '__main__':
