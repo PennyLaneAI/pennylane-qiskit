@@ -31,22 +31,22 @@ corresponding PennyLane devices:
 See below for a description of the devices and the supported Operations and Expectations.
 
 AerQiskitDevice
-#################
+###############
 
 .. autoclass:: AerQiskitDevice
 
 LegacySimulatorsQiskitDevice
-#############################
+############################
 
 .. autoclass:: LegacySimulatorsQiskitDevice
 
 BasicAerQiskitDevice
-#################
+####################
 
 .. autoclass:: BasicAerQiskitDevice
 
 IbmQQiskitDevice
-##################
+################
 
 .. autoclass:: IbmQQiskitDevice
 
@@ -250,10 +250,11 @@ class LegacySimulatorsQiskitDevice(QiskitDevice):
       :class:`pennylane.PauliZ`
 
     Extra Operations:
-      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
-      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
-
-    ..
+      :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_qiskit.T <pennylane_qiskit.ops.T>`
+      :class:`pennylane_qiskit.U1 <pennylane_qiskit.ops.U1>`,
+      :class:`pennylane_qiskit.U2 <pennylane_qiskit.ops.U2>`
+      :class:`pennylane_qiskit.U3 <pennylane_qiskit.ops.U3>`,
 
     """
     short_name = 'qiskit.legacy'
@@ -301,10 +302,11 @@ class BasicAerQiskitDevice(QiskitDevice):
       :class:`pennylane.PauliZ`
 
     Extra Operations:
-      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
-      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
-
-    ..
+      :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_qiskit.T <pennylane_qiskit.ops.T>`
+      :class:`pennylane_qiskit.U1 <pennylane_qiskit.ops.U1>`,
+      :class:`pennylane_qiskit.U2 <pennylane_qiskit.ops.U2>`
+      :class:`pennylane_qiskit.U3 <pennylane_qiskit.ops.U3>`,
 
     """
     short_name = 'qiskit.basicaer'
@@ -352,10 +354,11 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane.PauliZ`
 
     Extra Operations:
-      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
-      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
-
-    ..
+      :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_qiskit.T <pennylane_qiskit.ops.T>`
+      :class:`pennylane_qiskit.U1 <pennylane_qiskit.ops.U1>`,
+      :class:`pennylane_qiskit.U2 <pennylane_qiskit.ops.U2>`
+      :class:`pennylane_qiskit.U3 <pennylane_qiskit.ops.U3>`,
 
     """
     short_name = 'qiskit.basicaer'
@@ -404,10 +407,12 @@ class IbmQQiskitDevice(QiskitDevice):
       :class:`pennylane.PauliZ`
 
     Extra Operations:
-      :class:`pennylane_pq.S <pennylane_qiskit.ops.S>`,
-      :class:`pennylane_pq.T <pennylane_qiskit.ops.T>`
+      :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
+      :class:`pennylane_qiskit.T <pennylane_qiskit.ops.T>`
+      :class:`pennylane_qiskit.U1 <pennylane_qiskit.ops.U1>`,
+      :class:`pennylane_qiskit.U2 <pennylane_qiskit.ops.U2>`
+      :class:`pennylane_qiskit.U3 <pennylane_qiskit.ops.U3>`,
 
-    ..
     """
     short_name = 'qiskit.ibmq'
     _backend_kwargs = ['verbose', 'backend', 'ibmqx_token']
