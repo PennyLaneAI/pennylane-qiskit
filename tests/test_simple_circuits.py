@@ -15,13 +15,13 @@
 Unit tests for :mod:`pennylane_qiskit` simple circuits.
 """
 import cmath
+import logging as log
 import math
 import unittest
-import logging as log
-from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
-import pennylane
+
 from pennylane import numpy as np
 
+from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
@@ -121,10 +121,10 @@ class SimpleCircuitsTest(BaseTest):
                 1/math.sqrt(2) * np.array([1, -cmath.exp(1.0j*cmath.pi/2), cmath.exp(1.0j*cmath.pi/4), cmath.exp(1.0j*(cmath.pi/2 + cmath.pi/4))]),
                 np.array([1, 0, 0, cmath.exp(1.0j*cmath.pi/4)]),
             ]
-            for input in test_input:
+            for i in test_input:
                 @qml.qnode(device)
                 def circuit():
-                    qml.QubitUnitary(input, wires=[0])
+                    qml.QubitUnitary(i, wires=[0])
                     return qml.expval.PauliZ(0)
 
                 circuit()
