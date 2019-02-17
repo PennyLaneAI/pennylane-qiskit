@@ -191,7 +191,7 @@ class QiskitDevice(Device):
     def expval(self, expectation, wires, par):
         result = self._current_job.result()  # type: Result
 
-        probabilities = dict((state[::-1], count/self.shots) for state, count in result.get_counts().items())
+        probabilities = dict((state[::-1], count / self.shots) for state, count in result.get_counts().items())
 
         expval = None
 
@@ -204,7 +204,7 @@ class QiskitDevice(Device):
             zero = sum(p for (state, p) in probabilities.items() if state[wire] == '0')
             one = sum(p for (state, p) in probabilities.items() if state[wire] == '1')
 
-            expval = (1-(2*one)-(1-2*zero))/2
+            expval = (1 - (2 * one) - (1 - 2 * zero)) / 2
 
         return expval
 

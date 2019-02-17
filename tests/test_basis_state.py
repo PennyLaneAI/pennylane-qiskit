@@ -46,7 +46,8 @@ class BasisStateTest(BaseTest):
             self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             if IBMQX_TOKEN is not None:
-                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8*1024, ibmqx_token=IBMQX_TOKEN))
+                self.devices.append(
+                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
@@ -67,7 +68,8 @@ class BasisStateTest(BaseTest):
                     qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems)))
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
 
-                self.assertAllAlmostEqual([1]*self.num_subsystems-2*bits_to_flip, np.array(circuit()), delta=self.tol)
+                self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
+                                          delta=self.tol)
 
     def test_basis_state_on_subsystem(self):
         """Test BasisState with preparations on subsystems."""
@@ -83,10 +85,11 @@ class BasisStateTest(BaseTest):
                                  np.array([1, 1, 1])]:
                 @qml.qnode(device)
                 def circuit():
-                    qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems-1)))
+                    qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems - 1)))
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
 
-                self.assertAllAlmostEqual([1]*(self.num_subsystems-1)-2*bits_to_flip, np.array(circuit()[:-1]), delta=self.tol)
+                self.assertAllAlmostEqual([1] * (self.num_subsystems - 1) - 2 * bits_to_flip, np.array(circuit()[:-1]),
+                                          delta=self.tol)
 
     def test_disallow_basis_state_after_other_operation(self):
         if self.devices is None:
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')
     # run the tests in this file
     suite = unittest.TestSuite()
-    for t in (BasisStateTest, ):
+    for t in (BasisStateTest,):
         ttt = unittest.TestLoader().loadTestsFromTestCase(t)
         suite.addTests(ttt)
 
