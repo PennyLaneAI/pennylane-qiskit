@@ -84,7 +84,7 @@ class U1(Operation):
     """
     num_params = 1
     num_wires = 1
-    par_domain = None
+    par_domain = 'R'
 
 
 class U2(Operation):
@@ -100,7 +100,7 @@ class U2(Operation):
     """
     num_params = 2
     num_wires = 1
-    par_domain = None
+    par_domain = 'R'
 
 
 class U3(Operation):
@@ -117,4 +117,4 @@ class U3(Operation):
     """
     num_params = 3
     num_wires = 1
-    par_domain = None
+    par_domain = 'R'
