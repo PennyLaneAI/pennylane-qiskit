@@ -92,7 +92,12 @@ QISKIT_OPERATION_MAP = {
     'T': 't',
     'U1': 'u1',
     'U2': 'u2',
-    'U3': 'u3'
+    'U3': 'u3',
+    'Noise': 'noise',
+    'Snapshot': 'snapshot',
+    'Load': 'load',
+    'Wait': 'wait',
+    'Save': 'save',
 }  # type: Dict[str, Union[str, QiskitInstructions]]
 
 

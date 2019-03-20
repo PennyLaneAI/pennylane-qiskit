@@ -118,3 +118,33 @@ class U3(Operation):
     num_params = 3
     num_wires = 1
     par_domain = 'R'
+
+
+class Noise(Operation):
+    num_params = 0
+    num_wires = 1
+    par_domain = None
+
+
+class Load(Operation):
+    num_params = 0
+    num_wires = 1
+    par_domain = None
+
+
+class Save(Operation):
+    num_params = 0
+    num_wires = 1
+    par_domain = None
+
+
+class Snapshot(Operation):
+    num_params = 0
+    num_wires = 1
+    par_domain = None
+
+
+class Wait(Operation):
+    num_params = 0
+    num_wires = 1
+    par_domain = None
