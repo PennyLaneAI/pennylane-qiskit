@@ -42,7 +42,7 @@ class QiskitInstructions(object):
 #
 #     Contrary to other gates, ProjectQ does not have a class for the Toffoli gate,
 #     as it is implemented as a meta-gate.
-#     For consistency we define this class, whose constructor is made to retun
+#     For consistency we define this class, whose constructor is made to return
 #     a gate with the correct properties by overwriting __new__().
 #     """
 #     def __new__(*par): # pylint: disable=no-method-argument
@@ -53,7 +53,7 @@ class QiskitInstructions(object):
 #
 #     Contrary to other gates, ProjectQ does not have a class for the AllZ gate,
 #     as it is implemented as a meta-gate.
-#     For consistency we define this class, whose constructor is made to retun
+#     For consistency we define this class, whose constructor is made to return
 #     a gate with the correct properties by overwriting __new__().
 #     """
 #     def __new__(*par): # pylint: disable=no-method-argument
