@@ -19,10 +19,13 @@ import logging as log
 import os
 import unittest
 
-from pennylane import DeviceError, Device
+from pennylane import DeviceError
+from qiskit import IBMQ
+from qiskit.providers.aer import noise
+from qiskit.providers.aer.noise import NoiseModel
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
-from pennylane_qiskit import IbmQQiskitDevice
+from pennylane_qiskit import IbmQQiskitDevice, AerQiskitDevice, BasicAerQiskitDevice
 
 log.getLogger('defaults')
 
@@ -55,6 +58,45 @@ class DeviceInitialization(BaseTest):
             shots = 5
             dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=IBMQX_TOKEN)
             self.assertEqual(shots, dev1.shots)
+
+    def test_noise_model_for_aer(self):
+        try:
+            noise_model = self._get_noise_model()  # type: NoiseModel
+
+            dev = qml.device('qiskit.aer', wires=self.num_subsystems, ibmqx_token=IBMQX_TOKEN, noise_model=noise_model)
+            self.assertIsNotNone(dev._noise_model)
+            self.assertEqual(noise_model.as_dict(), dev._noise_model.as_dict())
+
+            dev2 = AerQiskitDevice(wires=self.num_subsystems, noise_model=noise_model)
+            self.assertIsNotNone(dev2._noise_model)
+            self.assertEqual(noise_model.as_dict(), dev2._noise_model.as_dict())
+
+        except DeviceError:
+            raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
+
+    def test_noise_model_for_basic_aer(self):
+        try:
+            noise_model = self._get_noise_model()
+
+            dev = qml.device('qiskit.basicaer', wires=self.num_subsystems, ibmqx_token=IBMQX_TOKEN,
+                             noise_model=noise_model)
+            self.assertIsNotNone(dev._noise_model)
+            self.assertEqual(noise_model.as_dict(), dev._noise_model.as_dict())
+
+            dev2 = BasicAerQiskitDevice(wires=self.num_subsystems, noise_model=noise_model)
+            self.assertIsNotNone(dev2._noise_model)
+            self.assertEqual(noise_model.as_dict(), dev2._noise_model.as_dict())
+
+        except DeviceError:
+            raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
+
+    @classmethod
+    def _get_noise_model(cls):
+        IBMQ.enable_account(IBMQX_TOKEN)
+        device = IBMQ.get_backend('ibmqx4')
+        properties = device.properties()
+
+        return noise.device.basic_device_noise_model(properties)
 
     def test_initiatlization_via_pennylane(self):
         for short_name in [

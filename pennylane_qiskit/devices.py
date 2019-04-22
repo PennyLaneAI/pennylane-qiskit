@@ -62,6 +62,7 @@ from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 from qiskit.extensions.standard import (x, y, z)
 from qiskit.providers import BaseProvider, BaseJob, BaseBackend, JobStatus
+from qiskit.providers.aer.backends.aerbackend import AerBackend
 from qiskit.result import Result
 
 from ._version import __version__
@@ -181,7 +182,12 @@ class QiskitDevice(Device):
         backend = self._provider.get_backend(self.backend)  # type: BaseBackend
 
         try:
-            self._current_job = backend.run(qobj)  # type: BaseJob
+            if isinstance(backend, AerBackend) and (isinstance(self, BasicAerQiskitDevice) or
+                                                    isinstance(self, AerQiskitDevice)):
+                self._current_job = backend.run(qobj, noise_model=self._noise_model)
+            else:
+                self._current_job = backend.run(qobj)  # type: BaseJob
+
             not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
             self._current_job.result()  # call result here once and discard it to trigger the actual computation
 
@@ -270,6 +276,7 @@ class BasicAerQiskitDevice(QiskitDevice):
 
     Args:
        wires (int): The number of qubits of the device
+       noise_model (NoiseModel, optional): NoiseModel Object from qiskit.providers.aer.noise. Defaults to None
 
     Keyword Args:
       backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
@@ -311,9 +318,10 @@ class BasicAerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.BasicAer
+        self._noise_model = noise_model
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 
@@ -325,6 +333,7 @@ class AerQiskitDevice(QiskitDevice):
 
     Keyword Args:
       backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
+      noise_model (NoiseModel, optional): NoiseModel Object from qiskit.providers.aer.noise. Defaults to None
 
     This device can, for example, be instantiated from PennyLane as follows:
 
@@ -363,9 +372,10 @@ class AerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, backend='qasm_simulator', **kwargs):
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.Aer
+        self._noise_model = noise_model
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 

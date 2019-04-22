@@ -23,6 +23,8 @@ from pennylane import numpy as np
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice, AerQiskitDevice
+from qiskit import IBMQ
+from qiskit.providers.aer import noise
 
 log.getLogger('defaults')
 
@@ -51,6 +53,12 @@ class SimpleCircuitsTest(BaseTest):
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
+
+        IBMQ.enable_account(IBMQX_TOKEN)
+        device = IBMQ.get_backend('ibmqx4')
+        properties = device.properties()
+
+        self.noise_model = noise.device.basic_device_noise_model(properties)
 
     def test_basis_state(self):
         """Test BasisState with preparations on the whole system."""
@@ -131,6 +139,31 @@ class SimpleCircuitsTest(BaseTest):
 
                 circuit()
                 # TODO 2018-12-23 Carsten Blank: create meaningful tests
+
+    def test_basis_state_noise_aer(self):
+
+        for device in self.devices:
+            if isinstance(device, AerQiskitDevice):
+                device = AerQiskitDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
+            if isinstance(device, BasicAerQiskitDevice):
+                device = BasicAerQiskitDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
+
+            for bits_to_flip in [np.array([0, 0, 0, 0]),
+                                 np.array([0, 1, 1, 0]),
+                                 np.array([1, 1, 1, 0]),
+                                 np.array([1, 1, 1, 1])]:
+                @qml.qnode(device)
+                def circuit():
+                    for i, p in enumerate(bits_to_flip):
+                        if p == 1:
+                            qml.PauliX(wires=[i])
+                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
+                # The assert is almost useless. Depending on the current noise model, the expectation values might be
+                # very different than what we expect. I guess it would be pretty much the best practice to assume
+                # that it is at least more likely to measure a 1 than a 0, hence we need to make sure that the
+                # expectation value is (strictly) greater than 0.
+                self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
+                                          delta=0.99)  # change delta tolerance if test fails due to the delta error
 
 
 if __name__ == '__main__':
