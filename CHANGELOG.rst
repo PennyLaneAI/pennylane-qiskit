@@ -19,9 +19,24 @@ The format is based on `Keep a Changelog`_.
 `UNRELEASED`_
 =============
 
-Changed
--------
 
+`0.0.5`_ - `0.0.6`
+===================
+
+Added
+------
+
+- Added the noise model to ``BasicAerQiskitDevice`` and ``AerQiskitDevice`` with unit tests (#13)
+- Added unit tests for the docs (#7/#20)
+
+Fixed
+------
+
+- Fixed the ''multiple'' ``backends`` keyword bug (#13).
+- Fixed the ``par_domain`` of the operations (real valued parameters) in ``pos.py`` (#21)
+- Fixed documentation problems
+- Started to 'fix' ''low'' code quality due to type hints with codacy (#15)
+- Small typos and code cleanups
 
 `0.0.2`_ - 2018-12-23
 ======================
