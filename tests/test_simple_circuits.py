@@ -142,10 +142,12 @@ class SimpleCircuitsTest(BaseTest):
 
     def test_basis_state_noise_aer(self):
 
-        devices = [AerQiskitDevice(wires=self.num_subsystems, noise_model=self.noise_model),
-                   BasicAerQiskitDevice(wires=self.num_subsystems, noise_model=self.noise_model)]
+        for device in self.devices:
+            if isinstance(device, AerQiskitDevice):
+                device = AerQiskitDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
+            if isinstance(device, BasicAerQiskitDevice):
+                device = BasicAerQiskitDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
 
-        for device in devices:
             for bits_to_flip in [np.array([0, 0, 0, 0]),
                                  np.array([0, 1, 1, 0]),
                                  np.array([1, 1, 1, 0]),
