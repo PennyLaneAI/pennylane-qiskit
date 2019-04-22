@@ -175,7 +175,7 @@ We also encourage bug reports, suggestions for new features and enhancements, an
 Authors
 =======
 
-Carsten Blank, Sebastian Boerakker
+Carsten Blank, Sebastian Boerakker, Christian Gogolin, Josh Izaac
 
 .. support-start-inclusion-marker-do-not-remove
 
