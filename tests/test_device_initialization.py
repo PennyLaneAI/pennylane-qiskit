@@ -101,7 +101,6 @@ class DeviceInitialization(BaseTest):
     def test_initiatlization_via_pennylane(self):
         for short_name in [
             'qiskit.aer',
-            'qiskit.legacy',
             'qiskit.basicaer',
             'qiskit.ibm'
         ]:

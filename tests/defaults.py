@@ -56,7 +56,7 @@ def get_commandline_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--provider', type=str, default=PROVIDER,
-                        help='Provider(s) to use for tests.', choices=['aer', 'basicaer', 'legacy', 'ibm', 'all'])
+                        help='Provider(s) to use for tests.', choices=['aer', 'basicaer', 'ibm', 'all'])
     parser.add_argument('-t', '--tolerance', type=float, default=TOLERANCE,
                         help='Numerical tolerance for equality tests.')
     parser.add_argument("--ibmqx_token",

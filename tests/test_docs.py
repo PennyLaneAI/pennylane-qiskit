@@ -20,8 +20,7 @@ import re
 import unittest
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
-from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice, \
-    AerQiskitDevice
+from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
 
@@ -41,8 +40,6 @@ class DocumentationTest(BaseTest):
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'aer' or self.args.provider == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'legacy' or self.args.provider == 'all':
-            self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
 
