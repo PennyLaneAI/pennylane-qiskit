@@ -46,14 +46,18 @@ IbmQQiskitDevice
 
 """
 import os
-from typing import Dict, Sequence, Any, List, Union
+import inspect
+from typing import Dict, Sequence, Any, List, Union, Optional, Type
 
 import qiskit
+import qiskit.compiler
 from pennylane import Device, DeviceError
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
-from qiskit.circuit import Instruction
+from qiskit.circuit import Instruction, Gate
 from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
+from qiskit.extensions import XGate, RXGate, U1Gate, HGate, RYGate, RZGate, CzGate, CnotGate, YGate, ZGate, SGate, \
+    TGate, U2Gate, U3Gate, SwapGate
 from qiskit.extensions.standard import (x, y, z)
 from qiskit.providers import BaseProvider, BaseJob, BaseBackend, JobStatus
 from qiskit.providers.aer.backends.aerbackend import AerBackend
@@ -64,17 +68,17 @@ from .qiskitops import BasisState, Rot, QubitStateVector, QubitUnitary, QiskitIn
 
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
-    'PauliX': 'x',
-    'PauliY': 'y',
-    'PauliZ': 'z',
-    'CNOT': 'cx',
-    'CZ': 'cz',
-    'SWAP': 'swap',
-    'RX': 'rx',
-    'RY': 'ry',
-    'RZ': 'rz',
-    'PhaseShift': 'u1',
-    'Hadamard': 'h',
+    'PauliX': XGate,
+    'PauliY': YGate,
+    'PauliZ': ZGate,
+    'CNOT': CnotGate,
+    'CZ': CzGate,
+    'SWAP': SwapGate,
+    'RX': RXGate,
+    'RY': RYGate,
+    'RZ': RZGate,
+    'PhaseShift': U1Gate,
+    'Hadamard': HGate,
 
     # operations not natively implemented in qiskit but provided in pqops.py
     'Rot': Rot(),
@@ -83,12 +87,12 @@ QISKIT_OPERATION_MAP = {
     'QubitUnitary': QubitUnitary(),
 
     # additional operations not native to PennyLane but present in qiskit
-    'S': 's',
-    'T': 't',
-    'U1': 'u1',
-    'U2': 'u2',
-    'U3': 'u3'
-}  # type: Dict[str, Union[str, QiskitInstructions]]
+    'S': SGate,
+    'T': TGate,
+    'U1': U1Gate,
+    'U2': U2Gate,
+    'U3': U3Gate
+}  # type: Dict[str, Union[Type[Gate], QiskitInstructions]]
 
 
 class QiskitDevice(Device):
@@ -121,9 +125,9 @@ class QiskitDevice(Device):
         # Inner state
         self._reg = QuantumRegister(wires, "q")
         self._creg = ClassicalRegister(wires, "c")
-        self._provider = None  # type: BaseProvider
-        self._circuit = None  # type: QuantumCircuit
-        self._current_job = None  # type: BaseJob
+        self._provider = None  # type: Optional[BaseProvider]
+        self._circuit = None  # type: Optional[QuantumCircuit]
+        self._current_job = None  # type: Optional[BaseJob]
         self._first_operation = True
         self.reset()
 
@@ -154,12 +158,15 @@ class QiskitDevice(Device):
 
         qregs = [(self._reg, i) for i in wires]
 
-        if isinstance(mapped_operation, str):
+        if inspect.isclass(mapped_operation):
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=''))
-            instruction = Instruction(mapped_operation, par, qregs, [], circuit=self._circuit)
-            dag.apply_operation_back(instruction)
-            qc = dag_to_circuit(dag)
-            self._circuit = self._circuit + qc
+            instruction = mapped_operation(*par)
+            if isinstance(instruction, Gate):
+                dag.apply_operation_back(instruction, qargs=qregs)
+                qc = dag_to_circuit(dag)
+                self._circuit = self._circuit + qc
+            else:
+                raise ValueError("Class not known and cannot be instantiated: ".format(type(instruction)))
         elif isinstance(mapped_operation, QiskitInstructions):
             op = mapped_operation  # type: QiskitInstructions
             op.apply(qregs=qregs, param=list(par), circuit=self._circuit)
@@ -172,7 +179,8 @@ class QiskitDevice(Device):
         for qr, cr in zip(self._reg, self._creg):
             measure(self._circuit, qr, cr)
 
-        qobj = qiskit.compile(circuits=self._circuit, backend=compile_backend, shots=self.shots)
+        compiled_circuits = qiskit.compiler.transpile(self._circuit, backend=compile_backend)
+        qobj = qiskit.compiler.assemble(experiments=compiled_circuits, backend=compile_backend, shots=self.shots)
         backend = self._provider.get_backend(self.backend)  # type: BaseBackend
 
         try:
