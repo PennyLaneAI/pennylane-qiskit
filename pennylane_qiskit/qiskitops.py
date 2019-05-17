@@ -23,7 +23,7 @@ This module provides wrapper classes for `Operations` that are missing a class i
 import cmath
 import math
 from math import acos
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from qiskit import QuantumRegister, QuantumCircuit
 from qiskit.extensions import standard
@@ -72,7 +72,7 @@ class BasisState(QiskitInstructions):
             raise Exception('Parameters are missing')
         for i, p in enumerate(param[0]):
             if p == 1:
-                x(circuit, qregs[i])
+                x.x(circuit, qregs[i])
 
 
 class Rot(QiskitInstructions):
@@ -88,9 +88,9 @@ class Rot(QiskitInstructions):
         if len(param) == 0:
             raise Exception('Parameters are missing')
         for q in qregs:
-            rx(circuit, param[0], q)
-            ry(circuit, param[1], q)
-            rz(circuit, param[2], q)
+            rx.rx(circuit, param[0], q)
+            ry.ry(circuit, param[1], q)
+            rz.rz(circuit, param[2], q)
 
 
 class QubitUnitary(QiskitInstructions):
@@ -122,8 +122,8 @@ class QubitUnitary(QiskitInstructions):
         global_phase = cmath.phase(a)
         theta = 2 * acos(a * cmath.exp(-global_phase))
 
-        lam = None  # type: float
-        phi = None  # type: float
+        lam = None  # type: Optional[float]
+        phi = None  # type: Optional[float]
         if abs(b) > 1e-6:
             lam = -cmath.phase(b * cmath.exp(-global_phase))
         if abs(c) > 1e-6:
@@ -144,9 +144,9 @@ class QubitUnitary(QiskitInstructions):
 
         if isinstance(qregs, list):
             for q in qregs:
-                standard.u3(circuit, theta, phi, lam, q)
+                standard.u3.u3(circuit, theta, phi, lam, q)
         else:
-            standard.u3(circuit, theta, phi, lam, qregs)
+            standard.u3.u3(circuit, theta, phi, lam, qregs)
 
 
 class QubitStateVector(QiskitInstructions):
@@ -163,6 +163,5 @@ class QubitStateVector(QiskitInstructions):
             raise Exception('Parameters are missing')
         if len(param) > 2 ** len(qregs):
             raise Exception("Too many parameters for the amount of qubits")
-        from qiskit.extensions.quantum_initializer import InitializeGate
-        gate = InitializeGate(param[0], qregs, circ=circuit)
-        circuit._attach(gate)
+        from qiskit.extensions import initializer
+        initializer.initialize(circuit, param[0], qregs)

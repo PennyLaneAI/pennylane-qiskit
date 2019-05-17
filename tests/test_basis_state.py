@@ -21,7 +21,7 @@ from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 import pennylane
 from pennylane import numpy as np
 
-from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, LegacySimulatorsQiskitDevice
+from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice
 from pennylane_qiskit.devices import AerQiskitDevice
 
 log.getLogger('defaults')
@@ -42,8 +42,6 @@ class BasisStateTest(BaseTest):
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'aer' or self.args.provider == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'legacy' or self.args.provider == 'all':
-            self.devices.append(LegacySimulatorsQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'ibm' or self.args.provider == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(

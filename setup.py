@@ -37,7 +37,6 @@ info = {
     'entry_points': {
         'pennylane.plugins': [
             'qiskit.aer = pennylane_qiskit:AerQiskitDevice',
-            'qiskit.legacy = pennylane_qiskit:LegacySimulatorsQiskitDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerQiskitDevice',
             'qiskit.ibm = pennylane_qiskit:IbmQQiskitDevice',
             ],
