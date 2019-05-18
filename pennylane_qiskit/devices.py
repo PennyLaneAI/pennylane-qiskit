@@ -106,8 +106,7 @@ class QiskitDevice(Device):
         'model': 'qubit'
     }  # type: Dict[str, any]
     _operation_map = QISKIT_OPERATION_MAP
-    _expectation_map = {key: val for key, val in _operation_map.items()
-                        if val in [x, y, z]}
+    _expectations = {'PauliZ'}
     _backend_kwargs = ['verbose', 'backend']
 
     def __init__(self, wires, backend, shots=1024, **kwargs):
@@ -137,7 +136,7 @@ class QiskitDevice(Device):
 
     @property
     def expectations(self):
-        return set(self._expectation_map.keys())
+        return set(self._expectations)
 
     def apply(self, operation, wires, par):
         # type: (Any, Sequence[int], List) -> None
