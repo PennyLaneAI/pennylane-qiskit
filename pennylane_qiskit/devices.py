@@ -45,6 +45,7 @@ IbmQQiskitDevice
 .. autoclass:: IbmQQiskitDevice
 
 """
+import inspect
 import os
 from typing import Dict, Sequence, Any, List, Union, Optional, Type
 
