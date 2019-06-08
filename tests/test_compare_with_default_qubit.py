@@ -131,7 +131,7 @@ class CompareWithDefaultQubitTest(BaseTest):
                             observable_pars = {}
 
                         # apply to the first wires
-                        operation_wires = list(range(operation_class.num_wires)) if operation_class.num_wires > 1 else 0
+                        operation_wires = list(range(operation_class.num_wires)) if operation_class.num_wires > 0 else list(range(self.num_subsystems))
                         observable_wires = list(
                             range(observable_class.num_wires)) if observable_class.num_wires > 1 else 0
 
