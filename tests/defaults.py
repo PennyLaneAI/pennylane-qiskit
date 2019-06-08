@@ -26,7 +26,7 @@ OPTIMIZER = "GradientDescentOptimizer"
 if PROVIDER == "all" or PROVIDER == "ibm":
     TOLERANCE = 3e-2
 else:
-    TOLERANCE = 1e-3
+    TOLERANCE = 3e-2
 
 IBMQX_TOKEN = None
 ibm_options = pennylane.default_config['qiskit.ibm']
