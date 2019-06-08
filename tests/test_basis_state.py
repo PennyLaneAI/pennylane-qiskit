@@ -38,11 +38,11 @@ class BasisStateTest(BaseTest):
         super().setUp()
 
         self.devices = []
-        if self.args.provider == 'basicaer' or self.args.provider == 'all':
+        if self.args.device == 'basicaer' or self.args.device == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'aer' or self.args.provider == 'all':
+        if self.args.device == 'aer' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'ibm' or self.args.provider == 'all':
+        if self.args.device == 'ibmq' or self.args.device == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(
                     IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))

@@ -17,13 +17,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pennylane_qiskit  # pylint: disable=wrong-import-position,unused-import
 
 # defaults
-if 'PROVIDER' in os.environ and os.environ['PROVIDER'] is not None:
-    PROVIDER = os.environ['PROVIDER']  # type: str
-    PROVIDER = PROVIDER.lower()
+if 'DEVICE' in os.environ and os.environ['DEVICE'] is not None:
+    DEVICE = os.environ['DEVICE']  # type: str
+    DEVICE = DEVICE.lower()
 else:
-    PROVIDER = "all"
+    DEVICE = "all"
 OPTIMIZER = "GradientDescentOptimizer"
-if PROVIDER == "all" or PROVIDER == "ibm":
+if DEVICE == "all" or DEVICE == "ibmq":
     TOLERANCE = 3e-2
 else:
     TOLERANCE = 3e-2
@@ -57,12 +57,12 @@ def get_commandline_args():
       argparse.Namespace: parsed arguments in a namespace container
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--provider', type=str, default=PROVIDER,
-                        help='Provider(s) to use for tests.', choices=['aer', 'basicaer', 'ibm', 'all'])
+    parser.add_argument('-p', '--device', type=str, default=DEVICE,
+                        help='Device(s) to use for tests.', choices=['aer', 'basicaer', 'ibmq', 'all'])
     parser.add_argument('-t', '--tolerance', type=float, default=TOLERANCE,
                         help='Numerical tolerance for equality tests.')
-    parser.add_argument("--ibmqx_token",
-                        help="IBM Quantum Experience token for use with the provider 'ibm'")
+    parser.add_argument("--ibmqx_token",default=IBMQX_TOKEN,
+                        help="IBM Quantum Experience token for use with the device 'ibmq'")
     parser.add_argument("--optimizer", default=OPTIMIZER, choices=pennylane.optimize.__all__,
                         help="optimizer to use")
 

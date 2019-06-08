@@ -14,17 +14,17 @@
 """
 Unit tests for :mod:`pennylane_qiskit` simple circuits.
 """
-import cmath
 import logging as log
-import math
 import unittest
 
+import cmath
+import math
 from pennylane import numpy as np
+from qiskit.providers.aer import noise
+from qiskit.providers.models import BackendProperties
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
-from qiskit import IBMQ
-from qiskit.providers.aer import noise
 
 log.getLogger('defaults')
 
@@ -40,11 +40,11 @@ class SimpleCircuitsTest(BaseTest):
         super().setUp()
 
         self.devices = []
-        if self.args.provider == 'basicaer' or self.args.provider == 'all':
+        if self.args.device == 'basicaer' or self.args.device == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'aer' or self.args.provider == 'all':
+        if self.args.device == 'aer' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'ibm' or self.args.provider == 'all':
+        if self.args.device == 'ibmq' or self.args.device == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(
                     IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
@@ -52,9 +52,244 @@ class SimpleCircuitsTest(BaseTest):
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
 
-        IBMQ.enable_account(IBMQX_TOKEN)
-        device = IBMQ.get_backend('ibmqx4')
-        properties = device.properties()
+        properties = BackendProperties.from_dict({'backend_name': 'ibmqx4',
+                                                                   'backend_version': '1.0.0',
+                                                                   'gates': [{'gate': 'u1',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0}],
+                                                                              'qubits': [0]},
+                                                                             {'gate': 'u2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0009443532335046134}],
+                                                                              'qubits': [0]},
+                                                                             {'gate': 'u3',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0018887064670092268}],
+                                                                              'qubits': [0]},
+                                                                             {'gate': 'u1',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0}],
+                                                                              'qubits': [1]},
+                                                                             {'gate': 'u2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0012019552727863259}],
+                                                                              'qubits': [1]},
+                                                                             {'gate': 'u3',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0024039105455726517}],
+                                                                              'qubits': [1]},
+                                                                             {'gate': 'u1',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0}],
+                                                                              'qubits': [2]},
+                                                                             {'gate': 'u2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0012019552727863259}],
+                                                                              'qubits': [2]},
+                                                                             {'gate': 'u3',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0024039105455726517}],
+                                                                              'qubits': [2]},
+                                                                             {'gate': 'u1',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0}],
+                                                                              'qubits': [3]},
+                                                                             {'gate': 'u2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0013737021608475342}],
+                                                                              'qubits': [3]},
+                                                                             {'gate': 'u3',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0027474043216950683}],
+                                                                              'qubits': [3]},
+                                                                             {'gate': 'u1',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.0}],
+                                                                              'qubits': [4]},
+                                                                             {'gate': 'u2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.001803112096824766}],
+                                                                              'qubits': [4]},
+                                                                             {'gate': 'u3',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T09:57:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.003606224193649532}],
+                                                                              'qubits': [4]},
+                                                                             {'gate': 'cx',
+                                                                              'name': 'CX1_0',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T01:27:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.024311890455604945}],
+                                                                              'qubits': [1, 0]},
+                                                                             {'gate': 'cx',
+                                                                              'name': 'CX2_0',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T01:32:39+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.023484363587478657}],
+                                                                              'qubits': [2, 0]},
+                                                                             {'gate': 'cx',
+                                                                              'name': 'CX2_1',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T01:38:20+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.04885221406150694}],
+                                                                              'qubits': [2, 1]},
+                                                                             {'gate': 'cx',
+                                                                              'name': 'CX3_2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T01:44:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.06682678733530181}],
+                                                                              'qubits': [3, 2]},
+                                                                             {'gate': 'cx',
+                                                                              'name': 'CX3_4',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T01:50:07+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.05217118636435464}],
+                                                                              'qubits': [3, 4]},
+                                                                             {'gate': 'cx',
+                                                                              'name': 'CX4_2',
+                                                                              'parameters': [
+                                                                                  {'date': '2019-05-08T01:56:04+00:00',
+                                                                                   'name': 'gate_error',
+                                                                                   'unit': '',
+                                                                                   'value': 0.06446497941268642}],
+                                                                              'qubits': [4, 2]}],
+                                                                   'general': [],
+                                                                   'last_update_date': '2019-05-08T01:56:04+00:00',
+                                                                   'qconsole': False,
+                                                                   'qubits': [[{'date': '2019-05-08T01:16:56+00:00',
+                                                                                'name': 'T1',
+                                                                                'unit': 'µs',
+                                                                                'value': 43.21767480545737},
+                                                                               {'date': '2019-05-08T01:17:40+00:00',
+                                                                                'name': 'T2',
+                                                                                'unit': 'µs',
+                                                                                'value': 19.77368032971812},
+                                                                               {'date': '2019-05-08T01:56:04+00:00',
+                                                                                'name': 'frequency',
+                                                                                'unit': 'GHz',
+                                                                                'value': 5.246576101635769},
+                                                                               {'date': '2019-05-08T01:16:37+00:00',
+                                                                                'name': 'readout_error',
+                                                                                'unit': '',
+                                                                                'value': 0.08650000000000002}],
+                                                                              [{'date': '2019-05-08T01:16:56+00:00',
+                                                                                'name': 'T1',
+                                                                                'unit': 'µs',
+                                                                                'value': 43.87997000828745},
+                                                                               {'date': '2019-05-08T01:18:27+00:00',
+                                                                                'name': 'T2',
+                                                                                'unit': 'µs',
+                                                                                'value': 11.390521028550571},
+                                                                               {'date': '2019-05-08T01:56:04+00:00',
+                                                                                'name': 'frequency',
+                                                                                'unit': 'GHz',
+                                                                                'value': 5.298309751315148},
+                                                                               {'date': '2019-05-08T01:16:37+00:00',
+                                                                                'name': 'readout_error',
+                                                                                'unit': '',
+                                                                                'value': 0.07999999999999996}],
+                                                                              [{'date': '2019-05-07T09:14:18+00:00',
+                                                                                'name': 'T1',
+                                                                                'unit': 'µs',
+                                                                                'value': 48.97128225850014},
+                                                                               {'date': '2019-05-08T01:19:07+00:00',
+                                                                                'name': 'T2',
+                                                                                'unit': 'µs',
+                                                                                'value': 31.06845465651204},
+                                                                               {'date': '2019-05-08T01:56:04+00:00',
+                                                                                'name': 'frequency',
+                                                                                'unit': 'GHz',
+                                                                                'value': 5.3383288291854765},
+                                                                               {'date': '2019-05-08T01:16:37+00:00',
+                                                                                'name': 'readout_error',
+                                                                                'unit': '',
+                                                                                'value': 0.038250000000000006}],
+                                                                              [{'date': '2019-05-08T01:16:56+00:00',
+                                                                                'name': 'T1',
+                                                                                'unit': 'µs',
+                                                                                'value': 38.30486582843196},
+                                                                               {'date': '2019-05-08T01:18:27+00:00',
+                                                                                'name': 'T2',
+                                                                                'unit': 'µs',
+                                                                                'value': 32.35546811356613},
+                                                                               {'date': '2019-05-08T01:56:04+00:00',
+                                                                                'name': 'frequency',
+                                                                                'unit': 'GHz',
+                                                                                'value': 5.426109336844823},
+                                                                               {'date': '2019-05-08T01:16:37+00:00',
+                                                                                'name': 'readout_error',
+                                                                                'unit': '',
+                                                                                'value': 0.35675}],
+                                                                              [{'date': '2019-05-08T01:16:56+00:00',
+                                                                                'name': 'T1',
+                                                                                'unit': 'µs',
+                                                                                'value': 36.02606265575505},
+                                                                               {'date': '2019-05-07T09:15:02+00:00',
+                                                                                'name': 'T2',
+                                                                                'unit': 'µs',
+                                                                                'value': 4.461644223370699},
+                                                                               {'date': '2019-05-08T01:56:04+00:00',
+                                                                                'name': 'frequency',
+                                                                                'unit': 'GHz',
+                                                                                'value': 5.174501299220437},
+                                                                               {'date': '2019-05-08T01:16:37+00:00',
+                                                                                'name': 'readout_error',
+                                                                                'unit': '',
+                                                                                'value': 0.2715000000000001}]]})
 
         self.noise_model = noise.device.basic_device_noise_model(properties)
 
