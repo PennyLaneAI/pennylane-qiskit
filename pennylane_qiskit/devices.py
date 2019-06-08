@@ -46,20 +46,18 @@ IbmQQiskitDevice
 
 """
 import os
-import inspect
 from typing import Dict, Sequence, Any, List, Union, Optional, Type
 
 import qiskit
 import qiskit.compiler
 from pennylane import Device, DeviceError
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
-from qiskit.circuit import Instruction, Gate
+from qiskit.circuit import Gate
 from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 from qiskit.extensions import XGate, RXGate, U1Gate, HGate, RYGate, RZGate, CzGate, CnotGate, YGate, ZGate, SGate, \
     TGate, U2Gate, U3Gate, SwapGate
-from qiskit.extensions.standard import (x, y, z)
-from qiskit.providers import BaseProvider, BaseJob, BaseBackend, JobStatus
+from qiskit.providers import BaseProvider, BaseJob, BaseBackend
 from qiskit.providers.aer.backends.aerbackend import AerBackend
 from qiskit.result import Result
 
