@@ -187,7 +187,6 @@ class QiskitDevice(Device):
             else:
                 self._current_job = backend.run(qobj)  # type: BaseJob
 
-            not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
             self._current_job.result()  # call result here once and discard it to trigger the actual computation
 
         except Exception as ex:
