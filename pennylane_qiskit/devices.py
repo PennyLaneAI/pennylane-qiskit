@@ -252,7 +252,7 @@ class BasicAerQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
-      :class:`pennylane.PauliZ`
+      :class:`pennylane.expval.PauliZ`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
@@ -306,7 +306,7 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
-      :class:`pennylane.PauliZ`
+      :class:`pennylane.expval.PauliZ`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
@@ -360,7 +360,7 @@ class IbmQQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
-      :class:`pennylane.PauliZ`
+      :class:`pennylane.expval.PauliZ`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
