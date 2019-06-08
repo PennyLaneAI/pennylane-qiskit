@@ -108,13 +108,16 @@ class QubitUnitary(QiskitInstructions):
         # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
-        if len(param[0]) != 4:
+        parameters = param[0]
+        if isinstance(parameters, np.ndarray):
+            parameters = parameters.reshape((4,))
+        if len(parameters) != 4:
             raise Exception('An array of 4 complex numbers must be given.')
 
-        a = param[0][0]  # type: complex
-        b = param[0][1]  # type: complex
-        c = param[0][2]  # type: complex
-        d = param[0][3]  # type: complex
+        a = parameters[0]  # type: complex
+        b = parameters[1]  # type: complex
+        c = parameters[2]  # type: complex
+        d = parameters[3]  # type: complex
 
         col1 = math.sqrt(abs(a) ** 2 + abs(c) ** 2)
         col2 = math.sqrt(abs(b) ** 2 + abs(d) ** 2)
