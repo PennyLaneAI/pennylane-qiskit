@@ -135,7 +135,7 @@ class CompareWithDefaultQubitTest(BaseTest):
                         observable_wires = list(
                             range(observable_class.num_wires)) if observable_class.num_wires > 1 else 0
 
-                        operation_class(*operation_pars, operation_wires)
+                        operation_class(*operation_pars, wires=operation_wires)
                         return observable_class(*observable_pars, observable_wires)
 
                     output = circuit()
