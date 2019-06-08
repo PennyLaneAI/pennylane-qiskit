@@ -334,7 +334,7 @@ class DeviceInitialization(BaseTest):
             qiskit.IBMQ.disable_accounts()
             try:
                 for backend in backends:
-                    qml.device('qiskit.ibm', wires=1, ibmqx_token=self.args.ibmqx_token, backend=backend)
+                    qml.device('qiskit.ibmq', wires=1, ibmqx_token=self.args.ibmqx_token, backend=backend)
             except DeviceError:
                 raise Exception("This test is expected to fail until pennylane-qiskit is installed.")
 
