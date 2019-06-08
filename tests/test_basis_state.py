@@ -66,6 +66,8 @@ class BasisStateTest(BaseTest):
                     qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems)))
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
 
+                log.info("BasisState on device %s with bitflip pattern %s.", device.name, bits_to_flip)
+
                 self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
                                           delta=self.tol)
 
@@ -85,6 +87,8 @@ class BasisStateTest(BaseTest):
                 def circuit():
                     qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems - 1)))
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
+
+                log.info("BasisState on device %s with bitflip pattern %s (sub-system).", device.name, bits_to_flip)
 
                 self.assertAllAlmostEqual([1] * (self.num_subsystems - 1) - 2 * bits_to_flip, np.array(circuit()[:-1]),
                                           delta=self.tol)
