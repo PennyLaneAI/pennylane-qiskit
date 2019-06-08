@@ -44,6 +44,7 @@ else:
     numeric_level = 100
 
 logging.getLogger().setLevel(numeric_level)
+logging.basicConfig(format=logging.BASIC_FORMAT)
 logging.captureWarnings(True)
 
 
