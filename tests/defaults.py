@@ -29,7 +29,7 @@ else:
     TOLERANCE = 3e-2
 
 IBMQX_TOKEN = None
-ibm_options = pennylane.default_config['qiskit.ibm']
+ibm_options = pennylane.default_config['qiskit.ibmq']
 if 'ibmqx_token' in ibm_options:
     IBMQX_TOKEN = ibm_options['ibmqx_token']
 elif 'IBMQX_TOKEN' in os.environ and os.environ['IBMQX_TOKEN'] is not None:

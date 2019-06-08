@@ -40,7 +40,7 @@ This PennyLane plugin allows to use both the software and hardware backends of q
 Features
 ========
 
-* Provides two providers to be used with PennyLane: ``qiskit.basicaer`` and ``qiskit.ibm``. These provide access to the respective qiskit backends.
+* Provides two providers to be used with PennyLane: ``qiskit.basicaer`` and ``qiskit.ibmq``. These provide access to the respective qiskit backends.
 
 * Supports a wide range of PennyLane operations and expectation values across the providers.
 
@@ -65,14 +65,14 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 
     $ make test
 
-in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibm`.
+in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibmq`.
 
 .. note::
     Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html>`_ can
     only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
     configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
-    If this is the case, running :code:`make test` also executes tests on the :code:`ibm` provider. By default tests on
-    the :code:`ibm` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`basicaer` provider are
+    If this is the case, running :code:`make test` also executes tests on the :code:`ibmq` provider. By default tests on
+    the :code:`ibmq` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`basicaer` provider are
     run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
     Please verify that this is also the case for your account.
 .. installation-end-inclusion-marker-do-not-remove
@@ -121,12 +121,12 @@ To get a current overview what backends are available you can query this by
     dev.capabilities()['backend']
 
 Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the
-device above, you would instantiate a :code:`'qiskit.ibm'` device by giving your IBM Quantum Experience token:
+device above, you would instantiate a :code:`'qiskit.ibmq'` device by giving your IBM Quantum Experience token:
 
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.ibm', wires=2, ibmqx_token="XXX")
+    dev = qml.device('qiskit.ibmq', wires=2, ibmqx_token="XXX")
 
 In order to avoid accidentally publishing your token, you should better specify it via the `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`__ by adding a section such as
 
@@ -134,12 +134,12 @@ In order to avoid accidentally publishing your token, you should better specify 
 
   [qiskit.global]
 
-    [qiskit.ibm]
+    [qiskit.ibmq]
     ibmqx_token = "XXX"
 
 It is also possible to define an environment variable :code:`IBMQX_TOKEN`, from which the token will be taken if not provided in another way.
 
-Per default the backend :code:`ibm` uses the simulator backend :code:`ibmq_qasm_simulator`, but you can change that
+Per default the backend :code:`ibmq` uses the simulator backend :code:`ibmq_qasm_simulator`, but you can change that
 to be any of the real backends as given by
 
 .. code-block:: python

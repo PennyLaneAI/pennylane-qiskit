@@ -327,7 +327,7 @@ class AerQiskitDevice(QiskitDevice):
 
 
 class IbmQQiskitDevice(QiskitDevice):
-    """A PennyLane :code:`qiskit.ibm` device for the `Qiskit Local Simulator` backend.
+    """A PennyLane :code:`qiskit.ibmq` device for the `Qiskit Local Simulator` backend.
 
     Args:
        wires (int): The number of qubits of the device
