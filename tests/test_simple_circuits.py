@@ -20,6 +20,7 @@ import unittest
 import cmath
 import math
 from pennylane import numpy as np
+from pennylane.plugins import DefaultQubit
 from qiskit.providers.aer import noise
 from qiskit.providers.models import BackendProperties
 
@@ -39,7 +40,7 @@ class SimpleCircuitsTest(BaseTest):
     def setUp(self):
         super().setUp()
 
-        self.devices = []
+        self.devices = [DefaultQubit(wires=self.num_subsystems)]
         if self.args.device == 'basicaer' or self.args.device == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
         if self.args.device == 'aer' or self.args.device == 'all':
@@ -338,17 +339,17 @@ class SimpleCircuitsTest(BaseTest):
         self.logTestName()
 
         for device in self.devices:
-            for index in range(8):
-                state = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+            for index in range(16):
+                state = np.array(16 * [0.0])
                 state[index] = 1.0
 
                 @qml.qnode(device)
                 def circuit():
-                    qml.QubitStateVector(state, wires=[0, 1, 2])
-                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2)
+                    qml.QubitStateVector(state, wires=[0, 1, 2, 3])
+                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
 
                 result = np.array(circuit())
-                expected = np.array(list(map(lambda c: 1.0 if c == '0' else -1.0, "{:b}".format(index).zfill(3)[::-1])))
+                expected = np.array(list(map(lambda c: 1.0 if c == '0' else -1.0, "{:b}".format(index).zfill(self.num_subsystems))))
                 self.assertAllAlmostEqual(expected, result, delta=self.tol)
 
     def test_arbitrary_unitary(self):
@@ -359,10 +360,12 @@ class SimpleCircuitsTest(BaseTest):
 
         for device in self.devices:
             test_input = [
-                np.array([1, 0, 0, 1]),
-                1 / math.sqrt(2) * np.array([1, -cmath.exp(1.0j * cmath.pi / 2), cmath.exp(1.0j * cmath.pi / 4),
-                                             cmath.exp(1.0j * (cmath.pi / 2 + cmath.pi / 4))]),
-                np.array([1, 0, 0, cmath.exp(1.0j * cmath.pi / 4)]),
+                np.array([[1, 0], [0, 1]]),
+                1 / math.sqrt(2) * np.array([
+                    [1, -cmath.exp(1.0j * cmath.pi / 2)],
+                    [cmath.exp(1.0j * cmath.pi / 4), cmath.exp(1.0j * (cmath.pi / 2 + cmath.pi / 4))]
+                ]),
+                np.array([[1, 0], [0, cmath.exp(1.0j * cmath.pi / 4)]])
             ]
             for i in test_input:
                 @qml.qnode(device)
