@@ -89,7 +89,7 @@ class Rot(QiskitInstructions):
         if len(param) == 0:
             raise Exception('Parameters are missing')
         for q in qregs:
-            rx.rx(circuit, param[0], q)
+            rz.rz(circuit, param[0], q)
             ry.ry(circuit, param[1], q)
             rz.rz(circuit, param[2], q)
 
