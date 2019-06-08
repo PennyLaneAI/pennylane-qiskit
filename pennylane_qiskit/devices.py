@@ -316,7 +316,7 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane_qiskit.U3 <pennylane_qiskit.ops.U3>`,
 
     """
-    short_name = 'qiskit.basicaer'
+    short_name = 'qiskit.aer'
 
     def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
