@@ -39,7 +39,7 @@ class CompareWithDefaultQubitTest(BaseTest):
     def setUp(self):
         super().setUp()
 
-        self.devices = [DefaultQubit(wires=self.num_subsystems)]
+        self.devices = []
         if self.args.provider == 'basicaer' or self.args.provider == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
         if self.args.provider == 'aer' or self.args.provider == 'all':
