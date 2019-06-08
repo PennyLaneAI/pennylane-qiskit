@@ -170,4 +170,4 @@ class QubitStateVector(QiskitInstructions):
         if len(param) > 2 ** len(qregs):
             raise Exception("Too many parameters for the amount of qubits")
         from qiskit.extensions import initializer
-        initializer.initialize(circuit, param[0], qregs)
+        initializer.initialize(circuit, param[0], list(reversed(qregs)))
