@@ -18,7 +18,8 @@ import pennylane_qiskit  # pylint: disable=wrong-import-position,unused-import
 
 # defaults
 if 'PROVIDER' in os.environ and os.environ['PROVIDER'] is not None:
-    PROVIDER = os.environ['PROVIDER']
+    PROVIDER = os.environ['PROVIDER']  # type: str
+    PROVIDER = PROVIDER.lower()
 else:
     PROVIDER = "all"
 OPTIMIZER = "GradientDescentOptimizer"
