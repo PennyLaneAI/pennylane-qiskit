@@ -39,18 +39,18 @@ class CompareWithDefaultQubitTest(BaseTest):
     def setUp(self):
         super().setUp()
 
-        self.devices = [DefaultQubit(wires=self.num_subsystems)]
-        if self.args.provider == 'basicaer' or self.args.provider == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'aer' or self.args.provider == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'ibm' or self.args.provider == 'all':
-            if IBMQX_TOKEN is not None:
+        self.devices = [DefaultQubit(wires=self.num_subsystems, shots=0)]
+        if self.args.device == 'basicaer' or self.args.device == 'all':
+            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=8 * 1024))
+        if self.args.device == 'aer' or self.args.device == 'all':
+            self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=8 * 1024))
+        if self.args.device == 'ibmq' or self.args.device == 'all':
+            if self.args.ibmqx_token is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
+                    IbmQQiskitDevice(wires=self.num_subsystems, shots=8 * 1024, ibmqx_token=self.args.ibmqx_token))
             else:
-                log.warning(
-                    "Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials "
+                            "could not be found in the PennyLane configuration file.")
 
     def test_simple_circuits(self):
         """Automatically compare the behavior on simple circuits"""
@@ -73,7 +73,8 @@ class CompareWithDefaultQubitTest(BaseTest):
             for operation in dev.operations:
                 for observable in dev.expectations:
                     log.info(
-                        "Running device " + dev.short_name + " with a circuit consisting of a " + operation + " Operation followed by a " + observable + " Expectation")
+                        "Running device {} with a circuit consisting of a {} Operation followed by a {} Expectation".format(
+                            dev.short_name, operation, observable))
 
                     @qml.qnode(dev)
                     def circuit():
@@ -95,6 +96,11 @@ class CompareWithDefaultQubitTest(BaseTest):
                                 'Skipping in automatic test because the observable ' + observable + " acts on more than the default number of wires " + str(
                                     self.num_subsystems) + ". Maybe you want to increase that?")
 
+                        # Operations
+                        operation_wires = list(
+                            range(operation_class.num_wires)) if operation_class.num_wires > 0 else list(
+                            range(self.num_subsystems))
+
                         if operation_class.par_domain == 'N':
                             operation_pars = rnd_int_pool[:operation_class.num_params]
                         elif operation_class.par_domain == 'R':
@@ -103,17 +109,20 @@ class CompareWithDefaultQubitTest(BaseTest):
                         elif operation_class.par_domain == 'A':
                             if str(operation) == "QubitUnitary":
                                 operation_pars = [np.array([[1, 0], [0, -1]])]
+                                operation_wires = [0]
                             elif str(operation) == "QubitStateVector":
                                 operation_pars = [np.array(random_ket)]
                             elif str(operation) == "BasisState":
                                 operation_pars = [random_zero_one_pool[:self.num_subsystems]]
-                                operation_class.num_wires = self.num_subsystems
                             else:
                                 raise IgnoreOperationException(
                                     'Skipping in automatic test because I don\'t know how to generate parameters for the operation ' + operation)
                         else:
                             operation_pars = {}
 
+                        # Observables
+                        observable_wires = list(
+                            range(observable_class.num_wires)) if observable_class.num_wires > 1 else 0
                         if observable_class.par_domain == 'N':
                             observable_pars = rnd_int_pool[:observable_class.num_params]
                         elif observable_class.par_domain == 'R':
@@ -129,30 +138,33 @@ class CompareWithDefaultQubitTest(BaseTest):
                         else:
                             observable_pars = {}
 
-                        # apply to the first wires
-                        operation_wires = list(range(operation_class.num_wires)) if operation_class.num_wires > 1 else 0
-                        observable_wires = list(
-                            range(observable_class.num_wires)) if observable_class.num_wires > 1 else 0
-
-                        operation_class(*operation_pars, operation_wires)
+                        # Apply operator and observable
+                        operation_class(*operation_pars, wires=operation_wires)
                         return observable_class(*observable_pars, observable_wires)
 
                     output = circuit()
                     if (operation, observable) not in outputs:
                         outputs[(operation, observable)] = {}
 
-                    outputs[(operation, observable)][
-                        str(type(dev).__name__) + "(shots=" + str(dev.shots) + ")"] = output
+                    device_key = str(type(dev).__name__) + "(shots=" + str(dev.shots) + ")"
+                    outputs[(operation, observable)][device_key] = output
 
         # if we could run the circuit on more than one device assert that both should have given the same output
         for (key, val) in outputs.items():
             if len(val) >= 2:
-                self.assertAllElementsAlmostEqual(val.values(), delta=self.tol,
-                                                  msg="Outputs " + str(list(val.values())) + " of devices [" + ''.join(
-                                                      list(
-                                                          val.keys())) + "] do not agree for a circuit consisting of a " + str(
-                                                      key[0]) + " Operation followed by a " + str(
-                                                      key[1]) + " Expectation.")
+                failed_message="Outputs {} of devices [{}] do not agree for a " \
+                               "circuit consisting of a {} Operation followed " \
+                               "by a {} Expectation.".format(
+                    str(list(val.values())), ', '.join(list(val.keys())),
+                    str(key[0]), str(key[1]))
+
+                if 'DefaultQubit(shots=0)' not in val:
+                    log.info("Operation %s followed by Expectation %s has no pendant in the DefaultQubit "
+                             "device. Skipping.", key[0], key[1])
+                    continue
+
+                reference_output = val['DefaultQubit(shots=0)']
+                self.assertAllAlmostEqual(val.values(), len(val) * [reference_output], delta=self.tol, msg=failed_message)
 
 
 if __name__ == '__main__':

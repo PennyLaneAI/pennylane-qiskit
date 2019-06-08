@@ -38,7 +38,7 @@ info = {
         'pennylane.plugins': [
             'qiskit.aer = pennylane_qiskit:AerQiskitDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerQiskitDevice',
-            'qiskit.ibm = pennylane_qiskit:IbmQQiskitDevice',
+            'qiskit.ibmq = pennylane_qiskit:IbmQQiskitDevice',
             ],
         },
     'description': 'PennyLane plugin for qiskit-terra',

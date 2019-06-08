@@ -45,21 +45,20 @@ IbmQQiskitDevice
 .. autoclass:: IbmQQiskitDevice
 
 """
-import os
 import inspect
+import os
 from typing import Dict, Sequence, Any, List, Union, Optional, Type
 
 import qiskit
 import qiskit.compiler
 from pennylane import Device, DeviceError
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
-from qiskit.circuit import Instruction, Gate
+from qiskit.circuit import Gate
 from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 from qiskit.extensions import XGate, RXGate, U1Gate, HGate, RYGate, RZGate, CzGate, CnotGate, YGate, ZGate, SGate, \
     TGate, U2Gate, U3Gate, SwapGate
-from qiskit.extensions.standard import (x, y, z)
-from qiskit.providers import BaseProvider, BaseJob, BaseBackend, JobStatus
+from qiskit.providers import BaseProvider, BaseJob, BaseBackend
 from qiskit.providers.aer.backends.aerbackend import AerBackend
 from qiskit.result import Result
 
@@ -189,7 +188,6 @@ class QiskitDevice(Device):
             else:
                 self._current_job = backend.run(qobj)  # type: BaseJob
 
-            not_done = [JobStatus.INITIALIZING, JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.VALIDATING]
             self._current_job.result()  # call result here once and discard it to trigger the actual computation
 
         except Exception as ex:
@@ -255,7 +253,7 @@ class BasicAerQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
-      :class:`pennylane.PauliZ`
+      :class:`pennylane.expval.PauliZ`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
@@ -309,7 +307,7 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
-      :class:`pennylane.PauliZ`
+      :class:`pennylane.expval.PauliZ`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
@@ -319,7 +317,7 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane_qiskit.U3 <pennylane_qiskit.ops.U3>`,
 
     """
-    short_name = 'qiskit.basicaer'
+    short_name = 'qiskit.aer'
 
     def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
@@ -329,7 +327,7 @@ class AerQiskitDevice(QiskitDevice):
 
 
 class IbmQQiskitDevice(QiskitDevice):
-    """A PennyLane :code:`qiskit.ibm` device for the `Qiskit Local Simulator` backend.
+    """A PennyLane :code:`qiskit.ibmq` device for the `Qiskit Local Simulator` backend.
 
     Args:
        wires (int): The number of qubits of the device
@@ -363,7 +361,7 @@ class IbmQQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
-      :class:`pennylane.PauliZ`
+      :class:`pennylane.expval.PauliZ`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,

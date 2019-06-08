@@ -17,6 +17,7 @@ install:
   - python setup.py bdist_wheel
   - pip install dist/PennyLane*.whl
 script:
-  - make coverage
+  - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then make coverage-aer; fi'
+  - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then make coverage; fi'
 after_success:
   - codecov

@@ -10,4 +10,4 @@ from the documentation of PennyLane and run them on a ``'qiskit.aer'`` device by
 
 for an appropriate number of wires.
 
-You can also try to run, e.g., the qubit rotation code on actual quantum hardware by using the ``'qiskit.ibm'`` device.
+You can also try to run, e.g., the qubit rotation code on actual quantum hardware by using the ``'qiskit.ibmq'`` device.

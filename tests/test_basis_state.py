@@ -38,11 +38,11 @@ class BasisStateTest(BaseTest):
         super().setUp()
 
         self.devices = []
-        if self.args.provider == 'basicaer' or self.args.provider == 'all':
+        if self.args.device == 'basicaer' or self.args.device == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'aer' or self.args.provider == 'all':
+        if self.args.device == 'aer' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.provider == 'ibm' or self.args.provider == 'all':
+        if self.args.device == 'ibmq' or self.args.device == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(
                     IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
@@ -66,6 +66,8 @@ class BasisStateTest(BaseTest):
                     qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems)))
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
 
+                log.info("BasisState on device %s with bitflip pattern %s.", device.name, bits_to_flip)
+
                 self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
                                           delta=self.tol)
 
@@ -85,6 +87,8 @@ class BasisStateTest(BaseTest):
                 def circuit():
                     qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems - 1)))
                     return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
+
+                log.info("BasisState on device %s with bitflip pattern %s (sub-system).", device.name, bits_to_flip)
 
                 self.assertAllAlmostEqual([1] * (self.num_subsystems - 1) - 2 * bits_to_flip, np.array(circuit()[:-1]),
                                           delta=self.tol)

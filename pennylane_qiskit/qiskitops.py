@@ -25,6 +25,7 @@ import math
 from math import acos
 from typing import List, Tuple, Optional
 
+import numpy as np
 from qiskit import QuantumRegister, QuantumCircuit
 from qiskit.extensions import standard
 from qiskit.extensions.standard import x, rx, ry, rz
@@ -88,12 +89,14 @@ class Rot(QiskitInstructions):
         if len(param) == 0:
             raise Exception('Parameters are missing')
         for q in qregs:
-            rx.rx(circuit, param[0], q)
+            rz.rz(circuit, param[0], q)
             ry.ry(circuit, param[1], q)
             rz.rz(circuit, param[2], q)
 
 
 class QubitUnitary(QiskitInstructions):
+
+    tolerance = 1e-6
     """Class for the arbitrary single qubit rotation gate.
 
     ProjectQ does not currently have an arbitrary single qubit rotation gate,
@@ -105,13 +108,16 @@ class QubitUnitary(QiskitInstructions):
         # type: (List[Tuple[QuantumRegister, int]], List, QuantumCircuit) -> None
         if len(param) == 0:
             raise Exception('Parameters are missing')
-        if len(param[0]) != 4:
+        parameters = param[0]
+        if isinstance(parameters, np.ndarray):
+            parameters = parameters.reshape((4,))
+        if len(parameters) != 4:
             raise Exception('An array of 4 complex numbers must be given.')
 
-        a = param[0][0]  # type: complex
-        b = param[0][1]  # type: complex
-        c = param[0][2]  # type: complex
-        d = param[0][3]  # type: complex
+        a = parameters[0]  # type: complex
+        b = parameters[1]  # type: complex
+        c = parameters[2]  # type: complex
+        d = parameters[3]  # type: complex
 
         col1 = math.sqrt(abs(a) ** 2 + abs(c) ** 2)
         col2 = math.sqrt(abs(b) ** 2 + abs(d) ** 2)
@@ -120,13 +126,13 @@ class QubitUnitary(QiskitInstructions):
             raise Exception('Not a unitary.')
 
         global_phase = cmath.phase(a)
-        theta = 2 * acos(a * cmath.exp(-global_phase))
+        theta = 2 * acos(abs(a) * math.exp(-global_phase))
 
         lam = None  # type: Optional[float]
         phi = None  # type: Optional[float]
-        if abs(b) > 1e-6:
+        if abs(b) > self.tolerance:
             lam = -cmath.phase(b * cmath.exp(-global_phase))
-        if abs(c) > 1e-6:
+        if abs(c) > self.tolerance:
             phi = cmath.phase(c * cmath.exp(-global_phase))
 
         lam_phi = cmath.phase(d * cmath.exp(-global_phase))
@@ -139,7 +145,7 @@ class QubitUnitary(QiskitInstructions):
         elif lam is not None and phi is None:
             phi = lam_phi - lam
 
-        if d != cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2):
+        if abs(d - cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2)) > self.tolerance:
             raise Exception('Not a unitary.')
 
         if isinstance(qregs, list):
@@ -164,4 +170,4 @@ class QubitStateVector(QiskitInstructions):
         if len(param) > 2 ** len(qregs):
             raise Exception("Too many parameters for the amount of qubits")
         from qiskit.extensions import initializer
-        initializer.initialize(circuit, param[0], qregs)
+        initializer.initialize(circuit, param[0], list(reversed(qregs)))

@@ -19,6 +19,17 @@ The format is based on `Keep a Changelog`_.
 `UNRELEASED`_
 =============
 
+Changed
+--------
+
+- Renamed the IBMQ device from :code:`qiskit.ibm` to :code:`qiskit.ibmq`
+
+Fixed
+------
+
+- Fixed the valid expectation values of all devices. Along with it tests where fixed.
+
+
 
 `0.0.5`_ - `0.0.6`
 ===================

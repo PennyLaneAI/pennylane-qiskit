@@ -17,18 +17,19 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import pennylane_qiskit  # pylint: disable=wrong-import-position,unused-import
 
 # defaults
-if 'PROVIDER' in os.environ and os.environ['PROVIDER'] is not None:
-    PROVIDER = os.environ['PROVIDER']
+if 'DEVICE' in os.environ and os.environ['DEVICE'] is not None:
+    DEVICE = os.environ['DEVICE']  # type: str
+    DEVICE = DEVICE.lower()
 else:
-    PROVIDER = "all"
+    DEVICE = "all"
 OPTIMIZER = "GradientDescentOptimizer"
-if PROVIDER == "all" or PROVIDER == "ibm":
+if DEVICE == "all" or DEVICE == "ibmq":
     TOLERANCE = 3e-2
 else:
-    TOLERANCE = 1e-3
+    TOLERANCE = 3e-2
 
 IBMQX_TOKEN = None
-ibm_options = pennylane.default_config['qiskit.ibm']
+ibm_options = pennylane.default_config['qiskit.ibmq']
 if 'ibmqx_token' in ibm_options:
     IBMQX_TOKEN = ibm_options['ibmqx_token']
 elif 'IBMQX_TOKEN' in os.environ and os.environ['IBMQX_TOKEN'] is not None:
@@ -43,6 +44,7 @@ else:
     numeric_level = 100
 
 logging.getLogger().setLevel(numeric_level)
+logging.basicConfig(format=logging.BASIC_FORMAT)
 logging.captureWarnings(True)
 
 
@@ -55,12 +57,12 @@ def get_commandline_args():
       argparse.Namespace: parsed arguments in a namespace container
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--provider', type=str, default=PROVIDER,
-                        help='Provider(s) to use for tests.', choices=['aer', 'basicaer', 'ibm', 'all'])
+    parser.add_argument('-p', '--device', type=str, default=DEVICE,
+                        help='Device(s) to use for tests.', choices=['aer', 'basicaer', 'ibmq', 'all'])
     parser.add_argument('-t', '--tolerance', type=float, default=TOLERANCE,
                         help='Numerical tolerance for equality tests.')
-    parser.add_argument("--ibmqx_token",
-                        help="IBM Quantum Experience token for use with the provider 'ibm'")
+    parser.add_argument("--ibmqx_token",default=IBMQX_TOKEN,
+                        help="IBM Quantum Experience token for use with the device 'ibmq'")
     parser.add_argument("--optimizer", default=OPTIMIZER, choices=pennylane.optimize.__all__,
                         help="optimizer to use")
 
@@ -103,6 +105,14 @@ class BaseTest(unittest.TestCase):
             if np.all([np.all(np.abs(first[idx] - second[idx])) <= delta for idx, _ in enumerate(first)]):
                 return
         else:
+            # TODO 2019-06-08 C. Blank this is all a whacky hack...
+            if isinstance(first, float):
+                first = [first]
+            if isinstance(second, float):
+                second = [second]
+
+            first = np.asarray(list(first))
+            second = np.asarray(list(second))
             if np.all(first == second):
                 return
             if np.all(np.abs(first - second) <= delta):
