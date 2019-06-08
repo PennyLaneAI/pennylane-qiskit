@@ -25,6 +25,7 @@ import math
 from math import acos
 from typing import List, Tuple, Optional
 
+import numpy as np
 from qiskit import QuantumRegister, QuantumCircuit
 from qiskit.extensions import standard
 from qiskit.extensions.standard import x, rx, ry, rz
@@ -94,6 +95,8 @@ class Rot(QiskitInstructions):
 
 
 class QubitUnitary(QiskitInstructions):
+
+    tolerance = 1e-6
     """Class for the arbitrary single qubit rotation gate.
 
     ProjectQ does not currently have an arbitrary single qubit rotation gate,
@@ -124,9 +127,9 @@ class QubitUnitary(QiskitInstructions):
 
         lam = None  # type: Optional[float]
         phi = None  # type: Optional[float]
-        if abs(b) > 1e-6:
+        if abs(b) > self.tolerance:
             lam = -cmath.phase(b * cmath.exp(-global_phase))
-        if abs(c) > 1e-6:
+        if abs(c) > self.tolerance:
             phi = cmath.phase(c * cmath.exp(-global_phase))
 
         lam_phi = cmath.phase(d * cmath.exp(-global_phase))
@@ -139,7 +142,7 @@ class QubitUnitary(QiskitInstructions):
         elif lam is not None and phi is None:
             phi = lam_phi - lam
 
-        if d != cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2):
+        if abs(d - cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2)) > self.tolerance:
             raise Exception('Not a unitary.')
 
         if isinstance(qregs, list):
