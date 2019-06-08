@@ -152,13 +152,15 @@ class CompareWithDefaultQubitTest(BaseTest):
         # if we could run the circuit on more than one device assert that both should have given the same output
         for (key, val) in outputs.items():
             if len(val) >= 2:
-                self.assertAllElementsAlmostEqual(val.values(), delta=self.tol,
-                                                  msg="Outputs {} of devices [{}] do not agree for a "
-                                                      "circuit consisting of a {} Operation followed "
-                                                      "by a {} Expectation.".format(
-                                                      str(list(val.values())), ', '.join(list(val.keys())),
-                                                      str(key[0]), str(key[1])
-                                                  ))
+                failed_message="Outputs {} of devices [{}] do not agree for a " \
+                               "circuit consisting of a {} Operation followed " \
+                               "by a {} Expectation.".format(
+                    str(list(val.values())), ', '.join(list(val.keys())),
+                    str(key[0]), str(key[1]))
+
+                reference_output = val['DefaultQubit(shots=0)']
+                self.assertAllAlmostEqual(val.values(), len(val) * [reference_output], delta=self.tol, msg=failed_message)
+
 
 if __name__ == '__main__':
     log.info('Testing PennyLane qiskit Plugin version ' + qml.version() + ', Device class.')

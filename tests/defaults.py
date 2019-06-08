@@ -105,6 +105,14 @@ class BaseTest(unittest.TestCase):
             if np.all([np.all(np.abs(first[idx] - second[idx])) <= delta for idx, _ in enumerate(first)]):
                 return
         else:
+            # TODO 2019-06-08 C. Blank this is all a whacky hack...
+            if isinstance(first, float):
+                first = [first]
+            if isinstance(second, float):
+                second = [second]
+
+            first = np.asarray(list(first))
+            second = np.asarray(list(second))
             if np.all(first == second):
                 return
             if np.all(np.abs(first - second) <= delta):

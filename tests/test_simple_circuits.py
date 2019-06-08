@@ -330,7 +330,7 @@ class SimpleCircuitsTest(BaseTest):
                 qml.CNOT(wires=[0, 1])
                 return qml.expval.PauliZ(wires=1)
 
-            self.assertAllAlmostEqual(0.96875, np.array(circuit(0.2, 0.1, 0.3)), delta=self.tol)
+            self.assertAllAlmostEqual(0.96875, circuit(0.2, 0.1, 0.3), delta=self.tol)
 
     def test_arbitrary_state(self):
         """Test BasisState with preparations on the whole system."""
