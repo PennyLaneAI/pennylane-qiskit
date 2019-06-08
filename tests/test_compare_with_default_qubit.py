@@ -73,7 +73,8 @@ class CompareWithDefaultQubitTest(BaseTest):
             for operation in dev.operations:
                 for observable in dev.expectations:
                     log.info(
-                        "Running device " + dev.short_name + " with a circuit consisting of a " + operation + " Operation followed by a " + observable + " Expectation")
+                        "Running device {} with a circuit consisting of a {} Operation followed by a {} Expectation".format(
+                            dev.short_name, operation, observable))
 
                     @qml.qnode(dev)
                     def circuit():
