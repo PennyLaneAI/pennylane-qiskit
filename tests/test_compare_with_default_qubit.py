@@ -158,6 +158,11 @@ class CompareWithDefaultQubitTest(BaseTest):
                     str(list(val.values())), ', '.join(list(val.keys())),
                     str(key[0]), str(key[1]))
 
+                if 'DefaultQubit(shots=0)' not in val:
+                    log.info("Operation %s followed by Expectation %s has no pendant in the DefaultQubit "
+                             "device. Skipping.", key[0], key[1])
+                    continue
+
                 reference_output = val['DefaultQubit(shots=0)']
                 self.assertAllAlmostEqual(val.values(), len(val) * [reference_output], delta=self.tol, msg=failed_message)
 
