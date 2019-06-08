@@ -126,7 +126,7 @@ class QubitUnitary(QiskitInstructions):
             raise Exception('Not a unitary.')
 
         global_phase = cmath.phase(a)
-        theta = 2 * acos(a * cmath.exp(-global_phase))
+        theta = 2 * acos(abs(a) * math.exp(-global_phase))
 
         lam = None  # type: Optional[float]
         phi = None  # type: Optional[float]
