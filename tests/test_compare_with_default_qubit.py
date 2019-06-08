@@ -49,8 +49,8 @@ class CompareWithDefaultQubitTest(BaseTest):
                 self.devices.append(
                     IbmQQiskitDevice(wires=self.num_subsystems, shots=8 * 1024, ibmqx_token=self.args.ibmqx_token))
             else:
-                log.warning(
-                    "Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials "
+                            "could not be found in the PennyLane configuration file.")
 
     def test_simple_circuits(self):
         """Automatically compare the behavior on simple circuits"""
