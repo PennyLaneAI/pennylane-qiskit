@@ -39,7 +39,7 @@ class CompareWithDefaultQubitTest(BaseTest):
     def setUp(self):
         super().setUp()
 
-        self.devices = [DefaultQubit(wires=self.num_subsystems, shots=8 * 1024)]
+        self.devices = [DefaultQubit(wires=self.num_subsystems, shots=0)]
         if self.args.device == 'basicaer' or self.args.device == 'all':
             self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=8 * 1024))
         if self.args.device == 'aer' or self.args.device == 'all':
@@ -114,7 +114,6 @@ class CompareWithDefaultQubitTest(BaseTest):
                                 operation_pars = [np.array(random_ket)]
                             elif str(operation) == "BasisState":
                                 operation_pars = [random_zero_one_pool[:self.num_subsystems]]
-                                operation_class.num_wires = self.num_subsystems
                             else:
                                 raise IgnoreOperationException(
                                     'Skipping in automatic test because I don\'t know how to generate parameters for the operation ' + operation)
