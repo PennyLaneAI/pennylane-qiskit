@@ -40,7 +40,7 @@ This PennyLane plugin allows to use both the software and hardware backends of q
 Features
 ========
 
-* Provides two providers to be used with PennyLane: ``qiskit.basicaer`` and ``qiskit.ibmq``. These provide access to the respective qiskit backends.
+* Provides three devices to be used with PennyLane: ``qiskit.basicaer``, ``qiskit.aer`` and ``qiskit.ibmq``. These devices provide access to the various backends.
 
 * Supports a wide range of PennyLane operations and expectation values across the providers.
 
@@ -65,28 +65,30 @@ To test that the PennyLane qiskit plugin is working correctly you can run
 
     $ make test
 
-in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-aer` or :code:`make test-ibmq`.
+in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-basicaer`,
+:code:`make test-aer` or :code:`make test-ibmq`.
 
 .. note::
-    Tests on the `ibm provider <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html>`_ can
+    Tests on the `IBMQ device <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html>`_ can
     only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
     configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
-    If this is the case, running :code:`make test` also executes tests on the :code:`ibmq` provider. By default tests on
-    the :code:`ibmq` provider run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`basicaer` provider are
-    run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
+    If this is the case, running :code:`make test` also executes tests on the :code:`ibmq` device. By default tests on
+    the :code:`ibmq` device run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`basicaer` and
+    :code:`aer` device are run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
     Please verify that this is also the case for your account.
+
 .. installation-end-inclusion-marker-do-not-remove
 .. gettingstarted-start-inclusion-marker-do-not-remove
 
 Getting started
 ===============
 
-You can instantiate a :code:`'qiskit.basicaer'` device for PennyLane with:
+You can instantiate a :code:`'qiskit.aer'` device for PennyLane with:
 
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.basicaer', wires=2)
+    dev = qml.device('qiskit.aer', wires=2)
 
 This device can then be used just like other devices for the definition and evaluation of QNodes within PennyLane.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
@@ -112,7 +114,7 @@ You can also change the default device's backend with
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.basicaer', wires=2, backend='unitary_simulator')
+    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
 To get a current overview what backends are available you can query this by
 
@@ -120,15 +122,43 @@ To get a current overview what backends are available you can query this by
 
     dev.capabilities()['backend']
 
-Running your code on an IBM Quantum Experience simulator or even a real hardware chip is just as easy. Instead of the
-device above, you would instantiate a :code:`'qiskit.ibmq'` device by giving your IBM Quantum Experience token:
+While the device :code:`'qiskit.aer'` is the standard go-to simulator that is provided along the `qiskit` main package
+installation, there exists a natively included python simulator that is slower but will work usually without the need
+to check out other dependencies (gcc, blas and so on) which can be sed by :code:`'qiskit.basicaer'`.
+There is an important difference of the two: while :code:`'qiskit.aer'` supports a simulation with noise
+:code:`'qiskit.basicaer'` does not.
+
+You can instantiate a noise model and apply it to the device by calling
+.. code-block:: python
+    import pennylane as qml
+
+    import qiskit
+    from qiskit.providers.aer.noise.device import basic_device_noise_model
+
+    qiskit.IBMQ.load_accounts()
+    ibmqx4 = qiskit.IBMQ.get_backend('ibmqx4')
+    device_properties = ibmqx4.properties()
+
+    noise_model = basic_device_noise_model(device_properties)
+
+    dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
+
+Then all simulations are done with noise. The basic noise model is explained a little at
+`qiskit's documentation <https://qiskit.org/documentation/aer/device_noise_simulation.html>`_.
+
+Finally one of the more interesting functionality is running your code through the IBM Quantum Experience API.
+You can choose between different `backends` having either simulators or real hardware depending on your agreement with
+IBM.
+To use this device you would instantiate a :code:`'qiskit.ibmq'` device by giving your IBM Quantum Experience token:
 
 .. code-block:: python
 
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, ibmqx_token="XXX")
 
-In order to avoid accidentally publishing your token, you should better specify it via the `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`__ by adding a section such as
+In order to avoid accidentally publishing your token, you should better specify it via the
+`PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`__ by
+adding a section such as
 
 .. code::
 
@@ -158,7 +188,7 @@ How to cite
 
 If you are doing research using PennyLane, please cite `our whitepaper <https://arxiv.org/abs/1811.04968>`_:
 
-  Ville Bergholm, Josh Izaac, Maria Schuld, Christian Gogolin, and Nathan Killoran. PennyLane. *arXiv*, 2018. arXiv:1811.04968
+  Ville Bergholm, Josh Izaac, Maria Schuld, Christian Gogolin, Carsten Blank, Keri McKiernan and Nathan Killoran. PennyLane. *arXiv*, 2018. arXiv:1811.04968
 
 .. howtocite-end-inclusion-marker-do-not-remove
 

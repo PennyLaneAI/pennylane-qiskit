@@ -219,7 +219,9 @@ class QiskitDevice(Device):
 
 
 class BasicAerQiskitDevice(QiskitDevice):
-    """A PennyLane :code:`qiskit.basicaer` device for the `Qiskit Local Simulator` backend.
+    """A PennyLane device for the native python `qiskit local simulator` backend, called :code:`qiskit.basicaer`.
+    It is recommended to look into the `qiskit docs <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.html>`_
+    to get an idea how to use it. This simulator does provide some backend options but does not allow for noise!
 
     Args:
        wires (int): The number of qubits of the device
@@ -273,7 +275,12 @@ class BasicAerQiskitDevice(QiskitDevice):
 
 
 class AerQiskitDevice(QiskitDevice):
-    """A PennyLane :code:`qiskit.aer` device for the `Qiskit Simulator Aer (local)` backend.
+    """A PennyLane device for the local `qiskit-aer simulator` backend allowing simulations with noise, it is
+    called :code:`qiskit.aer`. Although it is bundled along with `qiskit` it does have dependencies on compilers
+    (gcc...) and libs (e.g. BLAS) which might make it difficult to use it in all situations. If you are experiencing
+    problems you are advised to use the device :code:`qiskit-basicaer`.
+    Please refer to the `qiskit documentation <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.html>`_ for
+    further information to the noise model and backend options.
 
     Args:
        wires (int): The number of qubits of the device
@@ -327,7 +334,14 @@ class AerQiskitDevice(QiskitDevice):
 
 
 class IbmQQiskitDevice(QiskitDevice):
-    """A PennyLane :code:`qiskit.ibmq` device for the `Qiskit Local Simulator` backend.
+    """A PennyLane device for the IBMQ API (remote) backend, called :code:`qiskit.ibmq`. Details are found on
+    `qiskit home <https://qiskit.org>`_ and in more detail into the `code doc <https://qiskit.org/documentation/autodoc/qiskit.providers.ibmq.html>`_.
+    You need to register at `IBMQ <https://quantumexperience.ng.bluemix.net/>`_ in order to get a token that is used
+    for authentication using the API. As of the writing of this documentation, the API is free of charge, although
+    there is a credit system to limit access to the quantum devices (the simulator is even free of credits). Please be
+    also aware that the IBMQ public access API is a test environment so that the quality of results varies greatly.
+    Also be aware of the licence agreement you are accepting, especially regarding IP rights, as this might interfere
+    with your environment's requirements.
 
     Args:
        wires (int): The number of qubits of the device
