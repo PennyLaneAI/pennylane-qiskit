@@ -30,6 +30,19 @@ Fixed
 - Fixed the valid expectation values of all devices. Along with it tests where fixed.
 
 
+`0.0.6`_ - `0.0.7`
+===================
+
+Removed
+--------
+
+- Removed the `LegacySimulatorsQiskitDevice` as this isn't supported in `qiskit` anymore.
+
+Changed
+--------
+
+- updated to `qiskit` version `0.10.*`.
+
 
 `0.0.5`_ - `0.0.6`
 ===================
