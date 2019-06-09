@@ -17,7 +17,7 @@ The format is based on `Keep a Changelog`_.
   - **Security**: in case of vulnerabilities.
 
 `UNRELEASED`_
-=============
+==============
 
 Changed
 --------
@@ -30,8 +30,8 @@ Fixed
 - Fixed the valid expectation values of all devices. Along with it tests where fixed.
 
 
-`0.0.6`_ - `0.0.7`
-===================
+`0.0.6`_ - `0.0.7`_
+====================
 
 Removed
 --------
@@ -44,8 +44,8 @@ Changed
 - updated to `qiskit` version `0.10.*`.
 
 
-`0.0.5`_ - `0.0.6`
-===================
+`0.0.5`_ - `0.0.6`_
+====================
 
 Added
 ------
@@ -62,8 +62,8 @@ Fixed
 - Started to 'fix' ''low'' code quality due to type hints with codacy (#15)
 - Small typos and code cleanups
 
-`2018-12-23`_ - `0.0.5`
-========================
+`2018-12-23`_ - `0.0.5`_
+=========================
 
 Fixed
 ------
@@ -83,8 +83,8 @@ Added
 - `AerQiskitDevice` and `LegacySimulatorQiskitDevice` with tests
 
 
-`0.0.2`_ - `2018-12-23`
-======================
+`0.0.2`_ - `2018-12-23`_
+=========================
 
 Added
 ------
