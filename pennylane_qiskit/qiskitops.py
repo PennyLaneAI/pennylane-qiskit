@@ -157,10 +157,6 @@ class QubitUnitary(QiskitInstructions):
 
 class QubitStateVector(QiskitInstructions):
     """Class for creating an arbitrary quantum state.
-
-    Qiskit-terra does not currently have an arbitrary state gate,
-    so we provide a class that applies the state preparation by M\"ott\"onen et. al implemented
-    in dc-qiskit-algorithms.
     """
 
     def apply(self, qregs, param, circuit):
