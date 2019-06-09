@@ -129,7 +129,9 @@ There is an important difference of the two: while :code:`'qiskit.aer'` supports
 :code:`'qiskit.basicaer'` does not.
 
 You can instantiate a noise model and apply it to the device by calling
+
 .. code-block:: python
+
     import pennylane as qml
 
     import qiskit

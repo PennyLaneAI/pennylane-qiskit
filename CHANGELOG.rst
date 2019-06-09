@@ -17,7 +17,7 @@ The format is based on `Keep a Changelog`_.
   - **Security**: in case of vulnerabilities.
 
 `UNRELEASED`_
-=============
+==============
 
 Changed
 --------
@@ -30,9 +30,22 @@ Fixed
 - Fixed the valid expectation values of all devices. Along with it tests where fixed.
 
 
+`0.0.6`_ - `0.0.7`_
+====================
 
-`0.0.5`_ - `0.0.6`
-===================
+Removed
+--------
+
+- Removed the `LegacySimulatorsQiskitDevice` as this isn't supported in `qiskit` anymore.
+
+Changed
+--------
+
+- updated to `qiskit` version `0.10.*`.
+
+
+`0.0.5`_ - `0.0.6`_
+====================
 
 Added
 ------
@@ -49,8 +62,29 @@ Fixed
 - Started to 'fix' ''low'' code quality due to type hints with codacy (#15)
 - Small typos and code cleanups
 
-`0.0.2`_ - 2018-12-23
-======================
+`2018-12-23`_ - `0.0.5`_
+=========================
+
+Fixed
+------
+
+- Readme & documentation
+- :code:`setup.py`
+- Code style clean-ups & code cleaning.
+- Build setup with travis CI
+- Removed unsied `num_runs` kwargs
+- Fixed the overlapping kwargs with
+- Better tests taken from the _ProjectQ_ plugin
+- remove the sleep after computation.
+
+Added
+------
+
+- `AerQiskitDevice` and `LegacySimulatorQiskitDevice` with tests
+
+
+`0.0.2`_ - `2018-12-23`_
+=========================
 
 Added
 ------
@@ -75,6 +109,10 @@ Fixed
 - Update to qiskit 0.7.0 made changes necessary: import location have changes
 
 
-.. _UNRELEASED: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.2...HEAD
+.. _UNRELEASED: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.7...HEAD
 .. _0.0.2: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.1...0.0.2
+.. _2018-12-23: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.2...3b4ef02b5f3518a983350866048562b4a1f51832
+.. _0.0.5: https://github.com/carstenblank/pennylane-qiskit/compare/3b4ef02b5f3518a983350866048562b4a1f51832...0.0.5
+.. _0.0.6: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.5...0.0.6
+.. _0.0.7: https://github.com/carstenblank/pennylane-qiskit/compare/0.0.6...0.0.7
 .. _Keep a Changelog: http://keepachangelog.com/en/1.0.0/
