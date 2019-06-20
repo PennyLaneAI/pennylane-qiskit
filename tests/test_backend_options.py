@@ -15,14 +15,9 @@
 Unit tests for :mod:`pennylane_qiskit` simple circuits.
 """
 import logging as log
-import unittest
 
-import cmath
-import math
 from pennylane import numpy as np
 from pennylane.plugins import DefaultQubit
-from qiskit.providers.aer import noise
-from qiskit.providers.models import BackendProperties
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
@@ -34,7 +29,7 @@ class BackendOptionsTest(BaseTest):
     """test the BasisState operation.
     """
 
-    num_subsystems = 4
+    num_subsystems = 2
     devices = None
 
     def setUp(self):
@@ -60,20 +55,40 @@ class BackendOptionsTest(BaseTest):
         self.logTestName()
 
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            initial_unitary = np.array([
-                [1, 0, 0, 0],
-                [0, 0, 0, 1],
-                [0, 0, 1, 0],
-                [0, 1, 0, 0]
-            ])
-            dev = BasicAerQiskitDevice(wires=2, backend='unitary_simulator', initial_unitary=initial_unitary)
-            # dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator')
+            initial_unitaries = [
+                # H \otimes Id
+                np.array([
+                    [np.sqrt(2), np.sqrt(2), 0, 0],
+                    [np.sqrt(2), -np.sqrt(2), 0, 0],
+                    [0, 0, np.sqrt(2), np.sqrt(2)],
+                    [0, 0, np.sqrt(2), -np.sqrt(2)]
+                ]) / 2,
+                # H \otimes X
+                np.array([
+                    [0, 0, np.sqrt(2), np.sqrt(2)],
+                    [0, 0, np.sqrt(2), -np.sqrt(2)],
+                    [np.sqrt(2), np.sqrt(2), 0, 0],
+                    [np.sqrt(2), -np.sqrt(2), 0, 0]
+                ]) / 2
+            ]
+            expected_outcomes = [
+                [0, 1],
+                [0, -1]
+            ]
 
-            @qml.qnode(dev)
-            def circuit():
-                return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+            for initial_unitary, expected_outcome in zip(initial_unitaries, expected_outcomes):
 
-            log.info("Outcome: %s", circuit())
+                dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator', initial_unitary=initial_unitary)
+
+                @qml.qnode(dev)
+                def circuit():
+                    return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+
+                measurement = circuit()
+
+                self.assertAllAlmostEqual(measurement, expected_outcome, delta=self.tol)
+
+                log.info("Outcome: %s", measurement)
 
     def test_basicaer_chop_threshold(self):
         """Test BasisState with preparations on the whole system."""
