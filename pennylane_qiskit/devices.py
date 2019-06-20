@@ -52,6 +52,7 @@ from typing import Dict, Sequence, Any, List, Union, Optional, Type
 import qiskit
 import qiskit.compiler
 from pennylane import Device, DeviceError
+from pennylane import numpy as np
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 from qiskit.circuit import Gate
 from qiskit.circuit.measure import measure
@@ -59,12 +60,18 @@ from qiskit.converters import dag_to_circuit, circuit_to_dag
 from qiskit.extensions import XGate, RXGate, U1Gate, HGate, RYGate, RZGate, CzGate, CnotGate, YGate, ZGate, SGate, \
     TGate, U2Gate, U3Gate, SwapGate
 from qiskit.providers import BaseProvider, BaseJob, BaseBackend
+from qiskit.providers.aer import QasmSimulator, StatevectorSimulator, UnitarySimulator
 from qiskit.providers.aer.backends.aerbackend import AerBackend
+from qiskit.providers.aer.noise import NoiseModel
+from qiskit.providers.basicaer import QasmSimulatorPy, StatevectorSimulatorPy, UnitarySimulatorPy
 from qiskit.result import Result
 
 from ._version import __version__
 from .qiskitops import BasisState, Rot, QubitStateVector, QubitUnitary, QiskitInstructions
 
+"""
+This
+"""
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     'PauliX': XGate,
@@ -107,6 +114,11 @@ class QiskitDevice(Device):
     _operation_map = QISKIT_OPERATION_MAP
     _expectations = {'PauliZ'}
     _backend_kwargs = ['verbose', 'backend']
+    _noise_model = None  # type: Optional[NoiseModel]
+    _unitary_result_backends = [UnitarySimulator().name(), UnitarySimulatorPy().name()]
+    _statevector_result_backends = [StatevectorSimulator().name(), StatevectorSimulatorPy().name()]
+
+    _no_measure_backends = _unitary_result_backends + _statevector_result_backends
 
     def __init__(self, wires, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
@@ -171,20 +183,25 @@ class QiskitDevice(Device):
         else:
             raise ValueError("The operation is not of an expected type. This is a software bug!")
 
-    def pre_expval(self):
+    def _compile_and_execute(self):
         compile_backend = self._provider.get_backend(self.compile_backend)  # type: BaseBackend
-
-        for qr, cr in zip(self._reg, self._creg):
-            measure(self._circuit, qr, cr)
-
         compiled_circuits = qiskit.compiler.transpile(self._circuit, backend=compile_backend)
         qobj = qiskit.compiler.assemble(experiments=compiled_circuits, backend=compile_backend, shots=self.shots)
         backend = self._provider.get_backend(self.backend)  # type: BaseBackend
 
         try:
-            if isinstance(backend, AerBackend) and (isinstance(self, BasicAerQiskitDevice) or
-                                                    isinstance(self, AerQiskitDevice)):
-                self._current_job = backend.run(qobj, noise_model=self._noise_model)
+            if isinstance(backend, AerBackend) and isinstance(self, AerQiskitDevice):
+                self._current_job = backend.run(qobj, noise_model=self._noise_model, backend_options=self.kwargs)
+
+            elif isinstance(backend, QasmSimulatorPy) and isinstance(self, BasicAerQiskitDevice):
+                self._current_job = backend.run(qobj, backend_options=self.kwargs)
+
+            elif isinstance(backend, StatevectorSimulatorPy) and isinstance(self, BasicAerQiskitDevice):
+                self._current_job = backend.run(qobj, backend_options=self.kwargs)
+
+            elif isinstance(backend, UnitarySimulatorPy) and isinstance(self, BasicAerQiskitDevice):
+                self._current_job = backend.run(qobj, backend_options=self.kwargs)
+
             else:
                 self._current_job = backend.run(qobj)  # type: BaseJob
 
@@ -193,21 +210,67 @@ class QiskitDevice(Device):
         except Exception as ex:
             raise Exception("Error during job execution: {}!".format(ex))
 
+    def pre_expval(self):
+
+        # Add unitaries if a different expectation value is given
+        for e in self.expval_queue:
+            wires = e.wires
+
+            if e.name == 'PauliZ':
+                pass # nothing to be done here!
+
+            elif e.name == 'PauliX':
+                # X = H.Z.H
+                self.apply('Hadamard', wires=wires, par=[])
+
+            elif e.name == 'PauliY':
+                # Y = (HS^)^.Z.(HS^) and S^=SZ
+                self.apply('PauliZ', wires=wires, par=[])
+                self.apply('S', wires=wires, par=[])
+                self.apply('Hadamard', wires=wires, par=[])
+
+            elif e.name == 'Hadamard':
+                # H = Ry(-pi/4)^.Z.Ry(-pi/4)
+                self.apply('RY', wires, [-np.pi / 4])
+
+            elif e.name == 'Hermitian':
+                # TODO
+                raise ValueError("Hermitian expectation value is not implemented yet!")
+
+            else:
+                raise ValueError("The expectation %s is unknown!", e.name)
+
+        # Add measurements if they are needed
+        if self.backend not in self._no_measure_backends:
+            for qr, cr in zip(self._reg, self._creg):
+                measure(self._circuit, qr, cr)
+
+        self._compile_and_execute()
+
     def expval(self, expectation, wires, par):
+        # Make wires lists.
+        if isinstance(wires, int):
+            wire = wires
+        else:
+            wire = wires[0]
+
+        # Get the result of the job
         result = self._current_job.result()  # type: Result
 
-        probabilities = dict((state[::-1], count / self.shots) for state, count in result.get_counts().items())
+        # Distinguish between three different calculations
+        # As any different expectation value from PauliZ is already handled before
+        # here we treat everything as PauliZ.
+        if self.backend in self._statevector_result_backends:
+            state = np.asarray(result.get_statevector())
+            expval = np.vdot()
+        elif self.backend in self._unitary_result_backends:
+            unitary = np.asarray(result.get_unitary())
+            expval = np.vdot()
+        else:
+            probabilities = dict((state[::-1], count / self.shots) for state, count in result.get_counts().items())
 
-        expval = None
-
-        if expectation == 'PauliZ':
-            if isinstance(wires, int):
-                wire = wires
-            else:
-                wire = wires[0]
-
-            zero = sum(p for (state, p) in probabilities.items() if state[wire] == '0')
-            one = sum(p for (state, p) in probabilities.items() if state[wire] == '1')
+            zero = sum(p for (measurement, p) in probabilities.items() if measurement[wire] == '0')
+            one = sum(p for (measurement, p) in probabilities.items() if measurement[wire] == '1')
 
             expval = (1 - (2 * one) - (1 - 2 * zero)) / 2
 
@@ -224,11 +287,15 @@ class BasicAerQiskitDevice(QiskitDevice):
     to get an idea how to use it. This simulator does provide some backend options but does not allow for noise!
 
     Args:
-       wires (int): The number of qubits of the device
-       noise_model (NoiseModel, optional): NoiseModel Object from qiskit.providers.aer.noise. Defaults to None
+        wires (int): The number of qubits of the device
+        backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
 
-    Keyword Args:
-      backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
+    Keyword Args
+        A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
+        For details on the backends, please check out
+            * `qasm_simulator <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.qasm_simulator.html>`_
+            * `statevector_simulator  <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.statevector_simulator.html>`_
+            * `unitary_simulator  <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.unitary_simulator.html>`_
 
     This device can, for example, be instantiated from PennyLane as follows:
 
@@ -284,10 +351,15 @@ class AerQiskitDevice(QiskitDevice):
 
     Args:
        wires (int): The number of qubits of the device
+       backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
+       noise_model (NoiseModel, optional): NoiseModel Object from qiskit.providers.aer.noise. Defaults to None
 
-    Keyword Args:
-      backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
-      noise_model (NoiseModel, optional): NoiseModel Object from qiskit.providers.aer.noise. Defaults to None
+    Keyword Args
+        A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
+        For details on the backends, please check out
+            * `qasm_simulator <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.qasm_simulator.html>`_
+            * `statevector_simulator  <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.statevector_simulator .html>`_
+            * `unitary_simulator  <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.unitary_simulator .html>`_
 
     This device can, for example, be instantiated from PennyLane as follows:
 
@@ -326,10 +398,11 @@ class AerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.aer'
 
-    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, **kwargs):
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, backend_options=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.Aer
         self._noise_model = noise_model
+        self._backend_options = backend_options
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 
@@ -344,11 +417,9 @@ class IbmQQiskitDevice(QiskitDevice):
     with your environment's requirements.
 
     Args:
-       wires (int): The number of qubits of the device
-       ibmqx_token (str): The IBMQ API token
-
-    Keyword Args:
-      backend (str): the desired backend to run the code on. Default is :code:`ibmq_qasm_simulator`.
+        wires (int): The number of qubits of the device
+        ibmqx_token (str): The IBMQ API token
+        backend (str): the desired backend to run the code on. Default is :code:`ibmq_qasm_simulator`.
 
     This device can, for example, be instantiated from PennyLane as follows:
 
