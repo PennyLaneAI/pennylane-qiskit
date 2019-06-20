@@ -114,12 +114,13 @@ class QiskitDevice(Device):
         'model': 'qubit'
     }  # type: Dict[str, any]
     _operation_map = QISKIT_OPERATION_MAP
-    _expectations = {'PauliZ'}
+    _expectations = {'PauliX', 'PauliY', 'PauliZ', 'Identity', 'Hadamard', 'Hermitian'}
     _backend_kwargs = ['verbose', 'backend']
     _noise_model = None  # type: Optional[NoiseModel]
     _unitary_result_backends = [UnitarySimulator().name(), UnitarySimulatorPy().name()]
     _statevector_result_backends = [StatevectorSimulator().name(), StatevectorSimulatorPy().name()]
     _unitary_backend_initial_state = None
+    _eigs = {}  # type: Dict[str, Dict[str, np.ndarray]]
 
     _no_measure_backends = _unitary_result_backends + _statevector_result_backends
 
@@ -221,28 +222,46 @@ class QiskitDevice(Device):
 
         # Add unitaries if a different expectation value is given
         for e in self.expval_queue:
-            wires = e.wires
+            wire = [e.wires[0]]
 
-            if e.name == 'PauliZ':
-                pass # nothing to be done here!
+            if e.name == 'Identity':
+                pass # nothing to be done here! Will be taken care of later.
+
+            elif e.name == 'PauliZ':
+                pass # nothing to be done here! Will be taken care of later.
 
             elif e.name == 'PauliX':
                 # X = H.Z.H
-                self.apply('Hadamard', wires=wires, par=[])
+                self.apply('Hadamard', wires=wire, par=[])
 
             elif e.name == 'PauliY':
                 # Y = (HS^)^.Z.(HS^) and S^=SZ
-                self.apply('PauliZ', wires=wires, par=[])
-                self.apply('S', wires=wires, par=[])
-                self.apply('Hadamard', wires=wires, par=[])
+                self.apply('PauliZ', wires=wire, par=[])
+                self.apply('S', wires=wire, par=[])
+                self.apply('Hadamard', wires=wire, par=[])
 
             elif e.name == 'Hadamard':
                 # H = Ry(-pi/4)^.Z.Ry(-pi/4)
-                self.apply('RY', wires, [-np.pi / 4])
+                self.apply('RY', wire, [-np.pi / 4])
 
             elif e.name == 'Hermitian':
-                # TODO
-                raise ValueError("Hermitian expectation value is not implemented yet!")
+                # For arbitrary Hermitian matrix H, let U be the unitary matrix
+                # that diagonalises it, and w_i be the eigenvalues.
+                H = e.parameters[0]
+                Hkey = tuple(H.flatten().tolist())
+
+                if Hkey in self._eigs:
+                    # retrieve eigenvectors
+                    U = self._eigs[Hkey]['eigvec']
+                else:
+                    # store the eigenvalues corresponding to H
+                    # in a dictionary, so that they do not need to
+                    # be calculated later
+                    w, U = np.linalg.eigh(H)
+                    self._eigs[Hkey] = {'eigval': w, 'eigvec': U}
+
+                # Perform a change of basis before measuring by applying U^ to the circuit
+                self.apply('QubitUnitary', wire, [U.conj().T])
 
             else:
                 raise ValueError("The expectation %s is unknown!", e.name)
@@ -291,6 +310,21 @@ class QiskitDevice(Device):
         one = sum(p for (measurement, p) in probabilities.items() if measurement[::-1][wire] == '1')
 
         expval = (1 - (2 * one) - (1 - 2 * zero)) / 2
+
+        # for single qubit state probabilities |psi|^2 = (p0, p1),
+        # we know that p0+p1=1 and that <Z>=p0-p1
+        p0 = (1 + expval) / 2
+        p1 = (1 - expval) / 2
+
+        if expectation == 'Identity':
+            # <I> = \sum_i p_i
+            return p0 + p1
+
+        if expectation == 'Hermitian':
+            # <H> = \sum_i w_i p_i
+            Hkey = tuple(par[0].flatten().tolist())
+            w = self._eigs[Hkey]['eigval']
+            return w[0] * p0 + w[1] * p1
 
         return expval
 
@@ -347,7 +381,12 @@ class BasicAerQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
+      :class:`pennylane.expval.PauliX`
+      :class:`pennylane.expval.PauliY`
       :class:`pennylane.expval.PauliZ`
+      :class:`pennylane.expval.Identity`
+      :class:`pennylane.expval.Hadamard`
+      :class:`pennylane.expval.Hermitian`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
@@ -422,7 +461,12 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
+      :class:`pennylane.expval.PauliX`
+      :class:`pennylane.expval.PauliY`
       :class:`pennylane.expval.PauliZ`
+      :class:`pennylane.expval.Identity`
+      :class:`pennylane.expval.Hadamard`
+      :class:`pennylane.expval.Hermitian`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
@@ -486,7 +530,12 @@ class IbmQQiskitDevice(QiskitDevice):
       :class:`pennylane.BasisState`
 
     Supported PennyLane Expectations:
+      :class:`pennylane.expval.PauliX`
+      :class:`pennylane.expval.PauliY`
       :class:`pennylane.expval.PauliZ`
+      :class:`pennylane.expval.Identity`
+      :class:`pennylane.expval.Hadamard`
+      :class:`pennylane.expval.Hermitian`
 
     Extra Operations:
       :class:`pennylane_qiskit.S <pennylane_qiskit.ops.S>`,
