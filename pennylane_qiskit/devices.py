@@ -129,9 +129,8 @@ class QiskitDevice(Device):
         if 'verbose' not in kwargs:
             kwargs['verbose'] = False
 
-        kwargs['backend'] = backend
-        self.backend = kwargs['backend']
-        self.compile_backend = kwargs['compile_backend'] if 'compile_backend' in kwargs else self.backend
+        self.backend_name = backend
+        self.compile_backend = kwargs.get('compile_backend')
         self.name = kwargs.get('name', 'circuit')
         self.kwargs = kwargs
 
@@ -151,6 +150,11 @@ class QiskitDevice(Device):
     @property
     def expectations(self):
         return set(self._expectations)
+
+    @property
+    def backend(self):
+        # type: () -> BaseBackend
+        return self._provider.get_backend(self.backend_name)
 
     def apply(self, operation, wires, par):
         # type: (Any, Sequence[int], List) -> None
@@ -187,10 +191,10 @@ class QiskitDevice(Device):
             raise ValueError("The operation is not of an expected type. This is a software bug!")
 
     def _compile_and_execute(self):
-        compile_backend = self._provider.get_backend(self.compile_backend)  # type: BaseBackend
+        compile_backend = self.compile_backend if self.compile_backend is not None else self.backend  # type: BaseBackend
         compiled_circuits = qiskit.compiler.transpile(self._circuit, backend=compile_backend)
         qobj = qiskit.compiler.assemble(experiments=compiled_circuits, backend=compile_backend, shots=self.shots)
-        backend = self._provider.get_backend(self.backend)  # type: BaseBackend
+        backend = self.backend  # type: BaseBackend
 
         try:
             if isinstance(backend, AerBackend) and isinstance(self, AerQiskitDevice):
@@ -244,7 +248,7 @@ class QiskitDevice(Device):
                 raise ValueError("The expectation %s is unknown!", e.name)
 
         # Add measurements if they are needed
-        if self.backend not in self._no_measure_backends:
+        if self.backend_name not in self._no_measure_backends:
             for qr, cr in zip(self._reg, self._creg):
                 measure(self._circuit, qr, cr)
 
@@ -269,19 +273,24 @@ class QiskitDevice(Device):
         # Distinguish between three different calculations
         # As any different expectation value from PauliZ is already handled before
         # here we treat everything as PauliZ.
-        if self.backend in self._statevector_result_backends:
+        if self.backend_name in self._statevector_result_backends:
             state = np.asarray(result.get_statevector())
-            expval = np.vdot()
-        elif self.backend in self._unitary_result_backends:
+            probabilities = to_probabilities(state)
+
+        elif self.backend_name in self._unitary_result_backends:
             unitary = np.asarray(result.get_unitary())
-            expval = np.vdot()
+            # Now get the state!
+            state = unitary @ self._unitary_backend_initial_state
+            probabilities = to_probabilities(state)
+
         else:
-            probabilities = dict((state[::-1], count / self.shots) for state, count in result.get_counts().items())
+            probabilities = dict((state, count / self.shots) for state, count in result.get_counts().items())
 
-            zero = sum(p for (measurement, p) in probabilities.items() if measurement[wire] == '0')
-            one = sum(p for (measurement, p) in probabilities.items() if measurement[wire] == '1')
+        # The first qubit measurement is right-most, so we need to reverse the measurement result
+        zero = sum(p for (measurement, p) in probabilities.items() if measurement[::-1][wire] == '0')
+        one = sum(p for (measurement, p) in probabilities.items() if measurement[::-1][wire] == '1')
 
-            expval = (1 - (2 * one) - (1 - 2 * zero)) / 2
+        expval = (1 - (2 * one) - (1 - 2 * zero)) / 2
 
         return expval
 
