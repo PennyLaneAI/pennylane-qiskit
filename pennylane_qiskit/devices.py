@@ -119,6 +119,7 @@ class QiskitDevice(Device):
     _noise_model = None  # type: Optional[NoiseModel]
     _unitary_result_backends = [UnitarySimulator().name(), UnitarySimulatorPy().name()]
     _statevector_result_backends = [StatevectorSimulator().name(), StatevectorSimulatorPy().name()]
+    _unitary_backend_initial_state = None
 
     _no_measure_backends = _unitary_result_backends + _statevector_result_backends
 
@@ -259,6 +260,12 @@ class QiskitDevice(Device):
         # Get the result of the job
         result = self._current_job.result()  # type: Result
 
+        def to_probabilities(state):
+            # Normalize the state in case some numerical errors have changed this!
+            state = state / np.linalg.norm(state)
+            probabilities = state.conj() * state
+            return dict([("{0:b}".format(i).zfill(self.num_wires), abs(p)) for i, p in enumerate(probabilities)])
+
         # Distinguish between three different calculations
         # As any different expectation value from PauliZ is already handled before
         # here we treat everything as PauliZ.
@@ -336,10 +343,14 @@ class BasicAerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.basicaer'
 
-    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, **kwargs):
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, unitary_backend_initial_state=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.BasicAer
         self._noise_model = noise_model
+        if unitary_backend_initial_state is None:
+            unitary_backend_initial_state = np.zeros(shape=(self.num_wires ** 2,))
+            unitary_backend_initial_state[0] = 1
+        self._unitary_backend_initial_state = unitary_backend_initial_state
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 
@@ -400,11 +411,15 @@ class AerQiskitDevice(QiskitDevice):
     """
     short_name = 'qiskit.aer'
 
-    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, backend_options=None, **kwargs):
+    def __init__(self, wires, shots=1024, backend='qasm_simulator', noise_model=None, backend_options=None, unitary_backend_initial_state=None, **kwargs):
         super().__init__(wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.Aer
         self._noise_model = noise_model
         self._backend_options = backend_options
+        if unitary_backend_initial_state is None:
+            unitary_backend_initial_state = np.zeros(shape=(self.num_wires ** 2,))
+            unitary_backend_initial_state[0] = 1
+        self._unitary_backend_initial_state = unitary_backend_initial_state
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
 
 
