@@ -97,11 +97,139 @@ class BackendOptionsTest(BaseTest):
         self.logTestName()
 
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            dev = BasicAerQiskitDevice(wires=self.num_subsystems, chop_threshold=1e-1)
+            dev = BasicAerQiskitDevice(wires=self.num_subsystems, chop_threshold=1e-2, backend='unitary_simulator')
 
             @qml.qnode(dev)
             def circuit():
-                # TODO: rotation within the tolerance should be 0
+                # An angle of 1e-1 would fail!
+                angle = 1e-2
+                qml.RY(angle, wires=[0])
                 return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
 
-            log.info("Outcome: %s", circuit())
+            measurement = circuit()
+
+            self.assertAllAlmostEqual(measurement, [1, 1], delta=1e-15)
+
+            log.info("Outcome: %s", measurement)
+
+    def test_backend_options(self):
+        if self.devices is None:
+            return
+        self.logTestName()
+
+        if self.args.device == 'basicaer' or self.args.device == 'all':
+
+            def assertOptions(dev, backend_options):
+                log.info("Asserting Backend Options for {}".format(dev.backend_name))
+
+                @qml.qnode(dev)
+                def circuit():
+                    return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+
+                circuit()
+
+                for option, value in backend_options.items():
+                    self.assertAllTrue(hasattr(dev.backend, "_{}".format(option)),
+                                       "For Device {}/{} the attribute _{} wasn't found!"
+                                       .format(type(dev), dev.backend_name, option))
+                    other_value = getattr(dev.backend, "_{}".format(option))
+                    if isinstance(value, (list, np.ndarray)):
+                        self.assertAllEqual(value, other_value)
+                    else:
+                        self.assertEquals(value, other_value)
+
+            all_backend_options = {
+                'initial_unitary': np.array([
+                    [np.sqrt(2), np.sqrt(2), 0, 0],
+                    [np.sqrt(2), -np.sqrt(2), 0, 0],
+                    [0, 0, np.sqrt(2), np.sqrt(2)],
+                    [0, 0, np.sqrt(2), -np.sqrt(2)]
+                ]) / 2,
+                'chop_threshold': 1e-1
+            }
+            dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator', **all_backend_options)
+            assertOptions(dev, all_backend_options)
+
+            all_backend_options = {
+                'initial_statevector': np.array([0, 0, 1, 0]),
+                'chop_threshold': 1e-1
+            }
+            dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='statevector_simulator', **all_backend_options)
+            assertOptions(dev, all_backend_options)
+
+            all_backend_options = {
+                'initial_statevector': np.array([0, 0, 1, 0])
+            }
+            dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='qasm_simulator',
+                                       **all_backend_options)
+            assertOptions(dev, all_backend_options)
+
+        if self.args.device == 'aer' or self.args.device == 'all':
+
+            def assertOptions(dev, backend_options):
+                log.info("Asserting Backend Options for {}/{}".format(type(dev), dev.backend_name))
+
+                @qml.qnode(dev)
+                def circuit():
+                    return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+
+                circuit()
+
+                # first is the backend options, second noise model and third is validate bool
+                dict, _, _ = dev._current_job._args
+                for option, value in backend_options.items():
+                    self.assertAllTrue(option in dict,
+                                       "For Device {}/{} the key {} wasn't found!"
+                                       .format(type(dev), dev.backend_name, option))
+                    other_value = dict[option]
+                    if isinstance(value, (list, np.ndarray)):
+                        self.assertAllEqual(value, other_value)
+                    else:
+                        self.assertEquals(value, other_value)
+
+            all_backend_options = {
+                'initial_unitary': np.array([
+                    [np.sqrt(2), np.sqrt(2), 0, 0],
+                    [np.sqrt(2), -np.sqrt(2), 0, 0],
+                    [0, 0, np.sqrt(2), np.sqrt(2)],
+                    [0, 0, np.sqrt(2), -np.sqrt(2)]
+                ]) / 2,
+                'zero_threshold': 1e-1,  # default 1e-10
+                'max_parallel_threads': 1,  # default 0
+                'max_parallel_experiments': 2,  # default 1
+                'max_memory_mb': 8192,  # default: 0
+                'statevector_parallel_threshold': 16  # default: 14
+            }
+            dev = AerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator', **all_backend_options)
+            assertOptions(dev, all_backend_options)
+
+            all_backend_options = {
+                'zero_threshold': 1e-1,  # default 1e-10
+                'max_parallel_threads': 1,  # default 0
+                'max_parallel_experiments': 2,  # default 1
+                'max_memory_mb': 8192,  # default: 0
+                'statevector_parallel_threshold': 16  # default: 14
+            }
+            dev = AerQiskitDevice(wires=self.num_subsystems, backend='statevector_simulator', **all_backend_options)
+            assertOptions(dev, all_backend_options)
+
+            all_backend_options = {
+                'method': 'statevector',  # default. automatic
+                'zero_threshold': 1e-1,  # default 1e-10
+                'max_parallel_threads': 1,  # default 0
+                'max_parallel_experiments': 2,  # default 1
+                'max_memory_mb': 8192,  # default: 0
+                'statevector_parallel_threshold': 16,  # default: 14
+                'optimize_ideal_threshold': 4,  # default: 5
+                'optimize_noise_threshold': 14,  # default: 14
+                'statevector_sample_measure_opt': 11,  # default: 10
+                'stabilizer_max_snapshot_probabilities': 16,  # default: 32
+                'extended_stabilizer_measure_sampling': True,  # default: False
+                'extended_stabilizer_mixing_time': 5001,  # default: 5000
+                'extended_stabilizer_approximation_error': 0.051,  # default: 0.05
+                'extended_stabilizer_norm_estimation_samples': 101,  # default: 100
+                'extended_stabilizer_parallel_threshold': 101  # default: 100
+            }
+            dev = AerQiskitDevice(wires=self.num_subsystems, backend='qasm_simulator',
+                                       **all_backend_options)
+            assertOptions(dev, all_backend_options)
