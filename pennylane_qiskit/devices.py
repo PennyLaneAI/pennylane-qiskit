@@ -307,8 +307,15 @@ class BasicAerQiskitDevice(QiskitDevice):
     Args:
         wires (int): The number of qubits of the device
         backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
+        initial_state (List[complex]): if using the backend that computes unitaries PennyLane cannot output
+                                        any expectation values, so we need to use one initial state. If not
+                                        given, the state |0> will be used.
 
     Keyword Args
+        name (str): The name of the circuit if it matters. Default 'circuit'.
+        compile_backend (BaseBackend): usually the configured backend is used against which will be compiled. If you which to
+                                separate this, e.g. if you want to simulate a device compliant circuit, you can
+                                choose a different backend.
         A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
         For details on the backends, please check out
             * `qasm_simulator <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.qasm_simulator.html>`_
@@ -375,8 +382,15 @@ class AerQiskitDevice(QiskitDevice):
        wires (int): The number of qubits of the device
        backend (str): the desired backend to run the code on. Default is :code:`qasm_simulator`.
        noise_model (NoiseModel, optional): NoiseModel Object from qiskit.providers.aer.noise. Defaults to None
+       initial_state (List[complex]): if using the backend that computes unitaries PennyLane cannot output
+                                        any expectation values, so we need to use one initial state. If not
+                                        given, the state |0> will be used.
 
     Keyword Args
+        name (str): The name of the circuit if it matters. Default 'circuit'.
+        compile_backend (BaseBackend): usually the configured backend is used against which will be compiled. If you which to
+                                separate this, e.g. if you want to simulate a device compliant circuit, you can
+                                choose a different backend.
         A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
         For details on the backends, please check out
             * `qasm_simulator <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.qasm_simulator.html>`_
