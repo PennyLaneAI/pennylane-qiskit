@@ -60,7 +60,7 @@ from qiskit.converters import dag_to_circuit, circuit_to_dag
 from qiskit.extensions import XGate, RXGate, U1Gate, HGate, RYGate, RZGate, CzGate, CnotGate, YGate, ZGate, SGate, \
     TGate, U2Gate, U3Gate, SwapGate
 from qiskit.providers import BaseProvider, BaseJob, BaseBackend
-from qiskit.providers.aer import QasmSimulator, StatevectorSimulator, UnitarySimulator
+from qiskit.providers.aer import StatevectorSimulator, UnitarySimulator
 from qiskit.providers.aer.backends.aerbackend import AerBackend
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.basicaer import QasmSimulatorPy, StatevectorSimulatorPy, UnitarySimulatorPy
@@ -70,7 +70,9 @@ from ._version import __version__
 from .qiskitops import BasisState, Rot, QubitStateVector, QubitUnitary, QiskitInstructions
 
 """
-This
+This is the core mapping of PennyLane operations to qiskit's operations.
+It can be both :code:`Gate` or a :code:`QiskitInstructions` which will 
+later be handled differently.
 """
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
