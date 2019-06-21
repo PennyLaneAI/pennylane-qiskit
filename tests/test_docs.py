@@ -19,7 +19,7 @@ import logging as log
 import re
 import unittest
 
-from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
+from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
@@ -41,7 +41,11 @@ class DocumentationTest(BaseTest):
         if self.args.device == 'aer' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
         if self.args.device == 'ibmq' or self.args.device == 'all':
-            self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=IBMQX_TOKEN))
+            if self.args.ibmqx_token is not None:
+                self.devices.append(IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
+            else:
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                            "found in the PennyLane configuration file.")
 
     def test_device_docstrings(self):
         for dev in self.devices:

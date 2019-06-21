@@ -17,7 +17,7 @@ Unit tests for :mod:`pennylane_qiskit` expectation values
 import logging as log
 from pennylane import numpy as np
 
-from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
+from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit import BasicAerQiskitDevice, AerQiskitDevice, IbmQQiskitDevice
 
 log.getLogger('defaults')
@@ -41,9 +41,9 @@ class TestQVMBasic(BaseTest):
         if self.args.device == 'aer' or self.args.device == 'all':
             self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'ibmq' or self.args.device == 'all':
-            if IBMQX_TOKEN is not None:
+            if self.args.ibmqx_token is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=IBMQX_TOKEN))
+                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=self.args.ibmqx_token))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")

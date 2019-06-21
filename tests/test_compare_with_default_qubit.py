@@ -23,7 +23,7 @@ from pennylane.plugins.default_qubit import DefaultQubit
 
 import pennylane_qiskit
 import pennylane_qiskit.expval
-from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
+from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
