@@ -36,6 +36,7 @@ class SimpleCircuitsTest(BaseTest):
 
     num_subsystems = 4
     shots = 16 * 1024
+    ibmq_shots = 8 * 1024
     devices = None
 
     def setUp(self):
@@ -49,7 +50,7 @@ class SimpleCircuitsTest(BaseTest):
         if self.args.device == 'ibmq' or self.args.device == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.shots, ibmqx_token=IBMQX_TOKEN))
+                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=IBMQX_TOKEN))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
