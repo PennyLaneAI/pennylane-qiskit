@@ -182,6 +182,26 @@ class TestQVMBasic(BaseTest):
 
             self.assertAllAlmostEqual(res, expected, delta=5/np.sqrt(dev.shots))
 
+    def test_int_wires(self):
+        """Test that passing wires as int works for expval."""
+        theta = 0.432
+        phi = 0.123
+        for dev in self.devices:
+            dev.apply('RX', wires=[0], par=[theta])
+            dev.apply('RX', wires=[1], par=[phi])
+            dev.apply('CNOT', wires=[0, 1], par=[])
+
+            O = qml.expval.qubit.Identity
+            name = 'Identity'
+
+            dev._expval_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
+            res = dev.pre_expval()
+
+            res = np.array([dev.expval(name, 0, []), dev.expval(name, 1, [])])
+
+            # below are the analytic expectation values for this circuit (trace should always be 1)
+            self.assertAllAlmostEqual(res, np.array([1, 1]), delta=3/np.sqrt(dev.shots))
+
 
 if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', expectations.')
