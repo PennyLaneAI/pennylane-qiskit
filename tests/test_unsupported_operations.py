@@ -63,6 +63,9 @@ class UnsupportedOperationTest(BaseTest):
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
 
+        for device in self.devices:
+            self.assertRaises(ValueError, device.apply, 'RXY', wires=[0], par=None)
+
     def test_unsupported_expectation(self):
         if self.devices is None:
             return

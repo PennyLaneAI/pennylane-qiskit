@@ -166,8 +166,13 @@ class QiskitDevice(Device):
             wires (Sequence[int]): subsystems the operation is applied on
             par (tuple): parameters for the operation
         """
-
-        mapped_operation = self._operation_map[operation]
+        try:
+            mapped_operation = self._operation_map[operation]
+        except KeyError:
+            msg = "The operation is not of an expected type. "
+            msg += "Supported QISKIT operations and instructions are: "
+            msg += ", ".join(QISKIT_OPERATION_MAP.keys())
+            raise ValueError(msg)
 
         if isinstance(mapped_operation, BasisState) and not self._first_operation:
             raise DeviceError("Operation {} cannot be used after other Operations have already been applied "
@@ -188,8 +193,6 @@ class QiskitDevice(Device):
         elif isinstance(mapped_operation, QiskitInstructions):
             op = mapped_operation  # type: QiskitInstructions
             op.apply(qregs=qregs, param=list(par), circuit=self._circuit)
-        else:
-            raise ValueError("The operation is not of an expected type. This is a software bug!")
 
     def _compile_and_execute(self):
         compile_backend = self.compile_backend if self.compile_backend is not None else self.backend  # type: BaseBackend
