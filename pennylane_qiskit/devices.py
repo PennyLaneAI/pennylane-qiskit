@@ -188,9 +188,8 @@ class QiskitDevice(Device):
                 dag.apply_operation_back(instruction, qargs=qregs)
                 qc = dag_to_circuit(dag)
                 self._circuit = self._circuit + qc
-            else:
-                raise ValueError("Class not known and cannot be instantiated: ".format(type(instruction)))
-        elif isinstance(mapped_operation, QiskitInstructions):
+
+        if isinstance(mapped_operation, QiskitInstructions):
             op = mapped_operation  # type: QiskitInstructions
             op.apply(qregs=qregs, param=list(par), circuit=self._circuit)
 
