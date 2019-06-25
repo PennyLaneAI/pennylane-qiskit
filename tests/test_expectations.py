@@ -19,6 +19,7 @@ from pennylane import numpy as np
 
 from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit import BasicAerQiskitDevice, AerQiskitDevice, IbmQQiskitDevice
+import unittest
 
 log.getLogger('defaults')
 
@@ -180,3 +181,14 @@ class TestQVMBasic(BaseTest):
             expected = np.array([ev1, ev2])
 
             self.assertAllAlmostEqual(res, expected, delta=5/np.sqrt(dev.shots))
+
+
+if __name__ == '__main__':
+    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', expectations.')
+    # run the tests in this file
+    suite = unittest.TestSuite()
+    for t in (TestQVMBasic,):
+        ttt = unittest.TestLoader().loadTestsFromTestCase(t)
+        suite.addTests(ttt)
+
+    unittest.TextTestRunner().run(suite)
