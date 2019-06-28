@@ -27,7 +27,7 @@ corresponding PennyLane devices:
     BasicAerQiskitDevice
     IbmQQiskitDevice
 
-See below for a description of the devices and the supported Operations and Expectations.
+See below for a description of the devices and the supported Operations and observables.
 
 AerQiskitDevice
 ###############
@@ -114,7 +114,7 @@ class QiskitDevice(Device):
         'model': 'qubit'
     }  # type: Dict[str, any]
     _operation_map = QISKIT_OPERATION_MAP
-    _expectations = {'PauliX', 'PauliY', 'PauliZ', 'Identity', 'Hadamard', 'Hermitian'}
+    _observables = {'PauliX', 'PauliY', 'PauliZ', 'Identity', 'Hadamard', 'Hermitian'}
     _backend_kwargs = ['verbose', 'backend']
     _noise_model = None  # type: Optional[NoiseModel]
     _unitary_result_backends = [UnitarySimulator().name(), UnitarySimulatorPy().name()]
@@ -149,8 +149,8 @@ class QiskitDevice(Device):
         return set(self._operation_map.keys())
 
     @property
-    def expectations(self):
-        return set(self._expectations)
+    def observables(self):
+        return set(self._observables)
 
     @property
     def backend(self):
@@ -220,10 +220,10 @@ class QiskitDevice(Device):
         except Exception as ex:
             raise Exception("Error during job execution: {}!".format(ex))
 
-    def pre_expval(self):
+    def pre_measure(self):
 
         # Add unitaries if a different expectation value is given
-        for e in self.expval_queue:
+        for e in self.obs_queue:
             wire = [e.wires[0]]
 
             if e.name == 'Identity':
@@ -382,7 +382,7 @@ class BasicAerQiskitDevice(QiskitDevice):
       :class:`pennylane.QubitUnitary`,
       :class:`pennylane.BasisState`
 
-    Supported PennyLane Expectations:
+    Supported PennyLane observables:
       :class:`pennylane.expval.PauliX`
       :class:`pennylane.expval.PauliY`
       :class:`pennylane.expval.PauliZ`
@@ -462,7 +462,7 @@ class AerQiskitDevice(QiskitDevice):
       :class:`pennylane.QubitUnitary`,
       :class:`pennylane.BasisState`
 
-    Supported PennyLane Expectations:
+    Supported PennyLane observables:
       :class:`pennylane.expval.PauliX`
       :class:`pennylane.expval.PauliY`
       :class:`pennylane.expval.PauliZ`
@@ -531,7 +531,7 @@ class IbmQQiskitDevice(QiskitDevice):
       :class:`pennylane.QubitUnitary`,
       :class:`pennylane.BasisState`
 
-    Supported PennyLane Expectations:
+    Supported PennyLane observables:
       :class:`pennylane.expval.PauliX`
       :class:`pennylane.expval.PauliY`
       :class:`pennylane.expval.PauliZ`
