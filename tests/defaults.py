@@ -131,4 +131,4 @@ class BaseTest(unittest.TestCase):
         """
         Like assertTrue, but works with arrays. All the corresponding elements have to be True.
         """
-        return self.assertTrue(np.all(value))
+        return self.assertTrue(np.all(value), msg=msg)

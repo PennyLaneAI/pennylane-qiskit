@@ -23,7 +23,7 @@ from pennylane.plugins.default_qubit import DefaultQubit
 
 import pennylane_qiskit
 import pennylane_qiskit.expval
-from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
+from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
 
 log.getLogger('defaults')
@@ -33,7 +33,8 @@ class CompareWithDefaultQubitTest(BaseTest):
     """Compares the behavior of the ProjectQ plugin devices with the default qubit device.
     """
     num_subsystems = 3  # This should be as large as the largest gate/observable, but we cannot know that before instantiating the device. We thus check later that all gates/observables fit.
-
+    shots = 16 * 1024
+    ibmq_shots = 8 * 1024
     devices = None
 
     def setUp(self):
@@ -41,13 +42,13 @@ class CompareWithDefaultQubitTest(BaseTest):
 
         self.devices = [DefaultQubit(wires=self.num_subsystems, shots=0)]
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=8 * 1024))
+            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=8 * 1024))
+            self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'ibmq' or self.args.device == 'all':
             if self.args.ibmqx_token is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, shots=8 * 1024, ibmqx_token=self.args.ibmqx_token))
+                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=self.args.ibmqx_token))
             else:
                 log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials "
                             "could not be found in the PennyLane configuration file.")

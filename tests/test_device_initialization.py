@@ -55,6 +55,12 @@ class DeviceInitialization(BaseTest):
 
     def test_shots(self):
         if self.args.device == 'ibmq' or self.args.device == 'all':
+
+            if self.args.ibmqx_token is None:
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                            "found in the PennyLane configuration file.")
+                return
+
             shots = 5
             dev1 = IbmQQiskitDevice(wires=self.num_subsystems, shots=shots, ibmqx_token=self.args.ibmqx_token)
             self.assertEqual(shots, dev1.shots)
@@ -328,6 +334,12 @@ class DeviceInitialization(BaseTest):
 
     def test_ibm_device(self):
         if self.args.device in ['ibmq', 'all']:
+
+            if self.args.ibmqx_token is None:
+                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                            "found in the PennyLane configuration file.")
+                return
+
             import qiskit
             qiskit.IBMQ.enable_account(token=self.args.ibmqx_token)
             backends = qiskit.IBMQ.backends()

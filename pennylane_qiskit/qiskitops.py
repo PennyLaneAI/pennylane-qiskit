@@ -114,6 +114,9 @@ class QubitUnitary(QiskitInstructions):
         if len(parameters) != 4:
             raise Exception('An array of 4 complex numbers must be given.')
 
+        # We assume
+        # [ a  b ]
+        # [ c  d ]
         a = parameters[0]  # type: complex
         b = parameters[1]  # type: complex
         c = parameters[2]  # type: complex
@@ -125,17 +128,20 @@ class QubitUnitary(QiskitInstructions):
         if abs(col1 - 1.0) > 1e-3 or abs(col2 - 1.0) > 1e-3:
             raise Exception('Not a unitary.')
 
+        # We use the universal gate U (see https://qiskit.org/documentation/terra/summary_of_quantum_operations.html)
+        # And assume that a ought to be without a global phase
+        # Then we compute the angle theta
         global_phase = cmath.phase(a)
-        theta = 2 * acos(abs(a) * math.exp(-global_phase))
+        theta = 2 * acos((a * cmath.exp(-1j*global_phase)).real)
 
         lam = None  # type: Optional[float]
         phi = None  # type: Optional[float]
         if abs(b) > self.tolerance:
-            lam = -cmath.phase(b * cmath.exp(-global_phase))
+            lam = cmath.phase(-b * cmath.exp(-1j*global_phase))
         if abs(c) > self.tolerance:
-            phi = cmath.phase(c * cmath.exp(-global_phase))
+            phi = cmath.phase(c * cmath.exp(-1j*global_phase))
 
-        lam_phi = cmath.phase(d * cmath.exp(-global_phase))
+        lam_phi = cmath.phase(d * cmath.exp(-1j*global_phase))
 
         if lam is None and phi is None:
             lam = 0.0
@@ -145,7 +151,7 @@ class QubitUnitary(QiskitInstructions):
         elif lam is not None and phi is None:
             phi = lam_phi - lam
 
-        if abs(d - cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2)) > self.tolerance:
+        if abs(d * cmath.exp(-1j*global_phase) - cmath.exp(1.0j * lam + 1.0j * phi) * cmath.cos(theta / 2)) > self.tolerance:
             raise Exception('Not a unitary.')
 
         if isinstance(qregs, list):
