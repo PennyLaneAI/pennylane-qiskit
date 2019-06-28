@@ -61,7 +61,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.qubit.Identity
             name = 'Identity'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
             res = dev.pre_expval()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
@@ -82,7 +82,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.PauliZ
             name = 'PauliZ'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
             res = dev.pre_expval()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
@@ -103,7 +103,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.PauliX
             name = 'PauliX'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
             dev.pre_expval()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
@@ -123,7 +123,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.PauliY
             name = 'PauliY'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
             dev.pre_expval()
 
             # below are the analytic expectation values for this circuit
@@ -143,7 +143,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.Hadamard
             name = 'Hadamard'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
             dev.pre_expval()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
@@ -166,7 +166,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.qubit.Hermitian
             name = 'Hermitian'
 
-            dev._expval_queue = [O(H, wires=[0], do_queue=False), O(H, wires=[1], do_queue=False)]
+            dev._obs_queue = [O(H, wires=[0], do_queue=False), O(H, wires=[1], do_queue=False)]
             dev.pre_expval()
 
             res = np.array([dev.expval(name, [0], [H]), dev.expval(name, [1], [H])])
@@ -194,7 +194,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.qubit.Identity
             name = 'Identity'
 
-            dev._expval_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
+            dev._obs_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
             res = dev.pre_expval()
 
             res = np.array([dev.expval(name, 0, []), dev.expval(name, 1, [])])
@@ -204,7 +204,7 @@ class TestQVMBasic(BaseTest):
 
 
 if __name__ == '__main__':
-    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', expectations.')
+    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', observables.')
     # run the tests in this file
     suite = unittest.TestSuite()
     for t in (TestQVMBasic,):

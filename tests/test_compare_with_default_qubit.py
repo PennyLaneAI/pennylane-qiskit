@@ -72,7 +72,7 @@ class CompareWithDefaultQubitTest(BaseTest):
 
             # run all single operation circuits
             for operation in dev.operations:
-                for observable in dev.expectations:
+                for observable in dev.observables:
                     log.info(
                         "Running device {} with a circuit consisting of a {} Operation followed by a {} Expectation".format(
                             dev.short_name, operation, observable))
@@ -106,7 +106,7 @@ class CompareWithDefaultQubitTest(BaseTest):
                             operation_pars = rnd_int_pool[:operation_class.num_params]
                         elif operation_class.par_domain == 'R':
                             operation_pars = np.abs(rnd_float_pool[
-                                                    :operation_class.num_params])  # todo: some operations/expectations fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
+                                                    :operation_class.num_params])  # todo: some operations/observables fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
                         elif operation_class.par_domain == 'A':
                             if str(operation) == "QubitUnitary":
                                 operation_pars = [np.array([[1, 0], [0, -1]])]
@@ -128,7 +128,7 @@ class CompareWithDefaultQubitTest(BaseTest):
                             observable_pars = rnd_int_pool[:observable_class.num_params]
                         elif observable_class.par_domain == 'R':
                             observable_pars = np.abs(rnd_float_pool[
-                                                     :observable_class.num_params])  # todo: some operations/expectations fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
+                                                     :observable_class.num_params])  # todo: some operations/observables fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
                         elif observable_class.par_domain == 'A':
                             if str(observable) == "Hermitian":
                                 observable_pars = [np.array([[1, 1j], [-1j, 0]])]

@@ -28,7 +28,7 @@ log.getLogger('defaults')
 
 
 class UnsupportedOperationTest(BaseTest):
-    """test that unsupported operations/expectations raise DeviceErrors.
+    """test that unsupported operations/observables raise DeviceErrors.
     """
 
     num_subsystems = 4
