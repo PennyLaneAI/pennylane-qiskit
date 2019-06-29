@@ -157,6 +157,11 @@ class QiskitDevice(Device):
         # type: () -> BaseBackend
         return self._provider.get_backend(self.backend_name)
 
+    @property
+    def backend(self):
+        # type: () -> BaseBackend
+        return self._provider.get_backend(self.backend_name)
+
     def apply(self, operation, wires, par):
         # type: (Any, Sequence[int], List) -> None
         """Apply a quantum operation.

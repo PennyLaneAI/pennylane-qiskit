@@ -1,17 +1,17 @@
 PennyLane qiskit Plugin
 #########################
 
-.. image:: https://img.shields.io/travis/com/carstenblank/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
     :alt: Travis
-    :target: https://travis-ci.com/carstenblank/pennylane-qiskit
+    :target: https://travis-ci.com/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codecov/c/github/carstenblank/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/codecov/c/github/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
     :alt: Codecov coverage
-    :target: https://codecov.io/gh/carstenblank/pennylane-qiskit
+    :target: https://codecov.io/gh/XanaduAI/pennylane-qiskit
 
 .. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=for-the-badge
     :alt: Codacy grade
-    :target: https://www.codacy.com/app/carstenblank/pennylane-qiskit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=carstenblank/pennylane-qiskit&amp;utm_campaign=Badge_Grade
+    :target: https://www.codacy.com/app/XanaduAI/pennylane-qiskit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=carstenblank/pennylane-qiskit&amp;utm_campaign=Badge_Grade
 
 .. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=for-the-badge
     :alt: Read the Docs

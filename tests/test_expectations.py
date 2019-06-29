@@ -143,7 +143,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.Hadamard
             name = 'Hadamard'
 
-            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
             dev.pre_expval()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
@@ -194,7 +194,7 @@ class TestQVMBasic(BaseTest):
             O = qml.expval.qubit.Identity
             name = 'Identity'
 
-            dev._obs_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
+            dev._expval_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
             res = dev.pre_expval()
 
             res = np.array([dev.expval(name, 0, []), dev.expval(name, 1, [])])
