@@ -11,6 +11,7 @@ before_install:
   - sudo apt-get -y install g++-7
   - sudo apt-get -y install cmake
   - sudo apt-get -y install libopenblas-dev
+  - pip install pip --upgrade
   - pip install --upgrade -r requirements.txt
   - pip install --upgrade pytest pytest-cov wheel codecov
 install:
