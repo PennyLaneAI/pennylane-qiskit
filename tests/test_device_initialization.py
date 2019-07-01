@@ -49,7 +49,7 @@ def test_ibm_no_token():
             msg="Expected a ValueError if no IBMQX token is present.",
         )
 
-    # put the IBMQX token back into place fo other tests to use
+    # put the IBMQX token back into place for other tests to use
     if token_from_environment is not None:
         os.environ["IBMQX_TOKEN"] = token_from_environment
         token_from_environment_back = os.getenv("IBMQX_TOKEN")
