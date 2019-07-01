@@ -58,11 +58,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RX', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.qubit.Identity
+            O = qml.Identity
             name = 'Identity'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            res = dev.pre_expval()
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            res = dev.pre_measure()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
 
@@ -79,11 +79,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RX', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.PauliZ
+            O = qml.PauliZ
             name = 'PauliZ'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            res = dev.pre_expval()
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            res = dev.pre_measure()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
 
@@ -100,11 +100,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RY', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.PauliX
+            O = qml.PauliX
             name = 'PauliX'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            dev.pre_expval()
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev.pre_measure()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
             # below are the analytic expectation values for this circuit
@@ -120,11 +120,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RX', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.PauliY
+            O = qml.PauliY
             name = 'PauliY'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            dev.pre_expval()
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev.pre_measure()
 
             # below are the analytic expectation values for this circuit
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
@@ -140,11 +140,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RY', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.Hadamard
+            O = qml.Hadamard
             name = 'Hadamard'
 
-            dev._expval_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            dev.pre_expval()
+            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+            dev.pre_measure()
 
             res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
             # below are the analytic expectation values for this circuit
@@ -163,11 +163,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RY', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.qubit.Hermitian
+            O = qml.Hermitian
             name = 'Hermitian'
 
-            dev._expval_queue = [O(H, wires=[0], do_queue=False), O(H, wires=[1], do_queue=False)]
-            dev.pre_expval()
+            dev._obs_queue = [O(H, wires=[0], do_queue=False), O(H, wires=[1], do_queue=False)]
+            dev.pre_measure()
 
             res = np.array([dev.expval(name, [0], [H]), dev.expval(name, [1], [H])])
 
@@ -191,11 +191,11 @@ class TestQVMBasic(BaseTest):
             dev.apply('RX', wires=[1], par=[phi])
             dev.apply('CNOT', wires=[0, 1], par=[])
 
-            O = qml.expval.qubit.Identity
+            O = qml.Identity
             name = 'Identity'
 
-            dev._expval_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
-            res = dev.pre_expval()
+            dev._obs_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
+            res = dev.pre_measure()
 
             res = np.array([dev.expval(name, 0, []), dev.expval(name, 1, [])])
 
@@ -204,7 +204,7 @@ class TestQVMBasic(BaseTest):
 
 
 if __name__ == '__main__':
-    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', expectations.')
+    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', observables.')
     # run the tests in this file
     suite = unittest.TestSuite()
     for t in (TestQVMBasic,):
