@@ -27,7 +27,7 @@ corresponding PennyLane devices:
     BasicAerQiskitDevice
     IbmQQiskitDevice
 
-See below for a description of the devices and the supported Operations and observables.
+See below for a description of the devices and the supported operations and observables.
 
 AerQiskitDevice
 ###############
