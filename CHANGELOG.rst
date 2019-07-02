@@ -19,15 +19,43 @@ The format is based on `Keep a Changelog`_.
 `UNRELEASED`_
 ==============
 
+
+`0.0.7`_ - `0.0.8`_
+====================
+
+Added
+------
+
+- Added noise model and backend options to the devices as well as new observables.
+- Added all observables for calculating expectation values.
+- Added (copied & adjusted from pennylane-forest) test for the expectation values.
+- Added the necessary DefaultQubit device for comparison.
+- Added logging.
+
 Changed
 --------
 
-- Renamed the IBMQ device from :code:`qiskit.ibm` to :code:`qiskit.ibmq`
+- Changed exval queue to obs and expectations to observables as per latest pennylane.
+- Reversed qregs must to match the default qubit device behavior.
+- Renamed devices correctly.
+- Made wires explicit. If num_wires of operation is 0 then use the whole system as wires!
+- Renamed the IBMQ device from :code:`qiskit.ibm` to :code:`qiskit.ibmq`.
 
 Fixed
 ------
 
+- Fixed the Unitary gate.
+- Fixed the token loading and the shots.
+- Fixed and updated to qiskit v0.10.1
 - Fixed the valid expectation values of all devices. Along with it tests where fixed.
+
+
+Removed
+--------
+
+- Removed the IBMQX_TOKEN import and replace with the correct args.
+- Removed the unconditional make coverage.
+- Removed default qubit device, this is not tested in this package!
 
 
 `0.0.6`_ - `0.0.7`_
