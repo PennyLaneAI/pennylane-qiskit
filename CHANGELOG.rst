@@ -27,7 +27,7 @@ Added
 ------
 
 - Added noise model and backend options to the devices as well as new observables.
-- Added all observables for calculating expectation values.
+- Added support for all PennyLane observables for calculating expectation values.
 - Added (copied & adjusted from pennylane-forest) test for the expectation values.
 - Added the necessary DefaultQubit device for comparison.
 - Added logging.
