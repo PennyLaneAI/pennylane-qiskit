@@ -36,7 +36,7 @@ Changed
 --------
 
 - Changed expval_queue to obs_queue and expectations to observables as per latest pennylane.
-- Reversed qregs must to match the default qubit device behavior.
+- Reversed qregs to match the default qubit device behavior.
 - Renamed devices correctly.
 - Made wires explicit. If num_wires of operation is 0 then use the whole system as wires!
 - Renamed the IBMQ device from :code:`qiskit.ibm` to :code:`qiskit.ibmq`.
