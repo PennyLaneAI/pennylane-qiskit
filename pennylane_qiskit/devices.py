@@ -553,15 +553,19 @@ class IbmQQiskitDevice(QiskitDevice):
 
     """
     short_name = 'qiskit.ibmq'
-    _backend_kwargs = ['verbose', 'backend', 'ibmqx_token']
+    _backend_kwargs = ['verbose', 'backend', 'ibmqx_token', 'ibmqx_url']
 
     def __init__(self, wires, backend='ibmq_qasm_simulator', shots=1024, **kwargs):
         token_from_env = os.getenv('IBMQX_TOKEN')
         if 'ibmqx_token' not in kwargs and token_from_env is None:
             raise ValueError("IBMQX Token is missing!")
         token = token_from_env or kwargs['ibmqx_token']
+        url_from_env = os.getenv('IBMQX_URL')
+        if 'ibmqx_url' not in kwargs and url_from_env is None:
+            raise ValueError("IBMQX URL is missing!")
+        url = url_from_env or kwargs['ibmqx_url']
         super().__init__(wires=wires, backend=backend, shots=shots, **kwargs)
         self._provider = qiskit.IBMQ
-        if token not in map(lambda e: e['token'], self._provider.active_accounts()):
-            self._provider.enable_account(token)
+        if {'token': token, 'url': url} not in self._provider.active_accounts():
+            self._provider.enable_account(token, url)
         self._capabilities['backend'] = [b.name() for b in self._provider.backends()]
