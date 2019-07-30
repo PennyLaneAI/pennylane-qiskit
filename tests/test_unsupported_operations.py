@@ -59,7 +59,7 @@ class UnsupportedOperationTest(BaseTest):
             @qml.qnode(device)
             def circuit():
                 qml.Beamsplitter(0.2, 0.1, wires=[0, 1])  # this expectation will never be supported
-                return qml.expval.Homodyne(0.7, 0)
+                return qml.expval(qml.QuadOperator(0.7, 0))
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
 
@@ -74,7 +74,7 @@ class UnsupportedOperationTest(BaseTest):
         for device in self.devices:
             @qml.qnode(device)
             def circuit():
-                return qml.expval.Homodyne(0.7, 0)  # this expectation will never be supported
+                return qml.expval(qml.QuadOperator(0.7, 0))  # this expectation will never be supported
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
 

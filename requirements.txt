@@ -1,3 +1,3 @@
-qiskit>=0.10.1,<0.11.0
-PennyLane
+qiskit>=0.11.1
+PennyLane>=0.4
 numpy

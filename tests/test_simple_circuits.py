@@ -312,7 +312,7 @@ class SimpleCircuitsTest(BaseTest):
                     for i, p in enumerate(bits_to_flip):
                         if p == 1:
                             qml.PauliX(wires=[i])
-                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
+                    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2)), qml.expval(qml.PauliZ(3))
 
                 self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
                                           delta=self.tol)
@@ -330,7 +330,7 @@ class SimpleCircuitsTest(BaseTest):
                 qml.RY(y, wires=[0])
                 qml.RX(x, wires=[0])
                 qml.CNOT(wires=[0, 1])
-                return qml.expval.PauliZ(wires=1)
+                return qml.expval(qml.PauliZ(wires=1))
 
             self.assertAllAlmostEqual(0.96875, circuit(0.2, 0.1, 0.3), delta=self.tol)
 
@@ -348,7 +348,7 @@ class SimpleCircuitsTest(BaseTest):
                 @qml.qnode(device)
                 def circuit():
                     qml.QubitStateVector(state, wires=[0, 1, 2, 3])
-                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
+                    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2)), qml.expval(qml.PauliZ(3))
 
                 result = np.array(circuit())
                 expected = np.array(list(map(lambda c: 1.0 if c == '0' else -1.0, "{:b}".format(index).zfill(self.num_subsystems))))
@@ -373,7 +373,7 @@ class SimpleCircuitsTest(BaseTest):
                 @qml.qnode(device)
                 def circuit():
                     qml.QubitUnitary(i, wires=[0])
-                    return qml.expval.PauliZ(0)
+                    return qml.expval(qml.PauliZ(0))
 
                 circuit()
                 # TODO 2018-12-23 Carsten Blank: create meaningful tests
@@ -395,7 +395,7 @@ class SimpleCircuitsTest(BaseTest):
                     for i, p in enumerate(bits_to_flip):
                         if p == 1:
                             qml.PauliX(wires=[i])
-                    return qml.expval.PauliZ(0), qml.expval.PauliZ(1), qml.expval.PauliZ(2), qml.expval.PauliZ(3)
+                    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2)), qml.expval(qml.PauliZ(3))
                 # The assert is almost useless. Depending on the current noise model, the expectation values might be
                 # very different than what we expect. I guess it would be pretty much the best practice to assume
                 # that it is at least more likely to measure a 1 than a 0, hence we need to make sure that the

@@ -79,11 +79,11 @@ def test_noise_model_for_aer():
 
         dev = qml.device("qiskit.aer", wires=num_subsystems, noise_model=noise_model)
         assert dev._noise_model is not None
-        assert noise_model.as_dict() == dev._noise_model.as_dict()
+        assert noise_model.to_dict() == dev._noise_model.to_dict()
 
         dev2 = AerQiskitDevice(wires=num_subsystems, noise_model=noise_model)
         assert dev2._noise_model is not None
-        assert noise_model.as_dict() == dev2._noise_model.as_dict()
+        assert noise_model.to_dict() == dev2._noise_model.to_dict()
 
     except DeviceError:
         raise Exception(
@@ -99,11 +99,11 @@ def test_noise_model_for_basic_aer():
             "qiskit.basicaer", wires=num_subsystems, noise_model=noise_model
         )
         assert dev._noise_model is not None
-        assert noise_model.as_dict() == dev._noise_model.as_dict()
+        assert noise_model.to_dict() == dev._noise_model.to_dict()
 
         dev2 = BasicAerQiskitDevice(wires=num_subsystems, noise_model=noise_model)
         assert dev2._noise_model is not None
-        assert noise_model.as_dict() == dev2._noise_model.as_dict()
+        assert noise_model.to_dict() == dev2._noise_model.to_dict()
 
     except DeviceError:
         raise Exception(

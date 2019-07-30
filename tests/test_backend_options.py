@@ -82,7 +82,7 @@ class BackendOptionsTest(BaseTest):
 
                 @qml.qnode(dev)
                 def circuit():
-                    return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+                    return qml.expval(qml.PauliZ(wires=[0])), qml.expval(qml.PauliZ(wires=[1]))
 
                 measurement = circuit()
 
@@ -104,7 +104,7 @@ class BackendOptionsTest(BaseTest):
                 # An angle of 1e-1 would fail!
                 angle = 1e-2
                 qml.RY(angle, wires=[0])
-                return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+                return qml.expval(qml.PauliZ(wires=[0])), qml.expval(qml.PauliZ(wires=[1]))
 
             measurement = circuit()
 
@@ -124,7 +124,7 @@ class BackendOptionsTest(BaseTest):
 
                 @qml.qnode(dev)
                 def circuit():
-                    return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+                    return qml.expval(qml.PauliZ(wires=[0])), qml.expval(qml.PauliZ(wires=[1]))
 
                 circuit()
 
@@ -136,7 +136,7 @@ class BackendOptionsTest(BaseTest):
                     if isinstance(value, (list, np.ndarray)):
                         self.assertAllEqual(value, other_value)
                     else:
-                        self.assertEquals(value, other_value)
+                        self.assertEqual(value, other_value)
 
             all_backend_options = {
                 'initial_unitary': np.array([
@@ -171,7 +171,7 @@ class BackendOptionsTest(BaseTest):
 
                 @qml.qnode(dev)
                 def circuit():
-                    return qml.expval.PauliZ(wires=[0]), qml.expval.PauliZ(wires=[1])
+                    return qml.expval(qml.PauliZ(wires=[0])), qml.expval(qml.PauliZ(wires=[1]))
 
                 circuit()
 
@@ -185,7 +185,7 @@ class BackendOptionsTest(BaseTest):
                     if isinstance(value, (list, np.ndarray)):
                         self.assertAllEqual(value, other_value)
                     else:
-                        self.assertEquals(value, other_value)
+                        self.assertEqual(value, other_value)
 
             all_backend_options = {
                 'initial_unitary': np.array([

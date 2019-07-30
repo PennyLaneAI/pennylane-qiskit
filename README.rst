@@ -102,7 +102,7 @@ parameters would look like:
         qml.RY(y, wires=[0])
         qml.RX(x, wires=[0])
         qml.CNOT(wires=[0, 1])
-        return qml.expval.PauliZ(wires=1)
+        return qml.expval(qml.PauliZ(wires=1))
 
 You can then execute the circuit like any other function to get the quantum mechanical expectation value.
 
@@ -214,8 +214,8 @@ Carsten Blank, Sebastian Boerakker, Christian Gogolin, Josh Izaac
 Support
 =======
 
-- **Source Code:** https://github.com/carstenblank/pennylane-qiskit
-- **Issue Tracker:** https://github.com/carstenblank/pennylane-qiskit/issues
+- **Source Code:** https://github.com/XanaduAI/pennylane-qiskit
+- **Issue Tracker:** https://github.com/XanaduAI/pennylane-qiskit/issues
 
 If you are having issues, please let us know by posting the issue on our Github issue tracker.
 
