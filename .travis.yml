@@ -12,6 +12,7 @@ before_install:
   - sudo apt-get -y install cmake
   - sudo apt-get -y install libopenblas-dev
   - pip install pip --upgrade
+  - pip install -e git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
   - pip install --upgrade -r requirements.txt
   - pip install --upgrade pytest pytest-cov wheel codecov
 install:
