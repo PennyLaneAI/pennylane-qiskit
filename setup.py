@@ -21,15 +21,18 @@ with open("pennylane_qiskit/_version.py") as f:
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
-with open("requirements.txt") as f:
-    requirements = f.readlines()
+requirements = [
+    "qiskit>=0.11.1",
+    "pennylane>=0.4",
+    "numpy"
+]
 
 info = {
     'name': 'PennyLane-qiskit',
     'version': version,
-    'maintainer': 'Carsten Blank',
-    'maintainer_email': 'blank@data-cybernetics.com',
-    'url': 'http://data-cybernetics.com',
+    'maintainer': 'Xanadu',
+    'maintainer_email': 'software@xanadu.ai',
+    'url': 'http://pennylane.ai',
     'license': 'Apache License 2.0',
     'packages': [
         'pennylane_qiskit'

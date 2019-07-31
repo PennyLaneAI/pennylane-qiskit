@@ -83,8 +83,9 @@ class CompareWithDefaultQubitTest(BaseTest):
                             operation_class = getattr(qml, operation)
                         else:
                             operation_class = getattr(pennylane_qiskit, operation)
-                        if hasattr(qml.expval, observable):
-                            observable_class = getattr(qml.expval, observable)
+
+                        if hasattr(qml.ops, observable):
+                            observable_class = getattr(qml.ops, observable)
                         else:
                             observable_class = getattr(pennylane_qiskit.expval, observable)
 
@@ -141,7 +142,7 @@ class CompareWithDefaultQubitTest(BaseTest):
 
                         # Apply operator and observable
                         operation_class(*operation_pars, wires=operation_wires)
-                        return observable_class(*observable_pars, observable_wires)
+                        return qml.expval(observable_class(*observable_pars, observable_wires))
 
                     output = circuit()
                     if (operation, observable) not in outputs:
