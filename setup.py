@@ -32,7 +32,7 @@ info = {
     'version': version,
     'maintainer': 'Xanadu',
     'maintainer_email': 'software@xanadu.ai',
-    'url': 'http://pennylane.ai',
+    'url': 'https://github.com/XanaduAI/pennylane-qiskit',
     'license': 'Apache License 2.0',
     'packages': [
         'pennylane_qiskit'
