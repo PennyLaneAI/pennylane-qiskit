@@ -14,106 +14,93 @@
 """
 Unit tests for the :mod:`pennylane_qiskit` BasisState operation.
 """
-
-import unittest
-import logging as log
-from defaults import pennylane as qml, BaseTest
-import pennylane
+import pennylane as qml
 from pennylane import numpy as np
 
 from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice
 from pennylane_qiskit.devices import AerQiskitDevice
+import pytest
+import os
 
-log.getLogger('defaults')
+num_wires = 4
+bits = [
+    np.array([0, 0, 0, 0]),
+    np.array([0, 1, 1, 0]),
+    np.array([1, 1, 1, 0]),
+    np.array([1, 1, 1, 1]),
+]
+bits_subsystem = [
+    np.array([0, 0, 0]),
+    np.array([1, 0, 0]),
+    np.array([0, 1, 1]),
+    np.array([1, 1, 0]),
+    np.array([1, 1, 1]),
+]
 
+IBMQX_TOKEN = None
+ibm_options = qml.default_config["qiskit.ibmq"]
 
-class BasisStateTest(BaseTest):
-    """test the BasisState operation.
-    """
+if "ibmqx_token" in ibm_options:
+    IBMQX_TOKEN = ibm_options["ibmqx_token"]
 
-    num_subsystems = 4
-    devices = None
+elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
+    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
 
-    def setUp(self):
-        super().setUp()
+devices = [BasicAerQiskitDevice(wires=num_wires), AerQiskitDevice(wires=num_wires)]
 
-        self.devices = []
-        if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
-        if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
-        if self.args.device == 'ibmq' or self.args.device == 'all':
-            if self.args.ibmqx_token is not None:
-                self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
-            else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
-                            "found in the PennyLane configuration file.")
-
-    def test_basis_state(self):
-        """Test BasisState with preparations on the whole system."""
-        if self.devices is None:
-            return
-        self.logTestName()
-
-        for device in self.devices:
-            for bits_to_flip in [np.array([0, 0, 0, 0]),
-                                 np.array([0, 1, 1, 0]),
-                                 np.array([1, 1, 1, 0]),
-                                 np.array([1, 1, 1, 1])]:
-                @qml.qnode(device)
-                def circuit():
-                    qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems)))
-                    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2)), qml.expval(qml.PauliZ(3))
-
-                log.info("BasisState on device %s with bitflip pattern %s.", device.name, bits_to_flip)
-
-                self.assertAllAlmostEqual([1] * self.num_subsystems - 2 * bits_to_flip, np.array(circuit()),
-                                          delta=self.tol)
-
-    def test_basis_state_on_subsystem(self):
-        """Test BasisState with preparations on subsystems."""
-        if self.devices is None:
-            return
-        self.logTestName()
-
-        for device in self.devices:
-            for bits_to_flip in [np.array([0, 0, 0]),
-                                 np.array([1, 0, 0]),
-                                 np.array([0, 1, 1]),
-                                 np.array([1, 1, 0]),
-                                 np.array([1, 1, 1])]:
-                @qml.qnode(device)
-                def circuit():
-                    qml.BasisState(bits_to_flip, wires=list(range(self.num_subsystems - 1)))
-                    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2)), qml.expval(qml.PauliZ(3))
-
-                log.info("BasisState on device %s with bitflip pattern %s (sub-system).", device.name, bits_to_flip)
-
-                self.assertAllAlmostEqual([1] * (self.num_subsystems - 1) - 2 * bits_to_flip, np.array(circuit()[:-1]),
-                                          delta=self.tol)
-
-    def test_disallow_basis_state_after_other_operation(self):
-        if self.devices is None:
-            return
-        self.logTestName()
-
-        for device in self.devices:
-            @qml.qnode(device)
-            def circuit():
-                qml.PauliX(wires=[0])
-                qml.BasisState(np.array([0, 1, 0, 1]), wires=list(range(self.num_subsystems)))
-                return qml.expval(qml.PauliZ(0))
-
-            self.assertRaises(pennylane._device.DeviceError, circuit)
+if IBMQX_TOKEN is not None:
+    devices.append(
+        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
+    )
 
 
-if __name__ == '__main__':
-    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')
-    # run the tests in this file
-    suite = unittest.TestSuite()
-    for t in (BasisStateTest,):
-        ttt = unittest.TestLoader().loadTestsFromTestCase(t)
-        suite.addTests(ttt)
+@pytest.mark.parametrize("device", devices)
+@pytest.mark.parametrize("bits_to_flip", bits)
+def test_basis_state(device, bits_to_flip):
+    """Tests BasisState with preparations on the whole system."""
 
-    unittest.TextTestRunner().run(suite)
+    @qml.qnode(device)
+    def circuit():
+        qml.BasisState(bits_to_flip, wires=[0, 1, 2, 3])
+        return (
+            qml.expval(qml.PauliZ(0)),
+            qml.expval(qml.PauliZ(1)),
+            qml.expval(qml.PauliZ(2)),
+            qml.expval(qml.PauliZ(3)),
+        )
+
+    assert np.allclose([1] * num_wires - 2 * bits_to_flip, np.array(circuit()))
+
+
+@pytest.mark.parametrize("device", devices)
+@pytest.mark.parametrize("bits_to_flip", bits_subsystem)
+def test_basis_state_on_subsystem(device, bits_to_flip):
+    """Tests BasisState with preparations on subsystems."""
+
+    @qml.qnode(device)
+    def circuit():
+        qml.BasisState(bits_to_flip, wires=[i for i in range(num_wires - 1)])
+        return (
+            qml.expval(qml.PauliZ(0)),
+            qml.expval(qml.PauliZ(1)),
+            qml.expval(qml.PauliZ(2)),
+            qml.expval(qml.PauliZ(3)),
+        )
+
+    assert np.allclose(
+        [1] * (num_wires - 1) - 2 * bits_to_flip, np.array(circuit()[:-1])
+    )
+
+
+@pytest.mark.parametrize("device", devices)
+def test_disallow_basis_state_after_other_operation(device):
+    """Tests correct error is raised if trying to set basis after operation."""
+
+    @qml.qnode(device)
+    def circuit():
+        qml.PauliX(wires=[0])
+        qml.BasisState(np.array([0, 1, 0, 1]), wires=[i for i in range(num_wires - 1)])
+        return qml.expval(qml.PauliZ(0))
+
+    with pytest.raises(qml._device.DeviceError):
+        circuit()
