@@ -36,13 +36,16 @@ elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
 
 num_subsystems = 2
 num_wires = 2
-shots = 16 * 1024
-ibmq_shots = 8 * 1024
-devices = [BasicAerQiskitDevice(wires=num_wires), AerQiskitDevice(wires=num_wires)]
+shots = 100
+ibmq_shots = 100
+devices = [BasicAerQiskitDevice(wires=num_wires, shots=shots),
+           AerQiskitDevice(wires=num_wires, shots=shots)]
 
 if IBMQX_TOKEN is not None:
     devices.append(
-        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
+        IbmQQiskitDevice(wires=num_wires,
+                         num_runs=ibmq_shots,
+                         ibmqx_token=ibmqx_token)
     )
 
 
@@ -65,7 +68,12 @@ def test_identity_expectation(device):
     res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
 
     # below are the analytic expectation values for this circuit (trace should always be 1)
-    assert np.allclose(res, np.array([1, 1]), atol=1 / np.sqrt(device.shots))
+    assert np.allclose(
+        res,
+        np.array([1, 1]),
+        atol=3 / np.sqrt(device.shots),
+        rtol=3 / np.sqrt(device.shots),
+    )
 
 
 @pytest.mark.parametrize("device", devices)
@@ -91,7 +99,8 @@ def test_pauliz_expectation(device):
     assert np.allclose(
         res,
         np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]),
-        atol=1 / np.sqrt(device.shots),
+        atol=3 / np.sqrt(device.shots),
+        rtol=3 / np.sqrt(device.shots),
     )
 
 
@@ -116,7 +125,8 @@ def test_paulix_expectation(device):
     assert np.allclose(
         res,
         np.array([np.sin(theta) * np.sin(phi), np.sin(phi)]),
-        atol=1 / np.sqrt(device.shots),
+        atol=3 / np.sqrt(device.shots),
+        rtol=3 / np.sqrt(device.shots),
     )
 
 
@@ -139,7 +149,10 @@ def test_pauliy_expectation(device):
     res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
     # below are the analytic expectation values for this circuit
     assert np.allclose(
-        res, np.array([0, -np.cos(theta) * np.sin(phi)]), atol=1 / np.sqrt(device.shots)
+        res,
+        np.array([0, -np.cos(theta) * np.sin(phi)]),
+        atol=3 / np.sqrt(device.shots),
+        rtol=3 / np.sqrt(device.shots),
     )
 
 
@@ -167,7 +180,11 @@ def test_hadamard_expectation(device):
             np.cos(theta) * np.cos(phi) + np.sin(phi),
         ]
     ) / np.sqrt(2)
-    assert np.allclose(res, expected, atol=1 / np.sqrt(device.shots))
+    assert np.allclose(
+        res, expected,
+        atol=5 / np.sqrt(device.shots),
+        rtol=5 / np.sqrt(device.shots)
+    )
 
 
 @pytest.mark.parametrize("device", devices)
@@ -206,7 +223,12 @@ def test_hermitian_expectation(device):
     ev2 = ((a - d) * np.cos(theta) * np.cos(phi) + 2 * re_b * np.sin(phi) + a + d) / 2
     expected = np.array([ev1, ev2])
 
-    assert np.allclose(res, expected, atol=1 / np.sqrt(device.shots))
+    assert np.allclose(
+        res,
+        expected,
+        atol=5 / np.sqrt(device.shots),
+        rtol=5 / np.sqrt(device.shots)
+    )
 
 
 @pytest.mark.parametrize("device", devices)
@@ -228,4 +250,9 @@ def test_int_wires(device):
     res = np.array([device.expval(name, 0, []), device.expval(name, 1, [])])
 
     # below are the analytic expectation values for this circuit (trace should always be 1)
-    assert np.allclose(res, np.array([1, 1]), atol=1 / np.sqrt(device.shots))
+    assert np.allclose(
+        res,
+        np.array([1, 1]),
+        atol=3 / np.sqrt(device.shots),
+        rtol=3 / np.sqrt(device.shots),
+    )
