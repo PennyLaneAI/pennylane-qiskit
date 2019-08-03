@@ -20,195 +20,212 @@ from pennylane import numpy as np
 from defaults import pennylane as qml, BaseTest
 from pennylane_qiskit import BasicAerQiskitDevice, AerQiskitDevice, IbmQQiskitDevice
 import unittest
+import pytest
+import os
 
-log.getLogger('defaults')
+log.getLogger("defaults")
 
+IBMQX_TOKEN = None
+ibm_options = qml.default_config["qiskit.ibmq"]
 
-class TestQVMBasic(BaseTest):
-    """Unit tests for the QVM simulator."""
-    # pylint: disable=protected-access
+if "ibmqx_token" in ibm_options:
+    IBMQX_TOKEN = ibm_options["ibmqx_token"]
 
-    num_subsystems = 2
-    shots = 16 * 1024
-    ibmq_shots = 8 * 1024
-    devices = None
+elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
+    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
 
-    def setUp(self):
-        super().setUp()
+num_subsystems = 2
+num_wires = 2
+shots = 16 * 1024
+ibmq_shots = 8 * 1024
+devices = [BasicAerQiskitDevice(wires=num_wires), AerQiskitDevice(wires=num_wires)]
 
-        self.devices = []
-        if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
-        if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
-        if self.args.device == 'ibmq' or self.args.device == 'all':
-            if self.args.ibmqx_token is not None:
-                self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=self.args.ibmqx_token))
-            else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
-                            "found in the PennyLane configuration file.")
-
-    def test_identity_expectation(self):
-        """Test that identity expectation value (i.e. the trace) is 1"""
-        theta = 0.432
-        phi = 0.123
-        for dev in self.devices:
-            dev.apply('RX', wires=[0], par=[theta])
-            dev.apply('RX', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.Identity
-            name = 'Identity'
-
-            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            res = dev.pre_measure()
-
-            res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
-
-            # below are the analytic expectation values for this circuit (trace should always be 1)
-            self.assertAllAlmostEqual(res, np.array([1, 1]), delta=3/np.sqrt(dev.shots))
-
-    def test_pauliz_expectation(self):
-        """Test that PauliZ expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
-        for dev in self.devices:
-            dev.apply('RX', wires=[0], par=[theta])
-            dev.apply('RX', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.PauliZ
-            name = 'PauliZ'
-
-            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            res = dev.pre_measure()
-
-            res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
-
-            # below are the analytic expectation values for this circuit
-            self.assertAllAlmostEqual(res, np.array([np.cos(theta), np.cos(theta)*np.cos(phi)]), delta=3/np.sqrt(dev.shots))
-
-    def test_paulix_expectation(self):
-        """Test that PauliX expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
-        for dev in self.devices:
-            dev.apply('RY', wires=[0], par=[theta])
-            dev.apply('RY', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.PauliX
-            name = 'PauliX'
-
-            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            dev.pre_measure()
-
-            res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
-            # below are the analytic expectation values for this circuit
-            self.assertAllAlmostEqual(res, np.array([np.sin(theta)*np.sin(phi), np.sin(phi)]), delta=3/np.sqrt(dev.shots))
-
-    def test_pauliy_expectation(self):
-        """Test that PauliY expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
-        for dev in self.devices:
-            dev.apply('RX', wires=[0], par=[theta])
-            dev.apply('RX', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.PauliY
-            name = 'PauliY'
-
-            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            dev.pre_measure()
-
-            # below are the analytic expectation values for this circuit
-            res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
-            self.assertAllAlmostEqual(res, np.array([0, -np.cos(theta)*np.sin(phi)]), delta=3/np.sqrt(dev.shots))
-
-    def test_hadamard_expectation(self):
-        """Test that Hadamard expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
-        for dev in self.devices:
-            dev.apply('RY', wires=[0], par=[theta])
-            dev.apply('RY', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.Hadamard
-            name = 'Hadamard'
-
-            dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-            dev.pre_measure()
-
-            res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
-            # below are the analytic expectation values for this circuit
-            expected = np.array([np.sin(theta)*np.sin(phi)+np.cos(theta), np.cos(theta)*np.cos(phi)+np.sin(phi)])/np.sqrt(2)
-            self.assertAllAlmostEqual(res, expected, delta=3/np.sqrt(dev.shots))
-
-    def test_hermitian_expectation(self):
-        """Test that arbitrary Hermitian expectation values are correct"""
-        theta = 0.432
-        phi = 0.123
-        H = np.array([[1.02789352, 1.61296440 - 0.3498192j],
-                      [1.61296440 + 0.3498192j, 1.23920938 + 0j]])
-
-        for dev in self.devices:
-            dev.apply('RY', wires=[0], par=[theta])
-            dev.apply('RY', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.Hermitian
-            name = 'Hermitian'
-
-            dev._obs_queue = [O(H, wires=[0], do_queue=False), O(H, wires=[1], do_queue=False)]
-            dev.pre_measure()
-
-            res = np.array([dev.expval(name, [0], [H]), dev.expval(name, [1], [H])])
-
-            # below are the analytic expectation values for this circuit with arbitrary
-            # Hermitian observable H
-            a = H[0, 0]
-            re_b = H[0, 1].real
-            d = H[1, 1]
-            ev1 = ((a-d)*np.cos(theta)+2*re_b*np.sin(theta)*np.sin(phi)+a+d)/2
-            ev2 = ((a-d)*np.cos(theta)*np.cos(phi)+2*re_b*np.sin(phi)+a+d)/2
-            expected = np.array([ev1, ev2])
-
-            self.assertAllAlmostEqual(res, expected, delta=5/np.sqrt(dev.shots))
-
-    def test_int_wires(self):
-        """Test that passing wires as int works for expval."""
-        theta = 0.432
-        phi = 0.123
-        for dev in self.devices:
-            dev.apply('RX', wires=[0], par=[theta])
-            dev.apply('RX', wires=[1], par=[phi])
-            dev.apply('CNOT', wires=[0, 1], par=[])
-
-            O = qml.Identity
-            name = 'Identity'
-
-            dev._obs_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
-            res = dev.pre_measure()
-
-            res = np.array([dev.expval(name, 0, []), dev.expval(name, 1, [])])
-
-            # below are the analytic expectation values for this circuit (trace should always be 1)
-            self.assertAllAlmostEqual(res, np.array([1, 1]), delta=3/np.sqrt(dev.shots))
+if IBMQX_TOKEN is not None:
+    devices.append(
+        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
+    )
 
 
-if __name__ == '__main__':
-    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', observables.')
-    # run the tests in this file
-    suite = unittest.TestSuite()
-    for t in (TestQVMBasic,):
-        ttt = unittest.TestLoader().loadTestsFromTestCase(t)
-        suite.addTests(ttt)
+@pytest.mark.parametrize("device", devices)
+def test_identity_expectation(device):
+    """Test that identity expectation value (i.e. the trace) is 1"""
+    theta = 0.432
+    phi = 0.123
 
-    unittest.TextTestRunner().run(suite)
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.Identity
+    name = "Identity"
+
+    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+    res = device.pre_measure()
+
+    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+
+    # below are the analytic expectation values for this circuit (trace should always be 1)
+    assert np.allclose(res, np.array([1, 1]), atol=1 / np.sqrt(device.shots))
+
+
+@pytest.mark.parametrize("device", devices)
+def test_pauliz_expectation(device):
+    """Tests that PauliZ expectation value is correct"""
+    theta = 0.432
+    phi = 0.123
+
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.PauliZ
+    name = "PauliZ"
+
+    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+    res = device.pre_measure()
+
+    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    print(res)
+
+    # below are the analytic expectation values for this circuit
+    assert np.allclose(
+        res,
+        np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]),
+        atol=1 / np.sqrt(device.shots),
+    )
+
+
+@pytest.mark.parametrize("device", devices)
+def test_paulix_expectation(device):
+    """Tests that PauliX expectation value is correct"""
+    theta = 0.432
+    phi = 0.123
+
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.PauliX
+    name = "PauliX"
+
+    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+    device.pre_measure()
+
+    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    # below are the analytic expectation values for this circuit
+    assert np.allclose(
+        res,
+        np.array([np.sin(theta) * np.sin(phi), np.sin(phi)]),
+        atol=1 / np.sqrt(device.shots),
+    )
+
+
+@pytest.mark.parametrize("device", devices)
+def test_pauliy_expectation(device):
+    """Test that PauliY expectation value is correct"""
+    theta = 0.432
+    phi = 0.123
+
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.PauliY
+    name = "PauliY"
+
+    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+    device.pre_measure()
+
+    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    # below are the analytic expectation values for this circuit
+    assert np.allclose(
+        res, np.array([0, -np.cos(theta) * np.sin(phi)]), atol=1 / np.sqrt(device.shots)
+    )
+
+
+@pytest.mark.parametrize("device", devices)
+def test_hadamard_expectation(device):
+    """Tests that Hadamard expectation value is correct"""
+    theta = 0.432
+    phi = 0.123
+
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.Hadamard
+    name = "Hadamard"
+
+    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
+    device.pre_measure()
+
+    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    # below are the analytic expectation values for this circuit
+    expected = np.array(
+        [
+            np.sin(theta) * np.sin(phi) + np.cos(theta),
+            np.cos(theta) * np.cos(phi) + np.sin(phi),
+        ]
+    ) / np.sqrt(2)
+    assert np.allclose(res, expected, atol=1 / np.sqrt(device.shots))
+
+
+@pytest.mark.parametrize("device", devices)
+def test_hermitian_expectation(device):
+    """Tests that arbitrary Hermitian expectation values are correct"""
+    theta = 0.432
+    phi = 0.123
+    H = np.array(
+        [
+            [1.02789352, 1.61296440 - 0.3498192j],
+            [1.61296440 + 0.3498192j, 1.23920938 + 0j],
+        ]
+    )
+
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.Hermitian
+    name = "Hermitian"
+
+    device._obs_queue = [
+        O(H, wires=[0], do_queue=False),
+        O(H, wires=[1], do_queue=False),
+    ]
+    device.pre_measure()
+
+    res = np.array([device.expval(name, [0], [H]), device.expval(name, [1], [H])])
+
+    # below are the analytic expectation values for this circuit with arbitrary
+    # Hermitian observable H
+    a = H[0, 0]
+    re_b = H[0, 1].real
+    d = H[1, 1]
+    ev1 = ((a - d) * np.cos(theta) + 2 * re_b * np.sin(theta) * np.sin(phi) + a + d) / 2
+    ev2 = ((a - d) * np.cos(theta) * np.cos(phi) + 2 * re_b * np.sin(phi) + a + d) / 2
+    expected = np.array([ev1, ev2])
+
+    assert np.allclose(res, expected, atol=1 / np.sqrt(device.shots))
+
+
+@pytest.mark.parametrize("device", devices)
+def test_int_wires(device):
+    """Test that passing wires as int works for expval."""
+    theta = 0.432
+    phi = 0.123
+
+    device.apply("RX", wires=[0], par=[theta])
+    device.apply("RX", wires=[1], par=[phi])
+    device.apply("CNOT", wires=[0, 1], par=[])
+
+    O = qml.Identity
+    name = "Identity"
+
+    device._obs_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
+    res = device.pre_measure()
+
+    res = np.array([device.expval(name, 0, []), device.expval(name, 1, [])])
+
+    # below are the analytic expectation values for this circuit (trace should always be 1)
+    assert np.allclose(res, np.array([1, 1]), atol=1 / np.sqrt(device.shots))
