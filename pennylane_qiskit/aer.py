@@ -58,7 +58,7 @@ class AerDevice(QiskitDevice):
         shots (int): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables
 
-    Keyword Args
+    Keyword Args:
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.

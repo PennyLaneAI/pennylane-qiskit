@@ -1,27 +1,27 @@
 PennyLane Qiskit Plugin
 #######################
 
-.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
     :alt: Travis
     :target: https://travis-ci.com/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codecov/c/github/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/codecov/c/github/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
     :alt: Codecov coverage
     :target: https://codecov.io/gh/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=for-the-badge
+.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=popout-square
     :alt: Codacy grade
     :target: https://www.codacy.com/app/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=for-the-badge
+.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=popout-square
     :alt: Read the Docs
     :target: https://pennylane-qiskit.readthedocs.io
 
-.. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=for-the-badge
+.. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=popout-square
     :alt: PyPI
     :target: https://pypi.org/project/PennyLane-qiskit
 
-.. image:: https://img.shields.io/pypi/pyversions/PennyLane-qiskit.svg?style=for-the-badge
+.. image:: https://img.shields.io/pypi/pyversions/PennyLane-qiskit.svg?style=popout-square
     :alt: PyPI - Python Version
     :target: https://pypi.org/project/PennyLane-qiskit
 
@@ -162,8 +162,8 @@ You can instantiate a noise model and apply it to the device by calling
 Please refer to the Qiskit documentation for more information on
 `noise models <https://qiskit.org/documentation/aer/device_noise_simulation.html>`_.
 
-IBM Q Experience support
-========================
+IBM Q Experience
+================
 
 PennyLane-Qiskit supports running PennyLane on IBM Q hardware via the ``qistkit.ibmq`` device.
 You can choose between different backends having either simulators or real hardware.

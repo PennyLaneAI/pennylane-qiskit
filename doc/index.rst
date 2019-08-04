@@ -1,5 +1,5 @@
-PennyLane qiskit Plugin
-#########################
+PennyLane Qiskit Plugin
+#######################
 
 :Release: |release|
 :Date: |today|
@@ -28,8 +28,12 @@ Contents
 .. rst-class:: contents local topic
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Code details
 
-   devices
-   operations
+   code/operations
+   code/qiskit_device
+   code/basic_aer
+   code/aer
+   code/ibmq
+   code/gates

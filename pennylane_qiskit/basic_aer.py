@@ -15,9 +15,9 @@
 BasicAer Device
 ===============
 
-**Module name:** :mod:`pennylane_qiskit.basicaer`
+**Module name:** :mod:`pennylane_qiskit.basic_aer`
 
-.. currentmodule:: pennylane_qiskit.basicaer
+.. currentmodule:: pennylane_qiskit.basic_aer
 
 This module contains the :class:`~.BasicAerDevice` class, a PennyLane device that allows
 evaluation and differentiation of Qiskit Terra's BasicAer simulator
@@ -56,7 +56,7 @@ class BasicAerDevice(QiskitDevice):
         shots (int): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables
 
-    Keyword Args
+    Keyword Args:
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.

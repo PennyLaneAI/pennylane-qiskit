@@ -24,6 +24,9 @@ Classes
 
 .. autosummary::
    QiskitDevice
+
+Code details
+~~~~~~~~~~~~
 """
 # pylint: disable=too-many-instance-attributes
 import abc
@@ -86,7 +89,7 @@ class QiskitDevice(Device, abc.ABC):
             to estimate expectation values of observables.
             For simulator devices, 0 means the exact EV is returned.
 
-    Keyword Args
+    Keyword Args:
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
