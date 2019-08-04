@@ -83,7 +83,7 @@ class IBMQDevice(QiskitDevice):
             # turn off deprecation warnings
             # TODO: remove IBM Q v1 API calls when fully deprecated
             with warnings.catch_warnings():
-                warnings.filterwarnings("ignore",category=DeprecationWarning)
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
 
                 # check if an IBM Q account is already active.
                 #
@@ -105,7 +105,9 @@ class IBMQDevice(QiskitDevice):
                         except IBMQAccountError:
                             # attempt to enable an account manually using
                             # a provided token
-                            raise IBMQAccountError("No active IBM Q account, and no IBM Q token provided.") from None
+                            raise IBMQAccountError(
+                                "No active IBM Q account, and no IBM Q token provided."
+                            ) from None
 
         # IBM Q account is now enabled
 
