@@ -49,6 +49,7 @@ Operations
 Code details
 ~~~~~~~~~~~~
 """
+# pylint: disable=too-few-public-methods
 from pennylane.operation import Operation
 
 

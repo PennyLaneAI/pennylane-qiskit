@@ -33,6 +33,7 @@ Classes
 Code details
 ~~~~~~~~~~~~
 """
+# pylint: disable=attribute-defined-outside-init
 import numpy as np
 
 from qiskit import QuantumRegister
