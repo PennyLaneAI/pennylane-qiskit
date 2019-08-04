@@ -21,8 +21,8 @@ import unittest
 import pennylane
 
 from defaults import pennylane as qml, BaseTest
-from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice,  \
-    AerQiskitDevice
+from pennylane_qiskit import BasicAerDevice, IBMQDevice,  \
+    AerDevice
 
 log.getLogger('defaults')
 
@@ -39,16 +39,16 @@ class UnsupportedOperationTest(BaseTest):
 
         self.devices = []
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
+            self.devices.append(BasicAerDevice(wires=self.num_subsystems))
         if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
+            self.devices.append(AerDevice(wires=self.num_subsystems))
         if self.args.device == 'ibmq' or self.args.device == 'all':
             if self.args.ibmqx_token is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
+                    IBMQDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
             else:
                 log.warning(
-                    "Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
+                    "Skipping test of the IBMQDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
 
     def test_unsupported_operation(self):
         if self.devices is None:
@@ -62,9 +62,6 @@ class UnsupportedOperationTest(BaseTest):
                 return qml.expval(qml.QuadOperator(0.7, 0))
 
             self.assertRaises(pennylane._device.DeviceError, circuit)
-
-        for device in self.devices:
-            self.assertRaises(ValueError, device.apply, 'RXY', wires=[0], par=None)
 
     def test_unsupported_expectation(self):
         if self.devices is None:

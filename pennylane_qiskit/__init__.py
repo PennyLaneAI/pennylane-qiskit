@@ -1,4 +1,4 @@
-# Copyright 2018 Carsten Blank
+# Copyright 2019 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 
 from ._version import __version__
 
-from .devices import AerQiskitDevice
-from .devices import BasicAerQiskitDevice
-from .devices import IbmQQiskitDevice
+from .aer import AerDevice
+from .basic_aer import BasicAerDevice
+from .ibmq import IBMQDevice
 
 from .ops import *

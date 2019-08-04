@@ -23,10 +23,11 @@ from pennylane import DeviceError
 from qiskit.providers.aer import noise
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.providers.models import BackendProperties
+from qiskit.providers.ibmq.exceptions import IBMQAccountError
 
 from defaults import pennylane as qml
 from defaults import ARGS as args
-from pennylane_qiskit import IbmQQiskitDevice, AerQiskitDevice, BasicAerQiskitDevice
+from pennylane_qiskit import IBMQDevice, AerDevice, BasicAerDevice
 
 import pytest
 
@@ -43,10 +44,10 @@ def test_ibm_no_token():
 
     if args.device == "ibmq" or args.device == "all":
         pytest.raises(
-            ValueError,
-            IbmQQiskitDevice,
+            IBMQAccountError,
+            IBMQDevice,
             wires=num_subsystems,
-            msg="Expected a ValueError if no IBMQX token is present.",
+            msg="No active IBM Q account, and no IBM Q token provided",
         )
 
     # put the IBMQX token back into place for other tests to use
@@ -61,13 +62,13 @@ def test_shots():
 
         if args.ibmqx_token is None:
             print(
-                "Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                "Skipping test of the IBMQDevice device because IBM login credentials could not be "
                 "found in the PennyLane configuration file."
             )
             return
 
         shots = 5
-        dev1 = IbmQQiskitDevice(
+        dev1 = IBMQDevice(
             wires=num_subsystems, shots=shots, ibmqx_token=args.ibmqx_token
         )
         assert shots == dev1.shots
@@ -81,27 +82,7 @@ def test_noise_model_for_aer():
         assert dev._noise_model is not None
         assert noise_model.to_dict() == dev._noise_model.to_dict()
 
-        dev2 = AerQiskitDevice(wires=num_subsystems, noise_model=noise_model)
-        assert dev2._noise_model is not None
-        assert noise_model.to_dict() == dev2._noise_model.to_dict()
-
-    except DeviceError:
-        raise Exception(
-            "This test is expected to fail until pennylane-qiskit is installed."
-        )
-
-
-def test_noise_model_for_basic_aer():
-    try:
-        noise_model = _get_noise_model()
-
-        dev = qml.device(
-            "qiskit.basicaer", wires=num_subsystems, noise_model=noise_model
-        )
-        assert dev._noise_model is not None
-        assert noise_model.to_dict() == dev._noise_model.to_dict()
-
-        dev2 = BasicAerQiskitDevice(wires=num_subsystems, noise_model=noise_model)
+        dev2 = AerDevice(wires=num_subsystems, noise_model=noise_model)
         assert dev2._noise_model is not None
         assert noise_model.to_dict() == dev2._noise_model.to_dict()
 
@@ -538,7 +519,7 @@ def test_ibm_device():
 
         if args.ibmqx_token is None:
             print(
-                "Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                "Skipping test of the IBMQDevice device because IBM login credentials could not be "
                 "found in the PennyLane configuration file."
             )
             return
