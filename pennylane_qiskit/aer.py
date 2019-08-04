@@ -32,7 +32,6 @@ Classes
 Code details
 ~~~~~~~~~~~~
 """
-import numpy as np
 import qiskit
 
 from .qiskit_device import QiskitDevice
@@ -64,6 +63,7 @@ class AerDevice(QiskitDevice):
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
     """
+    # pylint: disable=too-many-arguments
 
     short_name = "qiskit.aer"
 

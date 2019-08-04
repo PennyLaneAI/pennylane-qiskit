@@ -33,12 +33,11 @@ Classes
 Code details
 ~~~~~~~~~~~~
 """
-import abc
 import numpy as np
 
-from qiskit import QuantumRegister, QuantumCircuit
+from qiskit import QuantumRegister
 from qiskit.circuit import Gate
-from qiskit.extensions.standard import IdGate, RXGate, RYGate, RZGate, U3Gate, XGate
+from qiskit.extensions.standard import IdGate, RYGate, RZGate, U3Gate, XGate
 
 
 class BasisState(Gate):

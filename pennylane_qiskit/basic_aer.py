@@ -32,7 +32,6 @@ Classes
 Code details
 ~~~~~~~~~~~~
 """
-import numpy as np
 import qiskit
 
 from .qiskit_device import QiskitDevice

@@ -25,11 +25,11 @@ Classes
 .. autosummary::
    QiskitDevice
 """
-import os
+# pylint: disable=too-many-instance-attributes
+import abc
 
 import numpy as np
 
-import qiskit
 from qiskit import extensions as ex
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
@@ -75,9 +75,23 @@ QISKIT_OPERATION_MAP = {
 }
 
 
-class QiskitDevice(Device):
+class QiskitDevice(Device, abc.ABC):
+    r"""Abstract Qiskit device for PennyLane.
+
+    Args:
+        wires (int): The number of qubits of the device
+        provider (Provider): The Qiskit simulation provider
+        backend (str): the desired backend
+        shots (int): Number of circuit evaluations/random samples used
+            to estimate expectation values of observables.
+            For simulator devices, 0 means the exact EV is returned.
+
+    Keyword Args
+        name (str): The name of the circuit. Default ``'circuit'``.
+        compile_backend (BaseBackend): The backend used for compilation. If you wish
+            to simulate a device compliant circuit, you can specify a backend here.
+    """
     name = "Qiskit PennyLane plugin"
-    short_name = "qiskit"
     pennylane_requires = ">=0.5.0"
     version = "0.1.0"
     plugin_version = __version__
@@ -120,6 +134,7 @@ class QiskitDevice(Device):
 
     @property
     def backend(self):
+        """The Qiskit simulation backend object"""
         return self.provider.get_backend(self.backend_name)
 
     def apply(self, operation, wires, par):
@@ -149,12 +164,15 @@ class QiskitDevice(Device):
         self._circuit = self._circuit + qc
 
     def compile(self):
+        """Compile the quantum circuit to target
+        the provided compile_backend. If compile_backend is None,
+        then the target is simply the backend."""
         compile_backend = self.compile_backend or self.backend
         compiled_circuits = transpile(self._circuit, backend=compile_backend)
-
         return assemble(experiments=compiled_circuits, backend=compile_backend, shots=self.shots)
 
     def run(self, qobj):
+        """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(qobj, backend_options=self.kwargs)
         self._current_job.result()
 
@@ -210,7 +228,7 @@ class QiskitDevice(Device):
         qobj = self.compile()
         self.run(qobj)
 
-    def expval(self, expectation, wires, par):
+    def expval(self, observable, wires, par):
         # Make wires lists.
         if isinstance(wires, int):
             wire = wires
@@ -224,12 +242,9 @@ class QiskitDevice(Device):
             # Normalize the state in case some numerical errors have changed this!
             state = state / np.linalg.norm(state)
             probabilities = state.conj() * state
-            return dict(
-                [
-                    ("{0:b}".format(i).zfill(self.num_wires), abs(p))
-                    for i, p in enumerate(probabilities)
-                ]
-            )
+            return {
+                "{0:b}".format(i).zfill(self.num_wires): abs(p) for i, p in enumerate(probabilities)
+            }
 
         # Distinguish between three different calculations
         # As any different expectation value from PauliZ is already handled before
@@ -263,11 +278,11 @@ class QiskitDevice(Device):
         p0 = (1 + expval) / 2
         p1 = (1 - expval) / 2
 
-        if expectation == "Identity":
+        if observable == "Identity":
             # <I> = \sum_i p_i
             return p0 + p1
 
-        if expectation == "Hermitian":
+        if observable == "Hermitian":
             # <H> = \sum_i w_i p_i
             Hkey = tuple(par[0].flatten().tolist())
             w = self._eigs[Hkey]["eigval"]
