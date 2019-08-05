@@ -90,7 +90,7 @@ Getting started
 ===============
 
 Once the PennyLane-Qiskit plugin is installed, the three provided Qiskit devices
-can be accessed straight away in PennyLane.
+can be accessed straightaway in PennyLane.
 
 You can instantiate a ``'qiskit.aer'`` device for PennyLane with:
 
@@ -134,7 +134,7 @@ To get a current overview what backends are available you can query this by
 While the device ``'qiskit.aer'`` is the standard go-to simulator that is provided along
 the Qiskit main package installation, there exists a natively included python simulator
 that is slower but will work usually without the need to check out other dependencies
-(gcc, blas and so on) which can be sed by ``'qiskit.basicaer'``.
+(gcc, blas and so on) which can be used by ``'qiskit.basicaer'``.
 
 Another important difference between the two is that while ``'qiskit.aer'``
 supports a simulation with noise, ``'qiskit.basicaer'`` does not.
@@ -166,7 +166,7 @@ IBM Q Experience
 ================
 
 PennyLane-Qiskit supports running PennyLane on IBM Q hardware via the ``qistkit.ibmq`` device.
-You can choose between different backends having either simulators or real hardware.
+You can choose between different backends - either simulators or real hardware.
 
 .. code-block:: python
 
@@ -206,7 +206,7 @@ Note that, by default, the ``qiskit.ibmq`` device uses the simulator backend
 .. gettingstarted-end-inclusion-marker-do-not-remove
 
 Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
-well as well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
+well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
 
 .. howtocite-start-inclusion-marker-do-not-remove
 

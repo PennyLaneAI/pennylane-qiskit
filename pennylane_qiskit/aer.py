@@ -41,9 +41,9 @@ class AerDevice(QiskitDevice):
     """A PennyLane device for the C++ Qiskit Aer simulator.
 
     Please refer to the `Qiskit documentation <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.html>`_ for
-    further information to the noise model and backend options.
+    for further information to the noise model and backend options.
 
-    A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
+    A range of :code:`backend_options` can be given as kwargs that will be passed to the simulator.
 
     For details on the backends, please check out
 

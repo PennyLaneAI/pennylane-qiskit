@@ -48,7 +48,7 @@ class BasisState(Gate):
     Args:
         n (array): prepares the basis state :math:`\ket{n}`, where ``n`` is an
             array of integers from the set :math:`\{0, 1\}`, i.e.,
-            if ``n = np.array([0, 1, 0])``, prepares the state :math:`|010\rangle`.
+            ``n = np.array([0, 1, 0])``, prepares the state :math:`|010\rangle`.
     """
 
     def __init__(self, n):
