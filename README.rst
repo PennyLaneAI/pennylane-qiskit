@@ -1,27 +1,27 @@
-PennyLane qiskit Plugin
-#########################
+PennyLane Qiskit Plugin
+#######################
 
-.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
     :alt: Travis
     :target: https://travis-ci.com/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codecov/c/github/XanaduAI/pennylane-qiskit/master.svg?style=for-the-badge
+.. image:: https://img.shields.io/codecov/c/github/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
     :alt: Codecov coverage
     :target: https://codecov.io/gh/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=for-the-badge
+.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=popout-square
     :alt: Codacy grade
-    :target: https://www.codacy.com/app/XanaduAI/pennylane-qiskit?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=carstenblank/pennylane-qiskit&amp;utm_campaign=Badge_Grade
+    :target: https://www.codacy.com/app/XanaduAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=for-the-badge
+.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=popout-square
     :alt: Read the Docs
     :target: https://pennylane-qiskit.readthedocs.io
 
-.. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=for-the-badge
+.. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=popout-square
     :alt: PyPI
     :target: https://pypi.org/project/PennyLane-qiskit
 
-.. image:: https://img.shields.io/pypi/pyversions/PennyLane-qiskit.svg?style=for-the-badge
+.. image:: https://img.shields.io/pypi/pyversions/PennyLane-qiskit.svg?style=popout-square
     :alt: PyPI - Python Version
     :target: https://pypi.org/project/PennyLane-qiskit
 
@@ -30,21 +30,23 @@ PennyLane qiskit Plugin
 `PennyLane <https://pennylane.readthedocs.io>`_ is a cross-platform Python library for quantum machine
 learning, automatic differentiation, and optimization of hybrid quantum-classical computations.
 
-`qiskit <https://qiskit.org/documentation/>`_ is an open-source compilation framework capable of targeting various
+`Qiskit <https://qiskit.org/documentation/>`_ is an open-source compilation framework capable of targeting various
 types of hardware and a high-performance quantum computer simulator with emulation capabilities, and various
 compiler plug-ins.
 
-This PennyLane plugin allows to use both the software and hardware backends of qiskit as devices for PennyLane.
+This PennyLane plugin allows to use both the software and hardware backends of Qiskit as devices for PennyLane.
 
 
 Features
 ========
 
-* Provides three devices to be used with PennyLane: ``qiskit.basicaer``, ``qiskit.aer`` and ``qiskit.ibmq``. These devices provide access to the various backends.
+* Provides three devices to be used with PennyLane: ``qiskit.basicaer``, ``qiskit.aer`` and ``qiskit.ibmq``.
+  These devices provide access to the various backends.
 
 * Supports a wide range of PennyLane operations and expectation values across the providers.
 
-* Combine qiskit high performance simulator and hardware backend support with PennyLane's automatic differentiation and optimization.
+* Combine Qiskit's high performance simulator and hardware backend support with PennyLane's automatic
+  differentiation and optimization.
 
 .. header-end-inclusion-marker-do-not-remove
 .. installation-start-inclusion-marker-do-not-remove
@@ -52,29 +54,33 @@ Features
 Installation
 ============
 
-This plugin requires Python version 3.5 and above, as well as PennyLane and qiskit.
-Installation of this plugin, as well as all dependencies, can be done using pip:
+This plugin requires Python version 3.5 and above, as well as PennyLane and Qiskit.
+Installation of this plugin, as well as all dependencies, can be done using ``pip``:
 
 .. code-block:: bash
 
-    $ python -m pip install pennylane_qiskit
+    pip install pennylane-qiskit
 
-To test that the PennyLane qiskit plugin is working correctly you can run
+To test that the PennyLane Qiskit plugin is working correctly you can run
 
 .. code-block:: bash
 
     $ make test
 
-in the source folder. Tests restricted to a specific provider can be run by executing :code:`make test-basicaer`,
-:code:`make test-aer` or :code:`make test-ibmq`.
+in the source folder. Tests restricted to a specific provider can be run by executing
+``make test-basicaer``, ``make test-aer`` ``make test-ibmq``.
 
 .. note::
+
     Tests on the `IBMQ device <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html>`_ can
-    only be run if a :code:`ibmqx_token` for the `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
+    only be run if a ``ibmqx_token`` for the
+    `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
     configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
-    If this is the case, running :code:`make test` also executes tests on the :code:`ibmq` device. By default tests on
-    the :code:`ibmq` device run with :code:`ibmq_qasm_simulator` backend and those done by the :code:`basicaer` and
-    :code:`aer` device are run with the :code:`qasm_simulator` backend. At the time of writing this means that the test are "free".
+
+    If this is the case, running ``make test`` also executes tests on the ``ibmq`` device.
+    By default tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend
+    and those done by the ``basicaer`` and ``aer`` device are run with the ``qasm_simulator``
+    backend. At the time of writing this means that the test are "free".
     Please verify that this is also the case for your account.
 
 .. installation-end-inclusion-marker-do-not-remove
@@ -83,7 +89,10 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 Getting started
 ===============
 
-You can instantiate a :code:`'qiskit.aer'` device for PennyLane with:
+Once the PennyLane-Qiskit plugin is installed, the three provided Qiskit devices
+can be accessed straightaway in PennyLane.
+
+You can instantiate a ``'qiskit.aer'`` device for PennyLane with:
 
 .. code-block:: python
 
@@ -122,11 +131,16 @@ To get a current overview what backends are available you can query this by
 
     dev.capabilities()['backend']
 
-While the device :code:`'qiskit.aer'` is the standard go-to simulator that is provided along the `qiskit` main package
-installation, there exists a natively included python simulator that is slower but will work usually without the need
-to check out other dependencies (gcc, blas and so on) which can be sed by :code:`'qiskit.basicaer'`.
-There is an important difference of the two: while :code:`'qiskit.aer'` supports a simulation with noise
-:code:`'qiskit.basicaer'` does not.
+While the device ``'qiskit.aer'`` is the standard go-to simulator that is provided along
+the Qiskit main package installation, there exists a natively included python simulator
+that is slower but will work usually without the need to check out other dependencies
+(gcc, blas and so on) which can be used by ``'qiskit.basicaer'``.
+
+Another important difference between the two is that while ``'qiskit.aer'``
+supports a simulation with noise, ``'qiskit.basicaer'`` does not.
+
+Noise models
+============
 
 You can instantiate a noise model and apply it to the device by calling
 
@@ -145,20 +159,32 @@ You can instantiate a noise model and apply it to the device by calling
 
     dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
 
-Then all simulations are done with noise. The basic noise model is explained a little at
-`qiskit's documentation <https://qiskit.org/documentation/aer/device_noise_simulation.html>`_.
+Please refer to the Qiskit documentation for more information on
+`noise models <https://qiskit.org/documentation/aer/device_noise_simulation.html>`_.
 
-Finally one of the more interesting functionality is running your code through the IBM Quantum Experience API.
-You can choose between different `backends` having either simulators or real hardware depending on your agreement with
-IBM.
-To use this device you would instantiate a :code:`'qiskit.ibmq'` device by giving your IBM Quantum Experience token:
+IBM Q Experience
+================
+
+PennyLane-Qiskit supports running PennyLane on IBM Q hardware via the ``qistkit.ibmq`` device.
+You can choose between different backends - either simulators or real hardware.
 
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.ibmq', wires=2, ibmqx_token="XXX")
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmqx4')
 
-In order to avoid accidentally publishing your token, you should better specify it via the
+By default, the ``qiskit.ibmq`` device will attempt to use an already active or stored
+IBM Q account. If none are available, you may also directly pass your IBM Q API token,
+as well as an optional URL:
+
+.. code-block:: python
+
+    import pennylane as qml
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX")
+
+
+In order to avoid accidentally publishing your token, it is best to store it using the
+``qiskit.IBMQ.save_account()`` function. Alternatively, you can specify the token or URL via the
 `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`__ by
 adding a section such as
 
@@ -168,11 +194,10 @@ adding a section such as
 
     [qiskit.ibmq]
     ibmqx_token = "XXX"
+    ibmqx_url = "XXX"
 
-It is also possible to define an environment variable :code:`IBMQX_TOKEN`, from which the token will be taken if not provided in another way.
-
-Per default the backend :code:`ibmq` uses the simulator backend :code:`ibmq_qasm_simulator`, but you can change that
-to be any of the real backends as given by
+Note that, by default, the ``qiskit.ibmq`` device uses the simulator backend
+``ibmq_qasm_simulator``, but this may be changed to any of the real backends as given by
 
 .. code-block:: python
 
@@ -180,8 +205,8 @@ to be any of the real backends as given by
 
 .. gettingstarted-end-inclusion-marker-do-not-remove
 
-Please refer to the `documentation of the PennyLane qiskit Plugin <https://pennylane-qiskit.readthedocs.io/>`_ as
-well as well as to the `documentation of PennyLane <https://pennylane.readthedocs.io/>`_ for further reference.
+Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
+well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
 
 .. howtocite-start-inclusion-marker-do-not-remove
 
@@ -190,7 +215,8 @@ How to cite
 
 If you are doing research using PennyLane, please cite `our whitepaper <https://arxiv.org/abs/1811.04968>`_:
 
-  Ville Bergholm, Josh Izaac, Maria Schuld, Christian Gogolin, Carsten Blank, Keri McKiernan and Nathan Killoran. PennyLane. *arXiv*, 2018. arXiv:1811.04968
+  Ville Bergholm, Josh Izaac, Maria Schuld, Christian Gogolin, Carsten Blank, Keri McKiernan and Nathan Killoran.
+  PennyLane. *arXiv*, 2018. arXiv:1811.04968
 
 .. howtocite-end-inclusion-marker-do-not-remove
 
@@ -201,7 +227,8 @@ We welcome contributions - simply fork the repository of this plugin, and then m
 `pull request <https://help.github.com/articles/about-pull-requests/>`_ containing your contribution.
 All contributers to this plugin will be listed as authors on the releases.
 
-We also encourage bug reports, suggestions for new features and enhancements, and even links to cool projects or applications built on PennyLane.
+We also encourage bug reports, suggestions for new features and enhancements, and even links to cool projects
+or applications built on PennyLane.
 
 
 Authors

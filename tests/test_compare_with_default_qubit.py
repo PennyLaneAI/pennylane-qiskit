@@ -22,9 +22,8 @@ from pennylane import numpy as np
 from pennylane.plugins.default_qubit import DefaultQubit
 
 import pennylane_qiskit
-import pennylane_qiskit.expval
 from defaults import pennylane as qml, BaseTest
-from pennylane_qiskit.devices import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
+from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 
 log.getLogger('defaults')
 
@@ -42,15 +41,15 @@ class CompareWithDefaultQubitTest(BaseTest):
 
         self.devices = [DefaultQubit(wires=self.num_subsystems, shots=0)]
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
+            self.devices.append(BasicAerDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
+            self.devices.append(AerDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'ibmq' or self.args.device == 'all':
             if self.args.ibmqx_token is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=self.args.ibmqx_token))
+                    IBMQDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=self.args.ibmqx_token))
             else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials "
+                log.warning("Skipping test of the IBMQDevice device because IBM login credentials "
                             "could not be found in the PennyLane configuration file.")
 
     def test_simple_circuits(self):
@@ -86,8 +85,6 @@ class CompareWithDefaultQubitTest(BaseTest):
 
                         if hasattr(qml.ops, observable):
                             observable_class = getattr(qml.ops, observable)
-                        else:
-                            observable_class = getattr(pennylane_qiskit.expval, observable)
 
                         if operation_class.num_wires > self.num_subsystems:
                             raise IgnoreOperationException(
