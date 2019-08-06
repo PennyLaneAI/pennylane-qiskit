@@ -25,7 +25,7 @@ from qiskit.providers.aer import noise
 from qiskit.providers.models import BackendProperties
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
-from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
+from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 
 log.getLogger('defaults')
 
@@ -44,15 +44,15 @@ class SimpleCircuitsTest(BaseTest):
 
         self.devices = [DefaultQubit(wires=self.num_subsystems)]
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
+            self.devices.append(BasicAerDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems, shots=self.shots))
+            self.devices.append(AerDevice(wires=self.num_subsystems, shots=self.shots))
         if self.args.device == 'ibmq' or self.args.device == 'all':
             if IBMQX_TOKEN is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=IBMQX_TOKEN))
+                    IBMQDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=IBMQX_TOKEN))
             else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                log.warning("Skipping test of the IBMQDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
 
         properties = BackendProperties.from_dict({'backend_name': 'ibmqx4',
@@ -381,10 +381,10 @@ class SimpleCircuitsTest(BaseTest):
     def test_basis_state_noise_aer(self):
 
         for device in self.devices:
-            if isinstance(device, AerQiskitDevice):
-                device = AerQiskitDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
-            if isinstance(device, BasicAerQiskitDevice):
-                device = BasicAerQiskitDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
+            if isinstance(device, AerDevice):
+                device = AerDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
+            if isinstance(device, BasicAerDevice):
+                device = BasicAerDevice(wires=device.num_wires, noise_model=self.noise_model, shots=device.shots)
 
             for bits_to_flip in [np.array([0, 0, 0, 0]),
                                  np.array([0, 1, 1, 0]),

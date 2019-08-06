@@ -20,7 +20,7 @@ from pennylane import numpy as np
 from pennylane.plugins import DefaultQubit
 
 from defaults import pennylane as qml, BaseTest
-from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice, AerQiskitDevice
+from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 
 log.getLogger('defaults')
 
@@ -37,15 +37,15 @@ class BackendOptionsTest(BaseTest):
 
         self.devices = [DefaultQubit(wires=self.num_subsystems)]
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerQiskitDevice(wires=self.num_subsystems))
+            self.devices.append(BasicAerDevice(wires=self.num_subsystems))
         if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerQiskitDevice(wires=self.num_subsystems))
+            self.devices.append(AerDevice(wires=self.num_subsystems))
         if self.args.device == 'ibmq' or self.args.device == 'all':
             if self.args.ibmqx_token is not None:
                 self.devices.append(
-                    IbmQQiskitDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
+                    IBMQDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
             else:
-                log.warning("Skipping test of the IbmQQiskitDevice device because IBM login credentials could not be "
+                log.warning("Skipping test of the IBMQDevice device because IBM login credentials could not be "
                             "found in the PennyLane configuration file.")
 
     def test_basicaer_initial_unitary(self):
@@ -78,7 +78,7 @@ class BackendOptionsTest(BaseTest):
 
             for initial_unitary, expected_outcome in zip(initial_unitaries, expected_outcomes):
 
-                dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator', initial_unitary=initial_unitary)
+                dev = BasicAerDevice(wires=self.num_subsystems, backend='unitary_simulator', initial_unitary=initial_unitary)
 
                 @qml.qnode(dev)
                 def circuit():
@@ -97,7 +97,7 @@ class BackendOptionsTest(BaseTest):
         self.logTestName()
 
         if self.args.device == 'basicaer' or self.args.device == 'all':
-            dev = BasicAerQiskitDevice(wires=self.num_subsystems, chop_threshold=1e-2, backend='unitary_simulator')
+            dev = BasicAerDevice(wires=self.num_subsystems, chop_threshold=1e-2, backend='unitary_simulator')
 
             @qml.qnode(dev)
             def circuit():
@@ -147,20 +147,20 @@ class BackendOptionsTest(BaseTest):
                 ]) / 2,
                 'chop_threshold': 1e-1
             }
-            dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator', **all_backend_options)
+            dev = BasicAerDevice(wires=self.num_subsystems, backend='unitary_simulator', **all_backend_options)
             assertOptions(dev, all_backend_options)
 
             all_backend_options = {
                 'initial_statevector': np.array([0, 0, 1, 0]),
                 'chop_threshold': 1e-1
             }
-            dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='statevector_simulator', **all_backend_options)
+            dev = BasicAerDevice(wires=self.num_subsystems, backend='statevector_simulator', **all_backend_options)
             assertOptions(dev, all_backend_options)
 
             all_backend_options = {
                 'initial_statevector': np.array([0, 0, 1, 0])
             }
-            dev = BasicAerQiskitDevice(wires=self.num_subsystems, backend='qasm_simulator',
+            dev = BasicAerDevice(wires=self.num_subsystems, backend='qasm_simulator',
                                        **all_backend_options)
             assertOptions(dev, all_backend_options)
 
@@ -200,7 +200,7 @@ class BackendOptionsTest(BaseTest):
                 'max_memory_mb': 8192,  # default: 0
                 'statevector_parallel_threshold': 16  # default: 14
             }
-            dev = AerQiskitDevice(wires=self.num_subsystems, backend='unitary_simulator', **all_backend_options)
+            dev = AerDevice(wires=self.num_subsystems, backend='unitary_simulator', **all_backend_options)
             assertOptions(dev, all_backend_options)
 
             all_backend_options = {
@@ -210,7 +210,7 @@ class BackendOptionsTest(BaseTest):
                 'max_memory_mb': 8192,  # default: 0
                 'statevector_parallel_threshold': 16  # default: 14
             }
-            dev = AerQiskitDevice(wires=self.num_subsystems, backend='statevector_simulator', **all_backend_options)
+            dev = AerDevice(wires=self.num_subsystems, backend='statevector_simulator', **all_backend_options)
             assertOptions(dev, all_backend_options)
 
             all_backend_options = {
@@ -230,6 +230,6 @@ class BackendOptionsTest(BaseTest):
                 'extended_stabilizer_norm_estimation_samples': 101,  # default: 100
                 'extended_stabilizer_parallel_threshold': 101  # default: 100
             }
-            dev = AerQiskitDevice(wires=self.num_subsystems, backend='qasm_simulator',
+            dev = AerDevice(wires=self.num_subsystems, backend='qasm_simulator',
                                        **all_backend_options)
             assertOptions(dev, all_backend_options)

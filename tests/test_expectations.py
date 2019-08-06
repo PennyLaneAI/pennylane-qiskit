@@ -18,7 +18,7 @@ import logging as log
 from pennylane import numpy as np
 
 from defaults import pennylane as qml, BaseTest
-from pennylane_qiskit import BasicAerQiskitDevice, AerQiskitDevice, IbmQQiskitDevice
+from pennylane_qiskit import BasicAerDevice, AerDevice, IBMQDevice
 import unittest
 import pytest
 import os

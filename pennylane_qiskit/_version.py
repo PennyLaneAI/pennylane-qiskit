@@ -1,4 +1,4 @@
-# Copyright 2018 Carsten Blank
+# Copyright 2019 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,4 +16,4 @@
    Version number (major.minor.patch[-label])
 """
 
-__version__ = '0.0.9'
+__version__ = "0.1.0-dev"
