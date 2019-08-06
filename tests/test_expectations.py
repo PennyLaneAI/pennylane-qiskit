@@ -38,8 +38,8 @@ num_subsystems = 2
 num_wires = 2
 shots = 100
 ibmq_shots = 100
-devices = [BasicAerQiskitDevice(wires=num_wires, shots=shots),
-           AerQiskitDevice(wires=num_wires, shots=shots)]
+devices = [BasicAerDevice(wires=num_wires, shots=shots),
+           AerDevice(wires=num_wires, shots=shots)]
 
 if IBMQX_TOKEN is not None:
     devices.append(

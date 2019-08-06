@@ -17,8 +17,7 @@ Unit tests for the :mod:`pennylane_qiskit` BasisState operation.
 import pennylane as qml
 from pennylane import numpy as np
 
-from pennylane_qiskit import BasicAerQiskitDevice, IbmQQiskitDevice
-from pennylane_qiskit.devices import AerQiskitDevice
+from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 import pytest
 import os
 
@@ -46,7 +45,7 @@ if "ibmqx_token" in ibm_options:
 elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
     IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
 
-devices = [BasicAerQiskitDevice(wires=num_wires), AerQiskitDevice(wires=num_wires)]
+devices = [BasicAerDevice(wires=num_wires), AerDevice(wires=num_wires)]
 
 if IBMQX_TOKEN is not None:
     devices.append(
