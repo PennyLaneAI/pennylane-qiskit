@@ -26,8 +26,148 @@ from qiskit.providers.models import BackendProperties
 
 from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
+import pennylane_qiskit
 
 log.getLogger('defaults')
+
+
+class CompareWithDefaultQubitTest(BaseTest):
+    """Compares the behavior of the ProjectQ plugin devices with the default qubit device.
+    """
+    num_subsystems = 3  # This should be as large as the largest gate/observable, but we cannot know that before instantiating the device. We thus check later that all gates/observables fit.
+    shots = 16 * 1024
+    ibmq_shots = 8 * 1024
+    devices = None
+
+    def setUp(self):
+        super().setUp()
+
+        self.devices = [DefaultQubit(wires=self.num_subsystems, shots=0)]
+        if self.args.device == 'basicaer' or self.args.device == 'all':
+            self.devices.append(BasicAerDevice(wires=self.num_subsystems, shots=self.shots))
+        if self.args.device == 'aer' or self.args.device == 'all':
+            self.devices.append(AerDevice(wires=self.num_subsystems, shots=self.shots))
+        if self.args.device == 'ibmq' or self.args.device == 'all':
+            if self.args.ibmqx_token is not None:
+                self.devices.append(
+                    IBMQDevice(wires=self.num_subsystems, shots=self.ibmq_shots, ibmqx_token=self.args.ibmqx_token))
+            else:
+                log.warning("Skipping test of the IBMQDevice device because IBM login credentials "
+                            "could not be found in the PennyLane configuration file.")
+
+    def test_simple_circuits(self):
+        """Automatically compare the behavior on simple circuits"""
+        self.logTestName()
+
+        class IgnoreOperationException(Exception):
+            pass
+
+        outputs = {}
+
+        rnd_int_pool = np.random.randint(0, 5, 100)
+        rnd_float_pool = np.random.randn(100)
+        random_ket = np.random.uniform(-1, 1, 2 ** self.num_subsystems)
+        random_ket = random_ket / np.linalg.norm(random_ket)
+        random_zero_one_pool = np.random.randint(2, size=100)
+
+        for dev in self.devices:
+
+            # run all single operation circuits
+            for operation in dev.operations:
+                for observable in dev.observables:
+                    log.info(
+                        "Running device {} with a circuit consisting of a {} Operation followed by a {} Expectation".format(
+                            dev.short_name, operation, observable))
+
+                    @qml.qnode(dev)
+                    def circuit():
+                        if hasattr(qml, operation):
+                            operation_class = getattr(qml, operation)
+                        else:
+                            operation_class = getattr(pennylane_qiskit, operation)
+
+                        if hasattr(qml.ops, observable):
+                            observable_class = getattr(qml.ops, observable)
+
+                        if operation_class.num_wires > self.num_subsystems:
+                            raise IgnoreOperationException(
+                                'Skipping in automatic test because the operation ' + operation + " acts on more than the default number of wires " + str(
+                                    self.num_subsystems) + ". Maybe you want to increase that?")
+                        if observable_class.num_wires > self.num_subsystems:
+                            raise IgnoreOperationException(
+                                'Skipping in automatic test because the observable ' + observable + " acts on more than the default number of wires " + str(
+                                    self.num_subsystems) + ". Maybe you want to increase that?")
+
+                        # Operations
+                        operation_wires = list(
+                            range(operation_class.num_wires)) if operation_class.num_wires > 0 else list(
+                            range(self.num_subsystems))
+
+                        if operation_class.par_domain == 'N':
+                            operation_pars = rnd_int_pool[:operation_class.num_params]
+                        elif operation_class.par_domain == 'R':
+                            operation_pars = np.abs(rnd_float_pool[
+                                                    :operation_class.num_params])  # todo: some operations/observables fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
+                        elif operation_class.par_domain == 'A':
+                            if str(operation) == "QubitUnitary":
+                                operation_pars = [np.array([[1, 0], [0, -1]])]
+                                operation_wires = [0]
+                            elif str(operation) == "QubitStateVector":
+                                operation_pars = [np.array(random_ket)]
+                            elif str(operation) == "BasisState":
+                                operation_pars = [random_zero_one_pool[:self.num_subsystems]]
+                            else:
+                                raise IgnoreOperationException(
+                                    'Skipping in automatic test because I don\'t know how to generate parameters for the operation ' + operation)
+                        else:
+                            operation_pars = {}
+
+                        # Observables
+                        observable_wires = list(
+                            range(observable_class.num_wires)) if observable_class.num_wires > 1 else 0
+                        if observable_class.par_domain == 'N':
+                            observable_pars = rnd_int_pool[:observable_class.num_params]
+                        elif observable_class.par_domain == 'R':
+                            observable_pars = np.abs(rnd_float_pool[
+                                                     :observable_class.num_params])  # todo: some operations/observables fail when parameters are negative (e.g. thermal state) but par_domain is not fine grained enough to capture this
+                        elif observable_class.par_domain == 'A':
+                            if str(observable) == "Hermitian":
+                                observable_pars = [np.array([[1, 1j], [-1j, 0]])]
+                            else:
+                                raise IgnoreOperationException(
+                                    'Skipping in automatic test because I don\'t know how to generate parameters for the observable ' + observable + " with par_domain=" + str(
+                                        observable_class.par_domain))
+                        else:
+                            observable_pars = {}
+
+                        # Apply operator and observable
+                        operation_class(*operation_pars, wires=operation_wires)
+                        return qml.expval(observable_class(*observable_pars, observable_wires))
+
+                    output = circuit()
+                    if (operation, observable) not in outputs:
+                        outputs[(operation, observable)] = {}
+
+                    device_key = str(type(dev).__name__) + "(shots=" + str(dev.shots) + ")"
+                    outputs[(operation, observable)][device_key] = output
+
+        # if we could run the circuit on more than one device assert that both should have given the same output
+        for (key, val) in outputs.items():
+            if len(val) >= 2:
+                failed_message="Outputs {} of devices [{}] do not agree for a " \
+                               "circuit consisting of a {} Operation followed " \
+                               "by a {} Expectation.".format(
+                    str(list(val.values())), ', '.join(list(val.keys())),
+                    str(key[0]), str(key[1]))
+
+                if 'DefaultQubit(shots=0)' not in val:
+                    log.info("Operation %s followed by Expectation %s has no pendant in the DefaultQubit "
+                             "device. Skipping.", key[0], key[1])
+                    continue
+
+                reference_output = val['DefaultQubit(shots=0)']
+                self.assertAllAlmostEqual(val.values(), len(val) * [reference_output], delta=self.tol, msg=failed_message)
+
 
 
 class SimpleCircuitsTest(BaseTest):
@@ -408,7 +548,7 @@ if __name__ == '__main__':
     print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', BasisState operation.')
     # run the tests in this file
     suite = unittest.TestSuite()
-    for t in (SimpleCircuitsTest,):
+    for t in (SimpleCircuitsTest, CompareWithDefaultQubitTest):
         ttt = unittest.TestLoader().loadTestsFromTestCase(t)
         suite.addTests(ttt)
 
