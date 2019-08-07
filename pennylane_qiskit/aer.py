@@ -63,6 +63,7 @@ class AerDevice(QiskitDevice):
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
     """
+
     # pylint: disable=too-many-arguments
 
     short_name = "qiskit.aer"
@@ -78,10 +79,11 @@ class AerDevice(QiskitDevice):
     ):
         super().__init__(wires, qiskit.Aer, backend=backend, shots=shots, **kwargs)
         self._noise_model = noise_model
-        self._backend_options = backend_options
 
     def run(self, qobj):
+        """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(
             qobj, noise_model=self._noise_model, backend_options=self.kwargs
         )
-        self._current_job.result()
+        result = self._current_job.result()
+        self._get_state(result)
