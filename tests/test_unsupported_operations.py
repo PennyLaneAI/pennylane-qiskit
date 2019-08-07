@@ -43,6 +43,7 @@ if IBMQX_TOKEN is not None:
 
 @pytest.mark.parametrize("device", devices)
 def test_unsupported_operation(device):
+    """Tests if the correct error is raised for an unsupported operation"""
     @qml.qnode(device)
     def circuit():
         qml.Beamsplitter(
@@ -55,7 +56,8 @@ def test_unsupported_operation(device):
 
 
 @pytest.mark.parametrize("device", devices)
-def test_unsupported_expectation(device):
+def test_unsupported_observable(device):
+    """Tests if the correct error is raised for an unsupported observable"""
     @qml.qnode(device)
     def circuit():
         return qml.expval(

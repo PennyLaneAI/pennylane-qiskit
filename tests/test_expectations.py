@@ -51,7 +51,7 @@ if IBMQX_TOKEN is not None:
 
 @pytest.mark.parametrize("device", devices)
 def test_identity_expectation(device):
-    """Test that identity expectation value (i.e. the trace) is 1"""
+    """Tests that identity expectation value (i.e. the trace) is 1"""
     theta = 0.432
     phi = 0.123
 
@@ -132,7 +132,7 @@ def test_paulix_expectation(device):
 
 @pytest.mark.parametrize("device", devices)
 def test_pauliy_expectation(device):
-    """Test that PauliY expectation value is correct"""
+    """Tests that PauliY expectation value is correct"""
     theta = 0.432
     phi = 0.123
 
@@ -233,7 +233,7 @@ def test_hermitian_expectation(device):
 
 @pytest.mark.parametrize("device", devices)
 def test_int_wires(device):
-    """Test that passing wires as int works for expval."""
+    """Tests that passing wires as int works for expval."""
     theta = 0.432
     phi = 0.123
 
