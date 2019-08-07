@@ -14,74 +14,53 @@
 """
 Unit tests for the :mod:`pennylane_pq` devices' behavior when applying unsupported operations.
 """
+from defaults import pennylane as qml
+from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 
-import logging as log
-import unittest
+import os
 
-import pennylane
-
-from defaults import pennylane as qml, BaseTest
-from pennylane_qiskit import BasicAerDevice, IBMQDevice,  \
-    AerDevice
-
-log.getLogger('defaults')
+import pytest
 
 
-class UnsupportedOperationTest(BaseTest):
-    """test that unsupported operations/observables raise DeviceErrors.
-    """
-
-    num_subsystems = 4
-    devices = None
-
-    def setUp(self):
-        super().setUp()
-
-        self.devices = []
-        if self.args.device == 'basicaer' or self.args.device == 'all':
-            self.devices.append(BasicAerDevice(wires=self.num_subsystems))
-        if self.args.device == 'aer' or self.args.device == 'all':
-            self.devices.append(AerDevice(wires=self.num_subsystems))
-        if self.args.device == 'ibmq' or self.args.device == 'all':
-            if self.args.ibmqx_token is not None:
-                self.devices.append(
-                    IBMQDevice(wires=self.num_subsystems, num_runs=8 * 1024, ibmqx_token=self.args.ibmqx_token))
-            else:
-                log.warning(
-                    "Skipping test of the IBMQDevice device because IBM login credentials could not be found in the PennyLane configuration file.")
-
-    def test_unsupported_operation(self):
-        if self.devices is None:
-            return
-        self.logTestName()
-
-        for device in self.devices:
-            @qml.qnode(device)
-            def circuit():
-                qml.Beamsplitter(0.2, 0.1, wires=[0, 1])  # this expectation will never be supported
-                return qml.expval(qml.QuadOperator(0.7, 0))
-
-            self.assertRaises(pennylane._device.DeviceError, circuit)
-
-    def test_unsupported_expectation(self):
-        if self.devices is None:
-            return
-        self.logTestName()
-
-        for device in self.devices:
-            @qml.qnode(device)
-            def circuit():
-                return qml.expval(qml.QuadOperator(0.7, 0))  # this expectation will never be supported
-
-            self.assertRaises(pennylane._device.DeviceError, circuit)
+num_wires = 4
+IBMQX_TOKEN = None
+ibm_options = qml.default_config["qiskit.ibmq"]
 
 
-if __name__ == '__main__':
-    print('Testing PennyLane qiskit Plugin version ' + qml.version() + ', unsupported operations.')
-    # run the tests in this file
-    suite = unittest.TestSuite()
-    for t in (UnsupportedOperationTest,):
-        ttt = unittest.TestLoader().loadTestsFromTestCase(t)
-        suite.addTests(ttt)
+if "ibmqx_token" in ibm_options:
+    IBMQX_TOKEN = ibm_options["ibmqx_token"]
 
-    unittest.TextTestRunner().run(suite)
+elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
+    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
+
+devices = [BasicAerDevice(wires=num_wires), AerDevice(wires=num_wires)]
+
+if IBMQX_TOKEN is not None:
+    devices.append(
+        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
+    )
+
+
+@pytest.mark.parametrize("device", devices)
+def test_unsupported_operation(device):
+    @qml.qnode(device)
+    def circuit():
+        qml.Beamsplitter(
+            0.2, 0.1, wires=[0, 1]
+        )  # this expectation will never be supported
+        return qml.expval(qml.QuadOperator(0.7, 0))
+
+    with pytest.raises(qml._device.DeviceError):
+        circuit()
+
+
+@pytest.mark.parametrize("device", devices)
+def test_unsupported_expectation(device):
+    @qml.qnode(device)
+    def circuit():
+        return qml.expval(
+            qml.QuadOperator(0.7, 0)
+        )  # this expectation will never be supported
+
+    with pytest.raises(qml._device.DeviceError):
+        circuit()
