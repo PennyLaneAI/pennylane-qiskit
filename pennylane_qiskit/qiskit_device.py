@@ -112,10 +112,10 @@ class QiskitDevice(Device, abc.ABC):
     plugin_version = __version__
     author = "Carsten Blank"
 
-    _capabilities = {"model": "qubit"}
-    _operation_map = QISKIT_OPERATION_MAP
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
+    _capabilities = {"model": "qubit"}
+    _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {"statevector_simulator", "unitary_simulator"}
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
@@ -221,7 +221,7 @@ class QiskitDevice(Device, abc.ABC):
         self._state = state.reshape([2] * self.num_wires).T.flatten()
 
     def pre_measure(self):
-        if self.backend_name not in ("statevector_simulator", "unitary_simulator"):
+        if self.backend_name not in self._state_backends:
             # a hardware simulator
 
             for e in self.obs_queue:
@@ -279,7 +279,7 @@ class QiskitDevice(Device, abc.ABC):
         self.run(qobj)
 
     def expval(self, observable, wires, par):
-        if self.backend_name not in ("statevector_simulator", "unitary_simulator"):
+        if self.backend_name not in self._state_backends:
             return np.mean(self.sample(observable, wires, par))
 
         if observable == "Hermitian":
@@ -298,7 +298,7 @@ class QiskitDevice(Device, abc.ABC):
         return ev
 
     def var(self, observable, wires, par):
-        if self.backend_name not in ("statevector_simulator", "unitary_simulator"):
+        if self.backend_name not in self._state_backends:
             return np.var(self.sample(observable, wires, par))
 
         if observable == "Hermitian":
@@ -335,7 +335,7 @@ class QiskitDevice(Device, abc.ABC):
             return np.ones([n])
 
         # branch out depending on the type of backend
-        if self.backend_name in {"statevector_simulator", "unitary_simulator"}:
+        if self.backend_name in self._state_backends:
             # software simulator. Need to sample from probabilities.
 
             if observable == "Hermitian":
@@ -396,7 +396,7 @@ class QiskitDevice(Device, abc.ABC):
         result = self._current_job.result()
         basis_states = itertools.product(range(2), repeat=self.num_wires)
 
-        if self.backend_name in {"statevector_simulator", "unitary_simulator"}:
+        if self.backend_name in self._state_backends:
             return OrderedDict(zip(basis_states, np.abs(self.state) ** 2))
 
         # sort the counts and reverse qubit order to match PennyLane convention
