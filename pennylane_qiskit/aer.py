@@ -74,7 +74,6 @@ class AerDevice(QiskitDevice):
         shots=1024,
         backend="qasm_simulator",
         noise_model=None,
-        backend_options=None,
         **kwargs
     ):
         super().__init__(wires, qiskit.Aer, backend=backend, shots=shots, **kwargs)
@@ -86,4 +85,6 @@ class AerDevice(QiskitDevice):
             qobj, noise_model=self._noise_model, backend_options=self.kwargs
         )
         result = self._current_job.result()
-        self._get_state(result)
+
+        if self.backend_name in self._state_backends:
+            self._state = self._get_state(result)

@@ -200,7 +200,9 @@ class QiskitDevice(Device, abc.ABC):
         """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(qobj, backend_options=self.kwargs)
         result = self._current_job.result()
-        self._get_state(result)
+
+        if self.backend_name in self._state_backends:
+            self._state = self._get_state(result)
 
     def _get_state(self, result):
         if self.backend_name == "statevector_simulator":
@@ -213,12 +215,8 @@ class QiskitDevice(Device, abc.ABC):
 
             state = unitary @ initial_state
 
-        else:
-            # hardware simulator, return
-            return None
-
         # reverse qubit order to match PennyLane convention
-        self._state = state.reshape([2] * self.num_wires).T.flatten()
+        return state.reshape([2] * self.num_wires).T.flatten()
 
     def pre_measure(self):
         if self.backend_name not in self._state_backends:
@@ -255,8 +253,8 @@ class QiskitDevice(Device, abc.ABC):
                 elif e.name == "Hermitian":
                     # For arbitrary Hermitian matrix H, let U be the unitary matrix
                     # that diagonalises it, and w_i be the eigenvalues.
-                    H = e.parameters[0]
-                    Hkey = tuple(H.flatten().tolist())
+                    Hmat = e.parameters[0]
+                    Hkey = tuple(Hmat.flatten().tolist())
 
                     if Hkey in self._eigs:
                         # retrieve eigenvectors
@@ -265,7 +263,7 @@ class QiskitDevice(Device, abc.ABC):
                         # store the eigenvalues corresponding to H
                         # in a dictionary, so that they do not need to
                         # be calculated later
-                        w, U = np.linalg.eigh(H)
+                        w, U = np.linalg.eigh(Hmat)
                         self._eigs[Hkey] = {"eigval": w, "eigvec": U}
 
                     # Perform a change of basis before measuring by applying U^ to the circuit
@@ -355,7 +353,7 @@ class QiskitDevice(Device, abc.ABC):
             return np.random.choice(a, n, p=p)
 
         # a hardware simulator
-        if self.memory == True:
+        if self.memory:
             # get the samples
             samples = self._current_job.result().get_memory()
 
