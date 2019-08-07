@@ -28,7 +28,56 @@ from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 import pennylane_qiskit
 
+import pytest
+
+import os
+
 log.getLogger('defaults')
+
+num_wires = 3
+IBMQX_TOKEN = None
+ibm_options = qml.default_config["qiskit.ibmq"]
+
+if "ibmqx_token" in ibm_options:
+    IBMQX_TOKEN = ibm_options["ibmqx_token"]
+
+elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
+    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
+
+devices = [BasicAerDevice(wires=num_wires), AerDevice(wires=num_wires)]
+
+if IBMQX_TOKEN is not None:
+    devices.append(
+        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
+    )
+
+
+@pytest.mark.parametrize("device", devices)
+def test_only_single_qubit_unitary(device):
+    """Tests if correct error is raised when attempting multi-qubit unitaries"""
+    test_input = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    @qml.qnode(device)
+    def circuit():
+        qml.QubitUnitary(test_input, wires=[0])
+        return qml.expval(qml.PauliZ(0))
+
+    with pytest.raises(ValueError,
+                       match="Only a single qubit unitary is supported."):
+        circuit()
+
+
+@pytest.mark.parametrize("device", devices)
+def test_non_unitary(device):
+    """Tests if correct error is raised when attempting non-unitaries"""
+    test_input = np.array([[1, 1], [1, 1]])
+    @qml.qnode(device)
+    def circuit():
+        qml.QubitUnitary(test_input, wires=[0])
+        return qml.expval(qml.PauliZ(0))
+
+    with pytest.raises(ValueError,
+                       match="Not a unitary"):
+        circuit()
 
 
 class CompareWithDefaultQubitTest(BaseTest):
