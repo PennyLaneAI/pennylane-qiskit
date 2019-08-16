@@ -68,7 +68,6 @@ class IBMQDevice(QiskitDevice):
     """
 
     short_name = "qiskit.ibmq"
-    _backend_kwargs = ["verbose", "backend", "ibmqx_token", "ibmqx_url"]
 
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
         token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)

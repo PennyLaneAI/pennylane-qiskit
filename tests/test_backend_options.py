@@ -90,27 +90,27 @@ class BackendOptionsTest(BaseTest):
 
                 log.info("Outcome: %s", measurement)
 
-    def test_basicaer_chop_threshold(self):
-        """Test BasisState with preparations on the whole system."""
-        if self.devices is None:
-            return
-        self.logTestName()
+    # def test_basicaer_chop_threshold(self):
+    #     """Test BasisState with preparations on the whole system."""
+    #     if self.devices is None:
+    #         return
+    #     self.logTestName()
 
-        if self.args.device == 'basicaer' or self.args.device == 'all':
-            dev = BasicAerDevice(wires=self.num_subsystems, chop_threshold=1e-2, backend='unitary_simulator')
+    #     if self.args.device == 'basicaer' or self.args.device == 'all':
+    #         dev = BasicAerDevice(wires=self.num_subsystems, chop_threshold=1e-2, backend='unitary_simulator')
 
-            @qml.qnode(dev)
-            def circuit():
-                # An angle of 1e-1 would fail!
-                angle = 1e-2
-                qml.RY(angle, wires=[0])
-                return qml.expval(qml.PauliZ(wires=[0])), qml.expval(qml.PauliZ(wires=[1]))
+    #         @qml.qnode(dev)
+    #         def circuit():
+    #             # An angle of 1e-1 would fail!
+    #             angle = 1e-2
+    #             qml.RY(angle, wires=[0])
+    #             return qml.expval(qml.PauliZ(wires=[0])), qml.expval(qml.PauliZ(wires=[1]))
 
-            measurement = circuit()
+    #         measurement = circuit()
 
-            self.assertAllAlmostEqual(measurement, [1, 1], delta=1e-15)
+    #         self.assertAllAlmostEqual(measurement, [1, 1], delta=1e-15)
 
-            log.info("Outcome: %s", measurement)
+    #         log.info("Outcome: %s", measurement)
 
     def test_backend_options(self):
         if self.devices is None:
