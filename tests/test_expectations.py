@@ -34,11 +34,11 @@ shots = 8192
 ibmq_shots = 8192
 aer_backends = ["statevector_simulator", "unitary_simulator", "qasm_simulator"]
 
-devices = [BasicAerDevice(wires=num_wires, backend=b) for b in aer_backends]
-devices += [AerDevice(wires=num_wires, backend=b) for b in aer_backends]
+devices = [BasicAerDevice(wires=num_wires, backend=b, shots=shots) for b in aer_backends]
+devices += [AerDevice(wires=num_wires, backend=b, shots=shots) for b in aer_backends]
 
 try:
-    devices.append(IBMQDevice(wires=num_wires, shots=8*1024))
+    devices.append(IBMQDevice(wires=num_wires, shots=ibmq_shots))
 except IBMQAccountError:
     pass
 
@@ -48,24 +48,23 @@ def test_identity_expectation(device):
     theta = 0.432
     phi = 0.123
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.Identity(wires=[0])),
+                qml.expval(qml.Identity(wires=[1])))
 
-    O = qml.Identity
-    name = "Identity"
-
-    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-    res = device.pre_measure()
-
-    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    res = circuit(theta, phi)
 
     # below are the analytic expectation values for this circuit (trace should always be 1)
     assert np.allclose(
         res,
         np.array([1, 1]),
         atol=3 / np.sqrt(device.shots),
-        rtol=3 / np.sqrt(device.shots),
+        rtol=0.,
     )
 
 
@@ -75,24 +74,23 @@ def test_pauliz_expectation(device):
     theta = 0.432
     phi = 0.123
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.PauliZ(wires=[0])),
+                qml.expval(qml.PauliZ(wires=[1])))
 
-    O = qml.PauliZ
-    name = "PauliZ"
-
-    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-    res = device.pre_measure()
-
-    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    res = circuit(theta, phi)
 
     # below are the analytic expectation values for this circuit
     assert np.allclose(
         res,
         np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]),
         atol=3 / np.sqrt(device.shots),
-        rtol=3 / np.sqrt(device.shots),
+        rtol=0.,
     )
 
 
@@ -102,23 +100,22 @@ def test_paulix_expectation(device):
     theta = 0.432
     phi = 0.123
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.PauliX(wires=[0])),
+                qml.expval(qml.PauliX(wires=[1])))
 
-    O = qml.PauliX
-    name = "PauliX"
-
-    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-    device.pre_measure()
-
-    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    res = circuit(theta, phi)
     # below are the analytic expectation values for this circuit
     assert np.allclose(
         res,
         np.array([np.sin(theta) * np.sin(phi), np.sin(phi)]),
         atol=3 / np.sqrt(device.shots),
-        rtol=3 / np.sqrt(device.shots),
+        rtol=0.,
     )
 
 
@@ -128,23 +125,23 @@ def test_pauliy_expectation(device):
     theta = 0.432
     phi = 0.123
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.PauliY(wires=[0])),
+                qml.expval(qml.PauliY(wires=[1])))
 
-    O = qml.PauliY
-    name = "PauliY"
-
-    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-    device.pre_measure()
-
-    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    res = circuit(theta, phi)
+    
     # below are the analytic expectation values for this circuit
     assert np.allclose(
         res,
-        np.array([0, -np.cos(theta) * np.sin(phi)]),
+        np.array([0., -np.cos(theta) * np.sin(phi)]),
         atol=3 / np.sqrt(device.shots),
-        rtol=3 / np.sqrt(device.shots),
+        rtol=0.,
     )
 
 
@@ -154,28 +151,27 @@ def test_hadamard_expectation(device):
     theta = 0.432
     phi = 0.123
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.Hadamard(wires=[0])),
+                qml.expval(qml.Hadamard(wires=[1])))
 
-    O = qml.Hadamard
-    name = "Hadamard"
-
-    device._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-    device.pre_measure()
-
-    res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
+    res = circuit(theta, phi)
     # below are the analytic expectation values for this circuit
     expected = np.array(
         [
             np.sin(theta) * np.sin(phi) + np.cos(theta),
             np.cos(theta) * np.cos(phi) + np.sin(phi),
         ]
-    ) / np.sqrt(2)
+    ) / np.sqrt(2.)
     assert np.allclose(
         res, expected,
         atol=5 / np.sqrt(device.shots),
-        rtol=5 / np.sqrt(device.shots)
+        rtol=0.
     )
 
 
@@ -191,20 +187,16 @@ def test_hermitian_expectation(device):
         ]
     )
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.Hermitian(H, wires=[0])),
+                qml.expval(qml.Hermitian(H, wires=[1])))
 
-    O = qml.Hermitian
-    name = "Hermitian"
-
-    device._obs_queue = [
-        O(H, wires=[0], do_queue=False),
-        O(H, wires=[1], do_queue=False),
-    ]
-    device.pre_measure()
-
-    res = np.array([device.expval(name, [0], [H]), device.expval(name, [1], [H])])
+    res = circuit(theta, phi)
 
     # below are the analytic expectation values for this circuit with arbitrary
     # Hermitian observable H
@@ -219,7 +211,7 @@ def test_hermitian_expectation(device):
         res,
         expected,
         atol=5 / np.sqrt(device.shots),
-        rtol=5 / np.sqrt(device.shots)
+        rtol=0.
     )
 
 
@@ -229,18 +221,16 @@ def test_int_wires(device):
     theta = 0.432
     phi = 0.123
 
-    device.apply("RX", wires=[0], par=[theta])
-    device.apply("RX", wires=[1], par=[phi])
-    device.apply("CNOT", wires=[0, 1], par=[])
+    @qml.qnode(device)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=[0])
+        qml.RX(phi, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        
+        return (qml.expval(qml.Identity(wires=0)),
+                qml.expval(qml.Identity(wires=1)))
 
-    O = qml.Identity
-    name = "Identity"
-
-    device._obs_queue = [O(wires=0, do_queue=False), O(wires=1, do_queue=False)]
-    res = device.pre_measure()
-
-    res = np.array([device.expval(name, 0, []), device.expval(name, 1, [])])
-
+    res = circuit(theta, phi) 
     # below are the analytic expectation values for this circuit (trace should always be 1)
     assert np.allclose(
         res,
