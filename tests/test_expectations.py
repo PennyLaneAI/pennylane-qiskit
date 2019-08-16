@@ -30,8 +30,8 @@ import os
 
 num_subsystems = 2
 num_wires = 2
-shots = 8192
-ibmq_shots = 8192
+shots = 100
+ibmq_shots = 100
 aer_backends = ["statevector_simulator", "unitary_simulator", "qasm_simulator"]
 
 devices = [BasicAerDevice(wires=num_wires, backend=b, shots=shots) for b in aer_backends]
