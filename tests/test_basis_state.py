@@ -16,8 +16,10 @@ Unit tests for the :mod:`pennylane_qiskit` BasisState operation.
 """
 import pennylane as qml
 from pennylane import numpy as np
-
 from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
+
+from qiskit.providers.ibmq.exceptions import IBMQAccountError
+
 import pytest
 import os
 
@@ -36,22 +38,15 @@ bits_subsystem = [
     np.array([1, 1, 1]),
 ]
 
-IBMQX_TOKEN = None
-ibm_options = qml.default_config["qiskit.ibmq"]
+aer_backends = ["statevector_simulator", "unitary_simulator", "qasm_simulator"]
 
-if "ibmqx_token" in ibm_options:
-    IBMQX_TOKEN = ibm_options["ibmqx_token"]
+devices = [BasicAerDevice(wires=num_wires, backend=b) for b in aer_backends]
+devices += [AerDevice(wires=num_wires, backend=b) for b in aer_backends]
 
-elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
-    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
-
-devices = [BasicAerDevice(wires=num_wires), AerDevice(wires=num_wires)]
-
-if IBMQX_TOKEN is not None:
-    devices.append(
-        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
-    )
-
+try:
+    devices.append(IBMQDevice(wires=num_wires, shots=8*1024))
+except IBMQAccountError:
+    pass
 
 @pytest.mark.parametrize("device", devices)
 @pytest.mark.parametrize("bits_to_flip", bits)

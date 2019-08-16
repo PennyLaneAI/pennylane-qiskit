@@ -14,40 +14,33 @@
 """
 Unit tests for :mod:`pennylane_qiskit` expectation values
 """
-import logging as log
 from pennylane import numpy as np
 
 from defaults import pennylane as qml, BaseTest
-from pennylane_qiskit import BasicAerDevice, AerDevice, IBMQDevice
+from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
+
+from qiskit.providers.ibmq.exceptions import IBMQAccountError
+
 import unittest
+
 import pytest
+
 import os
 
-log.getLogger("defaults")
-
-IBMQX_TOKEN = None
-ibm_options = qml.default_config["qiskit.ibmq"]
-
-if "ibmqx_token" in ibm_options:
-    IBMQX_TOKEN = ibm_options["ibmqx_token"]
-
-elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
-    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
 
 num_subsystems = 2
 num_wires = 2
-shots = 100
-ibmq_shots = 100
-devices = [BasicAerDevice(wires=num_wires, shots=shots),
-           AerDevice(wires=num_wires, shots=shots)]
+shots = 8192
+ibmq_shots = 8192
+aer_backends = ["statevector_simulator", "unitary_simulator", "qasm_simulator"]
 
-if IBMQX_TOKEN is not None:
-    devices.append(
-        IbmQQiskitDevice(wires=num_wires,
-                         num_runs=ibmq_shots,
-                         ibmqx_token=ibmqx_token)
-    )
+devices = [BasicAerDevice(wires=num_wires, backend=b) for b in aer_backends]
+devices += [AerDevice(wires=num_wires, backend=b) for b in aer_backends]
 
+try:
+    devices.append(IBMQDevice(wires=num_wires, shots=8*1024))
+except IBMQAccountError:
+    pass
 
 @pytest.mark.parametrize("device", devices)
 def test_identity_expectation(device):
@@ -93,7 +86,6 @@ def test_pauliz_expectation(device):
     res = device.pre_measure()
 
     res = np.array([device.expval(name, [0], []), device.expval(name, [1], [])])
-    print(res)
 
     # below are the analytic expectation values for this circuit
     assert np.allclose(

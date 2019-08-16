@@ -28,6 +28,8 @@ from defaults import pennylane as qml, BaseTest, IBMQX_TOKEN
 from pennylane_qiskit import BasicAerDevice, IBMQDevice, AerDevice
 import pennylane_qiskit
 
+from qiskit.providers.ibmq.exceptions import IBMQAccountError
+
 import pytest
 
 import os
@@ -35,21 +37,16 @@ import os
 log.getLogger('defaults')
 
 num_wires = 3
-IBMQX_TOKEN = None
-ibm_options = qml.default_config["qiskit.ibmq"]
 
-if "ibmqx_token" in ibm_options:
-    IBMQX_TOKEN = ibm_options["ibmqx_token"]
+aer_backends = ["statevector_simulator", "unitary_simulator", "qasm_simulator"]
 
-elif "IBMQX_TOKEN" in os.environ and os.environ["IBMQX_TOKEN"] is not None:
-    IBMQX_TOKEN = os.environ["IBMQX_TOKEN"]
+devices = [BasicAerDevice(wires=num_wires, backend=b) for b in aer_backends]
+devices += [AerDevice(wires=num_wires, backend=b) for b in aer_backends]
 
-devices = [BasicAerDevice(wires=num_wires), AerDevice(wires=num_wires)]
-
-if IBMQX_TOKEN is not None:
-    devices.append(
-        IbmQQiskitDevice(wires=num_wires, num_runs=8 * 1024, ibmqx_token=ibmqx_token)
-    )
+try:
+    devices.append(IBMQDevice(wires=num_wires, shots=8*1024))
+except IBMQAccountError:
+    pass
 
 
 @pytest.mark.parametrize("device", devices)
@@ -81,7 +78,7 @@ def test_non_unitary(device):
 
 
 class CompareWithDefaultQubitTest(BaseTest):
-    """Compares the behavior of the ProjectQ plugin devices with the default qubit device.
+    """Compares the behavior of the Qiskit plugin devices with the default qubit device.
     """
     num_subsystems = 3  # This should be as large as the largest gate/observable, but we cannot know that before instantiating the device. We thus check later that all gates/observables fit.
     shots = 16 * 1024
