@@ -30,7 +30,8 @@ Code details
 """
 # pylint: disable=too-many-instance-attributes
 import abc
-from collections import OrderedDict
+from collections import Sequence, OrderedDict
+import functools
 import itertools
 
 import numpy as np
@@ -55,6 +56,22 @@ Y = np.array([[0, -1j], [1j, 0]])  #: Pauli-Y matrix
 Z = np.array([[1, 0], [0, -1]])  #: Pauli-Z matrix
 H = np.array([[1, 1], [1, -1]]) / np.sqrt(2)  # Hadamard matrix
 
+
+@functools.lru_cache()
+def z_eigs(n):
+    r"""Returns the eigenvalues for :math:`Z^{\otimes n}`.
+
+    Args:
+        n (int): number of wires
+
+    Returns:
+        array[int]: eigenvalues of :math:`Z^{\otimes n}
+    """
+    if n == 1:
+        return np.array([1, -1])
+    return np.concatenate([z_eigs(n - 1), -z_eigs(n - 1)])
+
+
 observable_map = {"PauliX": X, "PauliY": Y, "PauliZ": Z, "Identity": I, "Hadamard": H}
 
 
@@ -76,7 +93,7 @@ QISKIT_OPERATION_MAP = {
     # operations not natively implemented in Qiskit but provided in gates.py
     "Rot": Rot,
     "BasisState": BasisState,
-    "QubitUnitary": QubitUnitary,
+    "QubitUnitary": ex.UnitaryGate,
     # additional operations not native to PennyLane but present in Qiskit
     "S": ex.SGate,
     "Sdg": ex.SdgGate,
@@ -168,7 +185,7 @@ class QiskitDevice(Device, abc.ABC):
 
         self._first_operation = False
 
-        qregs = [(self._reg, i) for i in wires]
+        qregs = [self._reg[i] for i in wires]
 
         if operation == "QubitStateVector":
 
@@ -218,6 +235,40 @@ class QiskitDevice(Device, abc.ABC):
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
 
+    def rotate_basis(self, obs, wires, par):
+        if obs == "PauliX":
+            # X = H.Z.H
+            self.apply("Hadamard", wires=wires, par=[])
+
+        elif obs == "PauliY":
+            # Y = (HS^)^.Z.(HS^) and S^=SZ
+            self.apply("PauliZ", wires=wires, par=[])
+            self.apply("S", wires=wires, par=[])
+            self.apply("Hadamard", wires=wires, par=[])
+
+        elif obs == "Hadamard":
+            # H = Ry(-pi/4)^.Z.Ry(-pi/4)
+            self.apply("RY", wires, [-np.pi / 4])
+
+        elif obs == "Hermitian":
+            # For arbitrary Hermitian matrix H, let U be the unitary matrix
+            # that diagonalises it, and w_i be the eigenvalues.
+            Hmat = par[0]
+            Hkey = tuple(Hmat.flatten().tolist())
+
+            if Hkey in self._eigs:
+                # retrieve eigenvectors
+                U = self._eigs[Hkey]["eigvec"]
+            else:
+                # store the eigenvalues corresponding to H
+                # in a dictionary, so that they do not need to
+                # be calculated later
+                w, U = np.linalg.eigh(Hmat)
+                self._eigs[Hkey] = {"eigval": w, "eigvec": U}
+
+            # Perform a change of basis before measuring by applying U^ to the circuit
+            self.apply("QubitUnitary", wires, [U.conj().T])
+
     def pre_measure(self):
         if self.backend_name not in self._state_backends:
             # a hardware simulator
@@ -228,46 +279,13 @@ class QiskitDevice(Device, abc.ABC):
                 if e.return_type == "sample":
                     self.memory = True  # make sure to return samples
 
-                wire = [e.wires[0]]
-
-                if e.name == "Identity":
-                    pass  # nothing to be done here! Will be taken care of later.
-
-                elif e.name == "PauliZ":
-                    pass  # nothing to be done here! Will be taken care of later.
-
-                elif e.name == "PauliX":
-                    # X = H.Z.H
-                    self.apply("Hadamard", wires=wire, par=[])
-
-                elif e.name == "PauliY":
-                    # Y = (HS^)^.Z.(HS^) and S^=SZ
-                    self.apply("PauliZ", wires=wire, par=[])
-                    self.apply("S", wires=wire, par=[])
-                    self.apply("Hadamard", wires=wire, par=[])
-
-                elif e.name == "Hadamard":
-                    # H = Ry(-pi/4)^.Z.Ry(-pi/4)
-                    self.apply("RY", wire, [-np.pi / 4])
-
-                elif e.name == "Hermitian":
-                    # For arbitrary Hermitian matrix H, let U be the unitary matrix
-                    # that diagonalises it, and w_i be the eigenvalues.
-                    Hmat = e.parameters[0]
-                    Hkey = tuple(Hmat.flatten().tolist())
-
-                    if Hkey in self._eigs:
-                        # retrieve eigenvectors
-                        U = self._eigs[Hkey]["eigvec"]
-                    else:
-                        # store the eigenvalues corresponding to H
-                        # in a dictionary, so that they do not need to
-                        # be calculated later
-                        w, U = np.linalg.eigh(Hmat)
-                        self._eigs[Hkey] = {"eigval": w, "eigvec": U}
-
-                    # Perform a change of basis before measuring by applying U^ to the circuit
-                    self.apply("QubitUnitary", wire, [U.conj().T])
+                if e.tensor:
+                    # tensor product
+                    for n, w, p in zip(e.name, e.wires, e.parameters):
+                        self.rotate_basis(n, w, p)
+                else:
+                    # single wire observable
+                    self.rotate_basis(e.name, e.wires, e.parameters)
 
             # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
@@ -363,22 +381,48 @@ class QiskitDevice(Device, abc.ABC):
         else:
             # Need to convert counts into samples
             samples = np.vstack(
-                [np.vstack([s] * int(self.shots * p)) for s, p in self.probabilities().items()]
+                [
+                    np.vstack([s] * int(self.shots * p))
+                    for s, p in self.probabilities().items()
+                ]
             )
 
-        if observable == "Hermitian":
+        if isinstance(observable, Sequence) and not isinstance(observable, str):
+            # tensor product
+
+            # determine the eigenvalues
+            if "Hermitian" in observable:
+                # observable is of the form Z^{\otimes a}\otimes H \otimes Z^{\otimes b}
+                eigvals = np.array([1])
+
+                for k, g in itertools.groupby(zip(observable, wires, par), lambda x: x[0] == "Hermitian"):
+                    if k:
+                        p = list(g)[0][2]
+                        Hkey = tuple(p[0].flatten().tolist())
+                        eigvals = np.kron(eigvals, self._eigs[Hkey]["eigval"])
+                    else:
+                        n = len([w for sublist in list(zip(*g))[1] for w in sublist])
+                        eigvals = np.kron(eigvals, z_eigs(n))
+            else:
+                # observable should be Z^{\otimes n}
+                eigvals = z_eigs(len(wires))
+
+        elif observable == "Hermitian":
+            # single wire Hermitian observable
             Hkey = tuple(par[0].flatten().tolist())
             eigvals = self._eigs[Hkey]["eigval"]
-            res = samples[:, np.array(wires)]
 
-            samples = np.zeros([n])
+        elif observable in {"PauliX", "PauliY", "PauliZ", "Hadamard"}:
+            return 1 - 2 * samples[:, wires[0]]
 
-            for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires))):
-                samples = np.where(np.all(res == b, axis=1), w, samples)
+        wires_flat = [w for sublist in wires for w in sublist]
+        res = samples[:, np.array(wires_flat)]
+        samples = np.zeros([n])
 
-            return samples
+        for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires_flat))):
+            samples = np.where(np.all(res == b, axis=1), w, samples)
 
-        return 1 - 2 * samples[:, wires[0]]
+        return samples
 
     @property
     def state(self):
@@ -399,7 +443,8 @@ class QiskitDevice(Device, abc.ABC):
 
         # sort the counts and reverse qubit order to match PennyLane convention
         probs = {
-            tuple(int(i) for i in s[::-1]): c / self.shots for s, c in result.get_counts().items()
+            tuple(int(i) for i in s[::-1]): c / self.shots
+            for s, c in result.get_counts().items()
         }
         return OrderedDict(tuple(sorted(probs.items())))
 
