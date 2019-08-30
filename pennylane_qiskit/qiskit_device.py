@@ -30,6 +30,8 @@ Code details
 """
 # pylint: disable=too-many-instance-attributes
 import abc
+from collections import OrderedDict
+import itertools
 
 import numpy as np
 
@@ -43,7 +45,17 @@ from qiskit.converters import dag_to_circuit, circuit_to_dag
 from pennylane import Device, DeviceError
 
 from .gates import BasisState, Rot, QubitUnitary
+from .utils import mat_vec_product, spectral_decomposition
 from ._version import __version__
+
+
+I = np.identity(2)
+X = np.array([[0, 1], [1, 0]])  #: Pauli-X matrix
+Y = np.array([[0, -1j], [1j, 0]])  #: Pauli-Y matrix
+Z = np.array([[1, 0], [0, -1]])  #: Pauli-Z matrix
+H = np.array([[1, 1], [1, -1]]) / np.sqrt(2)  # Hadamard matrix
+
+observable_map = {"PauliX": X, "PauliY": Y, "PauliZ": Z, "Identity": I, "Hadamard": H}
 
 
 QISKIT_OPERATION_MAP = {
@@ -100,13 +112,14 @@ class QiskitDevice(Device, abc.ABC):
     plugin_version = __version__
     author = "Carsten Blank"
 
-    _capabilities = {"model": "qubit"}
-
-    _operation_map = QISKIT_OPERATION_MAP
-
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
-    _backend_kwargs = ["verbose", "backend"]
+    _capabilities = {"model": "qubit"}
+    _operation_map = QISKIT_OPERATION_MAP
+    _state_backends = {"statevector_simulator", "unitary_simulator"}
+    """set[str]: Set of backend names that define the backends
+    that support returning the underlying quantum statevector"""
+
     _eigs = {}
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
@@ -118,7 +131,6 @@ class QiskitDevice(Device, abc.ABC):
         self.provider = provider
         self.backend_name = backend
         self.compile_backend = kwargs.get("compile_backend")
-        self.name = kwargs.get("name", "circuit")
         self.kwargs = kwargs
 
         self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
@@ -129,6 +141,11 @@ class QiskitDevice(Device, abc.ABC):
         self._circuit = None
         self._current_job = None
         self._first_operation = True
+        self._state = None  # statevector of a simulator backend
+
+        # job execution options
+        self.memory = False  # do not return samples, just counts
+
         self.reset()
 
     @property
@@ -172,59 +189,87 @@ class QiskitDevice(Device, abc.ABC):
         then the target is simply the backend."""
         compile_backend = self.compile_backend or self.backend
         compiled_circuits = transpile(self._circuit, backend=compile_backend)
-        return assemble(experiments=compiled_circuits, backend=compile_backend, shots=self.shots)
+        return assemble(
+            experiments=compiled_circuits,
+            backend=compile_backend,
+            shots=self.shots if self.shots > 0 else 1,
+            memory=self.memory,
+        )
 
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(qobj, backend_options=self.kwargs)
-        self._current_job.result()
+        result = self._current_job.result()
+
+        if self.backend_name in self._state_backends:
+            self._state = self._get_state(result)
+
+    def _get_state(self, result):
+        if self.backend_name == "statevector_simulator":
+            state = np.asarray(result.get_statevector())
+
+        elif self.backend_name == "unitary_simulator":
+            unitary = np.asarray(result.get_unitary())
+            initial_state = np.zeros([2 ** self.num_wires])
+            initial_state[0] = 1
+
+            state = unitary @ initial_state
+
+        # reverse qubit order to match PennyLane convention
+        return state.reshape([2] * self.num_wires).T.flatten()
 
     def pre_measure(self):
-        # Add unitaries if a different expectation value is given
-        for e in self.obs_queue:
-            wire = [e.wires[0]]
+        if self.backend_name not in self._state_backends:
+            # a hardware simulator
 
-            if e.name == "Identity":
-                pass  # nothing to be done here! Will be taken care of later.
+            for e in self.obs_queue:
+                # Add unitaries if a different expectation value is given
 
-            elif e.name == "PauliZ":
-                pass  # nothing to be done here! Will be taken care of later.
+                if e.return_type == "sample":
+                    self.memory = True  # make sure to return samples
 
-            elif e.name == "PauliX":
-                # X = H.Z.H
-                self.apply("Hadamard", wires=wire, par=[])
+                wire = [e.wires[0]]
 
-            elif e.name == "PauliY":
-                # Y = (HS^)^.Z.(HS^) and S^=SZ
-                self.apply("PauliZ", wires=wire, par=[])
-                self.apply("S", wires=wire, par=[])
-                self.apply("Hadamard", wires=wire, par=[])
+                if e.name == "Identity":
+                    pass  # nothing to be done here! Will be taken care of later.
 
-            elif e.name == "Hadamard":
-                # H = Ry(-pi/4)^.Z.Ry(-pi/4)
-                self.apply("RY", wire, [-np.pi / 4])
+                elif e.name == "PauliZ":
+                    pass  # nothing to be done here! Will be taken care of later.
 
-            elif e.name == "Hermitian":
-                # For arbitrary Hermitian matrix H, let U be the unitary matrix
-                # that diagonalises it, and w_i be the eigenvalues.
-                H = e.parameters[0]
-                Hkey = tuple(H.flatten().tolist())
+                elif e.name == "PauliX":
+                    # X = H.Z.H
+                    self.apply("Hadamard", wires=wire, par=[])
 
-                if Hkey in self._eigs:
-                    # retrieve eigenvectors
-                    U = self._eigs[Hkey]["eigvec"]
-                else:
-                    # store the eigenvalues corresponding to H
-                    # in a dictionary, so that they do not need to
-                    # be calculated later
-                    w, U = np.linalg.eigh(H)
-                    self._eigs[Hkey] = {"eigval": w, "eigvec": U}
+                elif e.name == "PauliY":
+                    # Y = (HS^)^.Z.(HS^) and S^=SZ
+                    self.apply("PauliZ", wires=wire, par=[])
+                    self.apply("S", wires=wire, par=[])
+                    self.apply("Hadamard", wires=wire, par=[])
 
-                # Perform a change of basis before measuring by applying U^ to the circuit
-                self.apply("QubitUnitary", wire, [U.conj().T])
+                elif e.name == "Hadamard":
+                    # H = Ry(-pi/4)^.Z.Ry(-pi/4)
+                    self.apply("RY", wire, [-np.pi / 4])
 
-        # Add measurements if they are needed
-        if self.backend_name not in ("statevector_simulator", "unitary_simulator"):
+                elif e.name == "Hermitian":
+                    # For arbitrary Hermitian matrix H, let U be the unitary matrix
+                    # that diagonalises it, and w_i be the eigenvalues.
+                    Hmat = e.parameters[0]
+                    Hkey = tuple(Hmat.flatten().tolist())
+
+                    if Hkey in self._eigs:
+                        # retrieve eigenvectors
+                        U = self._eigs[Hkey]["eigvec"]
+                    else:
+                        # store the eigenvalues corresponding to H
+                        # in a dictionary, so that they do not need to
+                        # be calculated later
+                        w, U = np.linalg.eigh(Hmat)
+                        self._eigs[Hkey] = {"eigval": w, "eigvec": U}
+
+                    # Perform a change of basis before measuring by applying U^ to the circuit
+                    self.apply("QubitUnitary", wire, [U.conj().T])
+
+            # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
                 measure(self._circuit, qr, cr)
 
@@ -232,67 +277,133 @@ class QiskitDevice(Device, abc.ABC):
         self.run(qobj)
 
     def expval(self, observable, wires, par):
-        # Make wires lists.
-        if isinstance(wires, int):
-            wire = wires
-        else:
-            wire = wires[0]
-
-        # Get the result of the job
-        result = self._current_job.result()
-
-        def to_probabilities(state):
-            # Normalize the state in case some numerical errors have changed this!
-            state = state / np.linalg.norm(state)
-            probabilities = state.conj() * state
-            return {
-                "{0:b}".format(i).zfill(self.num_wires): abs(p) for i, p in enumerate(probabilities)
-            }
-
-        # Distinguish between three different calculations
-        # As any different expectation value from PauliZ is already handled before
-        # here we treat everything as PauliZ.
-        if self.backend_name == "statevector_simulator":
-            state = np.asarray(result.get_statevector())
-            probabilities = to_probabilities(state)
-
-        elif self.backend_name == "unitary_simulator":
-            unitary = np.asarray(result.get_unitary())
-            initial_state = np.zeros(shape=(self.num_wires ** 2,))
-            initial_state[0] = 1
-            state = unitary @ initial_state
-            probabilities = to_probabilities(state)
-
-        else:
-            probabilities = dict(
-                (state, count / self.shots) for state, count in result.get_counts().items()
-            )
-
-        # The first qubit measurement is right-most, so we need to reverse the measurement result
-        zero = sum(
-            p for (measurement, p) in probabilities.items() if measurement[::-1][wire] == "0"
-        )
-        one = sum(p for (measurement, p) in probabilities.items() if measurement[::-1][wire] == "1")
-
-        expval = (1 - (2 * one) - (1 - 2 * zero)) / 2
-
-        # for single qubit state probabilities |psi|^2 = (p0, p1),
-        # we know that p0+p1=1 and that <Z>=p0-p1
-        p0 = (1 + expval) / 2
-        p1 = (1 - expval) / 2
-
-        if observable == "Identity":
-            # <I> = \sum_i p_i
-            return p0 + p1
+        if self.backend_name not in self._state_backends:
+            return np.mean(self.sample(observable, wires, par))
 
         if observable == "Hermitian":
-            # <H> = \sum_i w_i p_i
-            Hkey = tuple(par[0].flatten().tolist())
-            w = self._eigs[Hkey]["eigval"]
-            return w[0] * p0 + w[1] * p1
+            A = par[0]
+        else:
+            A = observable_map[observable]
 
-        return expval
+        if self.shots == 0:
+            # exact expectation value
+            As = mat_vec_product(A, self.state, wires, self.num_wires)
+            ev = np.vdot(self.state, As).real
+        else:
+            # estimate the ev
+            ev = np.mean(self.sample(observable, wires, par, self.shots))
+
+        return ev
+
+    def var(self, observable, wires, par):
+        if self.backend_name not in self._state_backends:
+            return np.var(self.sample(observable, wires, par))
+
+        if observable == "Hermitian":
+            A = par[0]
+        else:
+            A = observable_map[observable]
+
+        if self.shots == 0:
+            # exact expectation value
+            As = mat_vec_product(A, self.state, wires, self.num_wires)
+            ev = np.vdot(self.state, As).real
+
+            Asq = mat_vec_product(A @ A, self.state, wires, self.num_wires)
+            evSq = np.vdot(self.state, Asq).real
+
+            var = evSq - ev ** 2
+        else:
+            # estimate the ev
+            var = np.var(self.sample(observable, wires, par, self.shots))
+
+        return var
+
+    def sample(self, observable, wires, par, n=None):
+        if n is None:
+            n = self.shots
+
+        if n == 0:
+            raise ValueError("Calling sample with n = 0 is not possible.")
+
+        if n < 0 or not isinstance(n, int):
+            raise ValueError("The number of samples must be a positive integer.")
+
+        if observable == "Identity":
+            return np.ones([n])
+
+        # branch out depending on the type of backend
+        if self.backend_name in self._state_backends:
+            # software simulator. Need to sample from probabilities.
+
+            if observable == "Hermitian":
+                A = par[0]
+            else:
+                A = observable_map[observable]
+
+            a, P = spectral_decomposition(A)
+
+            p = np.zeros(a.shape)
+
+            for idx, Pi in enumerate(P):
+                p[idx] = np.vdot(
+                    self.state, mat_vec_product(Pi, self.state, wires, self.num_wires)
+                ).real
+
+            return np.random.choice(a, n, p=p)
+
+        # a hardware simulator
+        if self.memory:
+            # get the samples
+            samples = self._current_job.result().get_memory()
+
+            # reverse qubit order to match PennyLane convention
+            samples = np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+
+        else:
+            # Need to convert counts into samples
+            samples = np.vstack(
+                [np.vstack([s] * int(self.shots * p)) for s, p in self.probabilities().items()]
+            )
+
+        if observable == "Hermitian":
+            Hkey = tuple(par[0].flatten().tolist())
+            eigvals = self._eigs[Hkey]["eigval"]
+            res = samples[:, np.array(wires)]
+
+            samples = np.zeros([n])
+
+            for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires))):
+                samples = np.where(np.all(res == b, axis=1), w, samples)
+
+            return samples
+
+        return 1 - 2 * samples[:, wires[0]]
+
+    @property
+    def state(self):
+        return self._state
+
+    def probabilities(self):
+        # Note: Qiskit uses the convention that the first qubit is the
+        # least significant qubit.
+
+        if self._current_job is None:
+            return None
+
+        result = self._current_job.result()
+        basis_states = itertools.product(range(2), repeat=self.num_wires)
+
+        if self.backend_name in self._state_backends:
+            return OrderedDict(zip(basis_states, np.abs(self.state) ** 2))
+
+        # sort the counts and reverse qubit order to match PennyLane convention
+        probs = {
+            tuple(int(i) for i in s[::-1]): c / self.shots for s, c in result.get_counts().items()
+        }
+        return OrderedDict(tuple(sorted(probs.items())))
 
     def reset(self):
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
         self._first_operation = True
+        self._state = None
