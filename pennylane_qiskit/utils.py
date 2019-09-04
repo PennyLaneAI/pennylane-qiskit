@@ -26,6 +26,8 @@ This module contains various utility functions.
 Code details
 ~~~~~~~~~~~~
 """
+import itertools
+
 import numpy as np
 from numpy.linalg import eigh
 
@@ -104,3 +106,41 @@ def mat_vec_product(mat, vec, wires, total_wires):
     state_multi_index = np.transpose(tdot, inv_perm)
 
     return np.reshape(state_multi_index, 2 ** total_wires)
+
+
+def permute(U, wires):
+    r"""Permute a multi-qubit unitary operator from most siginificant
+    bit on the left to the Qiskit convention of most significant bit
+    on the right.
+
+    Args:
+        U (array): :math:`2^n \times 2^n` matrix where n = len(wires).
+        wires (Sequence[int]): target subsystems
+
+    Returns:
+        array: :math:`2^n\times 2^n` matrix
+    """
+    if len(wires) == 1:
+        # total number of wires is 1, simply return the matrix
+        return U
+
+    N = len(wires)
+    wires = np.asarray(wires)
+
+    if np.any(wires < 0) or np.any(wires >= N) or len(set(wires)) != len(wires):
+        raise ValueError("Invalid target subsystems provided in 'wires' argument.")
+
+    if U.shape != (2 ** len(wires), 2 ** len(wires)):
+        raise ValueError("Matrix parameter must be of size (2**len(wires), 2**len(wires))")
+
+    # generate N qubit basis states via the cartesian product
+    tuples = np.array(list(itertools.product([0, 1], repeat=N)))
+
+    # convert to computational basis
+    # i.e., converting the list of basis state bit strings into
+    # a list of decimal numbers that correspond to the computational
+    # basis state. For example, [0, 1, 0, 1, 1] = 2^3+2^1+2^0 = 11.
+    perm = np.ravel_multi_index(tuples[:, wires[::-1]].T, [2] * N)
+
+    # permute U to take into account rearranged wires
+    return U[:, perm][perm]

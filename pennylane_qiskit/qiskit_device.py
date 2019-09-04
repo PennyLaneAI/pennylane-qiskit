@@ -30,13 +30,14 @@ Code details
 """
 # pylint: disable=too-many-instance-attributes
 import abc
-from collections import Sequence, OrderedDict
+from collections import OrderedDict
 import functools
 import itertools
 
 import numpy as np
 
 from qiskit import extensions as ex
+from qiskit.extensions.quantum_initializer.isometry import iso
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
 from qiskit.compiler import transpile, assemble
@@ -44,9 +45,10 @@ from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 
 from pennylane import Device, DeviceError
+from pennylane.operation import Tensor
 
 from .gates import BasisState, Rot, QubitUnitary
-from .utils import mat_vec_product, spectral_decomposition
+from .utils import mat_vec_product, spectral_decomposition, permute
 from ._version import __version__
 
 
@@ -131,7 +133,7 @@ class QiskitDevice(Device, abc.ABC):
 
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
-    _capabilities = {"model": "qubit"}
+    _capabilities = {"model": "qubit", "tensor_observables": True}
     _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {"statevector_simulator", "unitary_simulator"}
     """set[str]: Set of backend names that define the backends
@@ -192,6 +194,9 @@ class QiskitDevice(Device, abc.ABC):
             if len(par) > 2 ** len(qregs):
                 raise ValueError("State vector must be of length 2**wires.")
 
+            qregs = list(reversed(qregs))
+
+        if operation == "QubitUnitary":
             qregs = list(reversed(qregs))
 
         dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
@@ -279,7 +284,7 @@ class QiskitDevice(Device, abc.ABC):
                 if e.return_type == "sample":
                     self.memory = True  # make sure to return samples
 
-                if e.tensor:
+                if isinstance(e, Tensor):
                     # tensor product
                     for n, w, p in zip(e.name, e.wires, e.parameters):
                         self.rotate_basis(n, w, p)
@@ -387,7 +392,7 @@ class QiskitDevice(Device, abc.ABC):
                 ]
             )
 
-        if isinstance(observable, Sequence) and not isinstance(observable, str):
+        if isinstance(observable, list):
             # tensor product
 
             # determine the eigenvalues
