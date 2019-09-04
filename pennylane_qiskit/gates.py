@@ -28,7 +28,6 @@ Classes
 .. autosummary::
     BasisState
     Rot
-    QubitUnitary
 
 Code details
 ~~~~~~~~~~~~
@@ -83,67 +82,3 @@ class Rot(Gate):
             (RYGate(self.params[1]), [q[0]], []),
             (RZGate(self.params[2]), [q[0]], []),
         ]
-
-
-class QubitUnitary(Gate):
-    """Applies a PennyLane ``QubitUnitary`` operation on a single qubit.
-
-    The resulting unitary is mapped to the Qiskit ``u3`` gate.
-
-    Args:
-        U (array[complex]): square unitary matrix
-    """
-
-    TOL = 1e-6
-
-    def __init__(self, U):
-        super().__init__("qubit_unitary", 1, [U])
-
-    def _define(self):
-        q = QuantumRegister(self.num_qubits, "q")
-
-        U = self.params[0]
-
-        if U.shape != (2, 2):
-            raise ValueError("Only a single qubit unitary is supported.")
-
-        if not np.allclose(U @ U.conj().T, np.identity(2), atol=self.TOL, rtol=0):
-            raise ValueError("Not a unitary.")
-
-        # We assume
-        # [ a  b ]
-        # [ c  d ]
-
-        a, b, c, d = U.flatten()
-
-        # We use the universal single qubit gate U3
-        # (see https://qiskit.org/documentation/terra/summary_of_quantum_operations.html)
-        # with the assumption that element a has no global phase.
-        global_phase = np.angle(a)
-        theta = 2 * np.arccos((a * np.exp(-1j * global_phase)).real)
-
-        lam = 0
-        phi = 0
-
-        if abs(b) > self.TOL:
-            lam = np.angle(-b * np.exp(-1j * global_phase))
-
-        if abs(c) > self.TOL:
-            phi = np.angle(c * np.exp(-1j * global_phase))
-
-        lam_phi = np.angle(d * np.exp(-1j * global_phase))
-
-        if lam == 0:
-            phi = lam_phi - phi
-        else:
-            phi = lam_phi - lam
-
-        if not np.allclose(
-            d * np.exp(-1j * global_phase),
-            np.exp(1.0j * lam + 1.0j * phi) * np.cos(theta / 2),
-            atol=self.TOL,
-            rtol=0,
-        ):
-            raise RuntimeError("Error applying unitary.")
-
-        self.definition = [(U3Gate(theta, phi, lam), [q[0]], [])]

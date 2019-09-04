@@ -37,26 +37,18 @@ import itertools
 import numpy as np
 
 from qiskit import extensions as ex
-from qiskit.extensions.quantum_initializer.isometry import iso
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 
 from qiskit.compiler import transpile, assemble
 from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
+from qiskit.extensions.quantum_initializer.isometry import iso
 
 from pennylane import Device, DeviceError
 from pennylane.operation import Tensor
 
-from .gates import BasisState, Rot, QubitUnitary
-from .utils import mat_vec_product, spectral_decomposition, permute
+from .gates import BasisState, Rot
 from ._version import __version__
-
-
-I = np.identity(2)
-X = np.array([[0, 1], [1, 0]])  #: Pauli-X matrix
-Y = np.array([[0, -1j], [1j, 0]])  #: Pauli-Y matrix
-Z = np.array([[1, 0], [0, -1]])  #: Pauli-Z matrix
-H = np.array([[1, 1], [1, -1]]) / np.sqrt(2)  # Hadamard matrix
 
 
 @functools.lru_cache()
@@ -72,9 +64,6 @@ def z_eigs(n):
     if n == 1:
         return np.array([1, -1])
     return np.concatenate([z_eigs(n - 1), -z_eigs(n - 1)])
-
-
-observable_map = {"PauliX": X, "PauliY": Y, "PauliZ": Z, "Identity": I, "Hadamard": H}
 
 
 QISKIT_OPERATION_MAP = {
@@ -197,6 +186,10 @@ class QiskitDevice(Device, abc.ABC):
             qregs = list(reversed(qregs))
 
         if operation == "QubitUnitary":
+
+            if len(par) > 2 ** len(qregs):
+                raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
+
             qregs = list(reversed(qregs))
 
         dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
@@ -275,23 +268,21 @@ class QiskitDevice(Device, abc.ABC):
             self.apply("QubitUnitary", wires, [U.conj().T])
 
     def pre_measure(self):
+        for e in self.obs_queue:
+            # Add unitaries if a different expectation value is given
+
+            if e.return_type == "sample":
+                self.memory = True  # make sure to return samples
+
+            if isinstance(e, Tensor):
+                # tensor product
+                for n, w, p in zip(e.name, e.wires, e.parameters):
+                    self.rotate_basis(n, w, p)
+            else:
+                # single wire observable
+                self.rotate_basis(e.name, e.wires, e.parameters)
+
         if self.backend_name not in self._state_backends:
-            # a hardware simulator
-
-            for e in self.obs_queue:
-                # Add unitaries if a different expectation value is given
-
-                if e.return_type == "sample":
-                    self.memory = True  # make sure to return samples
-
-                if isinstance(e, Tensor):
-                    # tensor product
-                    for n, w, p in zip(e.name, e.wires, e.parameters):
-                        self.rotate_basis(n, w, p)
-                else:
-                    # single wire observable
-                    self.rotate_basis(e.name, e.wires, e.parameters)
-
             # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
                 measure(self._circuit, qr, cr)
@@ -303,44 +294,26 @@ class QiskitDevice(Device, abc.ABC):
         if self.backend_name not in self._state_backends:
             return np.mean(self.sample(observable, wires, par))
 
-        if observable == "Hermitian":
-            A = par[0]
-        else:
-            A = observable_map[observable]
-
         if self.shots == 0:
             # exact expectation value
-            As = mat_vec_product(A, self.state, wires, self.num_wires)
-            ev = np.vdot(self.state, As).real
-        else:
-            # estimate the ev
-            ev = np.mean(self.sample(observable, wires, par, self.shots))
+            eigvals = self.eigvals(observable, wires, par)
+            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            return (eigvals @ prob).real
 
-        return ev
+        # estimate the ev
+        return np.mean(self.sample(observable, wires, par, self.shots))
 
     def var(self, observable, wires, par):
         if self.backend_name not in self._state_backends:
             return np.var(self.sample(observable, wires, par))
 
-        if observable == "Hermitian":
-            A = par[0]
-        else:
-            A = observable_map[observable]
-
         if self.shots == 0:
             # exact expectation value
-            As = mat_vec_product(A, self.state, wires, self.num_wires)
-            ev = np.vdot(self.state, As).real
+            eigvals = self.eigvals(observable, wires, par)
+            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            return (eigvals**2) @ prob - (eigvals @ prob).real**2
 
-            Asq = mat_vec_product(A @ A, self.state, wires, self.num_wires)
-            evSq = np.vdot(self.state, Asq).real
-
-            var = evSq - ev ** 2
-        else:
-            # estimate the ev
-            var = np.var(self.sample(observable, wires, par, self.shots))
-
-        return var
+        return np.var(self.sample(observable, wires, par, self.shots))
 
     def sample(self, observable, wires, par, n=None):
         if n is None:
@@ -358,22 +331,9 @@ class QiskitDevice(Device, abc.ABC):
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
             # software simulator. Need to sample from probabilities.
-
-            if observable == "Hermitian":
-                A = par[0]
-            else:
-                A = observable_map[observable]
-
-            a, P = spectral_decomposition(A)
-
-            p = np.zeros(a.shape)
-
-            for idx, Pi in enumerate(P):
-                p[idx] = np.vdot(
-                    self.state, mat_vec_product(Pi, self.state, wires, self.num_wires)
-                ).real
-
-            return np.random.choice(a, n, p=p)
+            eigvals = self.eigvals(observable, wires, par)
+            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            return np.random.choice(eigvals, n, p=prob)
 
         # a hardware simulator
         if self.memory:
@@ -392,9 +352,68 @@ class QiskitDevice(Device, abc.ABC):
                 ]
             )
 
-        if isinstance(observable, list):
-            # tensor product
+        if isinstance(observable, str) and observable in {"PauliX", "PauliY", "PauliZ", "Hadamard"}:
+            return 1 - 2 * samples[:, wires[0]]
 
+        eigvals = self.eigvals(observable, wires, par)
+        wires = np.hstack(wires)
+        res = samples[:, np.array(wires)]
+        samples = np.zeros([n])
+
+        for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires))):
+            samples = np.where(np.all(res == b, axis=1), w, samples)
+
+        return samples
+
+    @property
+    def state(self):
+        return self._state
+
+    def probabilities(self, wires=None):
+        # Note: Qiskit uses the convention that the first qubit is the
+        # least significant qubit.
+        if self._current_job is None:
+            return None
+
+        if wires is None:
+            wires = range(self.num_wires)
+        else:
+            wires = np.hstack(wires)
+
+        if self.backend_name in self._state_backends:
+            # statevector simulator
+            prob = np.abs(self.state.reshape([2]*self.num_wires))**2
+        else:
+            # hardware simulator
+            result = self._current_job.result()
+
+            # sort the counts and reverse qubit order to match PennyLane convention
+            prob = {
+                tuple(int(i) for i in s[::-1]): c / self.shots
+                for s, c in result.get_counts().items()
+            }
+
+            prob = np.array([p for _, p in tuple(sorted(prob.items()))]).reshape([2]*self.num_wires)
+
+        basis_states = itertools.product(range(2), repeat=len(wires))
+        inactive_wires = list(set(range(self.num_wires)) - set(wires))
+        prob = np.apply_over_axes(np.sum, prob, inactive_wires).flatten()
+        return OrderedDict(zip(basis_states, prob))
+
+    def eigvals(self, observable, wires, par):
+        """Determine the eigenvalues of observable(s).
+
+        Args:
+            observable (str, List[str]): the name of an observable,
+                or a list of observables representing a tensor product.
+            wires (List[int]): wires the observable(s) is measured on
+            par (List[Any]): parameters of the observable(s)
+
+        Returns:
+            array[float]: an array of size ``(len(wires),)`` containing the
+            eigenvalues of the observable
+        """
+        if isinstance(observable, list):
             # determine the eigenvalues
             if "Hermitian" in observable:
                 # observable is of the form Z^{\otimes a}\otimes H \otimes Z^{\otimes b}
@@ -417,41 +436,10 @@ class QiskitDevice(Device, abc.ABC):
             Hkey = tuple(par[0].flatten().tolist())
             eigvals = self._eigs[Hkey]["eigval"]
 
-        elif observable in {"PauliX", "PauliY", "PauliZ", "Hadamard"}:
-            return 1 - 2 * samples[:, wires[0]]
+        else:
+            eigvals = z_eigs(len(wires))
 
-        wires_flat = [w for sublist in wires for w in sublist]
-        res = samples[:, np.array(wires_flat)]
-        samples = np.zeros([n])
-
-        for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires_flat))):
-            samples = np.where(np.all(res == b, axis=1), w, samples)
-
-        return samples
-
-    @property
-    def state(self):
-        return self._state
-
-    def probabilities(self):
-        # Note: Qiskit uses the convention that the first qubit is the
-        # least significant qubit.
-
-        if self._current_job is None:
-            return None
-
-        result = self._current_job.result()
-        basis_states = itertools.product(range(2), repeat=self.num_wires)
-
-        if self.backend_name in self._state_backends:
-            return OrderedDict(zip(basis_states, np.abs(self.state) ** 2))
-
-        # sort the counts and reverse qubit order to match PennyLane convention
-        probs = {
-            tuple(int(i) for i in s[::-1]): c / self.shots
-            for s, c in result.get_counts().items()
-        }
-        return OrderedDict(tuple(sorted(probs.items())))
+        return eigvals
 
     def reset(self):
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
