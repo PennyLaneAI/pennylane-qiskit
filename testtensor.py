@@ -3,8 +3,8 @@ from pennylane_qiskit import AerDevice
 
 import numpy as np
 
-# dev = AerDevice(4, shots=8192, backend="qasm_simulator")
-dev = AerDevice(4, shots=0, backend="statevector_simulator")
+dev = AerDevice(4, shots=8192, backend="qasm_simulator")
+# dev = AerDevice(4, shots=0, backend="statevector_simulator")
 
 state = np.array(
 [-0.261731+0.168737*1j,-0.29686+0.271412*1j,-0.0784235+0.207215*1j,-0.261282+0.0494769*1j,-0.249531+0.171743*1j,0.161506 -0.00764956*1j,0.124922 -0.0647113*1j,0.0143323 +0.134286*1j,-0.167435-0.0221146*1j,0.225272 -0.0757478*1j,-0.260864+0.123485*1j,-0.22129-0.216037*1j,0.114676 -0.153486*1j,0.166597 +0.286896*1j,0.0712775 -0.00290848*1j,0.0219457 -0.221818*1j]
@@ -19,7 +19,7 @@ A = np.array(
 
 @qml.qnode(dev)
 def circuit():
-    qml.QubitStateVector(state, wires=[0, 1, 2, 3])
+    # qml.QubitStateVector(state, wires=[0, 1, 2, 3])
     # H = qml.PauliY(0) @ qml.Hermitian(A, wires=[1, 2, 3])
     # return qml.var(H)
     return qml.expval(qml.PauliY(0)), qml.var(qml.Hermitian(A, wires=[1,2,3]))
@@ -30,7 +30,7 @@ dev = qml.device("default.qubit", wires=4)
 
 @qml.qnode(dev)
 def circuit():
-    qml.QubitStateVector(state, wires=[0, 1, 2, 3])
+    # qml.QubitStateVector(state, wires=[0, 1, 2, 3])
     # H = qml.PauliY(0) @ qml.Hermitian(A, wires=[1, 2, 3])
     # return qml.var(H)
     return qml.expval(qml.PauliY(0)), qml.var(qml.Hermitian(A, wires=[1,2,3]))

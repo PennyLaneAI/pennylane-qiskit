@@ -68,14 +68,7 @@ class AerDevice(QiskitDevice):
 
     short_name = "qiskit.aer"
 
-    def __init__(
-        self,
-        wires,
-        shots=1024,
-        backend="qasm_simulator",
-        noise_model=None,
-        **kwargs
-    ):
+    def __init__(self, wires, shots=1024, backend="qasm_simulator", noise_model=None, **kwargs):
         super().__init__(wires, qiskit.Aer, backend=backend, shots=shots, **kwargs)
         self._noise_model = noise_model
 
