@@ -33,11 +33,9 @@ Code details
 ~~~~~~~~~~~~
 """
 # pylint: disable=attribute-defined-outside-init,too-few-public-methods
-import numpy as np
-
 from qiskit import QuantumRegister
 from qiskit.circuit import Gate
-from qiskit.extensions.standard import IdGate, RYGate, RZGate, U3Gate, XGate
+from qiskit.extensions.standard import RYGate, RZGate, XGate
 
 
 class BasisState(Gate):
