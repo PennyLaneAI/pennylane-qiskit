@@ -58,7 +58,7 @@ def z_eigs(n):
         n (int): number of wires
 
     Returns:
-        array[int]: eigenvalues of :math:`Z^{\otimes n}
+        array[int]: eigenvalues of :math:`Z^{\otimes n}`
     """
     if n == 1:
         return np.array([1, -1])
