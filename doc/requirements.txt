@@ -4,5 +4,5 @@ nbsphinx
 pygments-github-lexers
 pybind11
 qiskit
-pennylane
+git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
 dc-qiskit-algorithms
