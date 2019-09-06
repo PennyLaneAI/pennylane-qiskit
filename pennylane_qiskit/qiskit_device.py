@@ -44,6 +44,7 @@ from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 
 from pennylane import Device, DeviceError
+from pennylane.operation import Sample
 
 from .gates import BasisState, Rot
 from ._version import __version__
@@ -118,13 +119,14 @@ class QiskitDevice(Device, abc.ABC):
     plugin_version = __version__
     author = "Carsten Blank"
 
-    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
-
     _capabilities = {"model": "qubit", "tensor_observables": True}
     _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {"statevector_simulator", "unitary_simulator"}
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
+
+    operations = set(_operation_map.keys())
+    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
     _eigs = {}
 
@@ -141,6 +143,25 @@ class QiskitDevice(Device, abc.ABC):
 
         self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
 
+        # check that backend exists
+        if backend not in self._capabilities["backend"]:
+            raise ValueError(
+                "Backend '{}' does not exist. Available backends "
+                "are:\n {}".format(backend, self._capabilities["backend"])
+            )
+
+        # perform validation against backend
+        b = self.backend
+        if wires > b.configuration().n_qubits:
+            raise ValueError(
+                "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
+            )
+
+        if backend not in self._state_backends and shots == 0:
+            raise ValueError(
+                "Number of shots for backend '{}' must be a positive integer.".format(backend)
+            )
+
         # Inner state
         self._reg = QuantumRegister(wires, "q")
         self._creg = ClassicalRegister(wires, "c")
@@ -153,10 +174,6 @@ class QiskitDevice(Device, abc.ABC):
         self.memory = False  # do not return samples, just counts
 
         self.reset()
-
-    @property
-    def operations(self):
-        return set(self._operation_map.keys())
 
     @property
     def backend(self):
@@ -178,14 +195,14 @@ class QiskitDevice(Device, abc.ABC):
 
         if operation == "QubitStateVector":
 
-            if len(par) > 2 ** len(qregs):
+            if len(par[0]) != 2 ** len(wires):
                 raise ValueError("State vector must be of length 2**wires.")
 
             qregs = list(reversed(qregs))
 
         if operation == "QubitUnitary":
 
-            if len(par) > 2 ** len(qregs):
+            if len(par[0]) != 2 ** len(wires):
                 raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
 
             qregs = list(reversed(qregs))
@@ -284,8 +301,7 @@ class QiskitDevice(Device, abc.ABC):
     def pre_measure(self):
         for e in self.obs_queue:
             # Add unitaries if a different expectation value is given
-
-            if e.return_type == "sample":
+            if e.return_type == Sample:
                 self.memory = True  # make sure to return samples
 
             if isinstance(e.name, list):
@@ -400,12 +416,10 @@ class QiskitDevice(Device, abc.ABC):
             prob = np.zeros([2] * self.num_wires)
 
             for s, p in tuple(sorted(nonzero_prob.items())):
-                prob[np.array(s)] = p
+                prob[s] = p
 
-        if wires is None:
-            wires = range(self.num_wires)
-        else:
-            wires = np.hstack(wires)
+        wires = wires or range(self.num_wires)
+        wires = np.hstack(wires)
 
         basis_states = itertools.product(range(2), repeat=len(wires))
         inactive_wires = list(set(range(self.num_wires)) - set(wires))
@@ -451,7 +465,7 @@ class QiskitDevice(Device, abc.ABC):
             eigvals = self._eigs[Hkey]["eigval"]
 
         elif observable == "Identity":
-            eigvals = np.ones(2**len(wires))
+            eigvals = np.ones(2 ** len(wires))
 
         return eigvals
 

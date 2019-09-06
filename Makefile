@@ -13,9 +13,7 @@ help:
 	@echo "  clean              to delete all temporary, cache, and build files"
 	@echo "  clean-docs         to delete all built documentation"
 	@echo "  test               to run the test suite for all configured devices"
-	@echo "  test-[device]      to run the test suite for the device simulator or ibm"
 	@echo "  coverage           to generate a coverage report for all configured devices"
-	@echo "  coverage-[device]  to generate a coverage report for the device simulator or ibm"
 
 .PHONY: install
 install:
@@ -51,12 +49,10 @@ clean-docs:
 
 test: test-all
 
-test-%:
-	@echo "Testing device: $(subst test-,,$@)..."
-	export DEVICE=$(subst test-,,$@) && $(PYTHON) $(TESTRUNNER)
+test:
+	$(PYTHON) $(TESTRUNNER)
 
 coverage: coverage-all
 
 coverage-%:
-	@echo "Generating coverage report..."
-	export DEVICE=$(subst coverage-,,$@) && $(PYTHON) $(TESTRUNNER) $(COVERAGE)
+	$(PYTHON) $(TESTRUNNER) $(COVERAGE)

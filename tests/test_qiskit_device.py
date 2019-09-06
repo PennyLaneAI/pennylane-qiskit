@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 
 from pennylane_qiskit.qiskit_device import z_eigs
+from pennylane_qiskit import AerDevice
 
 
 Z = np.diag([1, -1])
@@ -21,8 +22,18 @@ class TestZEigs:
         res = z_eigs(n)
         Zn = np.kron(Z, Z)
 
-        for _ in range(n-2):
+        for _ in range(n - 2):
             Zn = np.kron(Zn, Z)
 
         expected = np.diag(Zn)
         assert np.all(res == expected)
+
+
+class TestProbabilities:
+    """Tests for the probability function"""
+
+    def test_probability_no_results(self):
+        """Test that the probabilities function returns
+        None if no job has yet been run."""
+        dev = AerDevice(backend="statevector_simulator", wires=1, shots=0)
+        assert dev.probabilities() is None

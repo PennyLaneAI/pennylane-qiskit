@@ -55,12 +55,7 @@ class BasisState(Gate):
 
     def _define(self):
         q = QuantumRegister(self.num_qubits, "q")
-        if np.any(self.params[0] == 1):
-            self.definition = [
-                (XGate(), [q[w]], []) for w, p in enumerate(self.params[0]) if p == 1
-            ]
-        else:
-            self.definition = [(IdGate(), [q[0]], [])]
+        self.definition = [(XGate(), [q[w]], []) for w, p in enumerate(self.params[0]) if p == 1]
 
 
 class Rot(Gate):
