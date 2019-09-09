@@ -35,6 +35,9 @@ PennyLane and Qiskit features.
 
   - It reduces the number of tests required.
 
+* Test suite now includes tests against the IBM Q Experience, in addition
+  to the local simulators.
+
 ### Bug fixes
 
 * Due to the move to IBM Q 2.0 credentials, users remaining with IBM Q v1.0
