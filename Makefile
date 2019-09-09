@@ -18,7 +18,7 @@ help:
 .PHONY: install
 install:
 ifndef PYTHON3
-	@echo "To install PennyLane-qiskit you need to have Python 3 installed"
+	@echo "To install PennyLane-Qiskit you need to have Python 3 installed"
 endif
 	$(PYTHON) setup.py install
 
@@ -46,13 +46,8 @@ docs:
 clean-docs:
 	make -C doc clean
 
-
-test: test-all
-
 test:
 	$(PYTHON) $(TESTRUNNER)
 
-coverage: coverage-all
-
-coverage-%:
+coverage:
 	$(PYTHON) $(TESTRUNNER) $(COVERAGE)
