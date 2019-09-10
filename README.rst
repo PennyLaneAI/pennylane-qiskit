@@ -234,7 +234,7 @@ or applications built on PennyLane.
 Authors
 =======
 
-Carsten Blank, Sebastian Boerakker, Christian Gogolin, Josh Izaac
+Shahnawaz Ahmed, Carsten Blank, Sebastian Boerakker, Christian Gogolin, Josh Izaac.
 
 .. support-start-inclusion-marker-do-not-remove
 
