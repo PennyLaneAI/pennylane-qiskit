@@ -1,18 +1,16 @@
-# Release 0.6.0-dev
-
-### New features since last release
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
+# Release 0.5.1
 
 ### Bug fixes
+
+* Fixed a bug where backend keyword arguments, such as `backend_options`
+  and `noise_model`, were being passed to backends that did not support it.
+  [#XX]()
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Josh Izaac
 
 ---
 

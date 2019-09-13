@@ -32,6 +32,7 @@ Code details
 import abc
 from collections import OrderedDict
 import functools
+import inspect
 import itertools
 
 import numpy as np
@@ -138,9 +139,6 @@ class QiskitDevice(Device, abc.ABC):
 
         self.provider = provider
         self.backend_name = backend
-        self.compile_backend = kwargs.get("compile_backend")
-        self.kwargs = kwargs
-
         self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
 
         # check that backend exists
@@ -172,6 +170,21 @@ class QiskitDevice(Device, abc.ABC):
 
         # job execution options
         self.memory = False  # do not return samples, just counts
+
+        # determine if backend supports backend options and noise models,
+        # and properly put together backend run arguments
+        s = inspect.signature(b.run)
+        self.run_args = {}
+        self.compile_backend = None
+
+        if "compile_backend" in kwargs:
+            self.compile_backend = kwargs.pop("compile_backend")
+
+        if "noise_model" in kwargs and "noise_model" in s.parameters:
+            self.run_args["noise_model"] = kwargs.pop("noise_model")
+
+        if "backend_options" in s.parameters:
+            self.run_args["backend_options"] = kwargs
 
         self.reset()
 
@@ -228,7 +241,7 @@ class QiskitDevice(Device, abc.ABC):
 
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
-        self._current_job = self.backend.run(qobj, backend_options=self.kwargs)
+        self._current_job = self.backend.run(qobj, **self.run_args)
         result = self._current_job.result()
 
         if self.backend_name in self._state_backends:
