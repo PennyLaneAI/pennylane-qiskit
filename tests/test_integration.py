@@ -66,3 +66,33 @@ class TestDeviceIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
+
+
+class TestKeywordArguments:
+    """Test keyword argument logic is correct"""
+
+    @pytest.mark.parametrize("d", pldevices)
+    def test_compile_backend(self, d):
+        """Test that the compile backend argument is properly
+        extracted"""
+        dev = qml.device(d[0], wires=2, compile_backend="test value")
+        assert dev.compile_backend == "test value"
+
+    def test_noise_model(self):
+        """Test that the noise model argument is properly
+        extracted if the backend supports it"""
+        dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
+        assert dev.run_args["noise_model"] == "test value"
+
+    def test_invalid_noise_model(self):
+        """Test that the noise model argument is ignored
+        if the backend does not support it"""
+        with pytest.raises(ValueError, match="does not support noisy simulations"):
+            dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
+
+    @pytest.mark.parametrize("d", pldevices)
+    def test_overflow_backend_options(self, d):
+        """Test all overflow backend options are extracted"""
+        dev = qml.device(d[0], wires=2, k1="v1", k2="v2")
+        assert dev.run_args["backend_options"]["k1"] == "v1"
+        assert dev.run_args["backend_options"]["k2"] == "v2"

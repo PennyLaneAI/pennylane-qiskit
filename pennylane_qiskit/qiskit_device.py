@@ -184,7 +184,7 @@ class QiskitDevice(Device, abc.ABC):
             if "noise_model" in s.parameters:
                 self.run_args["noise_model"] = kwargs.pop("noise_model")
             else:
-                kwargs.pop("noise_model")
+                raise ValueError("Backend {} does not support noisy simulations".format(backend))
 
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs
