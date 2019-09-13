@@ -180,8 +180,11 @@ class QiskitDevice(Device, abc.ABC):
         if "compile_backend" in kwargs:
             self.compile_backend = kwargs.pop("compile_backend")
 
-        if "noise_model" in kwargs and "noise_model" in s.parameters:
-            self.run_args["noise_model"] = kwargs.pop("noise_model")
+        if "noise_model" in kwargs:
+            if "noise_model" in s.parameters:
+                self.run_args["noise_model"] = kwargs.pop("noise_model")
+            else:
+                kwargs.pop("noise_model")
 
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs

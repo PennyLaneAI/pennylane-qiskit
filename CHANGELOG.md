@@ -4,7 +4,7 @@
 
 * Fixed a bug where backend keyword arguments, such as `backend_options`
   and `noise_model`, were being passed to backends that did not support it.
-  [#XX]()
+  [#51](https://github.com/XanaduAI/pennylane-qiskit/pull/51)
 
 ### Contributors
 
