@@ -85,7 +85,7 @@ class TestKeywordArguments:
         assert dev.run_args["noise_model"] == "test value"
 
     def test_invalid_noise_model(self):
-        """Test that the noise model argument is ignored
+        """Test that the noise model argument causes an exception to be raised
         if the backend does not support it"""
         with pytest.raises(ValueError, match="does not support noisy simulations"):
             dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
