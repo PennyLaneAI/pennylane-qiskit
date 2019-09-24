@@ -16,6 +16,22 @@ This release contains contributions from (in alphabetical order):
 
 ---
 
+# Release 0.5.1
+
+### Bug fixes
+
+* Fixed a bug where backend keyword arguments, such as `backend_options`
+  and `noise_model`, were being passed to backends that did not support it.
+  [#51](https://github.com/XanaduAI/pennylane-qiskit/pull/51)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Josh Izaac
+
+---
+
 # Release 0.5.0
 
 This is a significant release, bringing the plugin up to date with the latest

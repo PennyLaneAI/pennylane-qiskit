@@ -54,7 +54,6 @@ class AerDevice(QiskitDevice):
     Args:
         wires (int): The number of qubits of the device
         backend (str): the desired backend
-        noise_model (NoiseModel): NoiseModel Object from ``qiskit.providers.aer.noise``
         shots (int): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables
 
@@ -65,22 +64,12 @@ class AerDevice(QiskitDevice):
         analytic (bool): For statevector backends, determines if the
             expectation values and variances are to be computed analytically.
             Default value is ``True``.
+        noise_model (NoiseModel): NoiseModel Object from ``qiskit.providers.aer.noise``
     """
 
     # pylint: disable=too-many-arguments
 
     short_name = "qiskit.aer"
 
-    def __init__(self, wires, shots=1024, backend="qasm_simulator", noise_model=None, **kwargs):
-        super().__init__(wires, qiskit.Aer, backend=backend, shots=shots, **kwargs)
-        self._noise_model = noise_model
-
-    def run(self, qobj):
-        """Run the compiled circuit, and query the result."""
-        self._current_job = self.backend.run(
-            qobj, noise_model=self._noise_model, backend_options=self.kwargs
-        )
-        result = self._current_job.result()
-
-        if self.backend_name in self._state_backends:
-            self._state = self._get_state(result)
+    def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
+        super().__init__(wires, provider=qiskit.Aer, backend=backend, shots=shots, **kwargs)
