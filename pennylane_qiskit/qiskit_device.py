@@ -447,7 +447,7 @@ class QiskitDevice(Device, abc.ABC):
 
         Args:
             observable (str, List[str]): the name of an observable,
-                or a list of observables representing a tensor product.
+                or a list of observables representing a tensor product
             wires (List[int]): wires the observable(s) is measured on
             par (List[Any]): parameters of the observable(s)
 
