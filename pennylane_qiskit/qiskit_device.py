@@ -490,6 +490,7 @@ class QiskitDevice(Device, abc.ABC):
                     else:
                         # Subgroup g contains only non-standard observables.
                         for ns_obs in g:
+                            # loop through all non-standard observables
                             if ns_obs[0] == "Hermitian":
                                 # Hermitian observable has pre-computed eigenvalues
                                 p = ns_obs[2]
