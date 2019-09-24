@@ -31,7 +31,7 @@ class TestSample:
 
         dev.pre_measure()
 
-        s1 = dev.sample("PauliZ", [0], [], 10)
+        s1 = dev.sample("PauliZ", [0], [])
 
         # s1 should only contain 1 and -1
         assert np.allclose(s1 ** 2, 1, **tol)
@@ -112,46 +112,6 @@ class TestSample:
             + 6
         ) / 32
         assert np.allclose(np.mean(s1), expected, **tol)
-
-    def test_sample_exception_analytic_mode(self, device, shots):
-        """Tests if the sampling raises an error for sample size n=0
-        """
-        dev = device(1)
-        dev._obs_queue = [qml.PauliZ(wires=[0], do_queue=False)]
-
-        for idx in range(len(dev._obs_queue)):
-            dev._obs_queue[idx].return_type = qml.operation.Sample
-
-        dev.pre_measure()
-
-        with pytest.raises(ValueError, match="Calling sample with n = 0 is not possible"):
-            dev.sample("PauliZ", [0], [], n=0)
-
-        if shots != 0:
-            pytest.skip()
-
-        # self.def.shots = 0, so this should also fail
-        with pytest.raises(ValueError, match="Calling sample with n = 0 is not possible"):
-            dev.sample("PauliZ", [0], [])
-
-    def test_sample_exception_wrong_n(self, device, shots):
-        """Tests if the sampling raises an error for sample size n<0
-        or non-integer n
-        """
-        dev = device(1)
-        dev._obs_queue = [qml.PauliZ(wires=[0], do_queue=False)]
-
-        for idx in range(len(dev._obs_queue)):
-            dev._obs_queue[idx].return_type = qml.operation.Sample
-
-        dev.pre_measure()
-
-        with pytest.raises(ValueError, match="The number of samples must be a positive integer"):
-            dev.sample("PauliZ", [0], [], n=-12)
-
-        # self.def.shots = 0, so this should also fail
-        with pytest.raises(ValueError, match="The number of samples must be a positive integer"):
-            dev.sample("PauliZ", [0], [], n=12.3)
 
 
 @pytest.mark.parametrize("analytic", [False])

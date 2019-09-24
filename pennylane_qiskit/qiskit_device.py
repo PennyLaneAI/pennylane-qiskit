@@ -137,7 +137,7 @@ class QiskitDevice(Device, abc.ABC):
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
-      
+
         self.analytic = kwargs.pop("analytic", True)
 
         if "verbose" not in kwargs:
@@ -159,11 +159,6 @@ class QiskitDevice(Device, abc.ABC):
         if wires > b.configuration().n_qubits:
             raise ValueError(
                 "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
-            )
-
-        if backend not in self._state_backends and shots == 0:
-            raise ValueError(
-                "Number of shots for backend '{}' must be a positive integer.".format(backend)
             )
 
         # Inner state
@@ -361,25 +356,16 @@ class QiskitDevice(Device, abc.ABC):
 
         return np.var(self.sample(observable, wires, par))
 
-    def sample(self, observable, wires, par, n=None):
-        if n is None:
-            n = self.shots
-
-        if n == 0:
-            raise ValueError("Calling sample with n = 0 is not possible.")
-
-        if n < 0 or not isinstance(n, int):
-            raise ValueError("The number of samples must be a positive integer.")
-
+    def sample(self, observable, wires, par):
         if observable == "Identity":
-            return np.ones([n])
+            return np.ones([self.shots])
 
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
             # software simulator. Need to sample from probabilities.
             eigvals = self.eigvals(observable, wires, par)
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
-            return np.random.choice(eigvals, n, p=prob)
+            return np.random.choice(eigvals, self.shots, p=prob)
 
         # a hardware simulator
         if self.memory:
@@ -401,7 +387,7 @@ class QiskitDevice(Device, abc.ABC):
         eigvals = self.eigvals(observable, wires, par)
         wires = np.hstack(wires)
         res = samples[:, np.array(wires)]
-        samples = np.zeros([n])
+        samples = np.zeros([self.shots])
 
         for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires))):
             samples = np.where(np.all(res == b, axis=1), w, samples)
