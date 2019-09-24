@@ -84,7 +84,7 @@ class TestTensorVar:
         dev._obs_queue = [
             Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Variance)
         ]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = dev.var(["PauliX", "PauliY"], [[0], [2]], [[], [], []])
 
@@ -115,7 +115,7 @@ class TestTensorVar:
         dev._obs_queue = [
             Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Variance)
         ]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = dev.var(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []])
 
@@ -151,7 +151,7 @@ class TestTensorVar:
         )
 
         dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Variance)]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = dev.var(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
 

@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from pennylane_qiskit.qiskit_device import z_eigs
+from pennylane_qiskit.qiskit_device import pauli_eigs
 from pennylane_qiskit import AerDevice
 
 
@@ -14,12 +14,12 @@ class TestZEigs:
 
     def test_one(self):
         """Test that eigs(Z) = [1, -1]"""
-        assert np.all(z_eigs(1) == np.array([1, -1]))
+        assert np.all(pauli_eigs(1) == np.array([1, -1]))
 
     @pytest.mark.parametrize("n", [2, 3, 6])
     def test_multiple(self, n):
         r"""Test that eigs(Z^{\otimes n}) is correct"""
-        res = z_eigs(n)
+        res = pauli_eigs(n)
         Zn = np.kron(Z, Z)
 
         for _ in range(n - 2):

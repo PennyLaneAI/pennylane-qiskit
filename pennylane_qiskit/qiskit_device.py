@@ -51,8 +51,10 @@ from ._version import __version__
 
 
 @functools.lru_cache()
-def z_eigs(n):
-    r"""Returns the eigenvalues for :math:`Z^{\otimes n}`.
+def pauli_eigs(n):
+    r"""Returns the eigenvalues for :math:`A^{\otimes n}`,
+    where :math:`A` is any operator that shares eigenvalues
+    with the Pauli matrices.
 
     Args:
         n (int): number of wires
@@ -62,7 +64,7 @@ def z_eigs(n):
     """
     if n == 1:
         return np.array([1, -1])
-    return np.concatenate([z_eigs(n - 1), -z_eigs(n - 1)])
+    return np.concatenate([pauli_eigs(n - 1), -pauli_eigs(n - 1)])
 
 
 QISKIT_OPERATION_MAP = {
@@ -455,25 +457,45 @@ class QiskitDevice(Device, abc.ABC):
             array[float]: an array of size ``(len(wires),)`` containing the
             eigenvalues of the observable
         """
+        # the standard observables all share a common eigenbasis {1, -1}
+        # with the Pauli-Z gate/computational basis measurement
+        standard_observables = {"PauliX", "PauliY", "PauliZ", "Hadamard"}
+
         # observable should be Z^{\otimes n}
-        eigvals = z_eigs(len(wires))
+        eigvals = pauli_eigs(len(wires))
 
         if isinstance(observable, list):
-            # determine the eigenvalues
-            if "Hermitian" in observable:
-                # observable is of the form Z^{\otimes a}\otimes H \otimes Z^{\otimes b}
+            # tensor product of observables
+
+            # check if there are any non-standard observables (such as Identity, Hadamard)
+            if set(observable) - standard_observables:
+                # Tensor product of observables contains a mixture
+                # of standard and non-standard observables
                 eigvals = np.array([1])
 
+                # group the observables into subgroups, depending on whether
+                # they are in the standard observables or not.
                 for k, g in itertools.groupby(
-                    zip(observable, wires, par), lambda x: x[0] == "Hermitian"
+                    zip(observable, wires, par), lambda x: x[0] in standard_observables
                 ):
                     if k:
-                        p = list(g)[0][2]
-                        Hkey = tuple(p[0].flatten().tolist())
-                        eigvals = np.kron(eigvals, self._eigs[Hkey]["eigval"])
-                    else:
+                        # Subgroup g contains only standard observables.
+                        # Determine the size of the subgroup, by transposing
+                        # the list, flattening it, and determining the length.
                         n = len([w for sublist in list(zip(*g))[1] for w in sublist])
-                        eigvals = np.kron(eigvals, z_eigs(n))
+                        eigvals = np.kron(eigvals, pauli_eigs(n))
+                    else:
+                        # Subgroup g contains only non-standard observables.
+                        for ns_obs in g:
+                            if ns_obs[0] == "Hermitian":
+                                # Hermitian observable has pre-computed eigenvalues
+                                p = ns_obs[2]
+                                Hkey = tuple(p[0].flatten().tolist())
+                                eigvals = np.kron(eigvals, self._eigs[Hkey]["eigval"])
+
+                            elif ns_obs[0] == "Identity":
+                                # Identity observable has eigenvalues (1, 1)
+                                eigvals = np.kron(eigvals, np.array([1, 1]))
 
         elif observable == "Hermitian":
             # single wire Hermitian observable
@@ -481,6 +503,7 @@ class QiskitDevice(Device, abc.ABC):
             eigvals = self._eigs[Hkey]["eigval"]
 
         elif observable == "Identity":
+            # single wire identity observable
             eigvals = np.ones(2 ** len(wires))
 
         return eigvals

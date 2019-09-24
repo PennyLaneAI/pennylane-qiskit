@@ -28,7 +28,7 @@ class TestExpval:
         name = "Identity"
 
         dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
 
@@ -48,7 +48,7 @@ class TestExpval:
         name = "PauliZ"
 
         dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
 
@@ -202,10 +202,35 @@ class TestTensorExpval:
         dev._obs_queue = [
             Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Expectation)
         ]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = dev.expval(["PauliX", "PauliY"], [[0], [2]], [[], [], []])
         expected = np.sin(theta) * np.sin(phi) * np.sin(varphi)
+
+        assert np.allclose(res, expected, **tol)
+
+    def test_pauliz_identity(self, device, shots, tol):
+        """Test that a tensor product involving PauliZ and Identity works correctly"""
+        theta = 0.432
+        phi = 0.123
+        varphi = -0.543
+
+        dev = device(3)
+        dev.apply("RX", wires=[0], par=[theta])
+        dev.apply("RX", wires=[1], par=[phi])
+        dev.apply("RX", wires=[2], par=[varphi])
+        dev.apply("CNOT", wires=[0, 1], par=[])
+        dev.apply("CNOT", wires=[1, 2], par=[])
+
+        dev._obs_queue = [
+            Tensor(["PauliZ", "Identity", "PauliZ"], [[0], [1], [2]], [[], [], []], qml.operation.Expectation)
+        ]
+
+        dev.post_apply()
+        dev.pre_measure()
+
+        res = dev.expval(["PauliZ", "Identity", "PauliZ"], [[0], [1], [2]], [[], [], []])
+        expected = np.cos(varphi)*np.cos(phi)
 
         assert np.allclose(res, expected, **tol)
 
@@ -225,7 +250,7 @@ class TestTensorExpval:
         dev._obs_queue = [
             Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Expectation)
         ]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = dev.expval(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []])
         expected = -(np.cos(varphi) * np.sin(phi) + np.sin(varphi) * np.cos(theta)) / np.sqrt(2)
@@ -255,7 +280,7 @@ class TestTensorExpval:
         )
 
         dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Expectation)]
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         res = dev.expval(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
         expected = 0.5 * (
@@ -264,5 +289,77 @@ class TestTensorExpval:
             + 3 * np.cos(varphi) * np.sin(phi)
             + np.sin(phi)
         )
+
+        assert np.allclose(res, expected, **tol)
+
+    def test_hermitian_hermitian(self, device, shots, tol):
+        """Test that a tensor product involving two Hermitian matrices works correctly"""
+        theta = 0.432
+        phi = 0.123
+        varphi = -0.543
+
+        dev = device(3)
+        dev.apply("RX", wires=[0], par=[theta])
+        dev.apply("RX", wires=[1], par=[phi])
+        dev.apply("RX", wires=[2], par=[varphi])
+        dev.apply("CNOT", wires=[0, 1], par=[])
+        dev.apply("CNOT", wires=[1, 2], par=[])
+
+
+        A1 = np.array([[1, 2],
+                       [2, 4]])
+
+        A2 = np.array(
+            [
+                [-6, 2 + 1j, -3, -5 + 2j],
+                [2 - 1j, 0, 2 - 1j, -5 + 4j],
+                [-3, 2 + 1j, 0, -4 + 3j],
+                [-5 - 2j, -5 - 4j, -4 - 3j, -6],
+            ]
+        )
+
+        dev._obs_queue = [
+            Tensor(["Hermitian", "Hermitian"], [[0], [1, 2]], [[A1], [A2]], qml.operation.Expectation)
+        ]
+        dev.pre_measure()
+
+        res = dev.expval(["Hermitian", "Hermitian"], [[0], [1, 2]], [[A1], [A2]])
+        expected = 0.25 * (
+            -30
+            + 4 * np.cos(phi) * np.sin(theta)
+            + 3 * np.cos(varphi) * (-10 + 4 * np.cos(phi) * np.sin(theta) - 3 * np.sin(phi))
+            - 3 * np.sin(phi)
+            - 2 * (5 + np.cos(phi) * (6 + 4 * np.sin(theta)) + (-3 + 8 * np.sin(theta)) * np.sin(phi))
+            * np.sin(varphi)
+            + np.cos(theta)
+            * (
+                18
+                + 5 * np.sin(phi)
+                + 3 * np.cos(varphi) * (6 + 5 * np.sin(phi))
+                + 2 * (3 + 10 * np.cos(phi) - 5 * np.sin(phi)) * np.sin(varphi)
+            )
+        )
+
+        assert np.allclose(res, expected, **tol)
+
+    def test_hermitian_identity_expectation(self, device, shots, tol):
+        """Test that a tensor product involving an Hermitian matrix and the identity works correctly"""
+        theta = 0.432
+        phi = 0.123
+
+        dev = device(2)
+        dev.apply("RY", wires=[0], par=[theta])
+        dev.apply("RY", wires=[1], par=[phi])
+        dev.apply("CNOT", wires=[0, 1], par=[])
+
+        dev._obs_queue = [Tensor(["Hermitian", "Identity"], [[0], [1]], [[A], []], qml.operation.Expectation)]
+        dev.pre_measure()
+
+        res = dev.expval(["Hermitian", "Identity"], [[0], [1]], [[A], []])
+
+        a = A[0, 0]
+        re_b = A[0, 1].real
+        d = A[1, 1]
+        expected = ((a - d) * np.cos(theta) + 2 * re_b * np.sin(theta) * np.sin(phi) + a + d) / 2
 
         assert np.allclose(res, expected, **tol)
