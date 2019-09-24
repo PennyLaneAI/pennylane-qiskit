@@ -465,7 +465,7 @@ class QiskitDevice(Device, abc.ABC):
                 eigvals = np.array([1])
 
                 for k, g in itertools.groupby(
-                    zip(observable, wires, par), lambda x: x[0] == "Hermitian"
+                    zip(observable, wires, par), lambda x: "Hermitian" if x[0] == "Hermitian" else "non-Hermitian"
                 ):
                     if k:
                         p = list(g)[0][2]
