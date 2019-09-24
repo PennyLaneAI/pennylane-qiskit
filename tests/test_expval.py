@@ -3,13 +3,14 @@ import pytest
 import numpy as np
 import pennylane as qml
 
-from conftest import U, U2, A
+from conftest import U, U2, A, Tensor
 
 
 np.random.seed(42)
 
 
-@pytest.mark.parametrize("shots", [0, 8192])
+@pytest.mark.parametrize("analytic", [True, False])
+@pytest.mark.parametrize("shots", [8192])
 class TestExpval:
     """Test expectation values"""
 
@@ -180,7 +181,8 @@ class TestExpval:
         assert np.allclose(res, expected, **tol)
 
 
-@pytest.mark.parametrize("shots", [0, 8192])
+@pytest.mark.parametrize("analytic", [True, False])
+@pytest.mark.parametrize("shots", [8192])
 class TestTensorExpval:
     """Test tensor expectation values"""
 
@@ -198,7 +200,7 @@ class TestTensorExpval:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            qml.PauliX(wires=[0], do_queue=False) @ qml.PauliY(wires=[2], do_queue=False)
+            Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Expectation)
         ]
         res = dev.pre_measure()
 
@@ -221,9 +223,7 @@ class TestTensorExpval:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            qml.PauliZ(wires=[0], do_queue=False)
-            @ qml.Hadamard(wires=[1], do_queue=False)
-            @ qml.PauliY(wires=[2], do_queue=False)
+            Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Expectation)
         ]
         res = dev.pre_measure()
 
@@ -254,9 +254,7 @@ class TestTensorExpval:
             ]
         )
 
-        dev._obs_queue = [
-            qml.PauliZ(wires=[0], do_queue=False) @ qml.Hermitian(A, wires=[1, 2], do_queue=False)
-        ]
+        dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Expectation)]
         res = dev.pre_measure()
 
         res = dev.expval(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])

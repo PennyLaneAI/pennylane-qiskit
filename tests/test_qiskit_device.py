@@ -35,5 +35,5 @@ class TestProbabilities:
     def test_probability_no_results(self):
         """Test that the probabilities function returns
         None if no job has yet been run."""
-        dev = AerDevice(backend="statevector_simulator", wires=1, shots=0)
+        dev = AerDevice(backend="statevector_simulator", wires=1, analytic=True)
         assert dev.probabilities() is None

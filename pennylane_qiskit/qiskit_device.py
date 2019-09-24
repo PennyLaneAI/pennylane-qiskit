@@ -106,12 +106,14 @@ class QiskitDevice(Device, abc.ABC):
         backend (str): the desired backend
         shots (int): Number of circuit evaluations/random samples used
             to estimate expectation values of observables.
-            For simulator devices, 0 means the exact EV is returned.
 
     Keyword Args:
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
+        analytic (bool): For statevector backends, determines if the
+            expectation values and variances are to be computed analytically.
+            Default value is ``True``.
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.5.0"
@@ -140,6 +142,7 @@ class QiskitDevice(Device, abc.ABC):
         self.backend_name = backend
         self.compile_backend = kwargs.get("compile_backend")
         self.kwargs = kwargs
+        self.analytic = kwargs.get("analytic", True)
 
         self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
 
@@ -222,7 +225,7 @@ class QiskitDevice(Device, abc.ABC):
         return assemble(
             experiments=compiled_circuits,
             backend=compile_backend,
-            shots=self.shots if self.shots > 0 else 1,
+            shots=self.shots,
             memory=self.memory,
         )
 
@@ -301,7 +304,7 @@ class QiskitDevice(Device, abc.ABC):
     def pre_measure(self):
         for e in self.obs_queue:
             # Add unitaries if a different expectation value is given
-            if e.return_type == Sample:
+            if hasattr(e, "return_type") and e.return_type == Sample:
                 self.memory = True  # make sure to return samples
 
             if isinstance(e.name, list):
@@ -321,7 +324,7 @@ class QiskitDevice(Device, abc.ABC):
         self.run(qobj)
 
     def expval(self, observable, wires, par):
-        if self.backend_name in self._state_backends and self.shots == 0:
+        if self.backend_name in self._state_backends and self.analytic:
             # exact expectation value
             eigvals = self.eigvals(observable, wires, par)
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
@@ -331,7 +334,7 @@ class QiskitDevice(Device, abc.ABC):
         return np.mean(self.sample(observable, wires, par))
 
     def var(self, observable, wires, par):
-        if self.backend_name in self._state_backends and self.shots == 0:
+        if self.backend_name in self._state_backends and self.analytic:
             # exact variance value
             eigvals = self.eigvals(observable, wires, par)
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)

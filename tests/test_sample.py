@@ -5,12 +5,13 @@ import pennylane as qml
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
-from conftest import U, U2, A
+from conftest import U, U2, A, Tensor
 
 
 np.random.seed(42)
 
 
+@pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 class TestSample:
     """Tests for the sample return type"""
@@ -153,6 +154,7 @@ class TestSample:
             dev.sample("PauliZ", [0], [], n=12.3)
 
 
+@pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorSample:
     """Test tensor expectation values"""
@@ -171,11 +173,11 @@ class TestTensorSample:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            qml.PauliX(wires=[0], do_queue=False) @ qml.PauliY(wires=[2], do_queue=False)
+            Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Sample)
         ]
 
-        for idx in range(len(dev._obs_queue)):
-            dev._obs_queue[idx].return_type = qml.operation.Sample
+        # for idx in range(len(dev._obs_queue)):
+        #     dev._obs_queue[idx].return_type = qml.operation.Sample
 
         res = dev.pre_measure()
 
@@ -213,13 +215,11 @@ class TestTensorSample:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            qml.PauliZ(wires=[0], do_queue=False)
-            @ qml.Hadamard(wires=[1], do_queue=False)
-            @ qml.PauliY(wires=[2], do_queue=False)
+            Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Sample)
         ]
 
-        for idx in range(len(dev._obs_queue)):
-            dev._obs_queue[idx].return_type = qml.operation.Sample
+        # for idx in range(len(dev._obs_queue)):
+        #     dev._obs_queue[idx].return_type = qml.operation.Sample
 
         res = dev.pre_measure()
 
@@ -263,12 +263,10 @@ class TestTensorSample:
             ]
         )
 
-        dev._obs_queue = [
-            qml.PauliZ(wires=[0], do_queue=False) @ qml.Hermitian(A, wires=[1, 2], do_queue=False)
-        ]
+        dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Sample)]
 
-        for idx in range(len(dev._obs_queue)):
-            dev._obs_queue[idx].return_type = qml.operation.Sample
+        # for idx in range(len(dev._obs_queue)):
+        #     dev._obs_queue[idx].return_type = qml.operation.Sample
 
         res = dev.pre_measure()
 

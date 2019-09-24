@@ -15,7 +15,7 @@ class TestDeviceIntegration:
 
     @pytest.mark.parametrize("d", pldevices)
     def test_load_device(self, d, backend):
-        """Test that the QVM device loads correctly"""
+        """Test that the qiskit device loads correctly"""
         dev = qml.device(d[0], wires=2, backend=backend, shots=1024)
         assert dev.num_wires == 2
         assert dev.shots == 1024
@@ -37,21 +37,18 @@ class TestDeviceIntegration:
         with pytest.raises(TypeError, match="missing 1 required positional argument"):
             qml.device("qiskit.aer")
 
-        with pytest.raises(ValueError, match="must be a positive integer"):
+        with pytest.raises(qml.DeviceError, match="specified number of shots needs to be at least 1"):
             qml.device("qiskit.aer", backend="qasm_simulator", wires=1, shots=0)
 
-        # a state simulator will allow shots=0
-        qml.device("qiskit.aer", backend="statevector_simulator", wires=1, shots=0)
-        qml.device("qiskit.aer", backend="unitary_simulator", wires=1, shots=0)
-
     @pytest.mark.parametrize("d", pldevices)
-    @pytest.mark.parametrize("shots", [0, 8192])
-    def test_one_qubit_circuit(self, shots, d, backend, tol):
+    @pytest.mark.parametrize("analytic", [True, False])
+    @pytest.mark.parametrize("shots", [8192])
+    def test_one_qubit_circuit(self, shots, analytic, d, backend, tol):
         """Test that devices provide correct result for a simple circuit"""
-        if backend not in state_backends and shots == 0:
+        if backend not in state_backends and analytic:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
+        dev = qml.device(d[0], wires=1, backend=backend, shots=shots, analytic=analytic)
 
         a = 0.543
         b = 0.123

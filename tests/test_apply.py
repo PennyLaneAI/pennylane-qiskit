@@ -60,7 +60,8 @@ two_qubit_param = [("CRZ", crz)]
 three_qubit = [("Toffoli", toffoli), ("CSWAP", CSWAP)]
 
 
-@pytest.mark.parametrize("shots", [0])
+@pytest.mark.parametrize("analytic", [True])
+@pytest.mark.parametrize("shots", [8192])
 class TestStateApply:
     """Test application of PennyLane operations to state simulators."""
 
@@ -249,6 +250,7 @@ class TestStateApply:
 
 
 @pytest.mark.parametrize("shots", [8192])
+@pytest.mark.parametrize("analytic", [False])
 class TestHardwareApply:
     """Test application of PennyLane operations on hardware simulators."""
 

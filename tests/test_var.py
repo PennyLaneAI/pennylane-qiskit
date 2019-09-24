@@ -5,13 +5,14 @@ import pennylane as qml
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
-from conftest import U, U2, A
+from conftest import U, U2, A, Tensor
 
 
 np.random.seed(42)
 
 
-@pytest.mark.parametrize("shots", [0, 8192])
+@pytest.mark.parametrize("analytic", [True, False])
+@pytest.mark.parametrize("shots", [8192])
 class TestVar:
     """Tests for the variance"""
 
@@ -62,7 +63,8 @@ class TestVar:
         assert np.allclose(var, expected, **tol)
 
 
-@pytest.mark.parametrize("shots", [0, 8192])
+@pytest.mark.parametrize("analytic", [True, False])
+@pytest.mark.parametrize("shots", [8192])
 class TestTensorVar:
     """Tests for variance of tensor observables"""
 
@@ -80,7 +82,7 @@ class TestTensorVar:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            qml.PauliX(wires=[0], do_queue=False) @ qml.PauliY(wires=[2], do_queue=False)
+            Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Variance)
         ]
         res = dev.pre_measure()
 
@@ -111,9 +113,7 @@ class TestTensorVar:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            qml.PauliZ(wires=[0], do_queue=False)
-            @ qml.Hadamard(wires=[1], do_queue=False)
-            @ qml.PauliY(wires=[2], do_queue=False)
+            Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Variance)
         ]
         res = dev.pre_measure()
 
@@ -150,9 +150,7 @@ class TestTensorVar:
             ]
         )
 
-        dev._obs_queue = [
-            qml.PauliZ(wires=[0], do_queue=False) @ qml.Hermitian(A, wires=[1, 2], do_queue=False)
-        ]
+        dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Variance)]
         res = dev.pre_measure()
 
         res = dev.var(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
