@@ -10,9 +10,9 @@ from conftest import U, U2, A, Tensor
 
 np.random.seed(42)
 
-THETA = np.linspace(0.11, 2*np.pi-0.13, 3)
-PHI = np.linspace(0.32, 2*np.pi-0.11, 3)
-VARPHI = np.linspace(0.02, 2*np.pi-0.12, 3)
+THETA = np.linspace(0.11, 1, 3)
+PHI = np.linspace(0.32, 1, 3)
+VARPHI = np.linspace(0.02, 1, 3)
 
 
 @pytest.mark.parametrize("analytic", [False])
@@ -63,7 +63,7 @@ class TestSample:
         # s1 should only contain the eigenvalues of
         # the hermitian matrix
         eigvals = np.linalg.eigvalsh(A)
-        assert np.allclose(sorted(list(set(s1))), sorted(eigvals), **tol)
+        assert set(np.round(s1, 8)).issubset(set(np.round(eigvals, 8)))
 
         # the analytic mean is 2*sin(theta)+0.5*cos(theta)+0.5
         assert np.allclose(np.mean(s1), 2 * np.sin(theta) + 0.5 * np.cos(theta) + 0.5, **tol)
@@ -103,7 +103,7 @@ class TestSample:
         # s1 should only contain the eigenvalues of
         # the hermitian matrix
         eigvals = np.linalg.eigvalsh(A)
-        assert np.allclose(sorted(list(set(s1))), sorted(eigvals), **tol)
+        assert set(np.round(s1, 8)).issubset(set(np.round(eigvals, 8)))
 
         # make sure the mean matches the analytic mean
         expected = (
@@ -118,7 +118,7 @@ class TestSample:
         assert np.allclose(np.mean(s1), expected, **tol)
 
 
-@pytest.mark.parametrize("theta, phi, varphi", zip(THETA, PHI, VARPHI))
+@pytest.mark.parametrize("theta, phi, varphi", list(zip(THETA, PHI, VARPHI)))
 @pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorSample:
@@ -229,7 +229,7 @@ class TestTensorSample:
         # the hermitian matrix tensor product Z
         Z = np.diag([1, -1])
         eigvals = np.linalg.eigvalsh(np.kron(Z, A))
-        assert np.allclose(sorted(list(set(s1))), sorted(eigvals), **tol)
+        assert set(np.round(s1, 8)).issubset(set(np.round(eigvals, 8)))
 
         mean = np.mean(s1)
         expected = 0.5 * (

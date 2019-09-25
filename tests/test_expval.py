@@ -8,12 +8,12 @@ from conftest import U, U2, A, Tensor
 
 np.random.seed(42)
 
-THETA = np.linspace(0.11, 2*np.pi-0.13, 3)
-PHI = np.linspace(0.32, 2*np.pi-0.11, 3)
-VARPHI = np.linspace(0.02, 2*np.pi-0.12, 3)
+THETA = np.linspace(0.11, 1, 3)
+PHI = np.linspace(0.32, 1, 3)
+VARPHI = np.linspace(0.02, 1, 3)
 
 
-@pytest.mark.parametrize("theta, phi", zip(THETA, PHI))
+@pytest.mark.parametrize("theta, phi", list(zip(THETA, PHI)))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
 class TestExpval:
@@ -165,7 +165,7 @@ class TestExpval:
         assert np.allclose(res, expected, **tol)
 
 
-@pytest.mark.parametrize("theta, phi, varphi", zip(THETA, PHI, VARPHI))
+@pytest.mark.parametrize("theta,phi,varphi", list(zip(THETA, PHI, VARPHI)))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorExpval:
