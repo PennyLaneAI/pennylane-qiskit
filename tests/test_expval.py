@@ -8,17 +8,19 @@ from conftest import U, U2, A, Tensor
 
 np.random.seed(42)
 
+THETA = np.linspace(0.11, 2*np.pi-0.13, 3)
+PHI = np.linspace(0.32, 2*np.pi-0.11, 3)
+VARPHI = np.linspace(0.02, 2*np.pi-0.12, 3)
 
+
+@pytest.mark.parametrize("theta, phi", zip(THETA, PHI))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
 class TestExpval:
     """Test expectation values"""
 
-    def test_identity_expectation(self, device, shots, tol):
+    def test_identity_expectation(self, theta, phi, device, shots, tol):
         """Test that identity expectation value (i.e. the trace) is 1"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -34,11 +36,8 @@ class TestExpval:
 
         assert np.allclose(res, np.array([1, 1]), **tol)
 
-    def test_pauliz_expectation(self, device, shots, tol):
+    def test_pauliz_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliZ expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -54,11 +53,8 @@ class TestExpval:
 
         assert np.allclose(res, np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]), **tol)
 
-    def test_paulix_expectation(self, device, shots, tol):
+    def test_paulix_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliX expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RY", wires=[0], par=[theta])
         dev.apply("RY", wires=[1], par=[phi])
@@ -73,11 +69,8 @@ class TestExpval:
         res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
         assert np.allclose(res, np.array([np.sin(theta) * np.sin(phi), np.sin(phi)]), **tol)
 
-    def test_pauliy_expectation(self, device, shots, tol):
+    def test_pauliy_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliY expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -92,11 +85,8 @@ class TestExpval:
         res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
         assert np.allclose(res, np.array([0, -np.cos(theta) * np.sin(phi)]), **tol)
 
-    def test_hadamard_expectation(self, device, shots, tol):
+    def test_hadamard_expectation(self, theta, phi, device, shots, tol):
         """Test that Hadamard expectation value is correct"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RY", wires=[0], par=[theta])
         dev.apply("RY", wires=[1], par=[phi])
@@ -114,11 +104,8 @@ class TestExpval:
         ) / np.sqrt(2)
         assert np.allclose(res, expected, **tol)
 
-    def test_hermitian_expectation(self, device, shots, tol):
+    def test_hermitian_expectation(self, theta, phi, device, shots, tol):
         """Test that arbitrary Hermitian expectation values are correct"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RY", wires=[0], par=[theta])
         dev.apply("RY", wires=[1], par=[phi])
@@ -141,11 +128,8 @@ class TestExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_multi_mode_hermitian_expectation(self, device, shots, tol):
+    def test_multi_mode_hermitian_expectation(self, theta, phi, device, shots, tol):
         """Test that arbitrary multi-mode Hermitian expectation values are correct"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RY", wires=[0], par=[theta])
         dev.apply("RY", wires=[1], par=[phi])
@@ -181,17 +165,14 @@ class TestExpval:
         assert np.allclose(res, expected, **tol)
 
 
+@pytest.mark.parametrize("theta, phi, varphi", zip(THETA, PHI, VARPHI))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorExpval:
     """Test tensor expectation values"""
 
-    def test_paulix_pauliy(self, device, shots, tol):
+    def test_paulix_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliX and PauliY works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -209,12 +190,8 @@ class TestTensorExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_pauliz_identity(self, device, shots, tol):
+    def test_pauliz_identity(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliZ and Identity works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -234,12 +211,8 @@ class TestTensorExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_pauliz_hadamard(self, device, shots, tol):
+    def test_pauliz_hadamard(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliZ and PauliY and hadamard works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -257,12 +230,8 @@ class TestTensorExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_hermitian(self, device, shots, tol):
+    def test_hermitian(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving qml.Hermitian works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -292,19 +261,14 @@ class TestTensorExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_hermitian_hermitian(self, device, shots, tol):
+    def test_hermitian_hermitian(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving two Hermitian matrices works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
         dev.apply("RX", wires=[2], par=[varphi])
         dev.apply("CNOT", wires=[0, 1], par=[])
         dev.apply("CNOT", wires=[1, 2], par=[])
-
 
         A1 = np.array([[1, 2],
                        [2, 4]])
@@ -342,11 +306,8 @@ class TestTensorExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_hermitian_identity_expectation(self, device, shots, tol):
+    def test_hermitian_identity_expectation(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving an Hermitian matrix and the identity works correctly"""
-        theta = 0.432
-        phi = 0.123
-
         dev = device(2)
         dev.apply("RY", wires=[0], par=[theta])
         dev.apply("RY", wires=[1], par=[phi])

@@ -10,19 +10,20 @@ from conftest import U, U2, A, Tensor
 
 np.random.seed(42)
 
+THETA = np.linspace(0.11, 2*np.pi-0.13, 3)
+PHI = np.linspace(0.32, 2*np.pi-0.11, 3)
+VARPHI = np.linspace(0.02, 2*np.pi-0.12, 3)
 
+
+@pytest.mark.parametrize("theta, phi", zip(THETA, PHI))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
 class TestVar:
     """Tests for the variance"""
 
-    def test_var(self, device, shots, tol):
+    def test_var(self, theta, phi, device, shots, tol):
         """Tests for variance calculation"""
         dev = device(2)
-        dev.active_wires = {0}
-
-        phi = 0.543
-        theta = 0.6543
 
         # test correct variance for <Z> of a rotated state
         dev.apply("RX", wires=[0], par=[phi])
@@ -36,13 +37,9 @@ class TestVar:
 
         assert np.allclose(var, expected, **tol)
 
-    def test_var_hermitian(self, device, shots, tol):
+    def test_var_hermitian(self, theta, phi, device, shots, tol):
         """Tests for variance calculation using an arbitrary Hermitian observable"""
         dev = device(2)
-        dev.active_wires = {0}
-
-        phi = 0.543
-        theta = 0.6543
 
         # test correct variance for <H> of a rotated state
         H = np.array([[4, -1 + 6j], [-1 - 6j, 2]])
@@ -63,17 +60,14 @@ class TestVar:
         assert np.allclose(var, expected, **tol)
 
 
+@pytest.mark.parametrize("theta, phi, varphi", zip(THETA, PHI, VARPHI))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorVar:
     """Tests for variance of tensor observables"""
 
-    def test_paulix_pauliy(self, device, shots, tol):
+    def test_paulix_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliX and PauliY works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -99,12 +93,8 @@ class TestTensorVar:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_pauliz_hadamard(self, device, shots, tol):
+    def test_pauliz_hadamard(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliZ and PauliY and hadamard works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -128,12 +118,8 @@ class TestTensorVar:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_hermitian(self, device, shots, tol):
+    def test_hermitian(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving qml.Hermitian works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])

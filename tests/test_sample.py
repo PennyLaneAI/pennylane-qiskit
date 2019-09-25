@@ -10,6 +10,10 @@ from conftest import U, U2, A, Tensor
 
 np.random.seed(42)
 
+THETA = np.linspace(0.11, 2*np.pi-0.13, 3)
+PHI = np.linspace(0.32, 2*np.pi-0.11, 3)
+VARPHI = np.linspace(0.02, 2*np.pi-0.12, 3)
+
 
 @pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
@@ -36,13 +40,13 @@ class TestSample:
         # s1 should only contain 1 and -1
         assert np.allclose(s1 ** 2, 1, **tol)
 
-    def test_sample_values_hermitian(self, device, shots, tol):
+    @pytest.mark.parametrize("theta", THETA)
+    def test_sample_values_hermitian(self, theta, device, shots, tol):
         """Tests if the samples of a Hermitian observable returned by sample have
         the correct values
         """
         dev = device(1)
 
-        theta = 0.543
         A = np.array([[1, 2j], [-2j, 0]])
 
         dev.apply("RX", wires=[0], par=[theta])
@@ -67,12 +71,12 @@ class TestSample:
         # the analytic variance is 0.25*(sin(theta)-4*cos(theta))^2
         assert np.allclose(np.var(s1), 0.25 * (np.sin(theta) - 4 * np.cos(theta)) ** 2, **tol)
 
-    def test_sample_values_hermitian_multi_qubit(self, device, shots, tol):
+    @pytest.mark.parametrize("theta", THETA)
+    def test_sample_values_hermitian_multi_qubit(self, theta, device, shots, tol):
         """Tests if the samples of a multi-qubit Hermitian observable returned by sample have
         the correct values
         """
         dev = device(2)
-        theta = 0.543
 
         A = np.array(
             [
@@ -114,17 +118,14 @@ class TestSample:
         assert np.allclose(np.mean(s1), expected, **tol)
 
 
+@pytest.mark.parametrize("theta, phi, varphi", zip(THETA, PHI, VARPHI))
 @pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorSample:
     """Test tensor expectation values"""
 
-    def test_paulix_pauliy(self, device, shots, tol):
+    def test_paulix_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliX and PauliY works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -161,12 +162,8 @@ class TestTensorSample:
         ) / 16
         assert np.allclose(var, expected, **tol)
 
-    def test_pauliz_hadamard(self, device, shots, tol):
+    def test_pauliz_hadamard(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliZ and PauliY and hadamard works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
@@ -201,12 +198,8 @@ class TestTensorSample:
         ) / 4
         assert np.allclose(var, expected, **tol)
 
-    def test_hermitian(self, device, shots, tol):
+    def test_hermitian(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving qml.Hermitian works correctly"""
-        theta = 0.432
-        phi = 0.123
-        varphi = -0.543
-
         dev = device(3)
         dev.apply("RX", wires=[0], par=[theta])
         dev.apply("RX", wires=[1], par=[phi])
