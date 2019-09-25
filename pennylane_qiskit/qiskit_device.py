@@ -122,7 +122,7 @@ class QiskitDevice(Device, abc.ABC):
     pennylane_requires = ">=0.5.0"
     version = "0.5.0"
     plugin_version = __version__
-    author = "Carsten Blank"
+    author = "Xanadu"
 
     _capabilities = {"model": "qubit", "tensor_observables": True}
     _operation_map = QISKIT_OPERATION_MAP
