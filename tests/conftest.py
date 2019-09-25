@@ -1,3 +1,4 @@
+from collections import namedtuple
 import pytest
 import numpy as np
 
@@ -22,8 +23,8 @@ hw_backends = ["qasm_simulator"]
 
 
 @pytest.fixture
-def tol(shots):
-    if shots == 0:
+def tol(analytic):
+    if analytic:
         return {"atol": 0.01, "rtol": 0}
 
     return {"atol": 0.05, "rtol": 0.1}
@@ -45,11 +46,14 @@ def backend(request):
 
 
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
-def device(request, backend, shots):
-    if backend not in state_backends and shots == 0:
+def device(request, backend, shots, analytic):
+    if backend not in state_backends and analytic == True:
         pytest.skip("Hardware simulators do not support analytic mode")
 
     def _device(n):
-        return request.param(wires=n, backend=backend, shots=shots)
+        return request.param(wires=n, backend=backend, shots=shots, analytic=analytic)
 
     return _device
+
+
+Tensor = namedtuple("Tensor", ["name", "wires", "parameters", "return_type"])
