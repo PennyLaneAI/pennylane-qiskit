@@ -49,6 +49,7 @@ def test_account_error():
         IBMQDevice(wires=1)
 
 
+@pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 def test_simple_circuit(token, tol, shots):
     IBMQ.enable_account(token)
