@@ -83,14 +83,14 @@ QISKIT_OPERATION_MAP = {
     "CRZ": ex.CrzGate,
     "PhaseShift": ex.U1Gate,
     "QubitStateVector": ex.Initialize,
+    "S": ex.SGate,
+    "T": ex.TGate,
     # operations not natively implemented in Qiskit but provided in gates.py
     "Rot": Rot,
     "BasisState": BasisState,
     "QubitUnitary": ex.UnitaryGate,
     # additional operations not native to PennyLane but present in Qiskit
-    "S": ex.SGate,
     "Sdg": ex.SdgGate,
-    "T": ex.TGate,
     "Tdg": ex.TdgGate,
     "U1": ex.U1Gate,
     "U2": ex.U2Gate,
