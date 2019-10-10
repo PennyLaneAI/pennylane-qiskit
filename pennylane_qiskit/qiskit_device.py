@@ -45,7 +45,7 @@ from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 
 from pennylane import Device, DeviceError
-from pennylane.operation import Sample
+from pennylane.operation import Sample, Operation
 
 from .gates import BasisState, Rot
 from ._version import __version__
@@ -198,7 +198,14 @@ class QiskitDevice(Device, abc.ABC):
         return self.provider.get_backend(self.backend_name)
 
     def apply(self, operation, wires, par):
-        mapped_operation = self._operation_map[operation]
+
+        inverse_to_be_applied = False
+
+        if operation.endswith(Operation.string_for_inverse):
+            mapped_operation = self._operation_map[operation[:-len(Operation.string_for_inverse)]]
+            inverse_to_be_applied = True
+        else:
+            mapped_operation = self._operation_map[operation]
 
         if operation == "BasisState" and not self._first_operation:
             raise DeviceError(
@@ -225,7 +232,12 @@ class QiskitDevice(Device, abc.ABC):
             qregs = list(reversed(qregs))
 
         dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-        gate = mapped_operation(*par)
+
+        if not inverse_to_be_applied:
+            gate = mapped_operation(*par)
+        else:
+            gate = mapped_operation(*par).inverse()
+
         dag.apply_operation_back(gate, qargs=qregs)
         qc = dag_to_circuit(dag)
         self._circuit = self._circuit + qc
