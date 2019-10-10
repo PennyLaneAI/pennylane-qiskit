@@ -2,6 +2,7 @@ import pytest
 
 import numpy as np
 import pennylane as qml
+from pennylane.operation import Operation
 from scipy.linalg import block_diag
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
@@ -143,22 +144,6 @@ class TestStateApply:
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(mat @ state) ** 2
-        assert np.allclose(res, expected, **tol)
-
-    @pytest.mark.parametrize("theta", [0.5432, -0.232])
-    @pytest.mark.parametrize("name,func", single_qubit_param)
-    def test_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
-        """Test PauliX application"""
-        dev = device(1)
-        state = init_state(1)
-
-        dev.apply("QubitStateVector", [0], [state])
-        dev.apply(name, [0], [theta])
-        dev._obs_queue = []
-        dev.pre_measure()
-
-        res = np.abs(dev.state) ** 2
-        expected = np.abs(func(theta) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     def test_rotation(self, init_state, device, tol):
@@ -319,6 +304,22 @@ class TestHardwareApply:
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
+    @pytest.mark.parametrize("name,mat", single_qubit)
+    def test_inverse_single_qubit_no_parameters(self, init_state, device, name, mat, tol):
+        """Test the inverse of single qubit gates with no parameters"""
+        dev = device(1)
+        state = init_state(1)
+
+        dev.apply("QubitStateVector", [0], [state])
+        dev.apply(name + Operation.string_for_inverse, [0], [])
+        dev._obs_queue = []
+        dev.pre_measure()
+
+        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        expected = np.abs(mat @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
+
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("name,func", single_qubit_param)
     def test_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
@@ -333,6 +334,22 @@ class TestHardwareApply:
 
         res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
         expected = np.abs(func(theta) @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("theta", [0.5432, -0.232])
+    @pytest.mark.parametrize("name,func", single_qubit_param)
+    def test_inverse_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
+        """Test the inverse of single qubit gates with parameters"""
+        dev = device(1)
+        state = init_state(1)
+
+        dev.apply("QubitStateVector", [0], [state])
+        dev.apply(name + Operation.string_for_inverse, [0], [theta])
+        dev._obs_queue = []
+        dev.pre_measure()
+
+        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        expected = np.abs(func(-theta) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     def test_rotation(self, init_state, device, tol):
