@@ -140,7 +140,7 @@ class TestTensorSample:
         for idx in range(len(dev._obs_queue)):
             dev._obs_queue[idx].return_type = qml.operation.Sample
 
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         s1 = dev.sample(["PauliX", "PauliY"], [[0], [2]], [[], [], []])
 
@@ -178,7 +178,7 @@ class TestTensorSample:
         for idx in range(len(dev._obs_queue)):
             dev._obs_queue[idx].return_type = qml.operation.Sample
 
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         s1 = dev.sample(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []])
 
@@ -223,7 +223,7 @@ class TestTensorSample:
         for idx in range(len(dev._obs_queue)):
             dev._obs_queue[idx].return_type = qml.operation.Sample
 
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         s1 = dev.sample(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
 
