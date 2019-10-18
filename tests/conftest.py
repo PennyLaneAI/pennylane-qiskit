@@ -1,4 +1,3 @@
-from collections import namedtuple
 import pytest
 import numpy as np
 
@@ -54,6 +53,3 @@ def device(request, backend, shots, analytic):
         return request.param(wires=n, backend=backend, shots=shots, analytic=analytic)
 
     return _device
-
-
-Tensor = namedtuple("Tensor", ["name", "wires", "parameters", "return_type"])

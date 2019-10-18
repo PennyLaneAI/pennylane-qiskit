@@ -1,18 +1,16 @@
-# Release 0.6.0-dev
+# Release 0.6.0
 
 ### New features since last release
 
-### Breaking changes
-
-### Improvements
-
-### Documentation
-
-### Bug fixes
+* All Qiskit devices now support tensor observables using the
+  `return expval(qml.PauliZ(0) @ qml.Hermitian(A, [1, 2]))`
+  syntax introduced in PennyLane v0.6.
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Josh Izaac
 
 ---
 

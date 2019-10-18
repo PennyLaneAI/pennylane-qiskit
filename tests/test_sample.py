@@ -5,7 +5,7 @@ import pennylane as qml
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
-from conftest import U, U2, A, Tensor
+from conftest import U, U2, A
 
 
 np.random.seed(42)
@@ -134,13 +134,13 @@ class TestTensorSample:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Sample)
+            qml.PauliX(0, do_queue=False) @ qml.PauliY(2, do_queue=False)
         ]
 
-        # for idx in range(len(dev._obs_queue)):
-        #     dev._obs_queue[idx].return_type = qml.operation.Sample
+        for idx in range(len(dev._obs_queue)):
+            dev._obs_queue[idx].return_type = qml.operation.Sample
 
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         s1 = dev.sample(["PauliX", "PauliY"], [[0], [2]], [[], [], []])
 
@@ -172,13 +172,13 @@ class TestTensorSample:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Sample)
+            qml.PauliZ(0, do_queue=False) @ qml.Hadamard(1, do_queue=False) @ qml.PauliY(2, do_queue=False)
         ]
 
-        # for idx in range(len(dev._obs_queue)):
-        #     dev._obs_queue[idx].return_type = qml.operation.Sample
+        for idx in range(len(dev._obs_queue)):
+            dev._obs_queue[idx].return_type = qml.operation.Sample
 
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         s1 = dev.sample(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []])
 
@@ -216,12 +216,14 @@ class TestTensorSample:
             ]
         )
 
-        dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Sample)]
+        dev._obs_queue = [
+            qml.PauliZ(0, do_queue=False) @ qml.Hermitian(A, [1, 2], do_queue=False)
+        ]
 
-        # for idx in range(len(dev._obs_queue)):
-        #     dev._obs_queue[idx].return_type = qml.operation.Sample
+        for idx in range(len(dev._obs_queue)):
+            dev._obs_queue[idx].return_type = qml.operation.Sample
 
-        res = dev.pre_measure()
+        dev.pre_measure()
 
         s1 = dev.sample(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
 

@@ -119,8 +119,8 @@ class QiskitDevice(Device, abc.ABC):
             Default value is ``True``.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.5.0"
-    version = "0.5.0"
+    pennylane_requires = ">=0.6.0"
+    version = "0.6.0"
     plugin_version = __version__
     author = "Xanadu"
 
