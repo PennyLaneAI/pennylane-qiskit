@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import pennylane as qml
 
-from conftest import U, U2, A, Tensor
+from conftest import U, U2, A
 
 
 np.random.seed(42)
@@ -181,7 +181,7 @@ class TestTensorExpval:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            Tensor(["PauliX", "PauliY"], [[0], [2]], [[], []], qml.operation.Expectation)
+            qml.PauliX(0, do_queue=False) @ qml.PauliY(2, do_queue=False)
         ]
         dev.pre_measure()
 
@@ -200,7 +200,7 @@ class TestTensorExpval:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            Tensor(["PauliZ", "Identity", "PauliZ"], [[0], [1], [2]], [[], [], []], qml.operation.Expectation)
+            qml.PauliZ(0, do_queue=False) @ qml.Identity(1, do_queue=False) @ qml.PauliZ(2, do_queue=False)
         ]
 
         dev.post_apply()
@@ -221,7 +221,7 @@ class TestTensorExpval:
         dev.apply("CNOT", wires=[1, 2], par=[])
 
         dev._obs_queue = [
-            Tensor(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []], qml.operation.Expectation)
+            qml.PauliZ(0, do_queue=False) @ qml.Hadamard(1, do_queue=False) @ qml.PauliY(2, do_queue=False)
         ]
         dev.pre_measure()
 
@@ -248,7 +248,9 @@ class TestTensorExpval:
             ]
         )
 
-        dev._obs_queue = [Tensor(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]], qml.operation.Expectation)]
+        dev._obs_queue = [
+            qml.PauliZ(0, do_queue=False) @ qml.Hermitian(A, [1, 2], do_queue=False)
+        ]
         dev.pre_measure()
 
         res = dev.expval(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
@@ -283,7 +285,7 @@ class TestTensorExpval:
         )
 
         dev._obs_queue = [
-            Tensor(["Hermitian", "Hermitian"], [[0], [1, 2]], [[A1], [A2]], qml.operation.Expectation)
+            qml.Hermitian(A1, 0, do_queue=False) @ qml.Hermitian(A2, [1, 2], do_queue=False)
         ]
         dev.pre_measure()
 
@@ -313,7 +315,7 @@ class TestTensorExpval:
         dev.apply("RY", wires=[1], par=[phi])
         dev.apply("CNOT", wires=[0, 1], par=[])
 
-        dev._obs_queue = [Tensor(["Hermitian", "Identity"], [[0], [1]], [[A], []], qml.operation.Expectation)]
+        dev._obs_queue = [qml.Hermitian(A, 0, do_queue=False) @ qml.Identity(1, do_queue=False)]
         dev.pre_measure()
 
         res = dev.expval(["Hermitian", "Identity"], [[0], [1]], [[A], []])
