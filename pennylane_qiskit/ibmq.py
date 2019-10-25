@@ -44,7 +44,7 @@ from .qiskit_device import QiskitDevice
 class IBMQDevice(QiskitDevice):
     """A PennyLane device for the IBMQ API (remote) backend.
 
-    For more details, see the `Qiskit documentation <https://qiskit.org/documentation/autodoc/qiskit.providers.ibmq.html>`_.
+    For more details, see the `Qiskit documentation <https://qiskit.org/documentation/>`_
 
     You need to register at `IBMQ <https://quantum-computing.ibm.com/>`_ in order to
     recieve a token that is used for authentication using the API.
