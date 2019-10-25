@@ -74,7 +74,7 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 
     Tests on the `IBMQ device <https://pennylane-qiskit.readthedocs.io/en/latest/code/ibmq.html>`_ can
     only be run if a ``ibmqx_token`` for the
-    `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
+    `IBM Q experience <https://quantum-computing.ibm.com/>`_ is
     configured in the `PennyLane configuration file
     <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`_.
 
