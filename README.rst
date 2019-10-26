@@ -72,10 +72,11 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 
 .. note::
 
-    Tests on the `IBMQ device <https://pennylane-qiskit.readthedocs.io/en/latest/devices.html>`_ can
+    Tests on the `IBMQ device <https://pennylane-qiskit.readthedocs.io/en/latest/code/ibmq.html>`_ can
     only be run if a ``ibmqx_token`` for the
-    `IBM Q experience <https://quantumexperience.ng.bluemix.net/qx/experience>`_ is
-    configured in the `PennyLane configuration file <https://pennylane.readthedocs.io/configuration.html>`_.
+    `IBM Q experience <https://quantum-computing.ibm.com/>`_ is
+    configured in the `PennyLane configuration file
+    <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`_.
 
     If this is the case, running ``make test`` also executes tests on the ``ibmq`` device.
     By default tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend
@@ -160,7 +161,7 @@ You can instantiate a noise model and apply it to the device by calling
     dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
 
 Please refer to the Qiskit documentation for more information on
-`noise models <https://qiskit.org/documentation/aer/device_noise_simulation.html>`_.
+`noise models <https://qiskit.org/aer>`_.
 
 IBM Q Experience
 ================
@@ -185,7 +186,7 @@ as well as an optional URL:
 
 In order to avoid accidentally publishing your token, it is best to store it using the
 ``qiskit.IBMQ.save_account()`` function. Alternatively, you can specify the token or URL via the
-`PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/code/configuration.html>`__ by
+`PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`__ by
 adding a section such as
 
 .. code::

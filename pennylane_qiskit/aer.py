@@ -40,16 +40,16 @@ from .qiskit_device import QiskitDevice
 class AerDevice(QiskitDevice):
     """A PennyLane device for the C++ Qiskit Aer simulator.
 
-    Please refer to the `Qiskit documentation <https://qiskit.org/documentation/autodoc/qiskit.providers.aer.backends.html>`_ for
+    Please refer to the `Qiskit documentation <https://qiskit.org/documentation/>`_ for
     for further information to the noise model and backend options.
 
     A range of :code:`backend_options` can be given as kwargs that will be passed to the simulator.
 
     For details on the backends, please check out
 
-        * `qasm_simulator <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.qasm_simulator.html>`_
-        * `statevector_simulator  <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.statevector_simulator.html>`_
-        * `unitary_simulator  <https://qiskit.org/documentation/autodoc/qiskit.providers.basicaer.unitary_simulator.html>`_
+        * `qasm_simulator <https://qiskit.org/documentation/api/qiskit.providers.aer.QasmSimulator.html?highlight=qasm%20simulator#qiskit.providers.aer.QasmSimulator>`_
+        * `statevector_simulator  <https://qiskit.org/documentation/api/qiskit.providers.aer.backends.StatevectorSimulator.html?highlight=statevector%20simulator#qiskit.providers.aer.backends.StatevectorSimulator>`_
+        * `unitary_simulator  <https://qiskit.org/documentation/api/qiskit.providers.aer.backends.UnitarySimulator.html?highlight=unitary%20simulator#qiskit.providers.aer.backends.UnitarySimulator>`_
 
     Args:
         wires (int): The number of qubits of the device
