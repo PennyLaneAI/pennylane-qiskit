@@ -1,133 +1,120 @@
 from pennylane_qiskit.load import load
-
 from qiskit.circuit import Parameter
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit import QuantumCircuit, QuantumRegister
+from qiskit.quantum_info.operators import Operator
 from qiskit.exceptions import QiskitError
-import pennylane as qml
 from pennylane import numpy as np
-from pennylane.templates import layers
 import math
 
 import pytest
 import pennylane as qml
-from pennylane import Device, DeviceError
-from pennylane.operation import Sample, Variance, Expectation
-from pennylane.qnode import QuantumFunctionError
-
-import pennylane_qiskit.load
-
-# quantum_circuit_instructions =
 
 
-@pytest.fixture(scope="function")
-def mock_device_with_operations(monkeypatch):
-    """A mock instance of the abstract Device class with non-empty operations"""
-    with monkeypatch.context() as m:
-        m.setattr(Device, '__abstractmethods__', frozenset())
-        m.setattr(Device, 'operations', ["PauliX", "PauliZ", "CNOT"])
-        yield Device()
-
-
-class TestLoad():
+class TestLoad:
     """Test """
 
-    def test_load_quantum_circuit_init_by_passing_arguments(self):
-        """Test that eigs(Z) = [1, -1]"""
+    def test_load_quantum_circuit_init_by_specifying_rotation_in_circuit(self, recorder):
+        """Test the load method for a QuantumCircuit initialized using separately defined
+         quandumt and classical registers"""
 
-        theta = Parameter('θ')
+        angle = 0.5
 
         # quantum circuit to make an entangled bell state
-        qc = QuantumCircuit(5, 1)
+        qc = QuantumCircuit(3, 1)
+        qc.rz(angle, [0])
 
-        qc.h(0)
-        qc.rz(theta, [0])
-        qc.cx(0, 1)
         quantum_circuit = load(qc)
 
-        # TODO:
-        # Create QuantumCircuit with Quantum and classical registers
+        with recorder:
+            quantum_circuit()
 
-        dev = qml.device('default.qubit', wires=2)
+        assert len(recorder.queue) == 1
+        assert recorder.queue[0].name == 'RZ'
+        assert recorder.queue[0].params == [angle]
+        assert recorder.queue[0].wires == [0]
 
-        x = np.array([0.53896774, 0.79503606, 0.27826503, 0.])  # n qubits to encode 2^n features
+    def test_load_quantum_circuit_by_passing_parameters(self, recorder):
+        """Test the load method for a QuantumCircuit initialized using separately defined
+         quandumt and classical registers"""
 
-        # weights = np.array([[0.5, 0.4, 0.3], [0.5, 0.4, 0.3]])
+        theta = Parameter('θ')
+        angle = 0.5
 
-        @qml.qnode(dev)
-        def qiskit_loaded_quantum_circuit():
-            quantum_circuit(start_wire_index=0, params={theta: 0.5})
-            return qml.expval(qml.PauliZ(0))
+        # quantum circuit to make an entangled bell state
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
 
-        @qml.qnode(dev)
-        def pennylane_quantum_circuit():
+        quantum_circuit = load(qc)
+
+        with recorder:
+            quantum_circuit(params={theta: angle})
+
+        assert len(recorder.queue) == 1
+        assert recorder.queue[0].name == 'RZ'
+        assert recorder.queue[0].params == [angle]
+        assert recorder.queue[0].wires == [0]
+
+    def test_load_loaded_quantum_circuit_and_further_pennylane_operations(self, recorder):
+        """Test the load method for a QuantumCircuit initialized using separately defined
+         quandumt and classical registers"""
+
+        theta = Parameter('θ')
+        angle = 0.5
+
+        # quantum circuit to make an entangled bell state
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with recorder:
+            qml.PauliZ(0)
+            quantum_circuit(params={theta: angle})
             qml.Hadamard(0)
-            qml.RZ(0.5, wires=0)
-            qml.CNOT(wires=[0, 1])
-            return qml.expval(qml.PauliZ(0))
 
-        assert qiskit_loaded_quantum_circuit == pennylane_quantum_circuit
+        assert len(recorder.queue) == 3
+        assert recorder.queue[0].name == 'PauliZ'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == [0]
+        assert recorder.queue[1].name == 'RZ'
+        assert recorder.queue[1].params == [angle]
+        assert recorder.queue[1].wires == [0]
+        assert recorder.queue[2].name == 'Hadamard'
+        assert recorder.queue[2].params == []
+        assert recorder.queue[2].wires == [0]
 
-    def test_load_quantum_circuit_init_by_passing_arguments(self):
-        """Test that eigs(Z) = [1, -1]"""
+    def test_load_quantum_circuit_loaded_multiple_times_with_different_parameters(self, recorder):
+        """Test the load method for a QuantumCircuit initialized using separately defined
+         quandumt and classical registers"""
 
         theta = Parameter('θ')
-
-        n = 5
-
-        q2 = QuantumRegister(2)
-        c1 = ClassicalRegister(1)
-        c2 = ClassicalRegister(2)
+        angle1 = 0.5
+        angle2 = -0.5
+        angle3 = 0
 
         # quantum circuit to make an entangled bell state
-        qc = QuantumCircuit(q2, c1)
-
-        qc.h(0)
+        qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
-        qc.cx(0, 1)
-
-        qc.barrier()
-        qc.measure(0, 0)
-        quantum_circuit = load(qc)
-
-        # TODO:
-        # Create QuantumCircuit with Quantum and classical registers
-
-        dev = qml.device('default.qubit', wires=2)
-
-        x = np.array([0.53896774, 0.79503606, 0.27826503, 0.])  # n qubits to encode 2^n features
-
-        # weights = np.array([[0.5, 0.4, 0.3], [0.5, 0.4, 0.3]])
-
-        @qml.qnode(dev)
-        def load_quantum_circuit(x):
-            qml.QubitStateVector(x, wires=[0, 1])
-            quantum_circuit(start_wire_index=0, params={theta: 0.5})
-            # qml.Hadamard(0)
-            # qml.RZ(0.5, wires=0)
-            # qml.CNOT(wires=[0, 1])
-            return qml.expval(qml.PauliZ(0))
-
-        print(load_quantum_circuit(x))
-
-
-class TestLoadWarnings:
-
-    def test_load_warns_barrier(self, recorder):
-        # quantum circuit to make an entangled bell state
-        qc = QuantumCircuit(5, 1)
-
-        qc.barrier()
-
-        # instruction = getattr(QuantumCircuit, instruction_name)
 
         quantum_circuit = load(qc)
-        with pytest.warns(UserWarning, match=pennylane_qiskit.load.__name__ +
-                                             " The {} instruction is not supported by PennyLane.".
-                                                     format('Barrier')):
-            with recorder:
-                quantum_circuit()
 
-    def test_load_quantum_circuit_with_binding_parameters(self, recorder):
+        with recorder:
+            quantum_circuit(params={theta: angle1})
+            quantum_circuit(params={theta: angle2})
+            quantum_circuit(params={theta: angle3})
+
+        assert len(recorder.queue) == 3
+        assert recorder.queue[0].name == 'RZ'
+        assert recorder.queue[0].params == [angle1]
+        assert recorder.queue[0].wires == [0]
+        assert recorder.queue[1].name == 'RZ'
+        assert recorder.queue[1].params == [angle2]
+        assert recorder.queue[1].wires == [0]
+        assert recorder.queue[2].name == 'RZ'
+        assert recorder.queue[2].params == [angle3]
+        assert recorder.queue[2].wires == [0]
+
+    def test_load_quantum_circuit_with_bound_parameters(self, recorder):
 
         theta = Parameter('θ')
         qc = QuantumCircuit(3, 1)
@@ -197,30 +184,6 @@ class TestLoadWarnings:
             with recorder:
                 quantum_circuit(params={theta: 0.5, phi: 0.3})
 
-    def test_load_toffoli(self, recorder):
-
-        qc = QuantumCircuit(3, 1)
-        qc.ccx(0, 1, 2)
-
-        quantum_circuit = load(qc)
-        with pytest.warns(UserWarning, match=pennylane_qiskit.load.__name__ +
-                                             " The {} instruction is not supported by PennyLane.".
-                                                     format('ToffoliGate')):
-            with recorder:
-                quantum_circuit()
-
-    def test_load_ch(self, recorder):
-
-        qc = QuantumCircuit(3, 1)
-        qc.ch(0, 1)
-
-        quantum_circuit = load(qc)
-        with pytest.warns(UserWarning, match=pennylane_qiskit.load.__name__ +
-                                             " The {} instruction is not supported by PennyLane.".
-                                                     format('CHGate')):
-            with recorder:
-                quantum_circuit()
-
     def test_load_crz(self, recorder):
 
         q2 = QuantumRegister(2)
@@ -282,8 +245,7 @@ class TestLoadWarnings:
 
         single_wire = [0]
         angle = 0.3333
-        # prob_amplitudes = [1/np.sqrt(2) * complex(1), 1/np.sqrt(2) * complex(1)]
-        prob_amplitudes = [1 * complex(1), 0]
+        prob_amplitudes = [1/np.sqrt(2), 1/np.sqrt(2)]
 
         q_reg = QuantumRegister(1)
         qc = QuantumCircuit(q_reg)
@@ -298,11 +260,10 @@ class TestLoadWarnings:
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 6
-
         assert recorder.queue[0].name == 'QubitStateVector'
-        assert recorder.queue[0].params == prob_amplitudes
-        assert recorder.queue[0].wires == list(range(math.log2(len(prob_amplitudes))))
+        assert len(recorder.queue[0].params) == 1
+        assert np.array_equal(recorder.queue[0].params[0], np.array(prob_amplitudes))
+        assert recorder.queue[0].wires == list(range(int(math.log2(len(prob_amplitudes)))))
 
         assert recorder.queue[1].name == 'RX'
         assert recorder.queue[1].params == [angle]
@@ -322,19 +283,27 @@ class TestLoadWarnings:
 
     def test_load_two_qubit_operations_supported_by_pennylane(self, recorder):
 
-        two_wires =  [0, 1]
+        two_wires = [0, 1]
 
         qc = QuantumCircuit(2, 1)
+
+        unitary_op = [[1, 0, 0, 0],
+                     [0, 0, 1j, 0],
+                     [0, 1j, 0, 0],
+                     [0, 0, 0, 1]]
+        iswap_op = Operator(unitary_op)
+
 
         qc.cx(*two_wires)
         qc.cz(*two_wires)
         qc.swap(*two_wires)
+        qc.unitary(iswap_op, [0, 1], label='iswap')
 
         quantum_circuit = load(qc)
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 3
+        assert len(recorder.queue) == 4
 
         assert recorder.queue[0].name == 'CNOT'
         assert recorder.queue[0].params == []
@@ -347,6 +316,11 @@ class TestLoadWarnings:
         assert recorder.queue[2].name == 'SWAP'
         assert recorder.queue[2].params == []
         assert recorder.queue[2].wires == two_wires
+
+        assert recorder.queue[3].name == 'QubitUnitary'
+        assert len(recorder.queue[3].params) == 1
+        assert np.array_equal(recorder.queue[3].params[0], np.array(unitary_op))
+        assert recorder.queue[3].wires == two_wires
 
     def test_load_two_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
 
@@ -382,3 +356,99 @@ class TestLoadWarnings:
         assert recorder.queue[0].name == 'CSWAP'
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == three_wires
+
+    def test_load_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
+        """Test the load method for a QuantumCircuit raises a QiskitError,
+        if the wrong type of arguments were passed"""
+
+        theta = Parameter('θ')
+        angle = 'some_string_instead_an_angle'
+
+        # quantum circuit to make an entangled bell state
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(QiskitError):
+            with recorder:
+                quantum_circuit(params={theta: angle})
+
+    def test_load_quantum_circuit_error_by_calling_wrong_parameters(self, recorder):
+        """Test that the load method for a QuantumCircuit raises a TypeError,
+        if the wrong type of arguments were passed"""
+
+        angle = 'some_string_instead_an_angle'
+
+        # quantum circuit to make an entangled bell state
+        qc = QuantumCircuit(3, 1)
+        qc.rz(angle, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(TypeError, match="can't convert expression to float"):
+            with recorder:
+                quantum_circuit()
+
+    def test_load_quantum_circuit_error_passing_parameters_not_required(self, recorder):
+        """Test the load method raises a QiskitError, if the arguments, that are not required were passed"""
+
+        theta = Parameter('θ')
+        angle = 0.5
+
+        # quantum circuit to make an entangled bell state
+        qc = QuantumCircuit(3, 1)
+        qc.z([0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(QiskitError):
+            with recorder:
+                quantum_circuit(params={theta: angle})
+
+    def test_load_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
+
+        qc = qml.PauliZ(0)
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(ValueError):
+            with recorder:
+                quantum_circuit()
+
+
+
+class TestLoadWarnings:
+
+    def test_load_not_supported_gates(self, recorder):
+
+        angle = 0.333
+
+        qc = QuantumCircuit(3, 1)
+        qc.rzz(angle, qc.qubits[0], qc.qubits[1])
+
+        # Performing the Identity
+        qc.iden(qc.qubits[0])
+        qc.ch(0, 1)
+        qc.ccx(0, 1, 2)
+        qc.barrier()
+
+        quantum_circuit = load(qc)
+
+        with pytest.warns(UserWarning) as record:
+            with recorder:
+                quantum_circuit(params={})
+
+        # check that only one warning was raised
+        assert len(record) == 5
+        # check that the message matches
+        assert record[0].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
+            .format('RZZGate')
+        assert record[1].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
+            .format('IdGate')
+        assert record[2].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
+            .format('CHGate')
+        assert record[3].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane." \
+            .format('ToffoliGate')
+        assert record[4].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane." \
+            .format('Barrier')

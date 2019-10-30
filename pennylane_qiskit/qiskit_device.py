@@ -86,6 +86,7 @@ QISKIT_OPERATION_MAP = {
     "CRZ": ex.CrzGate,
     "PhaseShift": ex.U1Gate,
     "QubitStateVector": ex.Initialize,
+
     # TODO: add the CRY gate, once the U3Gate is a part of PennyLane
     # "CRY": U3Gate,
     # operations not natively implemented in Qiskit but provided in gates.py
@@ -93,9 +94,12 @@ QISKIT_OPERATION_MAP = {
     "BasisState": BasisState,
     "QubitUnitary": ex.UnitaryGate,
     # additional operations not native to PennyLane but present in Qiskit
+    # operations not natively implemented in Qiskit but provided in gates.py
+
+    # TODO: once inverse is added to PennyLane-Qiskit, test the following gates
     "Sdg": ex.SdgGate,
     "Tdg": ex.TdgGate,
-    "U1": ex.U1Gate,
+
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
     "Toffoli": ex.ToffoliGate,

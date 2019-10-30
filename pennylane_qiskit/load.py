@@ -33,7 +33,7 @@ from qiskit.circuit import Parameter, ParameterExpression
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 import pennylane.ops.qubit as ops
 import warnings
-from sympy.core.numbers import Float
+import numpy as np
 
 # pylint: disable=too-many-instance-attributes
 
@@ -50,79 +50,76 @@ class QuantumCircuitToTemplateConverter:
 
 _operation_map = QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in _operation_map.items()}
-a = 3
-
-# Defining the load function
-#def qiskit_to_pennylane(quantum_circuit: QuantumCircuit, params: dict = None):
 
 
-#    return operator_queue
+def check_parameter_bound(param):
+    if isinstance(param, Parameter):
+        raise ValueError("The parameter {} was not bound correctly.".format(param))
+    return param
+
 
 def load(quantum_circuit: QuantumCircuit):
-    # queue = qml.converter()
-    # template = qiskit_to_pennylane(quantum_circuit)
+    """Returns a PennyLane template created based on the input qiskit.QuantumCircuit.
+    Warnings are created for each of the QuantumCircuit instructions that were
+    not incorporated in the PennyLane template.
 
-    def _function(start_wire_index: int = 0, params: dict = None):
+    Args:
+        quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
+
+    Returns:
+        function: the new PennyLane template
+    """
+    def _function(params: dict = None, wire_shift: int = 0):
+        """Returns a PennyLane template created based on the input QuantumCircuit.
+            Warnings are created for each of the QuantumCircuit instructions that were
+            not incorporated in the PennyLane template.
+
+            Args:
+                params (dict): specifies the parameters that need to bound in the
+                QuantumCircuit
+
+                wire_shift (int): the shift to be made with respect to the wires
+                already specifiec in the QuantumCircuit
+                e.g. if the QuantumCircuit acts on wires [0, 1] and if wire_shift == 1,
+                then the returned Pennylane template will act on wires [1, 2]
+
+            Returns:
+                function: the new PennyLane template
+            """
+        # TODO: Add qasm import option
 
         if not isinstance(quantum_circuit, QuantumCircuit):
             raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
-        # TODO:
-        # Check if parameters are needed -> if so, bind them
-        # Check if parameters are needed -> if not passed, raise ERROR
-        # Check if parameters are not needed -> if not passed, go on
-        # Check if parameters are not needed -> if passed, , raise WARNING
 
-        operator_queue = []
-
-        # Qiskit will raise an error, if parameters that are not present were to bound bound
         if params is not None:
             qc = quantum_circuit.bind_parameters(params)
         else:
             qc = quantum_circuit
 
         # Processing the dictionary of parameters passed
-
         for op in qc.data:
 
-            # TODO:
-            # What if multiple quantum registers are specified
-
             # Indexing a Qubit object to obtain a wire and shifting it with the start wire index
-
-            # TODO:
-            # Check what if more wires specified in qiskit
-
-            wires = [start_wire_index + qubit.index for qubit in op[1]]
+            wires = [wire_shift + qubit.index for qubit in op[1]]
             instruction_name = op[0].__class__.__name__
 
             if instruction_name in inv_map and inv_map[instruction_name] in ops.ops:
                 operation_name = inv_map[instruction_name]
                 operation = getattr(ops, operation_name)
 
-
-                # Check that the parameters were bound correctly
-
-                # TODO:
-                # Check if there could be a parameter of type other than ParameterExpression and float
-                parameters = []
-                for param in op[0].params:
-                    if isinstance(param, Parameter):
-                        raise ValueError("The parameter {} was not bound correctly.".format(param))
-                    elif isinstance(param, ParameterExpression):
-
-                        # Conversion of the ParameterExpression value to float
-                        parameters.append(float(param._symbol_expr.evalf()))
-                    
-                    # Converted it to a float, if it can be
-                    elif isinstance(float(param), float):
-                        parameters.append(float(param))
-                    else:
-                        raise ValueError("Wrong type for {}.".format(param))
+                parameters = [check_parameter_bound(param) for param in op[0].params]
 
                 if not parameters:
                     operation(wires=wires)
-                else:
+                elif operation_name == 'QubitStateVector':
+                    operation(np.array(parameters), wires=wires)
+                elif operation_name == 'QubitUnitary':
                     operation(*parameters, wires=wires)
+                elif len(parameters) == 1:
+                    operation(float(*parameters), wires=wires)
+                else:
+                    float_params = [float(param) for param in parameters]
+                    operation(float_params, wires=wires)
 
             else:
                 warnings.warn(__name__ + " The {} instruction is not supported by PennyLane.".
