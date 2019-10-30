@@ -5,6 +5,7 @@ from qiskit.quantum_info.operators import Operator
 from qiskit.exceptions import QiskitError
 from pennylane import numpy as np
 import math
+import sys
 
 import pytest
 import pennylane as qml
@@ -490,12 +491,38 @@ class TestLoadWarnings:
 
 class TestLoadQasm:
 
-    def test_load_qasm_from_file(self, recorder):
-        quantum_circuit = load_qasm_from_file('qft.qasm')
+    qft_qasm = 'OPENQASM 2.0;' \
+               'include "qelib1.inc";' \
+               'qreg q[4];' \
+               'creg c[4];' \
+               'x q[0]; ' \
+               'x q[2];' \
+               'barrier q;' \
+               'h q[0];' \
+               'cu1(pi/2) q[1],q[0];' \
+               'h q[1];' \
+               'cu1(pi/4) q[2],q[0];' \
+               'cu1(pi/2) q[2],q[1];' \
+               'h q[2];' \
+               'cu1(pi/8) q[3],q[0];' \
+               'cu1(pi/4) q[3],q[1];' \
+               'cu1(pi/2) q[3],q[2];' \
+               'h q[3];' \
+               'measure q -> c;'
+
+    @pytest.mark.skipif(sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6")
+    def test_load_qasm_from_file(self, tmpdir, recorder):
+        """Test that a Blackbird script is deserialized from a file"""
+        qft_qasm = tmpdir.join("qft.qasm")
+
+        with open(qft_qasm, "w") as f:
+            f.write(TestLoadQasm.qft_qasm)
+
+        quantum_circuit = load_qasm_from_file(qft_qasm)
 
         with pytest.warns(UserWarning) as record:
             with recorder:
-                quantum_circuit(params={})
+                quantum_circuit()
 
         assert len(recorder.queue) == 6
 
