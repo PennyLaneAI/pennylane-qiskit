@@ -17,16 +17,8 @@ QuanctumCircuit converter module
 
 .. currentmodule:: pennylane_qiskit.load
 
-This module contains a base class for constructing Qiskit devices for PennyLane.
-
-Classes
--------
-
-.. autosummary::
-   QiskitDevice
-
-Code details
-~~~~~~~~~~~~
+This module contains functions for converting Qiskit QuantumCirducit objects
+PennyLane templates.
 """
 import warnings
 import numpy as np
@@ -36,7 +28,6 @@ from qiskit.circuit import Parameter
 from qiskit.exceptions import QiskitError
 
 import pennylane.ops.qubit as pennylane_ops
-import pennylane_qiskit.ops as plugin_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes

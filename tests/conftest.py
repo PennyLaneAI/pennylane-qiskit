@@ -8,6 +8,7 @@ import contextlib
 import io
 
 
+# TODO: once in PennyLane, modify the usage of Recorder and  OperationRecorder
 class Recorder:
     """Recorder class used by the :class:`~.OperationRecorder`.
 
