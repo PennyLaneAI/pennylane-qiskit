@@ -1,4 +1,4 @@
-from pennylane_qiskit.load import load
+from pennylane_qiskit.load import load, load_qasm_from_file, load_qasm
 from qiskit.circuit import Parameter
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.quantum_info.operators import Operator
@@ -357,6 +357,45 @@ class TestLoad:
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == three_wires
 
+    def test_load_operations_supported_by_pennylane_qiskit_plugin(self, recorder):
+
+        qc = QuantumCircuit(3, 1)
+
+        phi = 0.3
+        lam = 0.4
+        theta = 0.2
+
+        qc.sdg([0])
+        qc.tdg([0])
+
+        qc.u2(phi, lam, [0])
+        qc.u3(phi, lam, theta, [0])
+        qc.ccx(0, 1, 2)
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit()
+
+        assert recorder.queue[0].name == 'Sdg'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == [0]
+
+        assert recorder.queue[1].name == 'Tdg'
+        assert recorder.queue[1].params == []
+        assert recorder.queue[1].wires == [0]
+
+        assert recorder.queue[2].name == 'U2'
+        assert recorder.queue[2].params == [phi, lam]
+        assert recorder.queue[2].wires == [0]
+
+        assert recorder.queue[3].name == 'U3'
+        assert recorder.queue[3].params == [phi, lam, theta]
+        assert recorder.queue[3].wires == [0]
+
+        assert recorder.queue[4].name == 'Toffoli'
+        assert recorder.queue[4].params == []
+        assert recorder.queue[4].wires == [0, 1, 2]
+
     def test_load_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
         """Test the load method for a QuantumCircuit raises a QiskitError,
         if the wrong type of arguments were passed"""
@@ -416,8 +455,6 @@ class TestLoad:
             with recorder:
                 quantum_circuit()
 
-
-
 class TestLoadWarnings:
 
     def test_load_not_supported_gates(self, recorder):
@@ -430,7 +467,6 @@ class TestLoadWarnings:
         # Performing the Identity
         qc.iden(qc.qubits[0])
         qc.ch(0, 1)
-        qc.ccx(0, 1, 2)
         qc.barrier()
 
         quantum_circuit = load(qc)
@@ -440,7 +476,7 @@ class TestLoadWarnings:
                 quantum_circuit(params={})
 
         # check that only one warning was raised
-        assert len(record) == 5
+        assert len(record) == 4
         # check that the message matches
         assert record[0].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
             .format('RZZGate')
@@ -449,6 +485,73 @@ class TestLoadWarnings:
         assert record[2].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
             .format('CHGate')
         assert record[3].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane." \
-            .format('ToffoliGate')
-        assert record[4].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane." \
             .format('Barrier')
+
+
+class TestLoadQasm:
+
+    def test_load_qasm_from_file(self, recorder):
+        quantum_circuit = load_qasm_from_file('qft.qasm')
+
+        with pytest.warns(UserWarning) as record:
+            with recorder:
+                quantum_circuit(params={})
+
+        assert len(recorder.queue) == 6
+
+        assert recorder.queue[0].name == 'PauliX'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == [0]
+
+        assert recorder.queue[1].name == 'PauliX'
+        assert recorder.queue[1].params == []
+        assert recorder.queue[1].wires == [2]
+
+        assert recorder.queue[2].name == 'Hadamard'
+        assert recorder.queue[2].params == []
+        assert recorder.queue[2].wires == [0]
+
+        assert recorder.queue[3].name == 'Hadamard'
+        assert recorder.queue[3].params == []
+        assert recorder.queue[3].wires == [1]
+
+        assert recorder.queue[4].name == 'Hadamard'
+        assert recorder.queue[4].params == []
+        assert recorder.queue[4].wires == [2]
+
+        assert recorder.queue[5].name == 'Hadamard'
+        assert recorder.queue[5].params == []
+        assert recorder.queue[5].wires == [3]
+
+        assert len(record) == 11
+        # check that the message matches
+        assert record[0].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
+            .format('Barrier')
+        assert record[1].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
+            .format('Cu1Gate')
+        assert record[7].message.args[0] == "pennylane_qiskit.load The {} instruction is not supported by PennyLane."\
+            .format('Measure')
+
+    def test_load_qasm_(self, recorder):
+        qasm_string = 'include "qelib1.inc";' \
+                      'qreg q[4];' \
+                      'creg c[4];' \
+                      'x q[0];' \
+                      'x q[2];'\
+                      'measure q -> c;'
+
+        quantum_circuit = load_qasm(qasm_string)
+
+        with pytest.warns(UserWarning) as record:
+            with recorder:
+                quantum_circuit(params={})
+
+        assert len(recorder.queue) == 2
+
+        assert recorder.queue[0].name == 'PauliX'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == [0]
+
+        assert recorder.queue[1].name == 'PauliX'
+        assert recorder.queue[1].params == []
+        assert recorder.queue[1].wires == [2]

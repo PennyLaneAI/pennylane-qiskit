@@ -52,6 +52,18 @@ Code details
 # pylint: disable=too-few-public-methods
 from pennylane.operation import Operation
 
+_ops = {
+    "S",
+    "Sdg",
+    "T",
+    "Tdg",
+    "U1",
+    "U2",
+    "U3",
+    "CSWAP",
+    "Toffoli",
+}
+
 
 class S(Operation):
     r"""S(wires)

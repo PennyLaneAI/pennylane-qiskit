@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-Base Qiskit device class
-========================
+QuanctumCircuit converter module
+================================
 
-.. currentmodule:: pennylane_qiskit.qiskit_device
+.. currentmodule:: pennylane_qiskit.load
 
 This module contains a base class for constructing Qiskit devices for PennyLane.
 
@@ -31,22 +31,12 @@ Code details
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
-import pennylane.ops.qubit as ops
+import pennylane.ops.qubit as pennylane_ops
+import pennylane_qiskit.ops as plugin_ops
 import warnings
 import numpy as np
 
 # pylint: disable=too-many-instance-attributes
-
-
-class QuantumCircuitToTemplateConverter:
-
-    def __init__(self, quantum_circuit: QuantumCircuit):
-        self.circuit = quantum_circuit
-
-        # Check for all the operations that are valid as per the conversion
-
-        # unsupported gates which are essential to the quantum algorithm should instead raise an error
-
 
 _operation_map = QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in _operation_map.items()}
@@ -69,6 +59,10 @@ def load(quantum_circuit: QuantumCircuit):
     Returns:
         function: the new PennyLane template
     """
+
+    if isinstance(quantum_circuit, str):
+        quantum_circuit = QuantumCircuit._circuit_from_qasm(quantum_circuit)
+
     def _function(params: dict = None, wire_shift: int = 0):
         """Returns a PennyLane template created based on the input QuantumCircuit.
             Warnings are created for each of the QuantumCircuit instructions that were
@@ -86,7 +80,6 @@ def load(quantum_circuit: QuantumCircuit):
             Returns:
                 function: the new PennyLane template
             """
-        # TODO: Add qasm import option
 
         if not isinstance(quantum_circuit, QuantumCircuit):
             raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
@@ -103,9 +96,17 @@ def load(quantum_circuit: QuantumCircuit):
             wires = [wire_shift + qubit.index for qubit in op[1]]
             instruction_name = op[0].__class__.__name__
 
-            if instruction_name in inv_map and inv_map[instruction_name] in ops.ops:
+            print(plugin_ops)
+
+            if instruction_name in inv_map and\
+                    (inv_map[instruction_name] in pennylane_ops.ops or inv_map[instruction_name] in plugin_ops._ops):
+
                 operation_name = inv_map[instruction_name]
-                operation = getattr(ops, operation_name)
+
+                if operation_name in pennylane_ops.ops:
+                    operation = getattr(pennylane_ops, operation_name)
+                else:
+                    operation = getattr(plugin_ops, operation_name)
 
                 parameters = [check_parameter_bound(param) for param in op[0].params]
 
@@ -119,7 +120,7 @@ def load(quantum_circuit: QuantumCircuit):
                     operation(float(*parameters), wires=wires)
                 else:
                     float_params = [float(param) for param in parameters]
-                    operation(float_params, wires=wires)
+                    operation(*float_params, wires=wires)
 
             else:
                 warnings.warn(__name__ + " The {} instruction is not supported by PennyLane.".
@@ -127,3 +128,10 @@ def load(quantum_circuit: QuantumCircuit):
                               UserWarning)
     return _function
 
+
+def load_qasm_from_file(file: str):
+    return load(QuantumCircuit.from_qasm_file(file))
+
+
+def load_qasm(string: str):
+    return load(QuantumCircuit.from_qasm_str(string))
