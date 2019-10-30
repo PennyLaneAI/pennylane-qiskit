@@ -20,3 +20,4 @@ from .basic_aer import BasicAerDevice
 from .ibmq import IBMQDevice
 
 from .ops import *
+from .converter import load

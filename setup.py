@@ -43,6 +43,9 @@ info = {
             'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
             'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
             ],
+        'pennylane.io': [
+            'qiskit = pennylane_qiskit:load',
+            ],
         },
     'description': 'PennyLane plugin for qiskit-terra',
     'long_description': open('README.rst').read(),

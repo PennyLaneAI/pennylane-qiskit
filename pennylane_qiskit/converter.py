@@ -28,13 +28,16 @@ Classes
 Code details
 ~~~~~~~~~~~~
 """
-from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
-import pennylane.ops.qubit as pennylane_ops
-import pennylane_qiskit.ops as plugin_ops
 import warnings
 import numpy as np
+
+from qiskit import QuantumCircuit
+from qiskit.circuit import Parameter
+from qiskit.exceptions import QiskitError
+
+import pennylane.ops.qubit as pennylane_ops
+import pennylane_qiskit.ops as plugin_ops
+from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes
 
@@ -43,6 +46,15 @@ inv_map = {v.__name__: k for k, v in _operation_map.items()}
 
 
 def check_parameter_bound(param):
+    """Utility function determining if a certain parameter in a QuantumCircuit has
+    been bound.
+
+    Args:
+        param: the parameter to be checked
+
+    Returns:
+        param: the parameter after the check
+    """
     if isinstance(param, Parameter):
         raise ValueError("The parameter {} was not bound correctly.".format(param))
     return param
@@ -96,17 +108,11 @@ def load(quantum_circuit: QuantumCircuit):
             wires = [wire_shift + qubit.index for qubit in op[1]]
             instruction_name = op[0].__class__.__name__
 
-            print(plugin_ops)
-
-            if instruction_name in inv_map and\
-                    (inv_map[instruction_name] in pennylane_ops.ops or inv_map[instruction_name] in plugin_ops._ops):
+            if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
 
                 operation_name = inv_map[instruction_name]
 
-                if operation_name in pennylane_ops.ops:
-                    operation = getattr(pennylane_ops, operation_name)
-                else:
-                    operation = getattr(plugin_ops, operation_name)
+                operation = getattr(pennylane_ops, operation_name)
 
                 parameters = [check_parameter_bound(param) for param in op[0].params]
 
@@ -123,15 +129,35 @@ def load(quantum_circuit: QuantumCircuit):
                     operation(*float_params, wires=wires)
 
             else:
-                warnings.warn(__name__ + " The {} instruction is not supported by PennyLane.".
-                              format(instruction_name),
-                              UserWarning)
+                try:
+                    operation_matrix = op[0].to_matrix()
+                    pennylane_ops.QubitUnitary(operation_matrix, wires=wires)
+                except (AttributeError, QiskitError):
+                    warnings.warn(__name__ + " The {} instruction is not supported by PennyLane.".
+                                  format(instruction_name),
+                                  UserWarning)
     return _function
 
 
 def load_qasm_from_file(file: str):
+    """Returns a PennyLane template created based on the input qasm file.
+
+        Args:
+            file (str): the name of the file
+
+        Returns:
+            function: the new PennyLane template
+    """
     return load(QuantumCircuit.from_qasm_file(file))
 
 
-def load_qasm(string: str):
-    return load(QuantumCircuit.from_qasm_str(string))
+def load_qasm(qasm_string: str):
+    """Returns a PennyLane template created based on the input qasm string.
+
+        Args:
+            qasm_string (str): the name of the qasm string
+
+        Returns:
+            function: the new PennyLane template
+        """
+    return load(QuantumCircuit.from_qasm_str(qasm_string))
