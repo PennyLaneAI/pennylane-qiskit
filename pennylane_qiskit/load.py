@@ -29,8 +29,11 @@ Code details
 ~~~~~~~~~~~~
 """
 from qiskit import QuantumCircuit
+from qiskit.circuit import Parameter, ParameterExpression
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
-import pennylane.operation as ops
+import pennylane.ops.qubit as ops
+import warnings
+from sympy.core.numbers import Float
 
 # pylint: disable=too-many-instance-attributes
 
@@ -49,80 +52,81 @@ _operation_map = QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in _operation_map.items()}
 a = 3
 
-
 # Defining the load function
-def qiskit_to_pennylane(quantum_circuit: QuantumCircuit, params: dict = None):
+#def qiskit_to_pennylane(quantum_circuit: QuantumCircuit, params: dict = None):
 
-    if not isinstance(quantum_circuit, QuantumCircuit):
-        raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
 
-    operator_queue = []
-
-    # TODO:
-    # Check if parameters are needed -> if so, bind them
-    # Check if parameters are needed -> if not passed, raise ERROR
-    # Check if parameters are not needed -> if not passed, go on
-    # Check if parameters are not needed -> if passed, , raise WARNING
-
-    if len(quantum_circuit.parameters) > 0:
-        if params is not None:
-            quantum_circuit = quantum_circuit.bind_parameters(params)
-        else:
-            raise ValueError("Parameters required for circuit {}.".format(quantum_circuit.name))
-    else:
-        if params is not None:
-            print("Parameters were passed although the  circuit {} does not require them.".format(quantum_circuit.name))
-
-    # Processing the dictionary of parameters passed
-    for op in quantum_circuit.data:
-
-        #TODO:
-        # What if multiple quantum registers are specified
-        # Indexing a Qubit object to obtain a wire
-
-        wires = [qubit.index for qubit in op[1]]
-        operation = getattr(ops, op[0].name)
-
-        # Call each operator with the specified parameters
-        parameters = op[0].params
-
-        if not parameters:
-            operation(wires=wires)
-        else:
-            operation(*parameters, wires=wires)
-
-    return operator_queue
+#    return operator_queue
 
 def load(quantum_circuit: QuantumCircuit):
-    queue = qml.converter()
-    template = qiskit_to_pennylane(quantum_circuit)
+    # queue = qml.converter()
+    # template = qiskit_to_pennylane(quantum_circuit)
+
+    def _function(start_wire_index: int = 0, params: dict = None):
+
+        if not isinstance(quantum_circuit, QuantumCircuit):
+            raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
+        # TODO:
+        # Check if parameters are needed -> if so, bind them
+        # Check if parameters are needed -> if not passed, raise ERROR
+        # Check if parameters are not needed -> if not passed, go on
+        # Check if parameters are not needed -> if passed, , raise WARNING
+
+        operator_queue = []
+
+        # Qiskit will raise an error, if parameters that are not present were to bound bound
+        if params is not None:
+            qc = quantum_circuit.bind_parameters(params)
+        else:
+            qc = quantum_circuit
+
+        # Processing the dictionary of parameters passed
+
+        for op in qc.data:
+
+            # TODO:
+            # What if multiple quantum registers are specified
+
+            # Indexing a Qubit object to obtain a wire and shifting it with the start wire index
+
+            # TODO:
+            # Check what if more wires specified in qiskit
+
+            wires = [start_wire_index + qubit.index for qubit in op[1]]
+            instruction_name = op[0].__class__.__name__
+
+            if instruction_name in inv_map and inv_map[instruction_name] in ops.ops:
+                operation_name = inv_map[instruction_name]
+                operation = getattr(ops, operation_name)
 
 
-    #[docs]    @staticmethod
-    #def from_qasm_file(path):
-    #    """Take in a QASM file and generate a QuantumCircuit object.
+                # Check that the parameters were bound correctly
 
-    #    Args:
-    #      path (str): Path to the file for a QASM program
-    #    Return:
-    #      QuantumCircuit: The QuantumCircuit object for the input QASM
-    #    """
-    #    qasm = Qasm(filename=path)
-    #    return _circuit_from_qasm(qasm)
+                # TODO:
+                # Check if there could be a parameter of type other than ParameterExpression and float
+                parameters = []
+                for param in op[0].params:
+                    if isinstance(param, Parameter):
+                        raise ValueError("The parameter {} was not bound correctly.".format(param))
+                    elif isinstance(param, ParameterExpression):
 
-    def _function(params, wires):
+                        # Conversion of the ParameterExpression value to float
+                        parameters.append(float(param._symbol_expr.evalf()))
+                    
+                    # Converted it to a float, if it can be
+                    elif isinstance(float(param), float):
+                        parameters.append(float(param))
+                    else:
+                        raise ValueError("Wrong type for {}.".format(param))
 
-            pennylane_operator = inv_map[operator_name]
-            result = getattr(qml.ops, pennylane_operator)()
-            # First item of the list contains the gate
+                if not parameters:
+                    operation(wires=wires)
+                else:
+                    operation(*parameters, wires=wires)
 
-            queue =
-
-            # Second the wires it acts on
-
-
-
-            # convert operation to PennyLane operation
-            # pass parameter dictionary & wire
+            else:
+                warnings.warn(__name__ + " The {} instruction is not supported by PennyLane.".
+                              format(instruction_name),
+                              UserWarning)
     return _function
 

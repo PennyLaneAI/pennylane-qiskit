@@ -80,22 +80,24 @@ QISKIT_OPERATION_MAP = {
     "RX": ex.RXGate,
     "RY": ex.RYGate,
     "RZ": ex.RZGate,
+    "S": ex.SGate,
+    "T": ex.TGate,
+    "CSWAP": ex.FredkinGate,
     "CRZ": ex.CrzGate,
     "PhaseShift": ex.U1Gate,
     "QubitStateVector": ex.Initialize,
+    # TODO: add the CRY gate, once the U3Gate is a part of PennyLane
+    # "CRY": U3Gate,
     # operations not natively implemented in Qiskit but provided in gates.py
     "Rot": Rot,
     "BasisState": BasisState,
     "QubitUnitary": ex.UnitaryGate,
     # additional operations not native to PennyLane but present in Qiskit
-    "S": ex.SGate,
     "Sdg": ex.SdgGate,
-    "T": ex.TGate,
     "Tdg": ex.TdgGate,
     "U1": ex.U1Gate,
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
-    "CSWAP": ex.FredkinGate,
     "Toffoli": ex.ToffoliGate,
 }
 
