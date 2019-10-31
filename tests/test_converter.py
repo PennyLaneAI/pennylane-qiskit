@@ -458,7 +458,7 @@ class TestConverter:
                 quantum_circuit(params={theta: angle})
 
     def test_converter_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
-        """Tests the load method raises a ValueError, if not a QuanctumCircuit was passed."""
+        """Tests the load method raises a ValueError, if not a QuantumCircuit was passed."""
 
         qc = qml.PauliZ(0)
 
