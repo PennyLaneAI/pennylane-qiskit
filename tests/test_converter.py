@@ -89,6 +89,32 @@ class TestConverter:
         assert recorder.queue[2].params == []
         assert recorder.queue[2].wires == [0]
 
+    def test_quantum_circuit_with_multiple_parameters(self, recorder):
+        """Tests loading a circuit with multiple parameters."""
+
+        angle1 = 0.5
+        angle2 = 0.3
+
+        phi = Parameter('φ')
+        theta = Parameter('θ')
+
+        qc = QuantumCircuit(3, 1)
+        qc.rx(phi, 1)
+        qc.rz(theta, 0)
+
+        quantum_circuit = load(qc)
+
+        with recorder:
+            quantum_circuit(params={phi: angle1, theta: angle2})
+
+        assert len(recorder.queue) == 2
+        assert recorder.queue[0].name == 'RX'
+        assert recorder.queue[0].params == [angle1]
+        assert recorder.queue[0].wires == [1]
+        assert recorder.queue[1].name == 'RZ'
+        assert recorder.queue[1].params == [angle2]
+        assert recorder.queue[1].wires == [0]
+
     def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
         """Tests that a loaded quantum circuit can be called multiple times with
         different arguments."""
