@@ -363,7 +363,7 @@ class TestConverter:
 
     def test_converter_operations_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,
-         but not nativelysupported by PennyLane."""
+         but not natively supported by PennyLane."""
 
         qc = QuantumCircuit(3, 1)
 
