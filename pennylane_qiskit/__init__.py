@@ -14,10 +14,8 @@
 """Top level PennyLane-qiskit module"""
 
 from ._version import __version__
-
 from .aer import AerDevice
 from .basic_aer import BasicAerDevice
-from .ibmq import IBMQDevice
-
-from .ops import *
 from .converter import load
+from .ibmq import IBMQDevice
+from .ops import *

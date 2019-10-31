@@ -16,7 +16,7 @@ class TestConverter:
     """Tests the converter function that allows converting QuantumCircuit objects
      to Pennylane templates."""
 
-    def test_converter_quantum_circuit_init_by_specifying_rotation_in_circuit(self, recorder):
+    def test_quantum_circuit_init_by_specifying_rotation_in_circuit(self, recorder):
         """Tests the load method for a QuantumCircuit initialized using separately defined
          quandum and classical registers."""
 
@@ -39,7 +39,7 @@ class TestConverter:
         assert recorder.queue[0].params == [angle]
         assert recorder.queue[0].wires == [0]
 
-    def test_converter_quantum_circuit_by_passing_parameters(self, recorder):
+    def test_quantum_circuit_by_passing_parameters(self, recorder):
         """Tests the load method for a QuantumCircuit initialized by passing the number
         of registers required."""
 
@@ -60,7 +60,7 @@ class TestConverter:
         assert recorder.queue[0].params == [angle]
         assert recorder.queue[0].wires == [0]
 
-    def test_converter_loaded_quantum_circuit_and_further_pennylane_operations(self, recorder):
+    def test_loaded_quantum_circuit_and_further_pennylane_operations(self, recorder):
         """Tests that a loaded quantum circuit can be used around other PennyLane
         templates in a circuit."""
 
@@ -89,7 +89,7 @@ class TestConverter:
         assert recorder.queue[2].params == []
         assert recorder.queue[2].wires == [0]
 
-    def test_converter_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
+    def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
         """Tests that a loaded quantum circuit can be called multiple times with
         different arguments."""
 
@@ -120,7 +120,7 @@ class TestConverter:
         assert recorder.queue[2].params == [angle3]
         assert recorder.queue[2].wires == [0]
 
-    def test_converter_quantum_circuit_with_bound_parameters(self, recorder):
+    def test_quantum_circuit_with_bound_parameters(self, recorder):
         """Tests loading a quantum circuit that already had bound parameters."""
 
         theta = Parameter('θ')
@@ -138,7 +138,7 @@ class TestConverter:
         assert recorder.queue[0].params == [0.5]
         assert recorder.queue[0].wires == [0]
 
-    def test_converter_pass_parameters_to_bind(self, recorder):
+    def test_pass_parameters_to_bind(self, recorder):
         """Tests parameter binding by passing parameters when loading a quantum circuit."""
 
         theta = Parameter('θ')
@@ -155,7 +155,7 @@ class TestConverter:
         assert recorder.queue[0].params == [0.5]
         assert recorder.queue[0].wires == [0]
 
-    def test_converter_parameter_was_not_bound(self, recorder):
+    def test_parameter_was_not_bound(self, recorder):
         """Tests that loading raises an error when parameters were not bound."""
 
         theta = Parameter('θ')
@@ -168,7 +168,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={})
 
-    def test_converter_extra_parameters_were_passed(self, recorder):
+    def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were passed."""
 
         theta = Parameter('θ')
@@ -182,7 +182,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: 0.5, phi: 0.3})
 
-    def test_converter_crz(self, recorder):
+    def test_crz(self, recorder):
         """Tests loading a circuit with the controlled-Z operation."""
 
         q2 = QuantumRegister(2)
@@ -199,7 +199,7 @@ class TestConverter:
         assert recorder.queue[0].params == [0.5]
         assert recorder.queue[0].wires == [0, 1]
 
-    def test_converter_one_qubit_operations_supported_by_pennylane(self, recorder):
+    def test_one_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the one-qubit operations supported by PennyLane."""
 
         single_wire = [0]
@@ -241,7 +241,7 @@ class TestConverter:
         assert recorder.queue[5].params == []
         assert recorder.queue[5].wires == single_wire
 
-    def test_converter_one_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
+    def test_one_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the one-qubit parametrized operations supported by PennyLane."""
 
         single_wire = [0]
@@ -282,7 +282,7 @@ class TestConverter:
         assert recorder.queue[4].params == [angle]
         assert recorder.queue[4].wires == single_wire
 
-    def test_converter_two_qubit_operations_supported_by_pennylane(self, recorder):
+    def test_two_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the two-qubit operations supported by PennyLane."""
 
         two_wires = [0, 1]
@@ -324,7 +324,7 @@ class TestConverter:
         assert np.array_equal(recorder.queue[3].params[0], np.array(unitary_op))
         assert recorder.queue[3].wires == two_wires
 
-    def test_converter_two_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
+    def test_two_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the two-qubit parametrized operations supported by PennyLane."""
 
         two_wires = [0, 1]
@@ -344,7 +344,7 @@ class TestConverter:
         assert recorder.queue[0].params == [angle]
         assert recorder.queue[0].wires == two_wires
 
-    def test_converter_three_qubit_operations_supported_by_pennylane(self, recorder):
+    def test_three_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the three-qubit operations supported by PennyLane."""
 
         three_wires = [0, 1, 2]
@@ -361,7 +361,7 @@ class TestConverter:
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == three_wires
 
-    def test_converter_operations_transformed_into_qubit_unitary(self, recorder):
+    def test_operations_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,
          but not nativelysupported by PennyLane."""
 
@@ -407,7 +407,7 @@ class TestConverter:
         assert np.array_equal(recorder.queue[4].params[0], ex.ToffoliGate().to_matrix())
         assert recorder.queue[4].wires == [0, 1, 2]
 
-    def test_converter_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
+    def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
         """Tests the load method for a QuantumCircuit raises a QiskitError,
         if the wrong type of arguments were passed."""
 
@@ -424,7 +424,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: angle})
 
-    def test_converter_quantum_circuit_error_by_calling_wrong_parameters(self, recorder):
+    def test_quantum_circuit_error_by_calling_wrong_parameters(self, recorder):
         """Tests that the load method for a QuantumCircuit raises a TypeError,
         if the wrong type of arguments were passed."""
 
@@ -440,7 +440,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit()
 
-    def test_converter_quantum_circuit_error_passing_parameters_not_required(self, recorder):
+    def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
         """Tests the load method raises a QiskitError, if the arguments,
         that are not required were passed."""
 
@@ -457,7 +457,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: angle})
 
-    def test_converter_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
+    def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
         """Tests the load method raises a ValueError, if not a QuanctumCircuit was passed."""
 
         qc = qml.PauliZ(0)
@@ -472,7 +472,7 @@ class TestConverter:
 class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
-    def test_converter_barrier_not_supported(self, recorder):
+    def test_barrier_not_supported(self, recorder):
         """Tests the load method raises a ValueError, if not a QuanctumCircuit was passed."""
         qc = QuantumCircuit(3, 1)
         qc.barrier()
@@ -486,7 +486,8 @@ class TestConverterWarnings:
         # check that only one warning was raised
         assert len(record) == 1
         # check that the message matches
-        assert record[0].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by PennyLane." \
+        assert record[0].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+                                            " PennyLane, and has not been added to the template." \
             .format('Barrier')
 
 
@@ -513,7 +514,7 @@ class TestConverterQasm:
                'measure q -> c;'
 
     @pytest.mark.skipif(sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6")
-    def test_converter_qasm_from_file(self, tmpdir, recorder):
+    def test_qasm_from_file(self, tmpdir, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm file."""
         qft_qasm = tmpdir.join("qft.qasm")
 
@@ -554,14 +555,17 @@ class TestConverterQasm:
 
         assert len(record) == 11
         # check that the message matches
-        assert record[0].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by PennyLane."\
+        assert record[0].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+                                            " PennyLane, and has not been added to the template."\
             .format('Barrier')
-        assert record[1].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by PennyLane."\
+        assert record[1].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+                                            " PennyLane, and has not been added to the template."\
             .format('Cu1Gate')
-        assert record[7].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by PennyLane."\
+        assert record[7].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+                                            " PennyLane, and has not been added to the template."\
             .format('Measure')
 
-    def test_converter_qasm_(self, recorder):
+    def test_qasm_(self, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm string."""
         qasm_string = 'include "qelib1.inc";' \
                       'qreg q[4];' \
