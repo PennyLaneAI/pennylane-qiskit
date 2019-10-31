@@ -18,7 +18,7 @@ class TestConverter:
 
     def test_quantum_circuit_init_by_specifying_rotation_in_circuit(self, recorder):
         """Tests the load method for a QuantumCircuit initialized using separately defined
-         quandum and classical registers."""
+         quantum and classical registers."""
 
         angle = 0.5
 
@@ -363,7 +363,7 @@ class TestConverter:
 
     def test_operations_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,
-         but not nativelysupported by PennyLane."""
+         but not natively supported by PennyLane."""
 
         qc = QuantumCircuit(3, 1)
 
