@@ -2,6 +2,12 @@
 
 ### New features since last release
 
+* Added a 'QuantumCircuit'/'QASM' to PennyLane template converter
+  that allows incorporating Qiskit circuits in a PennyLane quantum
+  circuit. 
+  [#55](https://github.com/XanaduAI/pennylane-qiskit/pull/55)
+
+
 ### Breaking changes
 
 ### Improvements
@@ -13,6 +19,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Antal Száva
 
 ---
 
