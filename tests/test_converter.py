@@ -18,7 +18,7 @@ class TestConverter:
 
     def test_converter_quantum_circuit_init_by_specifying_rotation_in_circuit(self, recorder):
         """Tests the load method for a QuantumCircuit initialized using separately defined
-         quandum and classical registers."""
+         quantum and classical registers."""
 
         angle = 0.5
 
