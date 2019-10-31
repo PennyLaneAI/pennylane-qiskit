@@ -53,7 +53,7 @@ def check_parameter_bound(param):
 
 
 def load(quantum_circuit: QuantumCircuit):
-    """Returns a PennyLane template created based on the input qiskit.QuantumCircuit.
+    """Returns a PennyLane template created based on the input QuantumCircuit or QASM string.
     Warnings are created for each of the QuantumCircuit instructions that were
     not incorporated in the PennyLane template.
 
