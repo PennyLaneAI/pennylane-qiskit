@@ -21,6 +21,7 @@ This module contains functions for converting Qiskit QuantumCirducit objects
 PennyLane templates.
 """
 import warnings
+
 import numpy as np
 
 from qiskit import QuantumCircuit
