@@ -2,7 +2,7 @@ import math
 import sys
 import pytest
 
-from pennylane_qiskit.converter import load, load_qasm_from_file, load_qasm
+from pennylane_qiskit.converter import load, load_qasm_from_file, load_qasm, WiresError
 from qiskit.circuit import Parameter
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.quantum_info.operators import Operator
@@ -387,6 +387,68 @@ class TestConverter:
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == three_wires
 
+    def test_wires_two_different_quantum_registers(self, recorder):
+        """Tests loading a circuit with the three-qubit operations supported by PennyLane."""
+
+        three_wires = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires)
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit()
+
+        assert recorder.queue[0].name == 'CSWAP'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == three_wires
+
+    def test_wires_quantum_circuit_init_with_two_different_quantum_registers(self, recorder):
+        """Tests that the wires is correct even if the quantum circuit was initiliazed with two
+        separate quantum registers."""
+
+        three_wires = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires)
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit(wires=three_wires)
+
+        assert recorder.queue[0].name == 'CSWAP'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == three_wires
+
+    def test_wires_pass_different_wires_than_for_circuit(self, recorder):
+        """Tests that the wires is correct even if the quantum circuit was initiliazed with two
+        separate quantum registers."""
+
+        three_wires = [4, 7, 1]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*[0, 1, 2])
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit(wires=three_wires)
+
+        assert recorder.queue[0].name == 'CSWAP'
+        assert recorder.queue[0].params == []
+        assert recorder.queue[0].wires == three_wires
+
     def test_operations_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,
          but not natively supported by PennyLane."""
@@ -493,6 +555,48 @@ class TestConverter:
         with pytest.raises(ValueError):
             with recorder:
                 quantum_circuit()
+
+    def test_wires_error_too_few_wires_specified(self, recorder):
+        """Tests that an error is raised when too few wires were specified."""
+
+        only_two_wires = [0, 1]
+        three_wires_for_the_operation = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires_for_the_operation)
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(WiresError, match='The specified number of wires - {} - does not match the'
+                                             ' number of wires the loaded quantum circuit acts on.'.
+                format(len(only_two_wires))):
+            with recorder:
+                quantum_circuit(wires=only_two_wires)
+
+    def test_wires_error_too_many_wires_specified(self, recorder):
+        """Tests that an error is raised when too many wires were specified."""
+
+        more_than_three_wires = [4, 13, 123, 321]
+        three_wires_for_the_operation = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires_for_the_operation)
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(WiresError, match="The specified number of wires - {} - does not match the"
+                                             " number of wires the loaded quantum circuit acts on.".
+                format(len(more_than_three_wires))):
+            with recorder:
+                quantum_circuit(wires=more_than_three_wires)
 
 
 class TestConverterWarnings:

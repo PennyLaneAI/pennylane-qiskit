@@ -36,6 +36,12 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
+class WiresError(Exception):
+    """Exception raised by  the pennylane_qiskit.converter when it encounters an illegal
+    operation in the quantum circuit.
+    """
+
+
 def check_parameter_bound(param):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
@@ -63,7 +69,7 @@ def load(quantum_circuit: QuantumCircuit):
         function: the new PennyLane template
     """
 
-    def _function(params: dict = None, wire_shift: int = 0):
+    def _function(params: dict = None, wires: list = None):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
         not incorporated in the PennyLane template.
@@ -72,7 +78,7 @@ def load(quantum_circuit: QuantumCircuit):
             params (dict): specifies the parameters that need to bound in the
             QuantumCircuit
 
-            wire_shift (int): the shift to be made with respect to the wires
+            wire_shift (list): the shift to be made with respect to the wires
             already specifiec in the QuantumCircuit
             e.g. if the QuantumCircuit acts on wires [0, 1] and if wire_shift == 1,
             then the returned Pennylane template will act on wires [1, 2]
@@ -86,12 +92,23 @@ def load(quantum_circuit: QuantumCircuit):
 
         qc = quantum_circuit.bind_parameters(params) if params is not None else quantum_circuit
 
+        # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
+        qc_wires = [(q.register.name, q.index) for q in quantum_circuit.qubits]
+
+        if wires is None:
+            wire_map = dict(zip(qc_wires, range(len(qc_wires))))
+        elif len(qc_wires) == len(wires):
+            wire_map = dict(zip(qc_wires, wires))
+        else:
+            raise WiresError("The specified number of wires - {} - does not match "
+                             "the number of wires the loaded quantum circuit acts on.".format(len(wires)))
+
         # Processing the dictionary of parameters passed
         for op in qc.data:
 
-            # Indexing a Qubit object to obtain a wire and shifting it with the start wire index
-            wires = [wire_shift + qubit.index for qubit in op[1]]
             instruction_name = op[0].__class__.__name__
+
+            operation_wires = [wire_map[(qubit.register.name, qubit.index)] for qubit in op[1]]
 
             if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
 
@@ -102,21 +119,21 @@ def load(quantum_circuit: QuantumCircuit):
                 parameters = [check_parameter_bound(param) for param in op[0].params]
 
                 if not parameters:
-                    operation(wires=wires)
+                    operation(wires=operation_wires)
                 elif operation_name == 'QubitStateVector':
-                    operation(np.array(parameters), wires=wires)
+                    operation(np.array(parameters), wires=operation_wires)
                 elif operation_name == 'QubitUnitary':
-                    operation(*parameters, wires=wires)
+                    operation(*parameters, wires=operation_wires)
                 elif len(parameters) == 1:
-                    operation(float(*parameters), wires=wires)
+                    operation(float(*parameters), wires=operation_wires)
                 else:
                     float_params = [float(param) for param in parameters]
-                    operation(*float_params, wires=wires)
+                    operation(*float_params, wires=operation_wires)
 
             else:
                 try:
                     operation_matrix = op[0].to_matrix()
-                    pennylane_ops.QubitUnitary(operation_matrix, wires=wires)
+                    pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
                 except (AttributeError, QiskitError):
                     warnings.warn(__name__ + " The {} instruction is not supported by PennyLane,"
                                              " and has not been added to the template.".
