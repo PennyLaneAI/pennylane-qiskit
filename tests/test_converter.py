@@ -701,7 +701,7 @@ class TestConverterQasm:
                       'qreg q[4];' \
                       'creg c[4];' \
                       'x q[0];' \
-                      'x q[2];'\
+                      'cx q[2],q[0];'\
                       'measure q -> c;'
 
         quantum_circuit = load_qasm(qasm_string)
@@ -716,6 +716,6 @@ class TestConverterQasm:
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == [0]
 
-        assert recorder.queue[1].name == 'PauliX'
+        assert recorder.queue[1].name == 'CNOT'
         assert recorder.queue[1].params == []
-        assert recorder.queue[1].wires == [2]
+        assert recorder.queue[1].wires == [2, 0]
