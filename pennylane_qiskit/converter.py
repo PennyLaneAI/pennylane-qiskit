@@ -59,7 +59,7 @@ def check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: d
         params (dict): dictionary of the parameters in the circuit
 
     Returns:
-        qc: quantum circuit with bound parameters
+        qc (QuantumCircuit): quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
         raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
@@ -79,12 +79,11 @@ def map_wires(wires: list, qc_wires: list) -> dict:
     specified by the user for the template.
 
     Args:
-        wires: wires specified for the template
-        qc_wires: wires from the converted quantum circuit
+        wires (list): wires specified for the template
+        qc_wires (list): wires from the converted quantum circuit
 
     Returns:
-        wire_map: a dictionary that contains maps from quantum circuit wires to the user
-            defined wires
+        wire_map (dict): map from quantum circuit wires to the user defined wires
     """
     if wires is None:
         return dict(zip(qc_wires, range(len(qc_wires))))
@@ -100,9 +99,9 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
     """Utility function that executes an operation that is natively supported by PennyLane.
 
     Args:
-        operation_name: wires specified for the template
-        parameters: parameters of the operation that will be executed
-        wires: wires of the operation
+        operation_name (str): wires specified for the template
+        parameters (str): parameters of the operation that will be executed
+        wires (list): wires of the operation
     """
     operation = getattr(pennylane_ops, operation_name)
 

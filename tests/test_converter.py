@@ -855,6 +855,7 @@ class TestConverterIntegration:
                circuit_native_pennylane(rotation_angle1)
 
     def test_initialize_with_qubit_state_vector(self, qubit_device_single_wire):
+        """Tests the QuantumCircuit.initialize method in a QNode."""
 
         prob_amplitudes = [1/np.sqrt(2), 1/np.sqrt(2)]
 
