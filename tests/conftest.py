@@ -75,5 +75,10 @@ def recorder():
 
 
 @pytest.fixture(scope="function")
+def qubit_device_single_wire():
+    return qml.device('default.qubit', wires=1)
+
+
+@pytest.fixture(scope="function")
 def qubit_device_2_wires():
     return qml.device('default.qubit', wires=2)

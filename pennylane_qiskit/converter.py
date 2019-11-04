@@ -51,6 +51,74 @@ def check_parameter_bound(param):
     return param
 
 
+def check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict) -> QuantumCircuit:
+    """Utility function for checking for a valid quantum circuit and then binding parameters.
+
+    Args:
+        quantum_circuit (QuantumCircuit): the quantum circuit to check and bind the parameters for
+        params (dict): dictionary of the parameters in the circuit
+
+    Returns:
+        qc: quantum circuit with bound parameters
+    """
+    if not isinstance(quantum_circuit, QuantumCircuit):
+        raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
+
+    if params is None:
+        return quantum_circuit
+
+    for k, v in params.items():
+        if isinstance(v, qml.variable.Variable):
+            params.update({k: v.val})
+
+    return quantum_circuit.bind_parameters(params)
+
+
+def map_wires(wires: list, qc_wires: list) -> dict:
+    """Utility function mapping the wires specified in a quantum circuit with the wires
+    specified by the user for the template.
+
+    Args:
+        wires: wires specified for the template
+        qc_wires: wires from the converted quantum circuit
+
+    Returns:
+        wire_map: a dictionary that contains maps from quantum circuit wires to the user
+            defined wires
+    """
+    if wires is None:
+        return dict(zip(qc_wires, range(len(qc_wires))))
+
+    if len(qc_wires) == len(wires):
+        return dict(zip(qc_wires, wires))
+
+    raise qml.QuantumFunctionError("The specified number of wires - {} - does not match "
+                                   "the number of wires the loaded quantum circuit acts on.".format(len(wires)))
+
+
+def execute_supported_operation(operation_name: str, parameters: list, wires: list):
+    """Utility function that executes an operation that is natively supported by PennyLane.
+
+    Args:
+        operation_name: wires specified for the template
+        parameters: parameters of the operation that will be executed
+        wires: wires of the operation
+    """
+    operation = getattr(pennylane_ops, operation_name)
+
+    parameters = [check_parameter_bound(param) for param in parameters]
+
+    if not parameters:
+        operation(wires=wires)
+    elif operation_name == 'QubitStateVector':
+        operation(np.array(parameters), wires=wires)
+    elif operation_name == 'QubitUnitary':
+        operation(*parameters, wires=wires)
+    else:
+        float_params = [float(param) for param in parameters]
+        operation(*float_params, wires=wires)
+
+
 def load(quantum_circuit: QuantumCircuit):
     """Returns a PennyLane template created based on the input QuantumCircuit or QASM string.
     Warnings are created for each of the QuantumCircuit instructions that were
@@ -69,39 +137,22 @@ def load(quantum_circuit: QuantumCircuit):
         not incorporated in the PennyLane template.
 
         Args:
-            params (dict): specifies the parameters that need to bound in the
-            QuantumCircuit
+            params (dict): specifies the parameters that need to bound in the QuantumCircuit
 
             wires (Sequence[int] or int): The wires the converted template acts on.
-            Note that if the original QuantumCircuit acted on :math:`N` qubits,
-            then this must be a list of length :math:`N`.
+                Note that if the original QuantumCircuit acted on :math:`N` qubits,
+                then this must be a list of length :math:`N`.
 
         Returns:
             function: the new PennyLane template
         """
 
-        if not isinstance(quantum_circuit, QuantumCircuit):
-            raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
-
-        if params is None:
-            qc = quantum_circuit
-        else:
-            for k, v in params.items():
-                if isinstance(v, qml.variable.Variable):
-                    params.update({k: v.val})
-
-            qc = quantum_circuit.bind_parameters(params)
+        qc = check_circuit_and_bind_parameters(quantum_circuit, params)
 
         # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
         qc_wires = [(q.register.name, q.index) for q in quantum_circuit.qubits]
 
-        if wires is None:
-            wire_map = dict(zip(qc_wires, range(len(qc_wires))))
-        elif len(qc_wires) == len(wires):
-            wire_map = dict(zip(qc_wires, wires))
-        else:
-            raise qml.QuantumFunctionError("The specified number of wires - {} - does not match "
-                                           "the number of wires the loaded quantum circuit acts on.".format(len(wires)))
+        wire_map = map_wires(wires, qc_wires)
 
         # Processing the dictionary of parameters passed
         for op in qc.data:
@@ -112,23 +163,7 @@ def load(quantum_circuit: QuantumCircuit):
 
             if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
 
-                operation_name = inv_map[instruction_name]
-
-                operation = getattr(pennylane_ops, operation_name)
-
-                parameters = [check_parameter_bound(param) for param in op[0].params]
-
-                if not parameters:
-                    operation(wires=operation_wires)
-                elif operation_name == 'QubitStateVector':
-                    operation(np.array(parameters), wires=operation_wires)
-                elif operation_name == 'QubitUnitary':
-                    operation(*parameters, wires=operation_wires)
-                elif len(parameters) == 1:
-                    operation(float(*parameters), wires=operation_wires)
-                else:
-                    float_params = [float(param) for param in parameters]
-                    operation(*float_params, wires=operation_wires)
+                execute_supported_operation(inv_map[instruction_name], op[0].params, operation_wires)
 
             else:
                 try:
@@ -143,25 +178,18 @@ def load(quantum_circuit: QuantumCircuit):
     return _function
 
 
-def load_qasm_from_file(file: str):
-    """Returns a PennyLane template created based on the input qasm file.
-
-        Args:
-            file (str): the name of the file
-
-        Returns:
-            function: the new PennyLane template
-    """
-    return load(QuantumCircuit.from_qasm_file(file))
-
-
 def load_qasm(qasm_string: str):
-    """Returns a PennyLane template created based on the input qasm string.
+    """Returns a PennyLane template created based on the input QASM string or file.
 
         Args:
-            qasm_string (str): the name of the qasm string
+            qasm_string (str): the name of the QASM file or string
 
         Returns:
             function: the new PennyLane template
     """
-    return load(QuantumCircuit.from_qasm_str(qasm_string))
+
+    # Checks whether a qasm string or a file name was provided
+    if isinstance(qasm_string, str) and not qasm_string.endswith('.qasm'):
+        return load(QuantumCircuit.from_qasm_str(qasm_string))
+
+    return load(QuantumCircuit.from_qasm_file(qasm_string))

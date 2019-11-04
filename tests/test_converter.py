@@ -10,7 +10,7 @@ from qiskit.quantum_info.operators import Operator
 
 import pennylane as qml
 from pennylane import numpy as np
-from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file
+from pennylane_qiskit.converter import load, load_qasm
 
 
 class TestConverter:
@@ -298,25 +298,22 @@ class TestConverter:
 
         single_wire = [0]
         angle = 0.3333
-        prob_amplitudes = [1/np.sqrt(2), 1/np.sqrt(2)]
 
         q_reg = QuantumRegister(1)
         qc = QuantumCircuit(q_reg)
 
-        qc.initialize(prob_amplitudes, [q_reg[0]])
+        qc.u1(angle, single_wire)
         qc.rx(angle, single_wire)
         qc.ry(angle, single_wire)
         qc.rz(angle, single_wire)
-        qc.u1(angle, single_wire)
 
         quantum_circuit = load(qc)
         with recorder:
             quantum_circuit()
 
-        assert recorder.queue[0].name == 'QubitStateVector'
-        assert len(recorder.queue[0].params) == 1
-        assert np.array_equal(recorder.queue[0].params[0], np.array(prob_amplitudes))
-        assert recorder.queue[0].wires == list(range(int(math.log2(len(prob_amplitudes)))))
+        assert recorder.queue[0].name == 'PhaseShift'
+        assert recorder.queue[0].params == [angle]
+        assert recorder.queue[0].wires == single_wire
 
         assert recorder.queue[1].name == 'RX'
         assert recorder.queue[1].params == [angle]
@@ -329,10 +326,6 @@ class TestConverter:
         assert recorder.queue[3].name == 'RZ'
         assert recorder.queue[3].params == [angle]
         assert recorder.queue[3].wires == single_wire
-
-        assert recorder.queue[4].name == 'PhaseShift'
-        assert recorder.queue[4].params == [angle]
-        assert recorder.queue[4].wires == single_wire
 
     def test_two_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the two-qubit operations supported by PennyLane."""
@@ -566,6 +559,21 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: angle})
 
+    def test_quantum_circuit_error_parameter_not_bound(self, recorder):
+        """Tests the load method for a QuantumCircuit raises a ValueError,
+        if one of the parameters was not bound correctly."""
+
+        theta = Parameter('θ')
+
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(ValueError, match="The parameter {} was not bound correctly.".format(theta)):
+            with recorder:
+                quantum_circuit()
+
     def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
         """Tests the load method raises a ValueError, if something
         that is not a QuanctumCircuit was passed."""
@@ -673,7 +681,7 @@ class TestConverterQasm:
         with open(qft_qasm, "w") as f:
             f.write(TestConverterQasm.qft_qasm)
 
-        quantum_circuit = load_qasm_from_file(qft_qasm)
+        quantum_circuit = load_qasm(qft_qasm)
 
         with pytest.warns(UserWarning) as record:
             with recorder:
@@ -716,6 +724,13 @@ class TestConverterQasm:
         assert record[7].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
                                             " PennyLane, and has not been added to the template."\
             .format('Measure')
+
+    def test_qasm_file_not_found_error(self):
+        """Tests that an error is propagated, when a non-existing file is specified for parsing."""
+        qft_qasm = 'some_qasm_file.qasm'
+
+        with pytest.raises(FileNotFoundError):
+            load_qasm(qft_qasm)
 
     def test_qasm_(self, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm string."""
@@ -838,3 +853,23 @@ class TestConverterIntegration:
 
         assert circuit_loaded_qiskit_circuit(rotation_angle1) ==\
                circuit_native_pennylane(rotation_angle1)
+
+    def test_initialize_with_qubit_state_vector(self, qubit_device_single_wire):
+
+        prob_amplitudes = [1/np.sqrt(2), 1/np.sqrt(2)]
+
+        qreg = QuantumRegister(2)
+        qc = QuantumCircuit(qreg)
+        qc.initialize(prob_amplitudes, [qreg[0]])
+
+        @qml.qnode(qubit_device_single_wire)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)()
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_single_wire)
+        def circuit_native_pennylane():
+            qml.QubitStateVector(np.array(prob_amplitudes), wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
