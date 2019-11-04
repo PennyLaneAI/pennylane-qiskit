@@ -16,6 +16,6 @@
 from ._version import __version__
 from .aer import AerDevice
 from .basic_aer import BasicAerDevice
-from .converter import load
+from .converter import load, load_qasm_from_file, load_qasm
 from .ibmq import IBMQDevice
 from .ops import *

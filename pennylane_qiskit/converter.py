@@ -17,29 +17,23 @@ QuanctumCircuit converter module
 
 .. currentmodule:: pennylane_qiskit.load
 
-This module contains functions for converting Qiskit QuantumCirducit objects
-PennyLane templates.
+This module contains functions for converting Qiskit QuantumCircuit objects
+into PennyLane circuit templates.
 """
 import warnings
 
 import numpy as np
-
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 from qiskit.exceptions import QiskitError
 
+import pennylane as qml
 import pennylane.ops.qubit as pennylane_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
-
-
-class WiresError(Exception):
-    """Exception raised by  the pennylane_qiskit.converter when it encounters an illegal
-    operation in the quantum circuit.
-    """
 
 
 def check_parameter_bound(param):
@@ -78,10 +72,9 @@ def load(quantum_circuit: QuantumCircuit):
             params (dict): specifies the parameters that need to bound in the
             QuantumCircuit
 
-            wire_shift (list): the shift to be made with respect to the wires
-            already specifiec in the QuantumCircuit
-            e.g. if the QuantumCircuit acts on wires [0, 1] and if wire_shift == 1,
-            then the returned Pennylane template will act on wires [1, 2]
+            wires (Sequence[int] or int): The wires the converted template acts on.
+            Note that if the original QuantumCircuit acted on :math:`N` qubits,
+            then this must be a list of length :math:`N`.
 
         Returns:
             function: the new PennyLane template
@@ -90,7 +83,14 @@ def load(quantum_circuit: QuantumCircuit):
         if not isinstance(quantum_circuit, QuantumCircuit):
             raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
 
-        qc = quantum_circuit.bind_parameters(params) if params is not None else quantum_circuit
+        if params is None:
+            qc = quantum_circuit
+        else:
+            for k, v in params.items():
+                if isinstance(v, qml.variable.Variable):
+                    params.update({k: v.val})
+
+            qc = quantum_circuit.bind_parameters(params)
 
         # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
         qc_wires = [(q.register.name, q.index) for q in quantum_circuit.qubits]
@@ -100,8 +100,8 @@ def load(quantum_circuit: QuantumCircuit):
         elif len(qc_wires) == len(wires):
             wire_map = dict(zip(qc_wires, wires))
         else:
-            raise WiresError("The specified number of wires - {} - does not match "
-                             "the number of wires the loaded quantum circuit acts on.".format(len(wires)))
+            raise qml.QuantumFunctionError("The specified number of wires - {} - does not match "
+                                           "the number of wires the loaded quantum circuit acts on.".format(len(wires)))
 
         # Processing the dictionary of parameters passed
         for op in qc.data:
@@ -135,7 +135,7 @@ def load(quantum_circuit: QuantumCircuit):
                     operation_matrix = op[0].to_matrix()
                     pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
                 except (AttributeError, QiskitError):
-                    warnings.warn(__name__ + " The {} instruction is not supported by PennyLane,"
+                    warnings.warn(__name__ + ": The {} instruction is not supported by PennyLane,"
                                              " and has not been added to the template.".
                                   format(instruction_name),
                                   UserWarning)

@@ -1,15 +1,16 @@
 import math
 import sys
-import pytest
 
-from pennylane_qiskit.converter import load, load_qasm_from_file, load_qasm, WiresError
-from qiskit.circuit import Parameter
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
-from qiskit.quantum_info.operators import Operator
-from qiskit.exceptions import QiskitError
+import pytest
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
-from pennylane import numpy as np
+from qiskit.circuit import Parameter
+from qiskit.exceptions import QiskitError
+from qiskit.quantum_info.operators import Operator
+
 import pennylane as qml
+from pennylane import numpy as np
+from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file
 
 
 class TestConverter:
@@ -25,7 +26,6 @@ class TestConverter:
         qr = QuantumRegister(1)
         cr = ClassicalRegister(1)
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(qr, cr)
         qc.rz(angle, [0])
 
@@ -46,7 +46,6 @@ class TestConverter:
         theta = Parameter('θ')
         angle = 0.5
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
 
@@ -67,7 +66,6 @@ class TestConverter:
         theta = Parameter('θ')
         angle = 0.5
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
 
@@ -115,6 +113,31 @@ class TestConverter:
         assert recorder.queue[1].params == [angle2]
         assert recorder.queue[1].wires == [0]
 
+    def test_quantum_circuit_with_gate_requiring_multiple_parameters(self, recorder):
+        """Tests loading a circuit containing a gate that requires
+        multiple parameters."""
+
+        angle1 = 0.5
+        angle2 = 0.3
+        angle3 = 0.1
+
+        phi = Parameter('φ')
+        lam = Parameter('λ')
+        theta = Parameter('θ')
+
+        qc = QuantumCircuit(3, 1)
+        qc.u3(phi, lam, theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with recorder:
+            quantum_circuit(params={phi: angle1, lam: angle2, theta: angle3})
+
+        assert recorder.queue[0].name == 'QubitUnitary'
+        assert len(recorder.queue[0].params) == 1
+        assert np.array_equal(recorder.queue[0].params[0], ex.U3Gate(angle1, angle2, angle3).to_matrix())
+        assert recorder.queue[0].wires == [0]
+
     def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
         """Tests that a loaded quantum circuit can be called multiple times with
         different arguments."""
@@ -124,7 +147,6 @@ class TestConverter:
         angle2 = -0.5
         angle3 = 0
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
 
@@ -150,6 +172,7 @@ class TestConverter:
         """Tests loading a quantum circuit that already had bound parameters."""
 
         theta = Parameter('θ')
+
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
         qc_1 = qc.bind_parameters({theta: 0.5})
@@ -168,6 +191,7 @@ class TestConverter:
         """Tests parameter binding by passing parameters when loading a quantum circuit."""
 
         theta = Parameter('θ')
+
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
 
@@ -185,6 +209,7 @@ class TestConverter:
         """Tests that loading raises an error when parameters were not bound."""
 
         theta = Parameter('θ')
+
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
 
@@ -229,6 +254,7 @@ class TestConverter:
         """Tests loading a circuit with the one-qubit operations supported by PennyLane."""
 
         single_wire = [0]
+
         qc = QuantumCircuit(1, 1)
         qc.x(single_wire)
         qc.y(single_wire)
@@ -376,10 +402,9 @@ class TestConverter:
         three_wires = [0, 1, 2]
 
         qc = QuantumCircuit(3, 1)
-
         qc.cswap(*three_wires)
-
         quantum_circuit = load(qc)
+
         with recorder:
             quantum_circuit()
 
@@ -429,8 +454,7 @@ class TestConverter:
         assert recorder.queue[0].wires == three_wires
 
     def test_wires_pass_different_wires_than_for_circuit(self, recorder):
-        """Tests that the wires is correct even if the quantum circuit was initiliazed with two
-        separate quantum registers."""
+        """Tests that custom wires can be passed to the loaded template."""
 
         three_wires = [4, 7, 1]
 
@@ -500,9 +524,8 @@ class TestConverter:
         if the wrong type of arguments were passed."""
 
         theta = Parameter('θ')
-        angle = 'some_string_instead_an_angle'
+        angle = 'some_string_instead_of_an_angle'
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
 
@@ -516,9 +539,8 @@ class TestConverter:
         """Tests that the load method for a QuantumCircuit raises a TypeError,
         if the wrong type of arguments were passed."""
 
-        angle = 'some_string_instead_an_angle'
+        angle = 'some_string_instead_of_an_angle'
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(3, 1)
         qc.rz(angle, [0])
 
@@ -529,13 +551,12 @@ class TestConverter:
                 quantum_circuit()
 
     def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
-        """Tests the load method raises a QiskitError, if the arguments,
+        """Tests the load method raises a QiskitError if arguments
         that are not required were passed."""
 
         theta = Parameter('θ')
         angle = 0.5
 
-        # quantum circuit to make an entangled bell state
         qc = QuantumCircuit(3, 1)
         qc.z([0])
 
@@ -546,7 +567,8 @@ class TestConverter:
                 quantum_circuit(params={theta: angle})
 
     def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
-        """Tests the load method raises a ValueError, if not a QuanctumCircuit was passed."""
+        """Tests the load method raises a ValueError, if something
+        that is not a QuanctumCircuit was passed."""
 
         qc = qml.PauliZ(0)
 
@@ -571,8 +593,8 @@ class TestConverter:
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(WiresError, match='The specified number of wires - {} - does not match the'
-                                             ' number of wires the loaded quantum circuit acts on.'.
+        with pytest.raises(qml.QuantumFunctionError, match='The specified number of wires - {} - does not match the'
+                                                           ' number of wires the loaded quantum circuit acts on.'.
                 format(len(only_two_wires))):
             with recorder:
                 quantum_circuit(wires=only_two_wires)
@@ -592,8 +614,8 @@ class TestConverter:
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(WiresError, match="The specified number of wires - {} - does not match the"
-                                             " number of wires the loaded quantum circuit acts on.".
+        with pytest.raises(qml.QuantumFunctionError, match="The specified number of wires - {} - does not match the"
+                                                           " number of wires the loaded quantum circuit acts on.".
                 format(len(more_than_three_wires))):
             with recorder:
                 quantum_circuit(wires=more_than_three_wires)
@@ -603,7 +625,8 @@ class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
     def test_barrier_not_supported(self, recorder):
-        """Tests the load method raises a ValueError, if not a QuanctumCircuit was passed."""
+        """Tests the load method raises a ValueError, if something that is
+        not a QuanctumCircuit was passed."""
         qc = QuantumCircuit(3, 1)
         qc.barrier()
 
@@ -616,9 +639,8 @@ class TestConverterWarnings:
         # check that only one warning was raised
         assert len(record) == 1
         # check that the message matches
-        assert record[0].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
-                                            " PennyLane, and has not been added to the template." \
-            .format('Barrier')
+        assert record[0].message.args[0] == "pennylane_qiskit.converter: The Barrier instruction is not supported by" \
+                                            " PennyLane, and has not been added to the template."
 
 
 class TestConverterQasm:
@@ -685,13 +707,13 @@ class TestConverterQasm:
 
         assert len(record) == 11
         # check that the message matches
-        assert record[0].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+        assert record[0].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
                                             " PennyLane, and has not been added to the template."\
             .format('Barrier')
-        assert record[1].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+        assert record[1].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
                                             " PennyLane, and has not been added to the template."\
             .format('Cu1Gate')
-        assert record[7].message.args[0] == "pennylane_qiskit.converter The {} instruction is not supported by" \
+        assert record[7].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
                                             " PennyLane, and has not been added to the template."\
             .format('Measure')
 
@@ -719,3 +741,100 @@ class TestConverterQasm:
         assert recorder.queue[1].name == 'CNOT'
         assert recorder.queue[1].params == []
         assert recorder.queue[1].wires == [2, 0]
+
+
+class TestConverterIntegration:
+
+    def test_load_circuit_in_qnode(self, qubit_device_2_wires):
+        """Tests loading a converted template in a QNode."""
+
+        angle = 0.5
+
+        qc = QuantumCircuit(2)
+        qc.rz(angle, [0])
+
+        quantum_circuit = load(qc)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            quantum_circuit()
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RZ(angle, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_circuit_loaded_in_qnode(self, qubit_device_2_wires):
+        """Tests loading a QuantumCircuit inside of the QNode circuit
+        definition."""
+
+        theta = Parameter('θ')
+        angle = 0.5
+
+        qc = QuantumCircuit(2)
+        qc.rz(theta, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)({theta: angle})
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RZ(angle, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() ==\
+               circuit_native_pennylane()
+
+    def test_passing_parameter_into_qnode(self, qubit_device_2_wires):
+        """Tests passing a circuit parameter into the QNode."""
+
+        theta = Parameter('θ')
+        rotation_angle = 0.5
+
+        qc = QuantumCircuit(2)
+        qc.rz(theta, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit(angle):
+            load(qc)({theta: angle})
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane(angle):
+            qml.RZ(angle, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit(rotation_angle) ==\
+               circuit_native_pennylane(rotation_angle)
+
+    def test_one_parameter_in_qc_one_passed_into_qnode(self, qubit_device_2_wires):
+        """Tests passing a parameter by pre-defining it and then
+         passing another to the QNode."""
+
+        theta = Parameter('θ')
+        phi = Parameter('φ')
+        rotation_angle1 = 0.5
+        rotation_angle2 = 0.3
+
+        qc = QuantumCircuit(2)
+        qc.rz(theta, [0])
+        qc.rx(phi, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit(angle):
+            load(qc)({theta: angle, phi: rotation_angle2})
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane(angle):
+            qml.RZ(angle, wires=0)
+            qml.RX(rotation_angle2, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit(rotation_angle1) ==\
+               circuit_native_pennylane(rotation_angle1)

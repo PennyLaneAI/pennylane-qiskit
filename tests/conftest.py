@@ -72,3 +72,8 @@ def mock_device(monkeypatch):
 @pytest.fixture(scope="function")
 def recorder():
     return qml.utils.OperationRecorder()
+
+
+@pytest.fixture(scope="function")
+def qubit_device_2_wires():
+    return qml.device('default.qubit', wires=2)
