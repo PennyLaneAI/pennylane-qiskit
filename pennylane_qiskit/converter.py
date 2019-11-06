@@ -137,7 +137,6 @@ def load(quantum_circuit: QuantumCircuit):
 
         Args:
             params (dict): specifies the parameters that need to bound in the QuantumCircuit
-
             wires (Sequence[int] or int): The wires the converted template acts on.
                 Note that if the original QuantumCircuit acted on :math:`N` qubits,
                 then this must be a list of length :math:`N`.
