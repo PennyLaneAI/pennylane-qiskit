@@ -119,7 +119,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
 
 
 def load(quantum_circuit: QuantumCircuit):
-    """Returns a PennyLane template created based on the input QuantumCircuit or QASM string.
+    """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
     not incorporated in the PennyLane template.
 
@@ -127,7 +127,7 @@ def load(quantum_circuit: QuantumCircuit):
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
 
     Returns:
-        function: the new PennyLane template
+        function: the resulting PennyLane template
     """
 
     def _function(params: dict = None, wires: list = None):
@@ -137,7 +137,6 @@ def load(quantum_circuit: QuantumCircuit):
 
         Args:
             params (dict): specifies the parameters that need to bound in the QuantumCircuit
-
             wires (Sequence[int] or int): The wires the converted template acts on.
                 Note that if the original QuantumCircuit acted on :math:`N` qubits,
                 then this must be a list of length :math:`N`.
@@ -178,7 +177,7 @@ def load(quantum_circuit: QuantumCircuit):
 
 
 def load_qasm(qasm_string: str):
-    """Returns a PennyLane template created based on the input QASM string.
+    """Loads a PennyLane template from a QASM string.
         Args:
             qasm_string (str): the name of the QASM string
         Returns:
@@ -188,7 +187,7 @@ def load_qasm(qasm_string: str):
 
 
 def load_qasm_from_file(file: str):
-    """Returns a PennyLane template created based on the input QASM file.
+    """Loads a PennyLane template from a QASM file.
         Args:
             file (str): the name of the QASM file
         Returns:
