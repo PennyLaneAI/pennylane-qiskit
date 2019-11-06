@@ -178,17 +178,20 @@ def load(quantum_circuit: QuantumCircuit):
 
 
 def load_qasm(qasm_string: str):
-    """Returns a PennyLane template created based on the input QASM string or file.
-
+    """Returns a PennyLane template created based on the input QASM string.
         Args:
-            qasm_string (str): the name of the QASM file or string
-
+            qasm_string (str): the name of the QASM string
         Returns:
             function: the new PennyLane template
     """
+    return load(QuantumCircuit.from_qasm_str(qasm_string))
 
-    # Checks whether a qasm string or a file name was provided
-    if isinstance(qasm_string, str) and not qasm_string.endswith('.qasm'):
-        return load(QuantumCircuit.from_qasm_str(qasm_string))
 
-    return load(QuantumCircuit.from_qasm_file(qasm_string))
+def load_qasm_from_file(file: str):
+    """Returns a PennyLane template created based on the input QASM file.
+        Args:
+            file (str): the name of the QASM file
+        Returns:
+            function: the new PennyLane template
+    """
+    return load(QuantumCircuit.from_qasm_file(file))

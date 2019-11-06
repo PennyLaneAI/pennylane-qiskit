@@ -10,7 +10,7 @@ from qiskit.quantum_info.operators import Operator
 
 import pennylane as qml
 from pennylane import numpy as np
-from pennylane_qiskit.converter import load, load_qasm
+from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file
 
 
 class TestConverter:
@@ -681,7 +681,7 @@ class TestConverterQasm:
         with open(qft_qasm, "w") as f:
             f.write(TestConverterQasm.qft_qasm)
 
-        quantum_circuit = load_qasm(qft_qasm)
+        quantum_circuit = load_qasm_from_file(qft_qasm)
 
         with pytest.warns(UserWarning) as record:
             with recorder:
@@ -730,7 +730,7 @@ class TestConverterQasm:
         qft_qasm = 'some_qasm_file.qasm'
 
         with pytest.raises(FileNotFoundError):
-            load_qasm(qft_qasm)
+            load_qasm_from_file(qft_qasm)
 
     def test_qasm_(self, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm string."""

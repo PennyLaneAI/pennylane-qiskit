@@ -46,6 +46,7 @@ info = {
         'pennylane.io': [
             'qiskit = pennylane_qiskit:load',
             'qasm = pennylane_qiskit:load_qasm',
+            'qasm_file = pennylane_qiskit:load_qasm_from_file',
             ],
         },
     'description': 'PennyLane plugin for qiskit-terra',
