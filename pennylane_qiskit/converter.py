@@ -127,7 +127,7 @@ def load(quantum_circuit: QuantumCircuit):
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
 
     Returns:
-        function: the new PennyLane template
+        function: the resulting PennyLane template
     """
 
     def _function(params: dict = None, wires: list = None):
