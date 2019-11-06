@@ -177,7 +177,7 @@ def load(quantum_circuit: QuantumCircuit):
 
 
 def load_qasm(qasm_string: str):
-    """Returns a PennyLane template created based on the input QASM string or file.
+    """Loads a PennyLane template from a QASM string.
 
         Args:
             qasm_string (str): the name of the QASM file or string
