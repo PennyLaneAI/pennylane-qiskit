@@ -119,7 +119,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
 
 
 def load(quantum_circuit: QuantumCircuit):
-    """Returns a PennyLane template created based on the input QuantumCircuit or QASM string.
+    """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
     not incorporated in the PennyLane template.
 
