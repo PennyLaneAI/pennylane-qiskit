@@ -36,7 +36,7 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-def check_parameter_bound(param):
+def _check_parameter_bound(param):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
@@ -51,7 +51,7 @@ def check_parameter_bound(param):
     return param
 
 
-def check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict) -> QuantumCircuit:
+def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict) -> QuantumCircuit:
     """Utility function for checking for a valid quantum circuit and then binding parameters.
 
     Args:
@@ -105,7 +105,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
     """
     operation = getattr(pennylane_ops, operation_name)
 
-    parameters = [check_parameter_bound(param) for param in parameters]
+    parameters = [_check_parameter_bound(param) for param in parameters]
 
     if not parameters:
         operation(wires=wires)
@@ -145,7 +145,7 @@ def load(quantum_circuit: QuantumCircuit):
             function: the new PennyLane template
         """
 
-        qc = check_circuit_and_bind_parameters(quantum_circuit, params)
+        qc = _check_circuit_and_bind_parameters(quantum_circuit, params)
 
         # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
         qc_wires = [(q.register.name, q.index) for q in quantum_circuit.qubits]

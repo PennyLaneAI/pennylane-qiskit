@@ -10,7 +10,7 @@ from qiskit.quantum_info.operators import Operator
 
 import pennylane as qml
 from pennylane import numpy as np
-from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file
+from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires
 
 
 class TestConverter:
@@ -133,9 +133,9 @@ class TestConverter:
         with recorder:
             quantum_circuit(params={phi: angle1, lam: angle2, theta: angle3})
 
-        assert recorder.queue[0].name == 'QubitUnitary'
-        assert len(recorder.queue[0].params) == 1
-        assert np.array_equal(recorder.queue[0].params[0], ex.U3Gate(angle1, angle2, angle3).to_matrix())
+        assert recorder.queue[0].name == 'U3'
+        assert len(recorder.queue[0].params) == 3
+        assert recorder.queue[0].params == [0.5, 0.3, 0.1]
         assert recorder.queue[0].wires == [0]
 
     def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
@@ -497,19 +497,18 @@ class TestConverter:
         assert np.array_equal(recorder.queue[1].params[0], ex.TdgGate().to_matrix())
         assert recorder.queue[1].wires == [0]
 
-        assert recorder.queue[2].name == 'QubitUnitary'
-        assert len(recorder.queue[2].params) == 1
-        assert np.array_equal(recorder.queue[2].params[0], ex.U2Gate(phi, lam).to_matrix())
+        assert recorder.queue[2].name == 'U2'
+        assert len(recorder.queue[2].params) == 2
+        assert recorder.queue[2].params == [0.3, 0.4]
         assert recorder.queue[2].wires == [0]
 
-        assert recorder.queue[3].name == 'QubitUnitary'
-        assert len(recorder.queue[3].params) == 1
-        assert np.array_equal(recorder.queue[3].params[0], ex.U3Gate(phi, lam, theta).to_matrix())
+        assert recorder.queue[3].name == 'U3'
+        assert len(recorder.queue[3].params) == 3
+        assert recorder.queue[3].params == [0.3, 0.4, 0.2]
         assert recorder.queue[3].wires == [0]
 
-        assert recorder.queue[4].name == 'QubitUnitary'
-        assert len(recorder.queue[4].params) == 1
-        assert np.array_equal(recorder.queue[4].params[0], ex.ToffoliGate().to_matrix())
+        assert recorder.queue[4].name == 'Toffoli'
+        assert len(recorder.queue[4].params) == 0
         assert recorder.queue[4].wires == [0, 1, 2]
 
     def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
@@ -627,6 +626,50 @@ class TestConverter:
                 format(len(more_than_three_wires))):
             with recorder:
                 quantum_circuit(wires=more_than_three_wires)
+
+
+class TestConverterUtils:
+    """Tests the utility functions used by the converter function."""
+
+    def test_map_wires(self, recorder):
+        """Tests the map_wires function for wires of a quantum circuit."""
+
+        wires = [0]
+        qc = QuantumCircuit(1)
+        qc_wires = [(q.register.name, q.index) for q in qc.qubits]
+
+        assert map_wires(qc_wires, wires) == {0: ('q', 0)}
+
+    def test_map_wires_instantiate_quantum_circuit_with_registers(self, recorder):
+        """Tests the map_wires function for wires of a quantum circuit instantiated
+        using quantum registers."""
+
+        wires = [0, 1, 2]
+        qr1 = QuantumRegister(1)
+        qr2 = QuantumRegister(1)
+        qr3 = QuantumRegister(1)
+        qc = QuantumCircuit(qr1, qr2, qr3)
+        qc_wires = [(q.register.name, q.index) for q in qc.qubits]
+
+        mapped_wires = map_wires(qc_wires, wires)
+
+        assert len(mapped_wires) == len(wires)
+        assert list(mapped_wires.keys()) == wires
+        for q in qc.qubits:
+            assert (q.register.name, q.index) in mapped_wires.values()
+
+    def test_map_wires_exception_mismatch_in_number_of_wires(self, recorder):
+        """Tests that the map_wires function raises an exception if there is a mismatch between
+        wires."""
+
+        wires = [0, 1, 2]
+        qc = QuantumCircuit(1)
+        qc_wires = [(q.register.name, q.index) for q in qc.qubits]
+
+        with pytest.raises(qml.QuantumFunctionError, match='The specified number of wires - {} - does not match '
+                                                           'the number of wires the loaded quantum circuit acts on.'
+                .format(len(wires))):
+            map_wires(wires, qc_wires)
 
 
 class TestConverterWarnings:
