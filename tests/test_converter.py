@@ -668,7 +668,7 @@ class TestConverterUtils:
         mapped_wires = map_wires(qc_wires, wires)
 
         assert len(mapped_wires) == len(wires)
-        assert list(mapped_wires.keys()) == wires
+        assert set(mapped_wires.keys()) == set(wires)
         for q in qc.qubits:
             assert (q.register.name, q.index) in mapped_wires.values()
         assert mapped_wires[0][1] == 2
