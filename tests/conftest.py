@@ -82,3 +82,4 @@ def qubit_device_single_wire():
 @pytest.fixture(scope="function")
 def qubit_device_2_wires():
     return qml.device('default.qubit', wires=2)
+    
