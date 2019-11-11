@@ -136,7 +136,7 @@ def load(quantum_circuit: QuantumCircuit):
         not incorporated in the PennyLane template.
 
         Args:
-            params (dict): specifies the parameters that need to bound in the QuantumCircuit
+            params (dict): specifies the parameters that need to be bound in the QuantumCircuit
             wires (Sequence[int] or int): The wires the converted template acts on.
                 Note that if the original QuantumCircuit acted on :math:`N` qubits,
                 then this must be a list of length :math:`N`.

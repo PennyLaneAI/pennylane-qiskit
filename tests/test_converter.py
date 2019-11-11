@@ -802,7 +802,7 @@ class TestConverterIntegration:
             qml.RZ(angle, wires=0)
             return qml.expval(qml.PauliZ(0))
 
-        assert circuit_loaded_qiskit_circuit() ==\
+        assert circuit_loaded_qiskit_circuit() == \
                circuit_native_pennylane()
 
     def test_passing_parameter_into_qnode(self, qubit_device_2_wires):
@@ -824,7 +824,7 @@ class TestConverterIntegration:
             qml.RZ(angle, wires=0)
             return qml.expval(qml.PauliZ(0))
 
-        assert circuit_loaded_qiskit_circuit(rotation_angle) ==\
+        assert circuit_loaded_qiskit_circuit(rotation_angle) == \
                circuit_native_pennylane(rotation_angle)
 
     def test_one_parameter_in_qc_one_passed_into_qnode(self, qubit_device_2_wires):
