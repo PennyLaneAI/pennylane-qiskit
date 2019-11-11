@@ -1,6 +1,11 @@
 # Release 0.7.0-dev
 
 ### New features since last release
+* Added the ability to automatically convert Qiskit `QuantumCircuits`
+  or QASM circuits directly into PennyLane templates. The loaded
+  operations can be used directly inside PennyLane circuits.
+  [#55](https://github.com/XanaduAI/pennylane-qiskit/pull/55)
+
 
 ### Breaking changes
 
@@ -13,6 +18,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Antal Száva
 
 ---
 

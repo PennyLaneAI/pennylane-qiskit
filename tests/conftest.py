@@ -1,7 +1,11 @@
 import pytest
 import numpy as np
 
+import pennylane as qml
 from pennylane_qiskit import AerDevice, BasicAerDevice
+
+import contextlib
+import io
 
 
 np.random.seed(42)
@@ -53,3 +57,29 @@ def device(request, backend, shots, analytic):
         return request.param(wires=n, backend=backend, shots=shots, analytic=analytic)
 
     return _device
+
+
+@pytest.fixture(scope="function")
+def mock_device(monkeypatch):
+    """A mock instance of the abstract Device class"""
+
+    with monkeypatch.context() as m:
+        dev = qml.Device
+        m.setattr(dev, '__abstractmethods__', frozenset())
+        yield qml.Device()
+
+
+@pytest.fixture(scope="function")
+def recorder():
+    return qml.utils.OperationRecorder()
+
+
+@pytest.fixture(scope="function")
+def qubit_device_single_wire():
+    return qml.device('default.qubit', wires=1)
+
+
+@pytest.fixture(scope="function")
+def qubit_device_2_wires():
+    return qml.device('default.qubit', wires=2)
+    
