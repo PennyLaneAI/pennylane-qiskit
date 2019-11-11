@@ -851,7 +851,7 @@ class TestConverterIntegration:
             qml.RX(rotation_angle2, wires=0)
             return qml.expval(qml.PauliZ(0))
 
-        assert circuit_loaded_qiskit_circuit(rotation_angle1) ==\
+        assert circuit_loaded_qiskit_circuit(rotation_angle1) == \
                circuit_native_pennylane(rotation_angle1)
 
     def test_initialize_with_qubit_state_vector(self, qubit_device_single_wire):
