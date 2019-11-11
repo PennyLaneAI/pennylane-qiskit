@@ -658,6 +658,23 @@ class TestConverterUtils:
         for q in qc.qubits:
             assert (q.register.name, q.index) in mapped_wires.values()
 
+    def test_map_wires_provided_non_standard_order(self, recorder):
+        """Tests the map_wires function for wires of non-standard order."""
+
+        wires = [1, 2, 0]
+        qc = QuantumCircuit(3)
+        qc_wires = [(q.register.name, q.index) for q in qc.qubits]
+
+        mapped_wires = map_wires(qc_wires, wires)
+
+        assert len(mapped_wires) == len(wires)
+        assert list(mapped_wires.keys()) == wires
+        for q in qc.qubits:
+            assert (q.register.name, q.index) in mapped_wires.values()
+        assert mapped_wires[0][1] == 2
+        assert mapped_wires[1][1] == 0
+        assert mapped_wires[2][1] == 1
+
     def test_map_wires_exception_mismatch_in_number_of_wires(self, recorder):
         """Tests that the map_wires function raises an exception if there is a mismatch between
         wires."""
