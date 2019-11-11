@@ -760,7 +760,7 @@ class TestConverterQasm:
 
 class TestConverterIntegration:
 
-    def test_load_circuit_in_qnode(self, qubit_device_2_wires):
+    def test_use_loaded_circuit_in_qnode(self, qubit_device_2_wires):
         """Tests loading a converted template in a QNode."""
 
         angle = 0.5
@@ -782,7 +782,7 @@ class TestConverterIntegration:
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
-    def test_circuit_loaded_in_qnode(self, qubit_device_2_wires):
+    def test_load_circuit_inside_of_qnode(self, qubit_device_2_wires):
         """Tests loading a QuantumCircuit inside of the QNode circuit
         definition."""
 
