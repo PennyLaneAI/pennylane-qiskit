@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pennylane as qml
 import pytest
@@ -93,3 +95,80 @@ class TestKeywordArguments:
         dev = qml.device(d[0], wires=2, k1="v1", k2="v2")
         assert dev.run_args["backend_options"]["k1"] == "v1"
         assert dev.run_args["backend_options"]["k2"] == "v2"
+
+
+class TestLoadIntegration:
+    """Integration tests for the PennyLane load function. This test ensures that the PennyLane-Qiskit
+    specific load functions integrate properly with the PennyLane-Qiskit plugin."""
+
+    hadamard_qasm = 'OPENQASM 2.0;' \
+                    'include "qelib1.inc";' \
+                    'qreg q[1];' \
+                    'h q[0];'
+
+    def test_load_qiskit_circuit(self):
+        """Test that the default load function works correctly."""
+        theta = qiskit.circuit.Parameter('θ')
+
+        qc = qiskit.QuantumCircuit(2)
+        qc.rx(theta, 0)
+
+        my_template = qml.load(qc, format='qiskit')
+
+        dev = qml.device('default.qubit', wires=2)
+
+        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.])
+
+        @qml.qnode(dev)
+        def loaded_quantum_circuit(angle):
+            my_template({theta: angle})
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(dev)
+        def quantum_circuit(angle):
+            qml.RX(angle, wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        for x in angles:
+            assert np.allclose(loaded_quantum_circuit(x), quantum_circuit(x))
+
+    def test_load_from_qasm_string(self):
+        """Test that quantum circuits can be loaded from a qasm string."""
+
+        dev = qml.device('qiskit.aer', backend='statevector_simulator', shots=1000, wires=2)
+
+        @qml.qnode(dev)
+        def loaded_quantum_circuit():
+            qml.from_qasm(TestLoadIntegration.hadamard_qasm)(wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(dev)
+        def quantum_circuit():
+            qml.Hadamard(wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        assert np.allclose(loaded_quantum_circuit(), quantum_circuit())
+
+    @pytest.mark.skipif(sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6")
+    def test_load_qasm_from_file(self, tmpdir):
+        """Test that quantum circuits can be loaded from a qasm file."""
+        apply_hadamard = tmpdir.join("hadamard.qasm")
+
+        with open(apply_hadamard, "w") as f:
+            f.write(TestLoadIntegration.hadamard_qasm)
+
+        hadamard = qml.from_qasm_file(apply_hadamard)
+
+        dev = qml.device('default.qubit', wires=2)
+
+        @qml.qnode(dev)
+        def loaded_quantum_circuit():
+            hadamard(wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(dev)
+        def quantum_circuit():
+            qml.Hadamard(wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        assert np.allclose(loaded_quantum_circuit(), quantum_circuit())
