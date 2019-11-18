@@ -135,7 +135,7 @@ class TestLoadIntegration:
     def test_load_from_qasm_string(self):
         """Test that quantum circuits can be loaded from a qasm string."""
 
-        dev = qml.device('qiskit.aer', backend='statevector_simulator', shots=1000, wires=2)
+        dev = qml.device('default.qubit', wires=2)
 
         @qml.qnode(dev)
         def loaded_quantum_circuit():
