@@ -178,7 +178,8 @@ class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
 
     def test_inverse_of_operation(self):
-        """Test that the inverse of operations works as expected."""
+        """Test that the inverse of operations works as expected
+        by comparing a simple circuit with default.qubit."""
         dev = qml.device('default.qubit', wires=2)
 
         dev2 = qml.device('qiskit.aer', backend='statevector_simulator', shots=5, wires=2, analytic=True)
