@@ -349,7 +349,8 @@ class QiskitDevice(Device, abc.ABC):
             eigvals = self.eigvals(observable, wires, par)
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
             return (eigvals @ prob).real
-        elif self.analytic:
+
+        if self.analytic:
             # Raise a warning if backend is a hardware simulator
             warnings.warn("The analytic calculation of expectations and variances "
                           "is only supported on statevector backends, not on the {}. "
@@ -366,7 +367,8 @@ class QiskitDevice(Device, abc.ABC):
             eigvals = self.eigvals(observable, wires, par)
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
             return (eigvals ** 2) @ prob - (eigvals @ prob).real ** 2
-        elif self.analytic:
+
+        if self.analytic:
             # Raise a warning if backend is a hardware simulator
             warnings.warn("The analytic calculation of expectations and variances "
                           "is only supported on statevector backends, not on the {}. "
