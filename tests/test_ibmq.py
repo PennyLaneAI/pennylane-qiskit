@@ -44,7 +44,7 @@ def test_load_from_disk(token):
     IBMQ.delete_account()
 
 
-def test_account_error(token):
+def test_account_error():
 
     # Token is passed such that the test is skipped if no token was provided
     with pytest.raises(IBMQAccountError, match="No active IBM Q account"):
