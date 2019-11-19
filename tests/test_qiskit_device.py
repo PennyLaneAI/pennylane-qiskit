@@ -1,11 +1,9 @@
+import numpy as np
 import pytest
 
-import numpy as np
-
-from pennylane_qiskit.qiskit_device import pauli_eigs
-from pennylane_qiskit import AerDevice
 import pennylane as qml
-
+from pennylane_qiskit import AerDevice
+from pennylane_qiskit.qiskit_device import pauli_eigs
 
 Z = np.diag([1, -1])
 
