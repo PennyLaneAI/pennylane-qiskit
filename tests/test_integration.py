@@ -66,6 +66,28 @@ class TestDeviceIntegration:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
+    @pytest.mark.parametrize("d", pldevices)
+    @pytest.mark.parametrize("analytic", [False])
+    @pytest.mark.parametrize("shots", [8192])
+    def test_one_qubit_circuit(self, shots, analytic, d, backend, tol):
+        """Integration test for the Basisstate and Rot operations for when analytic
+        is False"""
+        dev = qml.device(d[0], wires=1, backend=backend, shots=shots, analytic=analytic)
+
+        a = 0
+        b = 0
+        c = np.pi
+        expected = 1
+
+        @qml.qnode(dev)
+        def circuit(x, y, z):
+            """Reference QNode"""
+            qml.BasisState(np.array([0]), wires=0)
+            qml.Rot(x, y, z, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert np.allclose(circuit(a, b, c), expected, **tol)
+
 
 class TestKeywordArguments:
     """Test keyword argument logic is correct"""
