@@ -152,9 +152,10 @@ You can instantiate a noise model and apply it to the device by calling
     import qiskit
     from qiskit.providers.aer.noise.device import basic_device_noise_model
 
-    qiskit.IBMQ.load_accounts()
-    ibmqx4 = qiskit.IBMQ.get_backend('ibmqx4')
-    device_properties = ibmqx4.properties()
+    qiskit.IBMQ.load_account()
+    provider = qiskit.IBMQ.get_provider(group='open')
+    ibmq16 = provider.get_backend('ibmq_16_melbourne')
+    device_properties = ibmq16.properties()
 
     noise_model = basic_device_noise_model(device_properties)
 
