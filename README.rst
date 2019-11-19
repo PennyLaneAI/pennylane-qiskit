@@ -154,8 +154,8 @@ You can instantiate a noise model and apply it to the device by calling
 
     qiskit.IBMQ.load_account()
     provider = qiskit.IBMQ.get_provider(group='open')
-    ibmq16 = provider.get_backend('ibmq_16_melbourne')
-    device_properties = ibmq16.properties()
+    ibmq_16_melbourne = provider.get_backend('ibmq_16_melbourne')
+    device_properties = ibmq_16_melbourne.properties()
 
     noise_model = basic_device_noise_model(device_properties)
 
@@ -173,7 +173,7 @@ You can choose between different backends - either simulators or real hardware.
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmqx4')
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_16_melbourne')
 
 By default, the ``qiskit.ibmq`` device will attempt to use an already active or stored
 IBM Q account. If none are available, you may also directly pass your IBM Q API token,
