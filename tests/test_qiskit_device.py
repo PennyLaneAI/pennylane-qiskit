@@ -4,6 +4,7 @@ import numpy as np
 
 from pennylane_qiskit.qiskit_device import pauli_eigs
 from pennylane_qiskit import AerDevice
+import pennylane as qml
 
 
 Z = np.diag([1, -1])
@@ -40,14 +41,13 @@ class TestProbabilities:
 
 
 class TestAnalyticWarningHWSimulator:
-    """Tests that a warning is raised if the analytic attribute is true on
-    hardware simulators"""
+    """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    def test_warning_raised_for_analytic_expval(self, backend, recorder):
+    def test_warning_raised_for_hardware_backend_analytic_expval(self, hardware_backend, recorder):
+        """Tests that a warning is raised if the analytic attribute is true on
+            hardware simulators"""
 
-        import pennylane as qml
-
-        dev = qml.device("qiskit.basicaer", backend=backend, wires=2)
+        dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2)
 
         @qml.qnode(dev)
         def circuit():
@@ -55,8 +55,7 @@ class TestAnalyticWarningHWSimulator:
             return qml.expval(qml.PauliZ(0))
 
         with pytest.warns(UserWarning) as record:
-            with recorder:
-                circuit()
+            circuit()
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -64,3 +63,19 @@ class TestAnalyticWarningHWSimulator:
         assert record[0].message.args[0] == "The analytic calculation of expectations and variances "\
                                             "is only supported on statevector backends, not on the {}. "\
                                             "The obtained result is based on sampling.".format(dev.backend)
+
+    def test_no_warning_raised_for_software_backend_analytic_expval(self, statevector_backend, recorder, recwarn):
+        """Tests that no warning is raised if the analytic attribute is true on
+            statevector simulators"""
+
+        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        circuit()
+
+        # check that no warnings were raised
+        assert len(recwarn) == 0
