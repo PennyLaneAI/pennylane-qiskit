@@ -194,3 +194,34 @@ class TestLoadIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(loaded_quantum_circuit(), quantum_circuit())
+
+
+class TestPLOperations:
+    """Integration tests for checking certain PennyLane specific operations."""
+
+    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_rotation(self, init_state, device, shots, analytic, tol):
+        """Test that the QubitStateVector and Rot operations are decomposed using a Qiskit device"""
+        dev = device(1)
+        state = init_state(1)
+
+        a = 0.542
+        b = 1.3432
+        c = -0.654
+
+        @qml.qnode(dev)
+        def qubitstatevector_and_rot():
+            qml.QubitStateVector(state, wires=[0])
+            qml.Rot(a, b, c, wires=[0])
+            return qml.expval(qml.Identity(0))
+
+        dev2 = qml.device('default.qubit', shots=shots, wires=2, analytic=analytic)
+
+        @qml.qnode(dev2)
+        def qubitstatevector_and_rot_default_qubit():
+            qml.QubitStateVector(state, wires=[0])
+            qml.Rot(a, b, c, wires=[0])
+            return qml.expval(qml.Identity(0))
+
+        assert np.allclose(qubitstatevector_and_rot(), qubitstatevector_and_rot_default_qubit(), **tol)
