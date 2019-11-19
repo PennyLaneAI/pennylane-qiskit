@@ -44,7 +44,7 @@ from qiskit.compiler import transpile, assemble
 from qiskit.circuit.measure import measure
 from qiskit.converters import dag_to_circuit, circuit_to_dag
 
-from pennylane import Device, DeviceError
+from pennylane import Device
 from pennylane.operation import Sample
 
 from ._version import __version__
