@@ -37,3 +37,30 @@ class TestProbabilities:
         None if no job has yet been run."""
         dev = AerDevice(backend="statevector_simulator", wires=1, analytic=True)
         assert dev.probabilities() is None
+
+
+class TestAnalyticWarningHWSimulator:
+    """Tests that a warning is raised if the analytic attribute is true on
+    hardware simulators"""
+
+    def test_warning_raised_for_analytic_expval(self, backend, recorder):
+
+        import pennylane as qml
+
+        dev = qml.device("qiskit.basicaer", backend=backend, wires=2)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        with pytest.warns(UserWarning) as record:
+            with recorder:
+                circuit()
+
+        # check that only one warning was raised
+        assert len(record) == 1
+        # check that the message matches
+        assert record[0].message.args[0] == "The analytic calculation of expectations and variances "\
+                                            "is only supported on statevector backends, not on the {}. "\
+                                            "The obtained result is based on sampling.".format(dev.backend)
