@@ -3,7 +3,6 @@ import pytest
 import pennylane as qml
 import math
 import numpy as np
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # defaults
 tol = 1e-5
@@ -19,8 +18,9 @@ class TestInverses:
         ("PauliZ", 1),
         ("Hadamard", 0),
     ])
-    def test_supported_gate_single_wire_no_parameters(self, name, expected_output):
-        """Tests supported gates that act on a single wire that are not parameterized"""
+    def test_supported_gate_inverse_single_wire_no_parameters(self, name, expected_output):
+        """Tests the inverse of supported gates that act on a single wire that are not
+        parameterized"""
 
         op = getattr(qml.ops, name)
 
@@ -39,8 +39,8 @@ class TestInverses:
         ("SWAP", [-1/2, -1/2]),
         ("CZ", [-1/2, -1/2]),
     ])
-    def test_supported_gate_two_wires_no_parameters(self, name, expected_output):
-        """Tests supported gates that act on two wires that are not parameterized"""
+    def test_supported_gate_inverse_two_wires_no_parameters(self, name, expected_output):
+        """Tests the inverse of supported gates that act on two wires that are not parameterized"""
 
         op = getattr(qml.ops, name)
 
@@ -59,8 +59,8 @@ class TestInverses:
     @pytest.mark.parametrize("name,expected_output", [
         ("CSWAP", [-1, -1, 1]),
     ])
-    def test_supported_gate_three_wires_no_parameters(self, name, expected_output):
-        """Tests supported gates that act on three wires that are not parameterized"""
+    def test_supported_gate_inverse_three_wires_no_parameters(self, name, expected_output):
+        """Tests the inverse of supported gates that act on three wires that are not parameterized"""
 
         op = getattr(qml.ops, name)
 
@@ -96,7 +96,7 @@ class TestInverses:
         ("QubitUnitary", [np.array([[-1j/math.sqrt(2), 1j/math.sqrt(2)], [1j/math.sqrt(2), 1j/math.sqrt(2)]])], 0),
     ])
     def test_supported_gate_inverse_single_wire_with_parameters(self, name, par, expected_output):
-        """Test the inverse of an operation"""
+        """Test the inverse of single gates with parameters"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
@@ -119,8 +119,8 @@ class TestInverses:
         ("QubitUnitary", [np.array([[1, 0, 0, 0], [0, 1/math.sqrt(2), 1/math.sqrt(2), 0], [0, 1/math.sqrt(2), -1/math.sqrt(2), 0], [0, 0, 0, 1]])], [-1/2, -1/2]),
         ("QubitUnitary", [np.array([[-1, 0, 0, 0], [0, 1/math.sqrt(2), 1/math.sqrt(2), 0], [0, 1/math.sqrt(2), -1/math.sqrt(2), 0], [0, 0, 0, -1]])], [-1/2, -1/2]),
     ])
-    def test_supported_gate_two_wires_with_parameters(self, name, par, expected_output):
-        """Tests supported gates that act on two wires wires that are parameterized"""
+    def test_supported_gate_inverse_two_wires_with_parameters(self, name, par, expected_output):
+        """Tests the inverse of supported gates that act on two wires that are parameterized"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
@@ -137,7 +137,7 @@ class TestInverses:
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
     def test_s_gate_inverses(self):
-        """Tests supported gates that act on two wires wires that are parameterized"""
+        """Tests the inverse of the S gate"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
@@ -151,7 +151,7 @@ class TestInverses:
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
     def test_t_gate_inverses(self):
-        """Tests supported gates that act on two wires wires that are parameterized"""
+        """Tests the inverse of the T gate"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
