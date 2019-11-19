@@ -49,6 +49,8 @@ single_qubit = [
     ("Hadamard", H),
     ("S", S),
     ("T", T),
+    ("S.inv", S.conj().T),
+    ("T.inv", T.conj().T),
 ]
 
 
