@@ -45,6 +45,8 @@ def test_load_from_disk(token):
 
 
 def test_account_error():
+
+    # Token is passed such that the test is skipped if no token was provided
     with pytest.raises(IBMQAccountError, match="No active IBM Q account"):
         IBMQDevice(wires=1)
 
