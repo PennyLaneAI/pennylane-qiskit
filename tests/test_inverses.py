@@ -165,8 +165,7 @@ class TestInverses:
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
     def test_inverse_operations_not_supported(self):
-        """Test that the inverse of operations is not currently
-        supported on the default gaussian device"""
+        """Test that the inverse of operations is not supported"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
