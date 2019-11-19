@@ -84,8 +84,6 @@ QISKIT_OPERATION_MAP = {
     "T": ex.TGate,
 
     # Adding the following for conversion compatibility
-    "Sdg": ex.SdgGate,
-    "Tdg": ex.TdgGate,
     "CSWAP": ex.FredkinGate,
     "CRZ": ex.CrzGate,
     "PhaseShift": ex.U1Gate,

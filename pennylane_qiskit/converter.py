@@ -163,6 +163,16 @@ def load(quantum_circuit: QuantumCircuit):
 
                 execute_supported_operation(inv_map[instruction_name], op[0].params, operation_wires)
 
+            elif instruction_name == 'SdgGate':
+
+                sgate = getattr(pennylane_ops, 'S')
+                sgate(wires=operation_wires).inv()
+
+            elif instruction_name == 'TdgGate':
+
+                tgate = getattr(pennylane_ops, 'T')
+                tgate(wires=operation_wires).inv()
+
             else:
                 try:
                     operation_matrix = op[0].to_matrix()
