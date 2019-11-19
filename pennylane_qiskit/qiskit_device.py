@@ -47,7 +47,6 @@ from qiskit.converters import dag_to_circuit, circuit_to_dag
 from pennylane import Device, DeviceError
 from pennylane.operation import Sample
 
-from .gates import BasisState, Rot
 from ._version import __version__
 
 
@@ -89,12 +88,7 @@ QISKIT_OPERATION_MAP = {
 
     # TODO: add the CRY gate, once the U3Gate is a part of PennyLane
     # "CRY": U3Gate,
-    # operations not natively implemented in Qiskit but provided in gates.py
-    "Rot": Rot,
-    "BasisState": BasisState,
     "QubitUnitary": ex.UnitaryGate,
-    # additional operations not native to PennyLane but present in Qiskit
-    # operations not natively implemented in Qiskit but provided in gates.py
 
     # TODO: once inverse is added to PennyLane-Qiskit, test the following gates
     "Sdg": ex.SdgGate,
@@ -172,7 +166,6 @@ class QiskitDevice(Device, abc.ABC):
         self._creg = ClassicalRegister(wires, "c")
         self._circuit = None
         self._current_job = None
-        self._first_operation = True
         self._state = None  # statevector of a simulator backend
 
         # job execution options
@@ -205,14 +198,6 @@ class QiskitDevice(Device, abc.ABC):
 
     def apply(self, operation, wires, par):
         mapped_operation = self._operation_map[operation]
-
-        if operation == "BasisState" and not self._first_operation:
-            raise DeviceError(
-                "Operation {} cannot be used after other Operations have already been applied "
-                "on a {} device.".format(operation, self.short_name)
-            )
-
-        self._first_operation = False
 
         qregs = [self._reg[i] for i in wires]
 
@@ -520,5 +505,4 @@ class QiskitDevice(Device, abc.ABC):
 
     def reset(self):
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
-        self._first_operation = True
         self._state = None

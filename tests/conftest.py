@@ -48,6 +48,11 @@ def backend(request):
     return request.param
 
 
+@pytest.fixture(params=hw_backends)
+def hardware_backend(request):
+    return request.param
+
+
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
 def device(request, backend, shots, analytic):
     if backend not in state_backends and analytic == True:
@@ -82,4 +87,4 @@ def qubit_device_single_wire():
 @pytest.fixture(scope="function")
 def qubit_device_2_wires():
     return qml.device('default.qubit', wires=2)
-    
+
