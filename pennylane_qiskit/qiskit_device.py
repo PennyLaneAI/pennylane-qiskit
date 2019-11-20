@@ -48,7 +48,6 @@ from pennylane import Device
 from pennylane.operation import Sample
 
 from ._version import __version__
-from .gates import BasisState, Rot
 
 
 @functools.lru_cache()
