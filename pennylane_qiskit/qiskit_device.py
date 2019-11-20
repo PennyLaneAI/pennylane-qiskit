@@ -139,6 +139,10 @@ class QiskitDevice(Device, abc.ABC):
     operations = set(_operation_map.keys())
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
+    hw_analytic_warning_message = "The analytic calculation of expectations and variances "\
+                                  "is only supported on statevector backends, not on the {}. "\
+                                  "The obtained result is based on sampling."
+
     _eigs = {}
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
@@ -352,9 +356,7 @@ class QiskitDevice(Device, abc.ABC):
 
         if self.analytic:
             # Raise a warning if backend is a hardware simulator
-            warnings.warn("The analytic calculation of expectations and variances "
-                          "is only supported on statevector backends, not on the {}. "
-                          "The obtained result is based on sampling.".
+            warnings.warn(self.hw_analytic_warning_message.
                           format(self.backend),
                           UserWarning)
 
@@ -370,9 +372,7 @@ class QiskitDevice(Device, abc.ABC):
 
         if self.analytic:
             # Raise a warning if backend is a hardware simulator
-            warnings.warn("The analytic calculation of expectations and variances "
-                          "is only supported on statevector backends, not on the {}. "
-                          "The obtained result is based on sampling.".
+            warnings.warn(self.hw_analytic_warning_message.
                           format(self.backend),
                           UserWarning)
 
