@@ -691,8 +691,7 @@ class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
     def test_barrier_not_supported(self, recorder):
-        """Tests the load method raises a ValueError, if something that is
-        not a QuanctumCircuit was passed."""
+        """Tests that a warning is raised if an unsupported instruction was reached."""
         qc = QuantumCircuit(3, 1)
         qc.barrier()
 

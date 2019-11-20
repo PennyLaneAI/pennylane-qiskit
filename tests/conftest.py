@@ -48,6 +48,16 @@ def backend(request):
     return request.param
 
 
+@pytest.fixture(params=state_backends)
+def statevector_backend(request):
+    return request.param
+
+
+@pytest.fixture(params=hw_backends)
+def hardware_backend(request):
+    return request.param
+
+
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
 def device(request, backend, shots, analytic):
     if backend not in state_backends and analytic == True:
