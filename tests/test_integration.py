@@ -66,6 +66,28 @@ class TestDeviceIntegration:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
+    @pytest.mark.parametrize("d", pldevices)
+    @pytest.mark.parametrize("analytic", [False])
+    @pytest.mark.parametrize("shots", [8192])
+    def test_one_qubit_circuit(self, shots, analytic, d, backend, tol):
+        """Integration test for the Basisstate and Rot operations for when analytic
+        is False"""
+        dev = qml.device(d[0], wires=1, backend=backend, shots=shots, analytic=analytic)
+
+        a = 0
+        b = 0
+        c = np.pi
+        expected = 1
+
+        @qml.qnode(dev)
+        def circuit(x, y, z):
+            """Reference QNode"""
+            qml.BasisState(np.array([0]), wires=0)
+            qml.Rot(x, y, z, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert np.allclose(circuit(a, b, c), expected, **tol)
+
 
 class TestKeywordArguments:
     """Test keyword argument logic is correct"""
@@ -172,6 +194,85 @@ class TestLoadIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(loaded_quantum_circuit(), quantum_circuit())
+
+
+class TestPLOperations:
+    """Integration tests for checking certain PennyLane specific operations."""
+
+    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_rotation(self, init_state, state_vector_device, shots, analytic, tol):
+        """Test that the QubitStateVector and Rot operations are decomposed using a
+        Qiskit device with statevector backend"""
+
+        dev = state_vector_device(1)
+        state = init_state(1)
+
+        a = 0.542
+        b = 1.3432
+        c = -0.654
+
+        I = np.eye(2)
+        Y = np.array([[0, -1j], [1j, 0]])  #: Pauli-Y matrix
+        Z = np.array([[1, 0], [0, -1]])  #: Pauli-Z matrix
+
+        def ry(theta):
+            return np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Y
+
+        def rz(theta):
+            return np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Z
+
+        @qml.qnode(dev)
+        def qubitstatevector_and_rot():
+            qml.QubitStateVector(state, wires=[0])
+            qml.Rot(a, b, c, wires=[0])
+            return qml.expval(qml.Identity(0))
+
+        qubitstatevector_and_rot()
+
+        assert np.allclose(np.abs(dev.state) ** 2, np.abs(rz(c) @ ry(b) @ rz(a) @ state) ** 2, **tol)
+
+    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_basisstate(self, init_state, state_vector_device, shots, analytic, tol):
+        """Test that the Basisstate is decomposed using a Qiskit device with
+        statevector backend"""
+
+        dev = state_vector_device(2)
+        state = np.array([1, 0])
+
+        @qml.qnode(dev)
+        def basisstate():
+            qml.BasisState(state, wires=[0, 1])
+            return qml.expval(qml.Identity(0))
+
+        basisstate()
+
+        expected_state = np.zeros(2**dev.num_wires)
+        expected_state[2] = 1
+
+        assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
+
+    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_basisstate_init_all_zero_states(self, init_state, state_vector_device, shots, analytic, tol):
+        """Test that the Basisstate that receives the all zero state is decomposed using
+        a Qiskit device with statevector backend"""
+
+        dev = state_vector_device(4)
+        state = np.array([0, 0, 0, 0])
+
+        @qml.qnode(dev)
+        def basisstate():
+            qml.BasisState(state, wires=[0, 1, 2, 3])
+            return qml.expval(qml.Identity(0))
+
+        basisstate()
+
+        expected_state = np.zeros(2**dev.num_wires)
+        expected_state[0] = 1
+
+        assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
 
 
 class TestInverses:

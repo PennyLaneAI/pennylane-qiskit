@@ -86,12 +86,6 @@ class TestInverses:
         ("RY", [-math.pi/4], 1/math.sqrt(2)),
         ("RZ", [math.pi/2], 1),
         ("RZ", [-math.pi/4], 1),
-        ("Rot", [math.pi/2, 0, 0], 1),
-        ("Rot", [0, math.pi/2, 0], 0),
-        ("Rot", [0, 0, math.pi/2], 1),
-        ("Rot", [math.pi/2, -math.pi/4, -math.pi/4], 1/math.sqrt(2)),
-        ("Rot", [-math.pi/4, math.pi/2, math.pi/4], 0),
-        ("Rot", [-math.pi/4, math.pi/4, math.pi/2], 1/math.sqrt(2)),
         ("QubitUnitary", [np.array([[1j/math.sqrt(2), 1j/math.sqrt(2)], [1j/math.sqrt(2), -1j/math.sqrt(2)]])], 0),
         ("QubitUnitary", [np.array([[-1j/math.sqrt(2), 1j/math.sqrt(2)], [1j/math.sqrt(2), 1j/math.sqrt(2)]])], 0),
     ])
@@ -136,6 +130,27 @@ class TestInverses:
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
+    @pytest.mark.parametrize("name,par,expected_output", [
+        ("Rot", [math.pi/2, 0, 0], 1),
+        ("Rot", [0, math.pi/2, 0], 0),
+        ("Rot", [0, 0, math.pi/2], 1),
+        ("Rot", [math.pi/2, -math.pi/4, -math.pi/4], 1/math.sqrt(2)),
+        ("Rot", [-math.pi/4, math.pi/2, math.pi/4], 0),
+        ("Rot", [-math.pi/4, math.pi/4, math.pi/2], 1/math.sqrt(2)),
+    ])
+    def test_unsupported_gate_inverses(self, name, par, expected_output):
+        """Test the inverse of single gates with parameters"""
+
+        dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
+
+        op = getattr(qml.ops, name)
+
+        @qml.qnode(dev)
+        def circuit():
+            op(*np.negative(par), wires=0).inv()
+            return qml.expval(qml.PauliZ(0))
+
+        assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
     def test_s_gate_inverses(self):
         """Tests the inverse of the S gate"""
 

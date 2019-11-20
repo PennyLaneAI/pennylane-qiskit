@@ -44,11 +44,10 @@ from qiskit.circuit.measure import measure
 from qiskit.compiler import assemble, transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from pennylane import Device, DeviceError
+from pennylane import Device
 from pennylane.operation import Sample
 
 from ._version import __version__
-from .gates import BasisState, Rot
 
 
 @functools.lru_cache()
@@ -91,8 +90,6 @@ QISKIT_OPERATION_MAP = {
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
     "Toffoli": ex.ToffoliGate,
-    "Rot": Rot,
-    "BasisState": BasisState,
     "QubitUnitary": ex.UnitaryGate,
 }
 
@@ -171,7 +168,6 @@ class QiskitDevice(Device, abc.ABC):
         self._creg = ClassicalRegister(wires, "c")
         self._circuit = None
         self._current_job = None
-        self._first_operation = True
         self._state = None  # statevector of a simulator backend
 
         # job execution options
@@ -204,14 +200,6 @@ class QiskitDevice(Device, abc.ABC):
 
     def apply(self, operation, wires, par):
         mapped_operation = self._operation_map[operation]
-
-        if operation == "BasisState" and not self._first_operation:
-            raise DeviceError(
-                "Operation {} cannot be used after other Operations have already been applied "
-                "on a {} device.".format(operation, self.short_name)
-            )
-
-        self._first_operation = False
 
         qregs = [self._reg[i] for i in wires]
 
@@ -535,5 +523,4 @@ class QiskitDevice(Device, abc.ABC):
 
     def reset(self):
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
-        self._first_operation = True
         self._state = None

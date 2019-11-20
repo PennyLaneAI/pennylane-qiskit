@@ -65,49 +65,6 @@ three_qubit = [("Toffoli", toffoli), ("CSWAP", CSWAP)]
 class TestStateApply:
     """Test application of PennyLane operations to state simulators."""
 
-    def test_basis_state(self, device, tol):
-        """Test basis state initialization"""
-        dev = device(4)
-        state = np.array([0, 0, 1, 0])
-
-        dev.apply("BasisState", [0, 1, 2, 3], [state])
-        dev._obs_queue = []
-        dev.pre_measure()
-
-        res = np.abs(dev.state) ** 2
-
-        expected = np.zeros([2 ** 4])
-        expected[np.ravel_multi_index(state, [2] * 4)] = 1
-        assert np.allclose(res, expected, **tol)
-
-    def test_identity_basis_state(self, device, tol):
-        """Test basis state initialization if identity"""
-        dev = device(4)
-        state = np.array([1, 0, 0, 0])
-
-        dev.apply("BasisState", [0, 1, 2, 3], [state])
-        dev._obs_queue = []
-        dev.pre_measure()
-
-        res = np.abs(dev.state) ** 2
-
-        expected = np.zeros([2 ** 4])
-        expected[np.ravel_multi_index(state, [2] * 4)] = 1
-        assert np.allclose(res, expected, **tol)
-
-    def test_basis_state_not_first_operation(self, device):
-        """Test that an exception is raised if BasisState is
-        applied to a circuit not in the ground state"""
-        dev = device(4)
-        state = np.array([0, 0, 1, 0])
-
-        dev.apply("Hadamard", [0], [])
-
-        with pytest.raises(
-            qml.DeviceError, match="annot be used after other Operations have already been applied"
-        ):
-            dev.apply("BasisState", [0, 1, 2, 3], [state])
-
     def test_qubit_state_vector(self, init_state, device, tol):
         """Test PauliX application"""
         dev = device(1)
@@ -159,24 +116,6 @@ class TestStateApply:
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(func(theta) @ state) ** 2
-        assert np.allclose(res, expected, **tol)
-
-    def test_rotation(self, init_state, device, tol):
-        """Test three axis rotation gate"""
-        dev = device(1)
-        state = init_state(1)
-
-        a = 0.542
-        b = 1.3432
-        c = -0.654
-
-        dev.apply("QubitStateVector", [0], [state])
-        dev.apply("Rot", [0], [a, b, c])
-        dev._obs_queue = []
-        dev.pre_measure()
-
-        res = np.abs(dev.state) ** 2
-        expected = np.abs(rot(a, b, c) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("name,mat", two_qubit)
@@ -254,34 +193,6 @@ class TestStateApply:
 class TestHardwareApply:
     """Test application of PennyLane operations on hardware simulators."""
 
-    def test_basis_state(self, device, tol):
-        """Test basis state initialization"""
-        dev = device(4)
-        state = np.array([0, 0, 1, 0])
-
-        dev.apply("BasisState", [0, 1, 2, 3], [state])
-        dev._obs_queue = []
-        dev.pre_measure()
-
-        res = np.fromiter(dev.probabilities(wires=range(4)).values(), dtype=np.float64)
-
-        expected = np.zeros([2 ** 4])
-        expected[np.ravel_multi_index(state, [2] * 4)] = 1
-        assert np.allclose(res, expected, **tol)
-
-    def test_basis_state_not_first_operation(self, device):
-        """Test that an exception is raised if BasisState is
-        applied to a circuit not in the ground state"""
-        dev = device(4)
-        state = np.array([0, 0, 1, 0])
-
-        dev.apply("Hadamard", [0], [])
-
-        with pytest.raises(
-            qml.DeviceError, match="annot be used after other Operations have already been applied"
-        ):
-            dev.apply("BasisState", [0, 1, 2, 3], [state])
-
     def test_qubit_state_vector(self, init_state, device, tol):
         """Test PauliX application"""
         dev = device(1)
@@ -333,24 +244,6 @@ class TestHardwareApply:
 
         res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
         expected = np.abs(func(theta) @ state) ** 2
-        assert np.allclose(res, expected, **tol)
-
-    def test_rotation(self, init_state, device, tol):
-        """Test three axis rotation gate"""
-        dev = device(1)
-        state = init_state(1)
-
-        a = 0.542
-        b = 1.3432
-        c = -0.654
-
-        dev.apply("QubitStateVector", [0], [state])
-        dev.apply("Rot", [0], [a, b, c])
-        dev._obs_queue = []
-        dev.pre_measure()
-
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
-        expected = np.abs(rot(a, b, c) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("name,mat", two_qubit)

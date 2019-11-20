@@ -69,6 +69,14 @@ def device(request, backend, shots, analytic):
     return _device
 
 
+@pytest.fixture(params=[AerDevice, BasicAerDevice])
+def state_vector_device(request, statevector_backend, shots, analytic):
+    def _device(n):
+        return request.param(wires=n, backend=statevector_backend, shots=shots, analytic=analytic)
+
+    return _device
+
+
 @pytest.fixture(scope="function")
 def mock_device(monkeypatch):
     """A mock instance of the abstract Device class"""
@@ -92,4 +100,3 @@ def qubit_device_single_wire():
 @pytest.fixture(scope="function")
 def qubit_device_2_wires():
     return qml.device('default.qubit', wires=2)
-    
