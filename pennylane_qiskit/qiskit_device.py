@@ -90,8 +90,6 @@ QISKIT_OPERATION_MAP = {
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
     "Toffoli": ex.ToffoliGate,
-    "Rot": Rot,
-    "BasisState": BasisState,
     "QubitUnitary": ex.UnitaryGate,
 }
 
