@@ -253,6 +253,28 @@ class TestPLOperations:
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
 
+    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_basisstate_init_all_zero_states(self, init_state, state_vector_device, shots, analytic, tol):
+        """Test that the Basisstate that receives the all zero state is decomposed using
+        a Qiskit device with statevector backend"""
+
+        dev = state_vector_device(4)
+        state = np.array([0, 0, 0, 0])
+
+        @qml.qnode(dev)
+        def basisstate():
+            qml.BasisState(state, wires=[0, 1, 2, 3])
+            return qml.expval(qml.Identity(0))
+
+        basisstate()
+
+        expected_state = np.zeros(2**dev.num_wires)
+        expected_state[0] = 1
+
+        assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
+
+
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
 
