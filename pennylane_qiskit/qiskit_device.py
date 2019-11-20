@@ -29,25 +29,26 @@ Code details
 ~~~~~~~~~~~~
 """
 # pylint: disable=too-many-instance-attributes
+
 import abc
-from collections import OrderedDict
 import functools
 import inspect
 import itertools
+import warnings
+from collections import OrderedDict
 
 import numpy as np
-
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
-from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
-
-from qiskit.compiler import transpile, assemble
 from qiskit.circuit.measure import measure
-from qiskit.converters import dag_to_circuit, circuit_to_dag
+from qiskit.compiler import assemble, transpile
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from pennylane import Device
 from pennylane.operation import Sample
 
 from ._version import __version__
+from .gates import BasisState, Rot
 
 
 @functools.lru_cache()
@@ -130,6 +131,10 @@ class QiskitDevice(Device, abc.ABC):
 
     operations = set(_operation_map.keys())
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
+
+    hw_analytic_warning_message = "The analytic calculation of expectations and variances "\
+                                  "is only supported on statevector backends, not on the {}. "\
+                                  "The obtained result is based on sampling."
 
     _eigs = {}
 
@@ -337,6 +342,12 @@ class QiskitDevice(Device, abc.ABC):
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
             return (eigvals @ prob).real
 
+        if self.analytic:
+            # Raise a warning if backend is a hardware simulator
+            warnings.warn(self.hw_analytic_warning_message.
+                          format(self.backend),
+                          UserWarning)
+
         # estimate the ev
         return np.mean(self.sample(observable, wires, par))
 
@@ -346,6 +357,12 @@ class QiskitDevice(Device, abc.ABC):
             eigvals = self.eigvals(observable, wires, par)
             prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
             return (eigvals ** 2) @ prob - (eigvals @ prob).real ** 2
+
+        if self.analytic:
+            # Raise a warning if backend is a hardware simulator
+            warnings.warn(self.hw_analytic_warning_message.
+                          format(self.backend),
+                          UserWarning)
 
         return np.var(self.sample(observable, wires, par))
 
