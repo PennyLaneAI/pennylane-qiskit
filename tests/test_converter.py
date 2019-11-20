@@ -299,6 +299,10 @@ class TestConverter:
         single_wire = [0]
         angle = 0.3333
 
+        phi = 0.3
+        lam = 0.4
+        theta = 0.2
+
         q_reg = QuantumRegister(1)
         qc = QuantumCircuit(q_reg)
 
@@ -306,6 +310,8 @@ class TestConverter:
         qc.rx(angle, single_wire)
         qc.ry(angle, single_wire)
         qc.rz(angle, single_wire)
+        qc.u2(phi, lam, [0])
+        qc.u3(phi, lam, theta, [0])
 
         quantum_circuit = load(qc)
         with recorder:
@@ -326,6 +332,16 @@ class TestConverter:
         assert recorder.queue[3].name == 'RZ'
         assert recorder.queue[3].params == [angle]
         assert recorder.queue[3].wires == single_wire
+
+        assert recorder.queue[4].name == 'U2'
+        assert len(recorder.queue[4].params) == 2
+        assert recorder.queue[4].params == [0.3, 0.4]
+        assert recorder.queue[4].wires == [0]
+
+        assert recorder.queue[5].name == 'U3'
+        assert len(recorder.queue[5].params) == 3
+        assert recorder.queue[5].params == [0.3, 0.4, 0.2]
+        assert recorder.queue[5].wires == [0]
 
     def test_two_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the two-qubit operations supported by PennyLane."""
@@ -396,6 +412,7 @@ class TestConverter:
 
         qc = QuantumCircuit(3, 1)
         qc.cswap(*three_wires)
+        qc.ccx(*three_wires)
         quantum_circuit = load(qc)
 
         with recorder:
@@ -404,6 +421,10 @@ class TestConverter:
         assert recorder.queue[0].name == 'CSWAP'
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == three_wires
+
+        assert recorder.queue[1].name == 'Toffoli'
+        assert len(recorder.queue[1].params) == 0
+        assert recorder.queue[1].wires == three_wires
 
     def test_wires_two_different_quantum_registers(self, recorder):
         """Tests loading a circuit with the three-qubit operations supported by PennyLane."""
@@ -466,22 +487,13 @@ class TestConverter:
         assert recorder.queue[0].params == []
         assert recorder.queue[0].wires == three_wires
 
-    def test_operations_transformed_into_qubit_unitary(self, recorder):
-        """Tests loading a circuit with operations that can be converted,
-         but not natively supported by PennyLane."""
+    def test_operations_sdg_and_tdg(self, recorder):
+        """Tests loading a circuit with the operations Sdg and Tdg gates."""
 
         qc = QuantumCircuit(3, 1)
 
-        phi = 0.3
-        lam = 0.4
-        theta = 0.2
-
         qc.sdg([0])
         qc.tdg([0])
-
-        qc.u2(phi, lam, [0])
-        qc.u3(phi, lam, theta, [0])
-        qc.ccx(0, 1, 2)
 
         quantum_circuit = load(qc)
         with recorder:
@@ -495,19 +507,22 @@ class TestConverter:
         assert len(recorder.queue[1].params) == 0
         assert recorder.queue[1].wires == [0]
 
-        assert recorder.queue[2].name == 'U2'
-        assert len(recorder.queue[2].params) == 2
-        assert recorder.queue[2].params == [0.3, 0.4]
-        assert recorder.queue[2].wires == [0]
+    def test_operation_transformed_into_qubit_unitary(self, recorder):
+        """Tests loading a circuit with operations that can be converted,
+         but not natively supported by PennyLane."""
 
-        assert recorder.queue[3].name == 'U3'
-        assert len(recorder.queue[3].params) == 3
-        assert recorder.queue[3].params == [0.3, 0.4, 0.2]
-        assert recorder.queue[3].wires == [0]
+        qc = QuantumCircuit(3, 1)
 
-        assert recorder.queue[4].name == 'Toffoli'
-        assert len(recorder.queue[4].params) == 0
-        assert recorder.queue[4].wires == [0, 1, 2]
+        qc.ch([0], [1])
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit()
+
+        assert recorder.queue[0].name == 'QubitUnitary'
+        assert len(recorder.queue[0].params) == 1
+        assert np.array_equal(recorder.queue[0].params[0], ex.CHGate().to_matrix())
+        assert recorder.queue[0].wires == [0, 1]
 
     def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
         """Tests the load method for a QuantumCircuit raises a QiskitError,
@@ -691,8 +706,7 @@ class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
     def test_barrier_not_supported(self, recorder):
-        """Tests the load method raises a ValueError, if something that is
-        not a QuanctumCircuit was passed."""
+        """Tests that a warning is raised if an unsupported instruction was reached."""
         qc = QuantumCircuit(3, 1)
         qc.barrier()
 
