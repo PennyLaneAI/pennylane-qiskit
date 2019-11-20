@@ -82,28 +82,23 @@ QISKIT_OPERATION_MAP = {
     "RZ": ex.RZGate,
     "S": ex.SGate,
     "T": ex.TGate,
+
+    # Adding the following for conversion compatibility
     "CSWAP": ex.FredkinGate,
     "CRZ": ex.CrzGate,
     "PhaseShift": ex.U1Gate,
     "QubitStateVector": ex.Initialize,
-
-    # TODO: add the CRY gate, once the U3Gate is a part of PennyLane
-    # "CRY": U3Gate,
-    # operations not natively implemented in Qiskit but provided in gates.py
-    "Rot": Rot,
-    "BasisState": BasisState,
-    "QubitUnitary": ex.UnitaryGate,
-    # additional operations not native to PennyLane but present in Qiskit
-    # operations not natively implemented in Qiskit but provided in gates.py
-
-    # TODO: once inverse is added to PennyLane-Qiskit, test the following gates
-    "Sdg": ex.SdgGate,
-    "Tdg": ex.TdgGate,
-
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
     "Toffoli": ex.ToffoliGate,
+    "Rot": Rot,
+    "BasisState": BasisState,
+    "QubitUnitary": ex.UnitaryGate,
 }
+
+# Separate dictionary for the inverses as the operations dictionary needs
+# to be invertable for the conversion functionality to work
+QISKIT_OPERATION_INVERSES_MAP = {k + ".inv": v for k, v in QISKIT_OPERATION_MAP.items()}
 
 
 class QiskitDevice(Device, abc.ABC):
@@ -130,8 +125,8 @@ class QiskitDevice(Device, abc.ABC):
     plugin_version = __version__
     author = "Xanadu"
 
-    _capabilities = {"model": "qubit", "tensor_observables": True}
-    _operation_map = QISKIT_OPERATION_MAP
+    _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
+    _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
     _state_backends = {"statevector_simulator", "unitary_simulator"}
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
@@ -236,6 +231,10 @@ class QiskitDevice(Device, abc.ABC):
 
         dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
         gate = mapped_operation(*par)
+
+        if operation.endswith(".inv"):
+            gate = gate.inverse()
+
         dag.apply_operation_back(gate, qargs=qregs)
         qc = dag_to_circuit(dag)
         self._circuit = self._circuit + qc
