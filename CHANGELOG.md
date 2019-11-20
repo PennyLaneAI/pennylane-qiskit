@@ -12,13 +12,6 @@
   of operations.
   [#58](https://github.com/XanaduAI/pennylane-qiskit/pull/58)
 
-### Bug fixes
-
-* Removed `gates.py` including operations `Rot` and `BasisState`
-  such that these operations are decomposed by PennyLane and no
-  errors arise for the `BasisState` initialized with all-zero states.
-  [#60](https://github.com/XanaduAI/pennylane-qiskit/pull/60)
-
 ### Improvements
 
 * Added integration tests for converting objects from Qiskit
@@ -28,6 +21,13 @@
 * Added warnings for hardware simulators using `analytic==True`
   when calculating expectations and variances.
   [#59](https://github.com/XanaduAI/pennylane-qiskit/pull/59)
+
+### Bug fixes
+
+* Removed `gates.py` including operations `Rot` and `BasisState`
+  such that these operations are decomposed by PennyLane and no
+  errors arise for the `BasisState` initialized with all-zero states.
+  [#60](https://github.com/XanaduAI/pennylane-qiskit/pull/60)
 
 ### Contributors
 
