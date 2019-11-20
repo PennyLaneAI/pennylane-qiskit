@@ -1,6 +1,7 @@
-# Release 0.7.0-dev
+# Release 0.7.0
 
 ### New features since last release
+
 * Added the ability to automatically convert Qiskit `QuantumCircuits`
   or QASM circuits directly into PennyLane templates. The loaded
   operations can be used directly inside PennyLane circuits.
@@ -11,14 +12,22 @@
   of operations.
   [#58](https://github.com/XanaduAI/pennylane-qiskit/pull/58)
 
-
-### Breaking changes
-
 ### Improvements
 
-### Documentation
+* Added integration tests for converting objects from Qiskit
+  using PennyLane.
+  [#57](https://github.com/XanaduAI/pennylane-qiskit/pull/57)
+
+* Added warnings for hardware simulators using `analytic==True`
+  when calculating expectations and variances.
+  [#59](https://github.com/XanaduAI/pennylane-qiskit/pull/59)
 
 ### Bug fixes
+
+* Removed `gates.py` including operations `Rot` and `BasisState`
+  such that these operations are decomposed by PennyLane and no
+  errors arise for the `BasisState` initialized with all-zero states.
+  [#60](https://github.com/XanaduAI/pennylane-qiskit/pull/60)
 
 ### Contributors
 
