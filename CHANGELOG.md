@@ -6,6 +6,11 @@
   operations can be used directly inside PennyLane circuits.
   [#55](https://github.com/XanaduAI/pennylane-qiskit/pull/55)
 
+* Updated the list of operations such that each operation is now
+  used from PennyLane. Added capability to specify the inverses
+  of operations.
+  [#58](https://github.com/XanaduAI/pennylane-qiskit/pull/58)
+
 
 ### Breaking changes
 
