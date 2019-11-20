@@ -487,14 +487,12 @@ class TestConverter:
         with recorder:
             quantum_circuit()
 
-        assert recorder.queue[0].name == 'QubitUnitary'
-        assert len(recorder.queue[0].params) == 1
-        assert np.array_equal(recorder.queue[0].params[0], ex.SdgGate().to_matrix())
+        assert recorder.queue[0].name == 'S.inv'
+        assert len(recorder.queue[0].params) == 0
         assert recorder.queue[0].wires == [0]
 
-        assert recorder.queue[1].name == 'QubitUnitary'
-        assert len(recorder.queue[1].params) == 1
-        assert np.array_equal(recorder.queue[1].params[0], ex.TdgGate().to_matrix())
+        assert recorder.queue[1].name == 'T.inv'
+        assert len(recorder.queue[1].params) == 0
         assert recorder.queue[1].wires == [0]
 
         assert recorder.queue[2].name == 'U2'

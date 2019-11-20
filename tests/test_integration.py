@@ -252,3 +252,30 @@ class TestPLOperations:
         expected_state[2] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
+
+class TestInverses:
+    """Integration tests checking that the inverse of the operations are applied."""
+
+    def test_inverse_of_operation(self):
+        """Test that the inverse of operations works as expected
+        by comparing a simple circuit with default.qubit."""
+        dev = qml.device('default.qubit', wires=2)
+
+        dev2 = qml.device('qiskit.aer', backend='statevector_simulator', shots=5, wires=2, analytic=True)
+
+        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.])
+
+        @qml.qnode(dev)
+        def circuit_with_inverses(angle):
+            qml.Hadamard(0).inv()
+            qml.RX(angle, wires=0).inv()
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(dev2)
+        def circuit_with_inverses_default_qubit(angle):
+            qml.Hadamard(0).inv()
+            qml.RX(angle, wires=0).inv()
+            return qml.expval(qml.PauliZ(0))
+
+        for x in angles:
+            assert np.allclose(circuit_with_inverses(x), circuit_with_inverses_default_qubit(x))
