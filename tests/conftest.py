@@ -53,6 +53,11 @@ def hardware_backend(request):
     return request.param
 
 
+@pytest.fixture(params=state_backends)
+def statevector_backend(request):
+    return request.param
+
+
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
 def device(request, backend, shots, analytic):
     if backend not in state_backends and analytic == True:
@@ -63,6 +68,13 @@ def device(request, backend, shots, analytic):
 
     return _device
 
+
+@pytest.fixture(params=[AerDevice, BasicAerDevice])
+def state_vector_device(request, statevector_backend, shots, analytic):
+    def _device(n):
+        return request.param(wires=n, backend=statevector_backend, shots=shots, analytic=analytic)
+
+    return _device
 
 @pytest.fixture(scope="function")
 def mock_device(monkeypatch):

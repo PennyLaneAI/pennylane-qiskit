@@ -201,14 +201,26 @@ class TestPLOperations:
 
     @pytest.mark.parametrize("shots", [1000])
     @pytest.mark.parametrize("analytic", [True, False])
-    def test_rotation(self, init_state, device, shots, analytic, tol):
-        """Test that the QubitStateVector and Rot operations are decomposed using a Qiskit device"""
-        dev = device(1)
+    def test_rotation(self, init_state, state_vector_device, shots, analytic, tol):
+        """Test that the QubitStateVector and Rot operations are decomposed using a
+        Qiskit device with statevector backend"""
+
+        dev = state_vector_device(1)
         state = init_state(1)
 
         a = 0.542
         b = 1.3432
         c = -0.654
+
+        I = np.eye(2)
+        Y = np.array([[0, -1j], [1j, 0]])  #: Pauli-Y matrix
+        Z = np.array([[1, 0], [0, -1]])  #: Pauli-Z matrix
+
+        def ry(theta):
+            return np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Y
+
+        def rz(theta):
+            return np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Z
 
         @qml.qnode(dev)
         def qubitstatevector_and_rot():
@@ -216,12 +228,27 @@ class TestPLOperations:
             qml.Rot(a, b, c, wires=[0])
             return qml.expval(qml.Identity(0))
 
-        dev2 = qml.device('default.qubit', shots=shots, wires=2, analytic=analytic)
+        qubitstatevector_and_rot()
 
-        @qml.qnode(dev2)
-        def qubitstatevector_and_rot_default_qubit():
-            qml.QubitStateVector(state, wires=[0])
-            qml.Rot(a, b, c, wires=[0])
+        assert np.allclose(np.abs(dev.state) ** 2, np.abs(rz(c) @ ry(b) @ rz(a) @ state) ** 2, **tol)
+
+    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_basisstate(self, init_state, state_vector_device, shots, analytic, tol):
+        """Test that the Basisstate is decomposed using a Qiskit device with
+        statevector backend"""
+
+        dev = state_vector_device(2)
+        state = np.array([1, 0])
+
+        @qml.qnode(dev)
+        def basisstate():
+            qml.BasisState(state, wires=[0, 1])
             return qml.expval(qml.Identity(0))
 
-        assert np.allclose(qubitstatevector_and_rot(), qubitstatevector_and_rot_default_qubit(), **tol)
+        basisstate()
+
+        expected_state = np.zeros(2**dev.num_wires)
+        expected_state[2] = 1
+
+        assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
