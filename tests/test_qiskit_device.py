@@ -45,7 +45,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that a warning is raised if the analytic attribute is true on
             hardware simulators when calculating the expectation"""
 
-        dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2)
+        dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, analytic=True)
 
         @qml.qnode(dev)
         def circuit():
@@ -66,7 +66,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that no warning is raised if the analytic attribute is true on
             statevector simulators when calculating the expectation"""
 
-        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2)
+        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, analytic=True)
 
         @qml.qnode(dev)
         def circuit():
@@ -82,7 +82,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that a warning is raised if the analytic attribute is true on
             hardware simulators when calculating the variance"""
 
-        dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2)
+        dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, analytic=True)
 
         @qml.qnode(dev)
         def circuit():
@@ -103,7 +103,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that no warning is raised if the analytic attribute is true on
             statevector simulators when calculating the variance"""
 
-        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2)
+        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, analytic=True)
 
         @qml.qnode(dev)
         def circuit():

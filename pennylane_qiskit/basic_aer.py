@@ -63,7 +63,7 @@ class BasicAerDevice(QiskitDevice):
             to simulate a device compliant circuit, you can specify a backend here.
         analytic (bool): For statevector backends, determines if the
             expectation values and variances are to be computed analytically.
-            Default value is ``True``.
+            Default value is ``False``.
     """
 
     short_name = "qiskit.basicaer"
