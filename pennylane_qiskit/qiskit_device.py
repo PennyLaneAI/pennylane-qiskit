@@ -114,7 +114,7 @@ class QiskitDevice(Device, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
         analytic (bool): For statevector backends, determines if the
             expectation values and variances are to be computed analytically.
-            Default value is ``True``.
+            Default value is ``False``.
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.8.0"
@@ -140,7 +140,7 @@ class QiskitDevice(Device, abc.ABC):
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
-        self.analytic = kwargs.pop("analytic", True)
+        self.analytic = kwargs.pop("analytic", False)
 
         if "verbose" not in kwargs:
             kwargs["verbose"] = False
