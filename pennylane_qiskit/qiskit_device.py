@@ -46,6 +46,7 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from pennylane import Device
 from pennylane.operation import Sample
+from pennylane_qiskit.gates import CryGate, CrxGate
 
 from ._version import __version__
 
@@ -81,8 +82,6 @@ QISKIT_OPERATION_MAP = {
     "RZ": ex.RZGate,
     "S": ex.SGate,
     "T": ex.TGate,
-
-    # Adding the following for conversion compatibility
     "CSWAP": ex.FredkinGate,
     "CRZ": ex.CrzGate,
     "PhaseShift": ex.U1Gate,
@@ -91,6 +90,11 @@ QISKIT_OPERATION_MAP = {
     "U3": ex.U3Gate,
     "Toffoli": ex.ToffoliGate,
     "QubitUnitary": ex.UnitaryGate,
+
+    # operations not natively implemented in Qiskit with a Gate object,
+    # but provided in gates.py
+    "CRY": CryGate,
+    "CRX": CrxGate
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs

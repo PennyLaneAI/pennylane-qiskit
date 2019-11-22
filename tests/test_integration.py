@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import pennylane as qml
+from pennylane.plugins.default_qubit import CRoty, CRotx, H, CNOT
 import pytest
 import qiskit
 
@@ -87,6 +88,58 @@ class TestDeviceIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), expected, **tol)
+
+    @pytest.mark.parametrize("d", pldevices)
+    @pytest.mark.parametrize("analytic", [True, False])
+    @pytest.mark.parametrize("shots", [8192])
+    @pytest.mark.parametrize("theta", [0.2725*i for i in range(5)])
+    def test_cry_circuit(self, init_state, shots, analytic, d, backend, tol, theta):
+        """Integration test for the Basisstate and Rot operations for when analytic
+        is False"""
+        if backend not in state_backends:
+            pytest.skip("Hardware simulators do not store the wavefunction that is used in this test")
+        dev = qml.device(d[0], wires=2, backend=backend, shots=shots, analytic=analytic)
+
+        state = init_state(2)
+
+        @qml.qnode(dev)
+        def circuit(angle1):
+            qml.QubitStateVector(state, wires=[0, 1])
+            qml.Hadamard(wires=[0])
+            qml.CNOT(wires=[0, 1])
+            qml.CRY(angle1, wires=[0, 1])
+            return qml.expval(qml.PauliZ(0))
+
+        circuit(theta)
+
+        assert np.allclose(np.abs(dev.state) ** 2,
+                           np.abs(CRoty(theta) @ CNOT @ np.kron(H, np.eye(2)) @ state) ** 2, **tol)
+
+    @pytest.mark.parametrize("d", pldevices)
+    @pytest.mark.parametrize("analytic", [True, False])
+    @pytest.mark.parametrize("shots", [8192])
+    @pytest.mark.parametrize("theta", [0.2725*i for i in range(5)])
+    def test_crx_circuit(self, init_state, shots, analytic, d, backend, tol, theta):
+        """Integration test for the Basisstate and Rot operations for when analytic
+        is False"""
+        if backend not in state_backends:
+            pytest.skip("Hardware simulators do not store the wavefunction that is used in this test")
+        dev = qml.device(d[0], wires=2, backend=backend, shots=shots, analytic=analytic)
+
+        state = init_state(2)
+
+        @qml.qnode(dev)
+        def circuit(angle1):
+            qml.QubitStateVector(state, wires=[0, 1])
+            qml.Hadamard(wires=[0])
+            qml.CNOT(wires=[0, 1])
+            qml.CRX(angle1, wires=[0, 1])
+            return qml.expval(qml.PauliZ(0))
+
+        circuit(theta)
+
+        assert np.allclose(np.abs(dev.state) ** 2,
+                           np.abs(CRotx(theta) @ CNOT @ np.kron(H, np.eye(2)) @ state) ** 2, **tol)
 
 
 class TestKeywordArguments:
