@@ -1,18 +1,16 @@
-# Release 0.8.0-dev
-
-### New features since last release
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
+# Release 0.7.1
 
 ### Bug fixes
+
+* Set `analytic=False` as default, since by default warnings are raised
+  for hardware simulators.
+  [#64](https://github.com/XanaduAI/pennylane-qiskit/pull/64)
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Antal Száva
 
 ---
 
