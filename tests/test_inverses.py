@@ -189,6 +189,6 @@ class TestInverses:
             qml.Rotation(phi, wires=0).inv()
             return qml.expval(qml.NumberOperator(0))
 
-        with pytest.raises(qml.DeviceError, match="Gate Rotation.inv not supported on device {}"
+        with pytest.raises(qml.QuantumFunctionError, match="Device {} is a qubit device; CV operations are not allowed."
                 .format(dev.short_name)):
             mean_photon_gaussian(0.015)
