@@ -315,7 +315,8 @@ class QiskitDevice(Device, abc.ABC):
     def pre_measure(self):
         for e in self.obs_queue:
             # Add unitaries if a different expectation value is given
-            if hasattr(e, "return_type") and e.return_type == Sample:
+            # Exclude unitary_simulator as it does not support memory=True
+            if hasattr(e, "return_type") and e.return_type == Sample and self.backend_name != 'unitary_simulator':
                 self.memory = True  # make sure to return samples
 
             if isinstance(e.name, list):
