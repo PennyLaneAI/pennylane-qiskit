@@ -81,34 +81,22 @@ class IBMQDevice(QiskitDevice):
             ibmq_kwargs = {"url": url} if url is not None else {}
             IBMQ.enable_account(token, **ibmq_kwargs)
         else:
-            # turn off deprecation warnings
-            # TODO: remove IBM Q v1 API calls when fully deprecated
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
+            # check if an IBM Q account is already active.
+            #
+            # * IBMQ v2 credentials stored in active_account().
+            #   If no accounts are active, it returns None.
 
-                # check if an IBM Q account is already active.
-                #
-                # * IBMQ v1 credentials stored in active_accounts().
-                #   If no accounts are active, it returns []
-                #
-                # * IBMQ v2 credentials stored in active_account().
-                #   If no accounts are active, it returns None.
-
-                if IBMQ.active_account() is None and not IBMQ.active_accounts():
-                    # no active account
-                    try:
-                        # attempt to load a v1 account stored on disk
-                        IBMQ.load_accounts()
-                    except IBMQAccountError:
-                        try:
-                            # attempt to load a v2 account stored on disk
-                            IBMQ.load_account()
-                        except IBMQAccountError:
-                            # attempt to enable an account manually using
-                            # a provided token
-                            raise IBMQAccountError(
-                                "No active IBM Q account, and no IBM Q token provided."
-                            ) from None
+            if IBMQ.active_account() is None:
+                # no active account
+                try:
+                    # attempt to load a v2 account stored on disk
+                    IBMQ.load_account()
+                except IBMQAccountError:
+                    # attempt to enable an account manually using
+                    # a provided token
+                    raise IBMQAccountError(
+                        "No active IBM Q account, and no IBM Q token provided."
+                    ) from None
 
         # IBM Q account is now enabled
 
