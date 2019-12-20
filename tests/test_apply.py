@@ -68,6 +68,10 @@ class TestStateApply:
     def test_qubit_state_vector(self, init_state, device, tol):
         """Test PauliX application"""
         dev = device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         dev.apply("QubitStateVector", [0], [state])
@@ -82,6 +86,10 @@ class TestStateApply:
         """Test that an exception is raised if the state
         vector is the wrong size"""
         dev = device(2)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = np.array([0, 123.432])
 
         with pytest.raises(ValueError, match=r"State vector must be of length 2\*\*wires"):
@@ -91,6 +99,10 @@ class TestStateApply:
     def test_single_qubit_no_parameters(self, init_state, device, name, mat, tol):
         """Test PauliX application"""
         dev = device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         dev.apply("QubitStateVector", [0], [state])
@@ -102,11 +114,28 @@ class TestStateApply:
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
+    @pytest.mark.parametrize("name,mat", single_qubit)
+    def test_qubit_state_vector_error_for_unitary_simulator(self, init_state, device, name, mat, tol):
+        """Test PauliX application"""
+        dev = device(1)
+
+        if dev.backend_name != "unitary_simulator":
+            pytest.skip("Test only runs for unitary simulator backend.")
+
+        state = init_state(1)
+
+        with pytest.raises(qml.QuantumFunctionError, match="The QubitStateVector operation is not supported on the unitary simulator backend."):
+            dev.apply("QubitStateVector", [0], [state])
+
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("name,func", single_qubit_param)
     def test_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
         """Test PauliX application"""
         dev = device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         dev.apply("QubitStateVector", [0], [state])
@@ -122,6 +151,10 @@ class TestStateApply:
     def test_two_qubit_no_parameters(self, init_state, device, name, mat, tol):
         """Test PauliX application"""
         dev = device(2)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(2)
 
         dev.apply("QubitStateVector", [0, 1], [state])
@@ -137,6 +170,10 @@ class TestStateApply:
     def test_qubit_unitary(self, init_state, device, mat, tol):
         N = int(np.log2(len(mat)))
         dev = device(N)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(N)
 
         dev.apply("QubitStateVector", list(range(N)), [state])
@@ -160,6 +197,10 @@ class TestStateApply:
     @pytest.mark.parametrize("name, mat", three_qubit)
     def test_three_qubit_no_parameters(self, init_state, device, name, mat, tol):
         dev = device(3)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(3)
 
         dev.apply("QubitStateVector", [0, 1, 2], [state])
@@ -176,6 +217,10 @@ class TestStateApply:
     def test_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
         """Test PauliX application"""
         dev = device(2)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(2)
 
         dev.apply("QubitStateVector", [0, 1], [state])
@@ -196,6 +241,10 @@ class TestHardwareApply:
     def test_qubit_state_vector(self, init_state, device, tol):
         """Test PauliX application"""
         dev = device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         dev.apply("QubitStateVector", [0], [state])
@@ -210,6 +259,10 @@ class TestHardwareApply:
         """Test that an exception is raised if the state
         vector is the wrong size"""
         dev = device(2)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = np.array([0, 123.432])
 
         with pytest.raises(ValueError, match=r"State vector must be of length 2\*\*wires"):
@@ -219,6 +272,10 @@ class TestHardwareApply:
     def test_single_qubit_no_parameters(self, init_state, device, name, mat, tol):
         """Test PauliX application"""
         dev = device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         dev.apply("QubitStateVector", [0], [state])
@@ -235,6 +292,10 @@ class TestHardwareApply:
     def test_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
         """Test PauliX application"""
         dev = device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         dev.apply("QubitStateVector", [0], [state])
@@ -250,6 +311,10 @@ class TestHardwareApply:
     def test_two_qubit_no_parameters(self, init_state, device, name, mat, tol):
         """Test PauliX application"""
         dev = device(2)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(2)
 
         dev.apply("QubitStateVector", [0, 1], [state])
@@ -265,6 +330,10 @@ class TestHardwareApply:
     def test_qubit_unitary(self, init_state, device, mat, tol):
         N = int(np.log2(len(mat)))
         dev = device(N)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(N)
 
         dev.apply("QubitStateVector", list(range(N)), [state])
@@ -288,6 +357,10 @@ class TestHardwareApply:
     @pytest.mark.parametrize("name, mat", three_qubit)
     def test_three_qubit_no_parameters(self, init_state, device, name, mat, tol):
         dev = device(3)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(3)
 
         dev.apply("QubitStateVector", [0, 1, 2], [state])
@@ -304,6 +377,10 @@ class TestHardwareApply:
     def test_single_qubit_parameters(self, init_state, device, name, func, theta, tol):
         """Test PauliX application"""
         dev = device(2)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(2)
 
         dev.apply("QubitStateVector", [0, 1], [state])

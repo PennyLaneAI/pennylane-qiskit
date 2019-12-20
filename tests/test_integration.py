@@ -206,6 +206,10 @@ class TestPLOperations:
         Qiskit device with statevector backend"""
 
         dev = state_vector_device(1)
+
+        if dev.backend_name == "unitary_simulator":
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
         state = init_state(1)
 
         a = 0.542
