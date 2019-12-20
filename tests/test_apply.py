@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 import pennylane as qml
 from scipy.linalg import block_diag
