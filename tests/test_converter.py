@@ -551,7 +551,7 @@ class TestConverter:
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(TypeError, match="can't convert expression to float"):
+        with pytest.raises(ValueError, match="could not convert string to float: '{}'".format(angle)):
             with recorder:
                 quantum_circuit()
 

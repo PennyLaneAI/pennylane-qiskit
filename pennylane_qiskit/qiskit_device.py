@@ -44,7 +44,7 @@ from qiskit.circuit.measure import measure
 from qiskit.compiler import assemble, transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from pennylane import Device
+from pennylane import Device, QuantumFunctionError
 from pennylane.operation import Sample
 
 from ._version import __version__
@@ -205,6 +205,9 @@ class QiskitDevice(Device, abc.ABC):
 
         if operation == "QubitStateVector":
 
+            if self.backend_name == "unitary_simulator":
+                raise QuantumFunctionError("The QubitStateVector operation is not supported on the unitary simulator backend.")
+
             if len(par[0]) != 2 ** len(wires):
                 raise ValueError("State vector must be of length 2**wires.")
 
@@ -315,7 +318,8 @@ class QiskitDevice(Device, abc.ABC):
     def pre_measure(self):
         for e in self.obs_queue:
             # Add unitaries if a different expectation value is given
-            if hasattr(e, "return_type") and e.return_type == Sample:
+            # Exclude unitary_simulator as it does not support memory=True
+            if hasattr(e, "return_type") and e.return_type == Sample and self.backend_name != 'unitary_simulator':
                 self.memory = True  # make sure to return samples
 
             if isinstance(e.name, list):

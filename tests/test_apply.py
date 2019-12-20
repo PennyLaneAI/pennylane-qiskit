@@ -62,6 +62,7 @@ three_qubit = [("Toffoli", toffoli), ("CSWAP", CSWAP)]
 
 @pytest.mark.parametrize("analytic", [True])
 @pytest.mark.parametrize("shots", [8192])
+@pytest.mark.usefixtures("skip_unitary")
 class TestStateApply:
     """Test application of PennyLane operations to state simulators."""
 
@@ -77,15 +78,6 @@ class TestStateApply:
         res = np.abs(dev.state) ** 2
         expected = np.abs(state) ** 2
         assert np.allclose(res, expected, **tol)
-
-    def test_invalid_qubit_state_vector(self, device):
-        """Test that an exception is raised if the state
-        vector is the wrong size"""
-        dev = device(2)
-        state = np.array([0, 123.432])
-
-        with pytest.raises(ValueError, match=r"State vector must be of length 2\*\*wires"):
-            dev.apply("QubitStateVector", [0, 1], [state])
 
     @pytest.mark.parametrize("name,mat", single_qubit)
     def test_single_qubit_no_parameters(self, init_state, device, name, mat, tol):
@@ -148,15 +140,6 @@ class TestStateApply:
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
-    def test_invalid_qubit_state_unitary(self, device):
-        """Test that an exception is raised if the
-        unitary matrix is the wrong size"""
-        dev = device(2)
-        state = np.array([[0, 123.432], [-0.432, 023.4]])
-
-        with pytest.raises(ValueError, match=r"Unitary matrix must be of shape"):
-            dev.apply("QubitUnitary", [0, 1], [state])
-
     @pytest.mark.parametrize("name, mat", three_qubit)
     def test_three_qubit_no_parameters(self, init_state, device, name, mat, tol):
         dev = device(3)
@@ -187,9 +170,24 @@ class TestStateApply:
         expected = np.abs(func(theta) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
+@pytest.mark.parametrize("analytic", [True])
+@pytest.mark.parametrize("shots", [8192])
+@pytest.mark.usefixtures("run_only_for_unitary")
+class TestStateApplyUnitarySimulator:
+    """Test application of PennyLane operations to the unitary simulator."""
+
+    def test_invalid_qubit(self, init_state, device):
+        """Test that an exception is raised if the
+        unitary matrix is applied on a unitary simulator."""
+        dev = device(1)
+        state = init_state(1)
+
+        with pytest.raises(qml.QuantumFunctionError, match="The QubitStateVector operation is not supported on the unitary simulator backend"):
+            dev.apply("QubitStateVector", [0], [state])
 
 @pytest.mark.parametrize("shots", [8192])
 @pytest.mark.parametrize("analytic", [False])
+@pytest.mark.usefixtures("skip_unitary")
 class TestHardwareApply:
     """Test application of PennyLane operations on hardware simulators."""
 

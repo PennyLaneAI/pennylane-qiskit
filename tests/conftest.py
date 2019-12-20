@@ -42,6 +42,15 @@ def init_state(scope="session"):
 
     return _init_state
 
+@pytest.fixture
+def skip_unitary(backend):
+    if backend == "unitary_simulator":
+        pytest.skip("This test does not support the unitary simulator backend.")
+
+@pytest.fixture
+def run_only_for_unitary(backend):
+    if backend != "unitary_simulator":
+        pytest.skip("This test only supports the unitary simulator.")
 
 @pytest.fixture(params=state_backends + hw_backends)
 def backend(request):
