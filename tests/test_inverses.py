@@ -178,17 +178,3 @@ class TestInverses:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
-
-    def test_inverse_operations_not_supported(self):
-        """Test that the inverse of operations is not supported"""
-
-        dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
-
-        @qml.qnode(dev)
-        def mean_photon_gaussian(phi):
-            qml.Rotation(phi, wires=0).inv()
-            return qml.expval(qml.NumberOperator(0))
-
-        with pytest.raises(qml.QuantumFunctionError, match="Device {} is a qubit device; CV operations are not allowed."
-                .format(dev.short_name)):
-            mean_photon_gaussian(0.015)
