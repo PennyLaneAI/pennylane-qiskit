@@ -2,7 +2,7 @@ import math
 import sys
 
 import pytest
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, __version__
 from qiskit import extensions as ex
 from qiskit.circuit import Parameter
 from qiskit.exceptions import QiskitError
@@ -540,7 +540,8 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: angle})
 
-    def test_quantum_circuit_error_by_calling_wrong_parameters(self, recorder):
+    @pytest.mark.usefixtures("run_only_for_qiskit_terra_v0_11_and_above")
+    def test_quantum_circuit_error_by_calling_wrong_parameters_above_terra_v0_11(self, recorder):
         """Tests that the load method for a QuantumCircuit raises a TypeError,
         if the wrong type of arguments were passed."""
 
@@ -552,6 +553,22 @@ class TestConverter:
         quantum_circuit = load(qc)
 
         with pytest.raises(ValueError, match="could not convert string to float: '{}'".format(angle)):
+            with recorder:
+                quantum_circuit()
+
+    @pytest.mark.usefixtures("run_only_for_qiskit_terra_version_below_v0_11")
+    def test_quantum_circuit_error_by_calling_wrong_parameters_below_terra_v0_11(self, recorder):
+        """Tests that the load method for a QuantumCircuit raises a TypeError,
+        if the wrong type of arguments were passed."""
+
+        angle = 'some_string_instead_of_an_angle'
+
+        qc = QuantumCircuit(3, 1)
+        qc.rz(angle, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(TypeError, match="can't convert expression to float"):
             with recorder:
                 quantum_circuit()
 

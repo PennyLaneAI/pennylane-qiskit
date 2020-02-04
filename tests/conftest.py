@@ -1,12 +1,13 @@
-import pytest
-import numpy as np
-
-import pennylane as qml
-from pennylane_qiskit import AerDevice, BasicAerDevice
-
 import contextlib
 import io
 
+import numpy as np
+import pennylane as qml
+import pytest
+from packaging import version
+from qiskit import __version__
+
+from pennylane_qiskit import AerDevice, BasicAerDevice
 
 np.random.seed(42)
 
@@ -51,6 +52,16 @@ def skip_unitary(backend):
 def run_only_for_unitary(backend):
     if backend != "unitary_simulator":
         pytest.skip("This test only supports the unitary simulator.")
+
+@pytest.fixture
+def run_only_for_qiskit_terra_v0_11_and_above():
+    if version.parse(__version__) < version.parse("0.11.0"):
+        pytest.skip("This test is only ran for Qiskit Terra version 0.11.0 and above.")
+
+@pytest.fixture
+def run_only_for_qiskit_terra_version_below_v0_11():
+    if version.parse(__version__) >=  version.parse("0.11.0"):
+        pytest.skip("This test is only ran for Qiskit Terra version that is below 0.11.0.")
 
 @pytest.fixture(params=state_backends + hw_backends)
 def backend(request):
