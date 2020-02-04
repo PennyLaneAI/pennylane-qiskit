@@ -1,3 +1,20 @@
+# Release 0.8.0
+
+### Bug fixes
+
+* Removed v1 `IBMQ` credentials, disallowed `unitary_simulator` backend to
+  have `memory=True` and discontinuing support for `QubitStateVector` on
+  the `unitary_simulator` backend due to Qiskit's 0.14.0 version.
+  [#65](https://github.com/XanaduAI/pennylane-qiskit/pull/65)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Antal Száva
+
+---
+
 # Release 0.7.1
 
 ### Bug fixes
@@ -5,11 +22,6 @@
 * Set `analytic=False` as default, since by default warnings are raised
   for hardware simulators.
   [#64](https://github.com/XanaduAI/pennylane-qiskit/pull/64)
-
-* Removed v1 `IBMQ` credentials, disallowed `unitary_simulator` backend to
-  have `memory=True` and discontinuing support for `QubitStateVector` on
-  the `unitary_simulator` backend due to Qiskit's 0.14.0 version.
-  [#65](https://github.com/XanaduAI/pennylane-qiskit/pull/65)
 
 ### Contributors
 
