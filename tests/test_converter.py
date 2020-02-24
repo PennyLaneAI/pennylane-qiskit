@@ -957,7 +957,7 @@ class TestConverterIntegration:
     def test_gradient(self, theta, phi, varphi, tol):
         """Test that the gradient works correctly"""
         qc = QuantumCircuit(3)
-        qiskit_params = [Parameter(f"param_{i}") for i in range(3)]
+        qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
 
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
