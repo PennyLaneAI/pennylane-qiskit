@@ -12,6 +12,7 @@
 
 * Fixed a bug where gradient computations always returned 0 when
   loading a parametrized Qiskit circuit as a PennyLane template.
+  [(#71)](https://github.com/XanaduAI/pennylane-qiskit/pull/71)
 
 ### Contributors
 
