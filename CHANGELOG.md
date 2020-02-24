@@ -10,9 +10,14 @@
 
 ### Bug fixes
 
+* Fixed a bug where gradient computations always returned 0 when
+  loading a parametrized Qiskit circuit as a PennyLane template.
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Josh Izaac
 
 ---
 

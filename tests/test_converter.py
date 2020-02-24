@@ -13,6 +13,11 @@ from pennylane import numpy as np
 from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires
 
 
+THETA = np.linspace(0.11, 3, 5)
+PHI = np.linspace(0.32, 3, 5)
+VARPHI = np.linspace(0.02, 3, 5)
+
+
 class TestConverter:
     """Tests the converter function that allows converting QuantumCircuit objects
      to Pennylane templates."""
@@ -551,7 +556,7 @@ class TestConverter:
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(ValueError, match="could not convert string to float: '{}'".format(angle)):
+        with pytest.raises(TypeError, match="parameter expected, got <class 'str'>"):
             with recorder:
                 quantum_circuit()
 
@@ -946,3 +951,37 @@ class TestConverterIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    @pytest.mark.parametrize("analytic", [True])
+    @pytest.mark.parametrize("theta,phi,varphi", list(zip(THETA, PHI, VARPHI)))
+    def test_gradient(self, theta, phi, varphi, tol):
+        """Test that the gradient works correctly"""
+        qc = QuantumCircuit(3)
+        qiskit_params = [Parameter(f"param_{i}") for i in range(3)]
+
+        qc.rx(qiskit_params[0], 0)
+        qc.rx(qiskit_params[1], 1)
+        qc.rx(qiskit_params[2], 2)
+        qc.cnot(0, 1)
+        qc.cnot(1, 2)
+
+        # convert to a PennyLane circuit
+        qc_pl = qml.from_qiskit(qc)
+
+        dev = qml.device("default.qubit", wires=3)
+
+        @qml.qnode(dev)
+        def circuit(params):
+            qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
+            qc_pl(qiskit_param_mapping)
+            return qml.expval(qml.PauliX(0) @ qml.PauliY(2))
+
+        dcircuit = qml.grad(circuit, 0)
+        res = dcircuit([theta, phi, varphi])
+        expected = [
+            np.cos(theta) * np.sin(phi) * np.sin(varphi),
+            np.sin(theta) * np.cos(phi) * np.sin(varphi),
+            np.sin(theta) * np.sin(phi) * np.cos(varphi)
+        ]
+
+        assert np.allclose(res, expected, **tol)
