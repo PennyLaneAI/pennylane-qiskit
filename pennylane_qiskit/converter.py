@@ -20,6 +20,7 @@ QuanctumCircuit converter module
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
+from typing import Dict, Any
 import warnings
 
 import numpy as np
@@ -36,7 +37,7 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-def _check_parameter_bound(param, var_ref_map):
+def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, qml.variable.VariableRef]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
@@ -49,7 +50,7 @@ def _check_parameter_bound(param, var_ref_map):
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
 
-def _extract_variable_refs(params: dict) -> dict:
+def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.variable.VariableRef]:
     """Iterate through the parameter mapping to be bound to the circuit,
     and return a dictionary containing the differentiable parameters.
 
