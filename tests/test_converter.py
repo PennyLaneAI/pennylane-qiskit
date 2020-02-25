@@ -224,6 +224,21 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={})
 
+    def test_invalid_parameter_expression(self, recorder):
+        """Tests that an operation with multiple parameters raises an error."""
+
+        theta = Parameter('θ')
+        phi = Parameter('φ')
+
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta*phi, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(ValueError, match='PennyLane does not support expressions'):
+            with recorder:
+                quantum_circuit(params={theta: qml.variable.VariableRef(0), phi: qml.variable.VariableRef(1)})
+
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were passed."""
 
