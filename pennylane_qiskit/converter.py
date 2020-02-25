@@ -103,7 +103,7 @@ def map_wires(wires: list, qc_wires: list) -> dict:
         qc_wires (list): wires from the converted quantum circuit
 
     Returns:
-        dict: map from quantum circuit wires to the user defined wires
+        dict[int, int]: map from quantum circuit wires to the user defined wires
     """
     if wires is None:
         return dict(zip(qc_wires, range(len(qc_wires))))
