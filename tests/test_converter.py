@@ -954,7 +954,7 @@ class TestConverterIntegration:
 
     @pytest.mark.parametrize("analytic", [True])
     @pytest.mark.parametrize("theta,phi,varphi", list(zip(THETA, PHI, VARPHI)))
-    def test_gradient(self, theta, phi, varphi, tol):
+    def test_gradient(self, theta, phi, varphi, analytic, tol):
         """Test that the gradient works correctly"""
         qc = QuantumCircuit(3)
         qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
@@ -968,7 +968,7 @@ class TestConverterIntegration:
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qml.device("default.qubit", wires=3, analytic=analytic)
 
         @qml.qnode(dev)
         def circuit(params):
