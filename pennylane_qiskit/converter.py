@@ -37,20 +37,20 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, qml.variable.VariableRef]):
+def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, qml.variable.Variable]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
         param (qiskit.circuit.Parameter): the parameter to be checked
-        var_ref_map (dict[qiskit.circuit.Parameter, pennylane.variable.VariableRef]):
+        var_ref_map (dict[qiskit.circuit.Parameter, pennylane.variable.Variable]):
             a dictionary mapping qiskit parameters to PennyLane variables
     """
     if isinstance(param, Parameter) and param not in var_ref_map:
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
 
-def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.variable.VariableRef]:
+def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.variable.Variable]:
     """Iterate through the parameter mapping to be bound to the circuit,
     and return a dictionary containing the differentiable parameters.
 
@@ -58,14 +58,14 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.
         params (dict): dictionary of the parameters in the circuit to their corresponding values
 
     Returns:
-        dict[qiskit.circuit.Parameter, pennylane.variable.VariableRef]: a dictionary mapping
+        dict[qiskit.circuit.Parameter, pennylane.variable.Variable]: a dictionary mapping
             qiskit parameters to PennyLane variables
     """
-    # map qiskit parameters to PennyLane differentiable VariableRefs.
+    # map qiskit parameters to PennyLane differentiable Variables.
     if params is None:
         return {}
 
-    return {k: v for k, v in params.items() if isinstance(v, qml.variable.VariableRef)}
+    return {k: v for k, v in params.items() if isinstance(v, qml.variable.Variable)}
 
 
 def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict, diff_params: dict) -> QuantumCircuit:
@@ -75,7 +75,7 @@ def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: 
         quantum_circuit (QuantumCircuit): the quantum circuit to check and bind the parameters for
         params (dict): dictionary of the parameters in the circuit to their corresponding values
         diff_params (dict): dictionary mapping the differentiable parameters to PennyLane
-            VariableRef instances
+            Variable instances
 
     Returns:
         QuantumCircuit: quantum circuit with bound parameters
@@ -87,7 +87,7 @@ def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: 
         return quantum_circuit
 
     for k in diff_params:
-        # Since we cannot bind VariableRefs to Qiskit circuits,
+        # Since we cannot bind Variables to Qiskit circuits,
         # we must remove them from the binding dictionary before binding.
         del params[k]
 

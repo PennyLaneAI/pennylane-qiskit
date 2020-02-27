@@ -1,4 +1,4 @@
 qiskit>=0.15
-git+git://github.com/XanaduAI/pennylane.git#egg=pennylane
+pennylane
 numpy
 networkx==2.3
