@@ -237,7 +237,7 @@ class TestConverter:
 
         with pytest.raises(ValueError, match='PennyLane does not support expressions'):
             with recorder:
-                quantum_circuit(params={theta: qml.variable.VariableRef(0), phi: qml.variable.VariableRef(1)})
+                quantum_circuit(params={theta: qml.variable.Variable(0), phi: qml.variable.Variable(1)})
 
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were passed."""
