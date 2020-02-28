@@ -20,11 +20,12 @@ QuanctumCircuit converter module
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
+from typing import Dict, Any
 import warnings
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter
+from qiskit.circuit import Parameter, ParameterExpression
 from qiskit.exceptions import QiskitError
 
 import pennylane as qml
@@ -36,30 +37,48 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-def _check_parameter_bound(param):
+def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, qml.variable.Variable]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
-        param: the parameter to be checked
+        param (qiskit.circuit.Parameter): the parameter to be checked
+        var_ref_map (dict[qiskit.circuit.Parameter, pennylane.variable.Variable]):
+            a dictionary mapping qiskit parameters to PennyLane variables
+    """
+    if isinstance(param, Parameter) and param not in var_ref_map:
+        raise ValueError("The parameter {} was not bound correctly.".format(param))
+
+
+def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.variable.Variable]:
+    """Iterate through the parameter mapping to be bound to the circuit,
+    and return a dictionary containing the differentiable parameters.
+
+    Args:
+        params (dict): dictionary of the parameters in the circuit to their corresponding values
 
     Returns:
-        param: the parameter after the check
+        dict[qiskit.circuit.Parameter, pennylane.variable.Variable]: a dictionary mapping
+            qiskit parameters to PennyLane variables
     """
-    if isinstance(param, Parameter):
-        raise ValueError("The parameter {} was not bound correctly.".format(param))
-    return param
+    # map qiskit parameters to PennyLane differentiable Variables.
+    if params is None:
+        return {}
+
+    return {k: v for k, v in params.items() if isinstance(v, qml.variable.Variable)}
 
 
-def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict) -> QuantumCircuit:
+def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict, diff_params: dict) -> QuantumCircuit:
     """Utility function for checking for a valid quantum circuit and then binding parameters.
 
     Args:
         quantum_circuit (QuantumCircuit): the quantum circuit to check and bind the parameters for
-        params (dict): dictionary of the parameters in the circuit
+        params (dict): dictionary of the parameters in the circuit to their corresponding values
+        diff_params (dict): dictionary mapping the differentiable parameters to PennyLane
+            Variable instances
 
     Returns:
-        qc (QuantumCircuit): quantum circuit with bound parameters
+        QuantumCircuit: quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
         raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
@@ -67,9 +86,10 @@ def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: 
     if params is None:
         return quantum_circuit
 
-    for k, v in params.items():
-        if isinstance(v, qml.variable.Variable):
-            params.update({k: v.val})
+    for k in diff_params:
+        # Since we cannot bind Variables to Qiskit circuits,
+        # we must remove them from the binding dictionary before binding.
+        del params[k]
 
     return quantum_circuit.bind_parameters(params)
 
@@ -83,7 +103,7 @@ def map_wires(wires: list, qc_wires: list) -> dict:
         qc_wires (list): wires from the converted quantum circuit
 
     Returns:
-        wire_map (dict): map from quantum circuit wires to the user defined wires
+        dict[int, int]: map from quantum circuit wires to the user defined wires
     """
     if wires is None:
         return dict(zip(qc_wires, range(len(qc_wires))))
@@ -105,17 +125,12 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
     """
     operation = getattr(pennylane_ops, operation_name)
 
-    parameters = [_check_parameter_bound(param) for param in parameters]
-
     if not parameters:
         operation(wires=wires)
     elif operation_name == 'QubitStateVector':
         operation(np.array(parameters), wires=wires)
-    elif operation_name == 'QubitUnitary':
-        operation(*parameters, wires=wires)
     else:
-        float_params = [float(param) for param in parameters]
-        operation(*float_params, wires=wires)
+        operation(*parameters, wires=wires)
 
 
 def load(quantum_circuit: QuantumCircuit):
@@ -144,8 +159,8 @@ def load(quantum_circuit: QuantumCircuit):
         Returns:
             function: the new PennyLane template
         """
-
-        qc = _check_circuit_and_bind_parameters(quantum_circuit, params)
+        var_ref_map = _extract_variable_refs(params)
+        qc = _check_circuit_and_bind_parameters(quantum_circuit, params, var_ref_map)
 
         # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
         qc_wires = [(q.register.name, q.index) for q in quantum_circuit.qubits]
@@ -160,8 +175,32 @@ def load(quantum_circuit: QuantumCircuit):
             operation_wires = [wire_map[(qubit.register.name, qubit.index)] for qubit in op[1]]
 
             if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
+                # Extract the bound parameters from the operation. If the bound parameters are a
+                # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
+                # variable from the var_ref_map dictionary.
 
-                execute_supported_operation(inv_map[instruction_name], op[0].params, operation_wires)
+                parameters = []
+                for p in op[0].params:
+
+                    _check_parameter_bound(p, var_ref_map)
+
+                    if isinstance(p, ParameterExpression):
+                        if p.parameters:
+                            # p.parameters must be a single parameter, as PennyLane
+                            # does not support expressions of variables currently.
+                            if len(p.parameters) > 1:
+                                raise ValueError("Operation {} has invalid parameter {}. PennyLane does not support "
+                                                 "expressions containing differentiable parameters as operation "
+                                                 "arguments".format(instruction_name, p))
+
+                            param = min(p.parameters)
+                            parameters.append(var_ref_map.get(param))
+                        else:
+                            parameters.append(float(p))
+                    else:
+                        parameters.append(p)
+
+                execute_supported_operation(inv_map[instruction_name], parameters, operation_wires)
 
             elif instruction_name == 'SdgGate':
 
