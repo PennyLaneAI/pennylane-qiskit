@@ -75,6 +75,11 @@ class IBMQDevice(QiskitDevice):
         token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
         url = os.getenv("IBMQX_URL") or kwargs.get("ibmqx_url", None)
 
+        # Specify a single hub, group and project
+        hub = kwargs.get("hub", 'ibm-q')
+        group = kwargs.get("group", 'open')
+        project = kwargs.get("project", 'main')
+
         if token is not None:
             # token was provided by the user, so attempt to enable an
             # IBM Q account manually
@@ -101,6 +106,6 @@ class IBMQDevice(QiskitDevice):
         # IBM Q account is now enabled
 
         # get a provider
-        p = provider or IBMQ.get_provider()
+        p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
