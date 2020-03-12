@@ -205,8 +205,16 @@ Note that, by default, the ``qiskit.ibmq`` device uses the simulator backend
 
     dev.capabilities()['backend']
 
-.. gettingstarted-end-inclusion-marker-do-not-remove
+By default, when getting a Qiskit provider, the official options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'`` will be used. Custom provider options can be passed as keyword arguments when creating a device:
 
+.. code-block:: python
+
+    import pennylane as qml
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX", hub='MYHUB', group='MYGROUP', project='MYPROJECT')
+
+Please refer to the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_ for more details.
+
+.. gettingstarted-end-inclusion-marker-do-not-remove
 Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
 well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
 
