@@ -107,5 +107,4 @@ class IBMQDevice(QiskitDevice):
 
         # get a provider
         p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
-
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
