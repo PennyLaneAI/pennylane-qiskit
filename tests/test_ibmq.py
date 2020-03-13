@@ -43,7 +43,7 @@ class MockQiskitDeviceInit:
     is called on by the IBMQDevice"""
 
     def mocked_init(self, wires, provider, backend, shots, **kwargs):
-        """Stores the provider with which QiskitDevice.__init__ was
+        """Stores the provider which QiskitDevice.__init__ was
         called with."""
         self.provider = provider
 
