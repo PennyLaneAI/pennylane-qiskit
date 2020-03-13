@@ -71,7 +71,7 @@ def test_default_provider(monkeypatch):
     mock_qiskit_device = MockQiskitDeviceInit()
 
     with monkeypatch.context() as m:
-        m.setattr(ibmq.QiskitDevice, "__init__",mock_qiskit_device.mocked_init)
+        m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
         m.setattr(ibmq.IBMQ, "get_provider", mock_get_provider)
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
         m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: None)
@@ -80,9 +80,24 @@ def test_default_provider(monkeypatch):
     assert mock_qiskit_device.provider[0] == ()
     assert mock_qiskit_device.provider[1] == {'hub': 'ibm-q', 'group': 'open', 'project': 'main'}
 
-def test_use_default_provider_when_multiple_exist():
-    """Tests that if multiple providers exist, then the default provider will
-    be used when creating an IBMQ device."""
+def test_custom_provider_hub_group_project(monkeypatch):
+    """Tests that the custom arguments passed during device instantiation are
+    used when calling get_provider."""
+    mock_qiskit_device = MockQiskitDeviceInit()
+
+    custom_hub = "SomeHub"
+    custom_group = "SomeGroup"
+    custom_project = "SomeProject"
+
+    with monkeypatch.context() as m:
+        m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
+        m.setattr(ibmq.IBMQ, "get_provider", mock_get_provider)
+        m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: None)
+        dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', hub=custom_hub, group=custom_group, project=custom_project)
+
+    assert mock_qiskit_device.provider[0] == ()
+    assert mock_qiskit_device.provider[1] == {'hub': custom_hub, 'group': custom_group, 'project': custom_project}
 
 
 def test_load_from_disk(token):
