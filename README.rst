@@ -229,6 +229,7 @@ Custom provider options can be passed as keyword arguments when creating a devic
 More details on Qiskit providers can be found at the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_.
 
 .. gettingstarted-end-inclusion-marker-do-not-remove
+
 Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
 well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
 
