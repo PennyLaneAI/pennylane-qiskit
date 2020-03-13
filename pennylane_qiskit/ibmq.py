@@ -33,7 +33,6 @@ Code details
 ~~~~~~~~~~~~
 """
 import os
-import warnings
 
 from qiskit import IBMQ
 from qiskit.providers.ibmq.exceptions import IBMQAccountError
