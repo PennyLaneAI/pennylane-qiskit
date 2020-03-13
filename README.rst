@@ -205,14 +205,28 @@ Note that, by default, the ``qiskit.ibmq`` device uses the simulator backend
 
     dev.capabilities()['backend']
 
-By default, when getting a Qiskit provider, the official options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'`` will be used. Custom provider options can be passed as keyword arguments when creating a device:
+When getting a ``qiskit.ibmq`` device a Qiskit provider is used to connect to the IBM Q systems.
+
+Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is created:
+
+.. code-block:: python
+
+    from qiskit import IBMQ
+    provider = IBMQ.enable_account("XXX")
+
+    import pennylane as qml
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', provider=provider)
+
+If no provider is passed explicitly, then the official provider is attempted to be used setting the provider options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
+
+Custom provider options can be passed as keyword arguments when creating a device:
 
 .. code-block:: python
 
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX", hub='MYHUB', group='MYGROUP', project='MYPROJECT')
 
-Please refer to the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_ for more details.
+More details on Qiskit providers can be found at the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_.
 
 .. gettingstarted-end-inclusion-marker-do-not-remove
 Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
