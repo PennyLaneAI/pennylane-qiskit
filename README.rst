@@ -217,7 +217,7 @@ Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is cre
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', provider=provider)
 
-If no provider is passed explicitly, then the official provider is attempted to be used setting the provider options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
+If no provider is passed explicitly, then the official provider is used, with options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
 
 Custom provider options can be passed as keyword arguments when creating a device:
 
