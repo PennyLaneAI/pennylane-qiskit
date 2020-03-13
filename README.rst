@@ -212,7 +212,7 @@ Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is cre
 .. code-block:: python
 
     from qiskit import IBMQ
-    provider = IBMQ.enable_account("XXX")
+    provider = IBMQ.enable_account('XYZ')
 
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', provider=provider)
