@@ -224,7 +224,7 @@ Custom provider options can be passed as keyword arguments when creating a devic
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX", hub='MYHUB', group='MYGROUP', project='MYPROJECT')
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token='XXX', hub='MYHUB', group='MYGROUP', project='MYPROJECT')
 
 More details on Qiskit providers can be found at the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_.
 
