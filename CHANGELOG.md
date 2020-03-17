@@ -1,18 +1,16 @@
-# Release 0.9.0-dev
-
-### New features since last release
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
+# Release 0.8.2
 
 ### Bug fixes
+
+* Fixed a bug where users with `IBMQ` tokens linked to multiple
+  providers would experience an error.
+  [(#74)](https://github.com/XanaduAI/pennylane-qiskit/pull/74)
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Antal Száva
 
 ---
 
