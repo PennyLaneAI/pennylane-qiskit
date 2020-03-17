@@ -118,7 +118,7 @@ class QiskitDevice(Device, abc.ABC):
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.8.1"
-    version = "0.9.0-dev"
+    version = "0.8.2"
     plugin_version = __version__
     author = "Xanadu"
 
