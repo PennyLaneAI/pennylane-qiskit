@@ -205,6 +205,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Apply the circuit operations
         for i, operation in enumerate(operations):
             wires = operation.wires
+            par = operation.parameters
+            operation = operation.name
+
             mapped_operation = self._operation_map[operation]
 
             qregs = [self._reg[i] for i in wires]
@@ -217,14 +220,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 if len(par[0]) != 2 ** len(wires):
                     raise ValueError("State vector must be of length 2**wires.")
 
-                qregs = revert_quantum_register_order(qregs)
+                qregs = QiskitDevice.revert_quantum_register_order(qregs)
 
             if operation == "QubitUnitary":
 
                 if len(par[0]) != 2 ** len(wires):
                     raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
 
-                qregs = revert_quantum_register_order(qregs)
+                qregs = QiskitDevice.revert_quantum_register_order(qregs)
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
             gate = mapped_operation(*par)
@@ -236,7 +239,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
             qc = dag_to_circuit(dag)
             self._circuit += qc
 
-        self._circuit += self.apply_rotations(rotations)
+        rotation_circuits = self.get_rotation_circuits(rotations)
+
+        for circuit in rotation_circuits:
+            self._circuit += circuits
 
     @staticmethod
     def revert_quantum_register_order(qregs):
@@ -251,7 +257,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """
         return list(reversed(qregs))
 
-    def apply_rotations(self, rotations):
+    def get_rotation_circuits(self, rotations):
         """Apply the circuit rotations.
 
         This method serves as an auxiliary method to :meth:`~.QiskitDevice.apply`.
@@ -263,9 +269,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
         Returns:
             pyquil.Program: the pyquil Program that specifies the corresponding rotations
         """
+        circuits = []
         # Apply the circuit operations
-        for i, operation in enumerate(operations):
+        for i, operation in enumerate(rotations):
             wires = operation.wires
+            par = operation.parameters
+            operation = operation.name
+
             mapped_operation = self._operation_map[operation]
 
             qregs = [self._reg[i] for i in wires]
@@ -284,7 +294,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 gate = gate.inverse()
 
             dag.apply_operation_back(gate, qargs=qregs)
-            return dag_to_circuit(dag)
+            circuit = dag_to_circuit(dag)
+            circuits.append(circuit)
+
+        return circuits
 
     def compile(self):
         """Compile the quantum circuit to target
@@ -394,21 +407,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
         qobj = self.compile()
         self.run(qobj)
 
-    def expval(self, observable, wires, par):
-        if self.backend_name in self._state_backends and self.analytic:
-            # exact expectation value
-            eigvals = self.eigvals(observable, wires, par)
-            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
-            return (eigvals @ prob).real
-
-        if self.analytic:
-            # Raise a warning if backend is a hardware simulator
+    def expval(self, observable):
+        if self.backend_name not in self._state_backends and self.analytic:
+            # Raise a warning if backend is a hardware simulator and the analytic attribute is set to True
             warnings.warn(self.hw_analytic_warning_message.
                           format(self.backend),
                           UserWarning)
 
-        # estimate the ev
-        return np.mean(self.sample(observable, wires, par))
+        super().expval(observable)
 
     def var(self, observable, wires, par):
         if self.backend_name in self._state_backends and self.analytic:
