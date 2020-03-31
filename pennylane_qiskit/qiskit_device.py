@@ -44,7 +44,7 @@ from qiskit.circuit.measure import measure
 from qiskit.compiler import assemble, transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from pennylane import Device, QuantumFunctionError
+from pennylane import QubitDevice, QuantumFunctionError
 from pennylane.operation import Sample
 
 from ._version import __version__
@@ -98,7 +98,7 @@ QISKIT_OPERATION_MAP = {
 QISKIT_OPERATION_INVERSES_MAP = {k + ".inv": v for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-class QiskitDevice(Device, abc.ABC):
+class QiskitDevice(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
 
     Args:
@@ -198,37 +198,93 @@ class QiskitDevice(Device, abc.ABC):
         """The Qiskit simulation backend object"""
         return self.provider.get_backend(self.backend_name)
 
-    def apply(self, operation, wires, par):
-        mapped_operation = self._operation_map[operation]
+    def apply(self, operations, **kwargs):
 
-        qregs = [self._reg[i] for i in wires]
+        rotations = kwargs.get("rotations", [])
 
-        if operation == "QubitStateVector":
+        # Apply the circuit operations
+        for i, operation in enumerate(operations):
+            wires = operation.wires
+            mapped_operation = self._operation_map[operation]
 
-            if self.backend_name == "unitary_simulator":
-                raise QuantumFunctionError("The QubitStateVector operation is not supported on the unitary simulator backend.")
+            qregs = [self._reg[i] for i in wires]
 
-            if len(par[0]) != 2 ** len(wires):
-                raise ValueError("State vector must be of length 2**wires.")
+            if operation == "QubitStateVector":
 
-            qregs = list(reversed(qregs))
+                if self.backend_name == "unitary_simulator":
+                    raise QuantumFunctionError("The QubitStateVector operation is not supported on the unitary simulator backend.")
 
-        if operation == "QubitUnitary":
+                if len(par[0]) != 2 ** len(wires):
+                    raise ValueError("State vector must be of length 2**wires.")
 
-            if len(par[0]) != 2 ** len(wires):
-                raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
+                qregs = revert_quantum_register_order(qregs)
 
-            qregs = list(reversed(qregs))
+            if operation == "QubitUnitary":
 
-        dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-        gate = mapped_operation(*par)
+                if len(par[0]) != 2 ** len(wires):
+                    raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
 
-        if operation.endswith(".inv"):
-            gate = gate.inverse()
+                qregs = revert_quantum_register_order(qregs)
 
-        dag.apply_operation_back(gate, qargs=qregs)
-        qc = dag_to_circuit(dag)
-        self._circuit = self._circuit + qc
+            dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
+            gate = mapped_operation(*par)
+
+            if operation.endswith(".inv"):
+                gate = gate.inverse()
+
+            dag.apply_operation_back(gate, qargs=qregs)
+            qc = dag_to_circuit(dag)
+            self._circuit += qc
+
+        self._circuit += self.apply_rotations(rotations)
+
+    @staticmethod
+    def revert_quantum_register_order(qregs):
+        """Reverts the order of the quantum registers used in Qiskit such
+        that it matches the PennyLane ordering.
+
+        Args:
+            qregs (Sequence(QuantumRegister)): the Qiskit quantum registers
+
+        Returns:
+            list(QuantumRegister): list of reverse quantum registers
+        """
+        return list(reversed(qregs))
+
+    def apply_rotations(self, rotations):
+        """Apply the circuit rotations.
+
+        This method serves as an auxiliary method to :meth:`~.QiskitDevice.apply`.
+
+        Args:
+            rotations (List[pennylane.Operation]): operations that rotate into the
+                measurement basis
+
+        Returns:
+            pyquil.Program: the pyquil Program that specifies the corresponding rotations
+        """
+        # Apply the circuit operations
+        for i, operation in enumerate(operations):
+            wires = operation.wires
+            mapped_operation = self._operation_map[operation]
+
+            qregs = [self._reg[i] for i in wires]
+
+            if operation == "QubitUnitary":
+
+                if len(par[0]) != 2 ** len(wires):
+                    raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
+
+                qregs = list(reversed(qregs))
+
+            dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
+            gate = mapped_operation(*par)
+
+            if operation.endswith(".inv"):
+                gate = gate.inverse()
+
+            dag.apply_operation_back(gate, qargs=qregs)
+            return dag_to_circuit(dag)
 
     def compile(self):
         """Compile the quantum circuit to target
@@ -528,3 +584,29 @@ class QiskitDevice(Device, abc.ABC):
     def reset(self):
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
         self._state = None
+
+    def probability(self, wires=None):
+        """Return the (marginal) probability of each computational basis
+        state from the last run of the device.
+
+        If no wires are specified, then all the basis states representable by
+        the device are considered and no marginalization takes place.
+
+        .. warning:: This method will have to be redefined for hardware devices, since it uses
+            the ``device._state`` attribute. This attribute might not be available for such devices.
+
+        Args:
+            wires (Sequence[int]): Sequence of wires to return
+                marginal probabilities for. Wires not provided
+                are traced out of the system.
+
+        Returns:
+            List[float]: list of the probabilities
+        """
+        if self._state is None:
+            return None
+
+        wires = wires or range(self.num_wires)
+        wires = self.remap_wires(wires)
+        prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
+        return prob
