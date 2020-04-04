@@ -8,6 +8,9 @@
 
 ### Documentation
 
+* Major redesign of the documentation, making it easier to navigate.
+  [(#78)](https://github.com/XanaduAI/pennylane-qiskit/pull/78)
+
 ### Bug fixes
 
 ### Contributors
