@@ -17,23 +17,33 @@ Contents
    :maxdepth: 2
    :caption: Getting started
    :titlesonly:
+   :hidden:
 
    installation
-   gettingstarted
    support
    howtocite
    license
-   tutorials
+
+.. rst-class:: contents local topic
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Usage
+   :hidden:
+
+   devices/overview
+   devices/aer
+   devices/basicaer
+   devices/ibmq
 
 .. rst-class:: contents local topic
 
 .. toctree::
    :maxdepth: 1
-   :caption: Code details
+   :caption: API
+   :hidden:
 
-   code/operations
    code/qiskit_device
    code/basic_aer
    code/aer
    code/ibmq
-   code/gates
