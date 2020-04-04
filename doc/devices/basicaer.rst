@@ -1,10 +1,10 @@
 The BasicAer device
 ===================
 
-While the device ``'qiskit.aer'`` is the standard go-to simulator that is provided along
+While the ``'qiskit.aer'`` device is the standard go-to simulator that is provided along
 the Qiskit main package installation, there exists a natively included python simulator
 that is slower but will work usually without the need to check out other dependencies
-(gcc, blas and so on) which can be used through the device ``'qiskit.basicaer'``:
+(gcc, blas and so on). This simulator can be used through the device ``'qiskit.basicaer'``:
 
 .. code-block:: python
 
@@ -22,4 +22,4 @@ by calling
 
     Currently, PennyLane does not support the ``'pulse_simulator'`` backend.
 
-The ``'qiskit.basicaer'`` does not support the simulation of noise models.
+The ``'qiskit.basicaer'`` device however does not support the simulation of noise models.

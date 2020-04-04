@@ -1,6 +1,8 @@
 Overview
 ========
 
+This section will introduce some examples of how to use the PennyLane-Qiskit plugin.
+
 Devices
 ~~~~~~~
 
@@ -9,22 +11,23 @@ can be accessed straightaway in PennyLane.
 
 .. devicegalleryitem::
     :name: 'qiskit.aer'
-    :description: Qiskit's staple simulator and has great features like noise models.
-    :link: devices/aer
+    :description: Qiskit's staple simulator with great features such as noise models.
+    :link: `https://pennylane-qiskit.readthedocs.io/en/latest/devices/aer`_
 
 .. devicegalleryitem::
     :name: 'qiskit.basicaer'
     :description: A simplified version of the Aer device, which requires fewer dependencies.
-    :link: /devices/basicaer
+    :link: `https://pennylane-qiskit.readthedocs.io/en/latest/devices/basicaer`_
 
 .. devicegalleryitem::
     :name: 'qiskit.ibmq'
     :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
-    :link: devices/ibmq
+    :link: `https://pennylane-qiskit.readthedocs.io/en/latest/devices/ibmq`_
 
 .. raw:: html
 
         <div style='clear:both'></div>
+        </br>
 
 A device is chosen by calling (here for 2 wires):
 

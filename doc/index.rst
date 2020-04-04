@@ -19,10 +19,9 @@ Contents
    :titlesonly:
    :hidden:
 
+   about
    installation
    support
-   howtocite
-   license
 
 .. rst-class:: contents local topic
 

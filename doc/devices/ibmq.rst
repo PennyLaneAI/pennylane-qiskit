@@ -9,6 +9,8 @@ Find out which backends are available by calling
 
 .. code-block:: python
 
+    import pennylane as qml
+
     dev = qml.device('qiskit.ibmq', wires=2)
     dev.capabilities()['backend']
 
@@ -21,7 +23,6 @@ as well as an optional URL:
 
 .. code-block:: python
 
-    import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX")
 
 

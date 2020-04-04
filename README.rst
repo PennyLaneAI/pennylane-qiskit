@@ -27,21 +27,27 @@ PennyLane Qiskit Plugin
 
 .. header-start-inclusion-marker-do-not-remove
 
+The PennyLane-Qiskit plugin integrates the Qiskit quantum computing framework with PennyLane's
+quantum machine learning capabilities.
+
+.. image:: doc/_static/puzzle.png
+    :align: center
+    :width: 40%
+    :target: javascript:void(0);
+
+|
+
 `PennyLane <https://pennylane.readthedocs.io>`_ is a cross-platform Python library for quantum machine
 learning, automatic differentiation, and optimization of hybrid quantum-classical computations.
 
-`Qiskit <https://qiskit.org/documentation/>`_ is an open-source compilation framework capable of targeting various
-types of hardware and a high-performance quantum computer simulator with emulation capabilities, and various
-compiler plug-ins.
-
-This PennyLane plugin allows to use both the software and hardware backends of Qiskit as devices for PennyLane.
+`Qiskit <https://qiskit.org/documentation/>`_ is an open-source framework for quantum computing.
 
 
 Features
 ========
 
 * Provides three devices to be used with PennyLane: ``qiskit.basicaer``, ``qiskit.aer`` and ``qiskit.ibmq``.
-  These devices provide access to the various backends.
+  These devices provide access to the various backends, including the IBM hardware accessible through the cloud.
 
 * Supports a wide range of PennyLane operations and expectation values across the providers.
 
@@ -68,7 +74,7 @@ To test that the PennyLane Qiskit plugin is working correctly you can run
     $ make test
 
 in the source folder. Tests restricted to a specific provider can be run by executing
-``make test-basicaer``, ``make test-aer`` ``make test-ibmq``.
+``make test-basicaer``, ``make test-aer``, and ``make test-ibmq``.
 
 .. note::
 
@@ -124,8 +130,10 @@ Support
 
 - **Source Code:** https://github.com/XanaduAI/pennylane-qiskit
 - **Issue Tracker:** https://github.com/XanaduAI/pennylane-qiskit/issues
+- **PennyLane Forum:** https://discuss.pennylane.ai
 
-If you are having issues, please let us know by posting the issue on our Github issue tracker.
+If you are having issues, please let us know by posting the issue on our Github issue tracker, or
+by asking a question in the forum.
 
 .. support-end-inclusion-marker-do-not-remove
 .. license-start-inclusion-marker-do-not-remove

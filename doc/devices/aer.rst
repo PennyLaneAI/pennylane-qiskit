@@ -33,10 +33,10 @@ Backends
 
 Qiskit's Aer layer has several backends, for example ``'qasm_simulator'``,
 ``'statevector_simulator'``, ``'unitary_simulator'``. For more information on backends, please visit the
-`qiskit documentation <https://qiskit.org/documentation/the_elements.html#aer>`_ and
+`qiskit documentation <https://qiskit.org/documentation/the_elements.html#aer>`_ and the
 `qiskit tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
 
-You can change the default device's backend with
+You can change a device's backend with
 
 .. code-block:: python
 
@@ -50,29 +50,49 @@ To get a current overview what backends are available you can query this by
 
 .. note::
 
-    Currently, PennyLane does not support the ``'pulse_simulator'`` backend.
+    Currently, PennyLane currently does not support the ``'pulse_simulator'`` backend.
 
 Noise models
 ~~~~~~~~~~~~
 
 One great feature of the ``'qiskit.aer'`` device is the ability to simulate noise. There are different noise models,
-which you can instantiate and apply to the device by calling
+which you can instantiate and apply to the device as follows
+(adapting `this <https://qiskit.org/documentation/apidoc/aer_noise.html>`_ qiskit tutorial):
 
 .. code-block:: python
 
     import pennylane as qml
 
     import qiskit
-    from qiskit.providers.aer.noise.device import basic_device_noise_model
+    import qiskit.providers.aer.noise as noise
 
-    qiskit.IBMQ.load_account()
-    provider = qiskit.IBMQ.get_provider(group='open')
-    ibmq_16_melbourne = provider.get_backend('ibmq_16_melbourne')
-    device_properties = ibmq_16_melbourne.properties()
+    # Error probabilities
+    prob_1 = 0.001  # 1-qubit gate
+    prob_2 = 0.01   # 2-qubit gate
 
-    noise_model = basic_device_noise_model(device_properties)
+    # Depolarizing quantum errors
+    error_1 = noise.depolarizing_error(prob_1, 1)
+    error_2 = noise.depolarizing_error(prob_2, 2)
 
+    # Add errors to noise model
+    noise_model = noise.NoiseModel()
+    noise_model.add_all_qubit_quantum_error(error_1, ['u1', 'u2', 'u3'])
+    noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
+
+    # Create a PennyLane device
     dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
+
+    # Create a PennyLane quantum node run on the device
+    @qml.qnode(dev)
+    def circuit(x, y, z):
+        qml.RZ(z, wires=[0])
+        qml.RY(y, wires=[0])
+        qml.RX(x, wires=[0])
+        qml.CNOT(wires=[0, 1])
+        return qml.expval(qml.PauliZ(wires=1))
+
+    # Result of noisy simulator
+    print(circuit(0.2, 0.1, 0.3))
 
 Please refer to the Qiskit documentation for more information on
 `noise models <https://qiskit.org/documentation/tutorials/advanced/aer/3_building_noise_models.html>`_.
