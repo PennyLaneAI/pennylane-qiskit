@@ -1,5 +1,8 @@
 The Aer device
 ==============
+The ``qiskit.aer`` device provided by the PennyLane-Qiskit plugin allows you to use PennyLane
+to deploy and run your quantum machine learning models on the backends and simulators provided
+by `Qiskit Aer <https://qiskit.org/aer/>`_.
 
 You can instantiate a ``'qiskit.aer'`` device for PennyLane with:
 
@@ -31,12 +34,11 @@ You can then execute the circuit like any other function to get the quantum mech
 Backends
 ~~~~~~~~
 
-Qiskit's Aer has several backends, for example ``'qasm_simulator'``,
-``'statevector_simulator'``, ``'unitary_simulator'``.
-If no backend is specified, PennyLane uses the ``'qasm_simulator'`.
-For more information on available backends, please visit the
-`qiskit documentation <https://qiskit.org/documentation/the_elements.html#aer>`_ and the
-`qiskit tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
+
+Qiskit's Aer layer has several backends, for example ``'qasm_simulator'``,
+``'statevector_simulator'``, ``'unitary_simulator'``. For more information on backends, please visit the
+`Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_ and the
+`Qiskit Aer tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
 
 You can change an ``'qiskit.aer'`` device's backend with
 

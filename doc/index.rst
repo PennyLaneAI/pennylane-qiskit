@@ -7,7 +7,7 @@ PennyLane-Qiskit Plugin
 
 .. image:: _static/puzzle.png
     :align: center
-    :width: 200px
+    :width: 300px
     :target: javascript:void(0);
 
 |
