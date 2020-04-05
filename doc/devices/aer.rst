@@ -1,5 +1,8 @@
 The Aer device
 ==============
+The ``qiskit.aer`` device provided by the PennyLane-Qiskit plugin allows you to use PennyLane
+to deploy and run your quantum machine learning models on the backends and simulators provided
+by `Qiskit Aer <https://qiskit.org/aer/>`_.
 
 You can instantiate a ``'qiskit.aer'`` device for PennyLane with:
 
