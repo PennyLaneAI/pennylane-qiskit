@@ -1,4 +1,4 @@
-PennyLane Qiskit Plugin
+PennyLane-Qiskit Plugin
 #######################
 
 :Release: |release|
@@ -16,10 +16,9 @@ PennyLane Qiskit Plugin
   :start-after:	header-start-inclusion-marker-do-not-remove
   :end-before: header-end-inclusion-marker-do-not-remove
 
-Contents
-========
-
-.. rst-class:: contents local topic
+.. include:: ../README.rst
+  :start-after:	license-start-inclusion-marker-do-not-remove
+  :end-before: license-end-inclusion-marker-do-not-remove
 
 .. toctree::
    :maxdepth: 2
@@ -27,11 +26,8 @@ Contents
    :titlesonly:
    :hidden:
 
-   about
    installation
    support
-
-.. rst-class:: contents local topic
 
 .. toctree::
    :maxdepth: 2
@@ -42,8 +38,6 @@ Contents
    devices/aer
    devices/basicaer
    devices/ibmq
-
-.. rst-class:: contents local topic
 
 .. toctree::
    :maxdepth: 1

@@ -1,13 +1,13 @@
 Overview
 ========
 
-This section will introduce some examples of how to use the PennyLane-Qiskit plugin.
+Once the PennyLane-Qiskit plugin is installed, the following Qiskit devices
+can be accessed straightaway in PennyLane.
 
 Devices
 ~~~~~~~
 
-Once the PennyLane-Qiskit plugin is installed, the following Qiskit devices
-can be accessed straightaway in PennyLane.
+Currently, there are three devices for different qiskit "providers":
 
 .. devicegalleryitem::
     :name: 'qiskit.aer'
@@ -29,7 +29,7 @@ can be accessed straightaway in PennyLane.
         <div style='clear:both'></div>
         </br>
 
-A device is chosen by calling (here for 2 wires):
+For example, the ``'qiskit.aer'`` device with two wires called like this:
 
 .. code-block:: python
 
@@ -44,13 +44,14 @@ follows:
 
     dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
+PennyLane chooses a default backend if no backend is specified.
 
 Tutorials
 ~~~~~~~~~
 
-To see the PennyLane-Qiskit plugin in action, you can use any of the qubit based `tutorials
-from the PennyLane documentation <https://pennylane.ai/qml/beginner.html>`_, for example
-the tutorial on `qubit rotation <https://pennylane.ai/qml/tutorial/tutorial_qubit_rotation.html>`_,
+To see the PennyLane-Qiskit plugin in action, you can use any of the qubit based `demos
+from the PennyLane documentation <https://pennylane.ai/qml/demonstrations.html>`_, for example
+the tutorial on `qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_,
 and simply replace ``'default.qubit'`` with any of the available Qiskit devices, such as ``'qiskit.aer'``:
 
 .. code-block:: python
@@ -59,3 +60,6 @@ and simply replace ``'default.qubit'`` with any of the available Qiskit devices,
 
 You can also try to run tutorials, such as the qubit rotation tutorial, on actual quantum hardware by
 using the ``'qiskit.ibmq'`` device.
+
+To filter tutorials that explicitly use a qiskit device, use the "Qiskit" filter on the right panel of the
+`demos <https://pennylane.ai/qml/demonstrations.html>`_.

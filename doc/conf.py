@@ -407,4 +407,3 @@ from directives import CustomDeviceGalleryItemDirective
 
 def setup(app):
     app.add_directive('devicegalleryitem', CustomDeviceGalleryItemDirective)
-    app.add_stylesheet('xanadu_gallery.css')
