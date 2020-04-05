@@ -4,6 +4,14 @@ PennyLane Qiskit Plugin
 :Release: |release|
 :Date: |today|
 
+
+.. image:: _static/puzzle.png
+    :align: center
+    :width: 200px
+    :target: javascript:void(0);
+
+|
+
 .. include:: ../README.rst
   :start-after:	header-start-inclusion-marker-do-not-remove
   :end-before: header-end-inclusion-marker-do-not-remove
