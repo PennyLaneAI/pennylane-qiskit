@@ -36,8 +36,8 @@ Backends
 
 Qiskit's Aer layer has several backends, for example ``'qasm_simulator'``,
 ``'statevector_simulator'``, ``'unitary_simulator'``. For more information on backends, please visit the
-`qiskit documentation <https://qiskit.org/documentation/the_elements.html#aer>`_ and the
-`qiskit tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
+`Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_ and the
+`Qiskit Aer tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
 
 You can change a device's backend with
 
