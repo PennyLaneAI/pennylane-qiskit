@@ -30,7 +30,7 @@ PennyLane Qiskit Plugin
 The PennyLane-Qiskit plugin integrates the Qiskit quantum computing framework with PennyLane's
 quantum machine learning capabilities.
 
-.. image:: doc/_static/puzzle.png
+.. image:: /_static/puzzle.png
     :align: center
     :width: 40%
     :target: javascript:void(0);
@@ -95,18 +95,6 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
 well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
 
-.. howtocite-start-inclusion-marker-do-not-remove
-
-How to cite
-===========
-
-If you are doing research using PennyLane, please cite `our whitepaper <https://arxiv.org/abs/1811.04968>`_:
-
-  Ville Bergholm, Josh Izaac, Maria Schuld, Christian Gogolin, Carsten Blank, Keri McKiernan and Nathan Killoran.
-  PennyLane. *arXiv*, 2018. arXiv:1811.04968
-
-.. howtocite-end-inclusion-marker-do-not-remove
-
 Contributing
 ============
 
@@ -117,11 +105,17 @@ All contributers to this plugin will be listed as authors on the releases.
 We also encourage bug reports, suggestions for new features and enhancements, and even links to cool projects
 or applications built on PennyLane.
 
-
 Authors
 =======
 
-Shahnawaz Ahmed, Carsten Blank, Sebastian Boerakker, Christian Gogolin, Josh Izaac.
+PennyLane-Qiskit is the work of `many contributors <https://github.com/XanaduAI/pennylane-qiskit/graphs/contributors>`_.
+
+If you are doing research using PennyLane and PennyLane-Qiskit, please cite `our paper <https://arxiv.org/abs/1811.04968>`_:
+
+    Ville Bergholm, Josh Izaac, Maria Schuld, Christian Gogolin, M. Sohaib Alam, Shahnawaz Ahmed,
+    Juan Miguel Arrazola, Carsten Blank, Alain Delgado, Soran Jahangiri, Keri McKiernan, Johannes Jakob Meyer,
+    Zeyue Niu, Antal Száva, and Nathan Killoran.
+    *PennyLane: Automatic differentiation of hybrid quantum-classical computations.* 2018. arXiv:1811.04968
 
 .. support-start-inclusion-marker-do-not-remove
 
