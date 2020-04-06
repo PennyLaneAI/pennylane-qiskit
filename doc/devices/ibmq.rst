@@ -18,15 +18,19 @@ Accounts and Tokens
 ~~~~~~~~~~~~~~~~~~~
 
 By default, the ``qiskit.ibmq`` device will attempt to use an already active or stored
-IBM Q account. If none are available, you may also directly pass your IBM Q API token,
-as well as an optional URL:
+IBM Q account. If it finds no account it will raise an error
+
+``qiskit.providers.ibmq.exceptions.IBMQAccountError: 'No active IBM Q account, and no IBM Q token provided.``
+
+To allow the ``qiskit.ibmq`` device to use your account , you may directly pass your IBM Q API token,
+as well as an optional URL, to the device:
 
 .. code-block:: python
 
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX")
 
 
-In order to avoid accidentally publishing your token, it is best to store it using the
+However, in order to avoid accidentally publishing your token, it is best to store it using the
 ``qiskit.IBMQ.save_account()`` function. Alternatively, you can specify the token or URL via the
 `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`__ by
 adding a section such as
@@ -39,14 +43,17 @@ adding a section such as
     ibmqx_token = "XXX"
     ibmqx_url = "XXX"
 
-Note that, by default, the ``qiskit.ibmq`` device uses the simulator backend
-``ibmq_qasm_simulator``, but this may be changed to any of the real backends as given by
+Backends
+~~~~~~~~
+
+By default, the ``qiskit.ibmq`` device uses the simulator backend
+``ibmq_qasm_simulator``, but this may be changed to any of the real backends as returned by
 
 .. code-block:: python
 
     dev.capabilities()['backend']
 
-When getting a ``qiskit.ibmq`` device a Qiskit provider is used to connect to the IBM Q systems.
+When creating a ``qiskit.ibmq`` device a Qiskit provider is used to connect to the IBM Q systems.
 
 Specifying providers
 ~~~~~~~~~~~~~~~~~~~~
@@ -61,13 +68,16 @@ Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is cre
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', provider=provider)
 
-If no provider is passed explicitly, then the official provider is used, with options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
+If no provider is passed explicitly, then the official provider is used,
+with options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
 
 Custom provider options can be passed as keyword arguments when creating a device:
 
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token='XXX', hub='MYHUB', group='MYGROUP', project='MYPROJECT')
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator',
+                     ibmqx_token='XXX', hub='MYHUB', group='MYGROUP', project='MYPROJECT')
 
-More details on Qiskit providers can be found at the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_.
+More details on Qiskit providers can be found
+in the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_.
