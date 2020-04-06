@@ -45,11 +45,8 @@ class BasicAerDevice(QiskitDevice):
 
     A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
 
-    For details on the backends, please check out
-
-        * `qasm_simulator <https://qiskit.org/documentation/api/qiskit.providers.aer.QasmSimulator.html?highlight=qasm%20simulator#qiskit.providers.aer.QasmSimulator>`_
-        * `statevector_simulator  <https://qiskit.org/documentation/api/qiskit.providers.aer.backends.StatevectorSimulator.html?highlight=statevector%20simulator#qiskit.providers.aer.backends.StatevectorSimulator>`_
-        * `unitary_simulator  <https://qiskit.org/documentation/api/qiskit.providers.aer.backends.UnitarySimulator.html?highlight=unitary%20simulator#qiskit.providers.aer.backends.UnitarySimulator>`_
+    For more information on backends, please visit the
+    `Basic Aer provider documentation <https://qiskit.org/documentation/apidoc/providers_basicaer.html>`_.
 
     Args:
         wires (int): The number of qubits of the device

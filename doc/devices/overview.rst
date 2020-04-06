@@ -12,17 +12,17 @@ Currently, there are three devices for different qiskit "providers":
 .. devicegalleryitem::
     :name: 'qiskit.aer'
     :description: Qiskit's staple simulator with great features such as noise models.
-    :link: `https://pennylane-qiskit.readthedocs.io/en/latest/devices/aer`_
+    :link: aer.html
 
 .. devicegalleryitem::
     :name: 'qiskit.basicaer'
     :description: A simplified version of the Aer device, which requires fewer dependencies.
-    :link: `https://pennylane-qiskit.readthedocs.io/en/latest/devices/basicaer`_
+    :link: basicaer.html
 
 .. devicegalleryitem::
     :name: 'qiskit.ibmq'
     :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
-    :link: `https://pennylane-qiskit.readthedocs.io/en/latest/devices/ibmq`_
+    :link: ibmq.html
 
 .. raw:: html
 

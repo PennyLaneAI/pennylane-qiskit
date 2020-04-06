@@ -295,7 +295,7 @@ html_theme_options = {
     # "index_template": "special_index.html",
 
     # Set the name of the project to appear in the left sidebar.
-    "project_nav_name": "PennyLane",
+    "project_nav_name": "PennyLane-Qiskit",
 
     # Set your Disqus short name to enable comments
     # "disqus_comments_shortname": "pennylane-1",
