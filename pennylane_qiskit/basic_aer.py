@@ -12,25 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-BasicAer Device
-===============
-
-**Module name:** :mod:`pennylane_qiskit.basic_aer`
-
-.. currentmodule:: pennylane_qiskit.basic_aer
-
 This module contains the :class:`~.BasicAerDevice` class, a PennyLane device that allows
 evaluation and differentiation of Qiskit Terra's BasicAer simulator
 using PennyLane.
-
-Classes
--------
-
-.. autosummary::
-   BasicAerDevice
-
-Code details
-~~~~~~~~~~~~
 """
 import qiskit
 

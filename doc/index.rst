@@ -44,7 +44,4 @@ PennyLane-Qiskit Plugin
    :caption: API
    :hidden:
 
-   code/qiskit_device
-   code/basic_aer
-   code/aer
-   code/ibmq
+   code

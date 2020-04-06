@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-QuanctumCircuit converter module
-================================
-
-.. currentmodule:: pennylane_qiskit.load
-
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """

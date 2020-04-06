@@ -12,25 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Aer Device
-==========
-
-**Module name:** :mod:`pennylane_qiskit.aer`
-
-.. currentmodule:: pennylane_qiskit.aer
-
 This module contains the :class:`~.AerDevice` class, a PennyLane device that allows
 evaluation and differentiation of Qiskit Aer's C++ simulator
 using PennyLane.
-
-Classes
--------
-
-.. autosummary::
-   AerDevice
-
-Code details
-~~~~~~~~~~~~
 """
 import qiskit
 

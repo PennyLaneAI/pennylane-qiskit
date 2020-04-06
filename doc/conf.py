@@ -40,8 +40,14 @@ extensions = [
     'sphinx.ext.inheritance_diagram',
     "sphinx.ext.intersphinx",
     'sphinx.ext.viewcode',
+    "sphinx_automodapi.automodapi",
     'edit_on_github'
 ]
+
+autosummary_generate = True
+autosummary_imported_members = False
+automodapi_toctreedirnm = "code/api"
+automodsumm_inherited_members = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates', 'xanadu_theme']
