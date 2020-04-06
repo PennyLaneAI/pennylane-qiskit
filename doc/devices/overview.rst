@@ -44,7 +44,9 @@ follows:
 
     dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
-PennyLane chooses a default backend if no backend is specified.
+PennyLane chooses the ``qasm_simulator`` as the default backend if no backend is specified.
+For more details on the ``qasm_simulator``, including available backend options, see
+`Qiskit Qasm Simulator documentation <https://qiskit.org/documentation/stubs/qiskit.providers.aer.QasmSimulator.html>`_.
 
 Tutorials
 ~~~~~~~~~
