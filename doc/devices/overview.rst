@@ -1,13 +1,13 @@
 Overview
 ========
 
-Once the PennyLane-Qiskit plugin is installed, the following Qiskit devices
-can be accessed straightaway in PennyLane.
+Once the PennyLane-Qiskit plugin is installed, the the Qiskit devices
+can be accessed straightaway in PennyLane, without the need to import new packages.
 
 Devices
 ~~~~~~~
 
-Currently, there are three devices for different qiskit "providers":
+Currently, there are three different devices available:
 
 .. devicegalleryitem::
     :name: 'qiskit.aer'
@@ -29,12 +29,16 @@ Currently, there are three devices for different qiskit "providers":
         <div style='clear:both'></div>
         </br>
 
-For example, the ``'qiskit.aer'`` device with two wires called like this:
+For example, the ``'qiskit.aer'`` device with two wires is called like this:
 
 .. code-block:: python
 
     import pennylane as qml
     dev = qml.device('qiskit.aer', wires=2)
+
+
+Backends
+~~~~~~~~
 
 Qiskit devices have different **backends**, which define which actual simulator or hardware is used by the
 device. Different simulator backends are optimized for different types of circuits. A backend can be defined as

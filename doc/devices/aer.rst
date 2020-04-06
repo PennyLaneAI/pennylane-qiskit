@@ -34,17 +34,11 @@ You can then execute the circuit like any other function to get the quantum mech
 Backends
 ~~~~~~~~
 
-
 Qiskit's Aer layer has several backends, for example ``'qasm_simulator'``,
 ``'statevector_simulator'``, ``'unitary_simulator'``. For more information on backends, please visit the
 `Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_ and the
 `Qiskit Aer tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
 
-You can change an ``'qiskit.aer'`` device's backend with
-
-.. code-block:: python
-
-    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
 To get a current overview what backends are available you can query
 
@@ -52,9 +46,40 @@ To get a current overview what backends are available you can query
 
     dev.capabilities()['backend']
 
+or, alternatively,
+
+.. code-block:: python
+
+    from qiskit import Aer
+    Aer.backends()
+
 .. note::
 
     Currently, PennyLane currently does not support the ``'pulse_simulator'`` backend.
+
+You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument when creating the ``device``:
+
+.. code-block:: python
+
+    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+
+Backend options
+~~~~~~~~~~~~~~~
+
+Qiskit's backends can take different *backend options*, for example to specify the numerical
+precision of the simulation.
+You can find a list of backend options in the backends' respective API documentations:
+
+* `'qasm_simulator' <https://qiskit.org/documentation/stubs/qiskit.providers.aer.QasmSimulator.html>`_
+* `'statevector_simulator' <https://qiskit.org/documentation/stubs/qiskit.providers.aer.StatevectorSimulator.html>`_
+* `'unitary_simulator' <https://qiskit.org/documentation/stubs/qiskit.providers.aer.UnitarySimulator.html>`_
+
+The options are set via
+
+.. code-block:: python
+
+    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator',
+                     backend_options={"validation_threshold": 1e-6})
 
 Noise models
 ~~~~~~~~~~~~

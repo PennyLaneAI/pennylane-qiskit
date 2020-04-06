@@ -22,4 +22,5 @@ by calling
 
     Currently, PennyLane does not support the ``'pulse_simulator'`` backend.
 
+The backends are used in the same manner as specified for the ``'qiskit.aer'`` device.
 The ``'qiskit.basicaer'`` device however does not support the simulation of noise models.
