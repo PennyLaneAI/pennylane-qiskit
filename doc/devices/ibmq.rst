@@ -48,6 +48,9 @@ Note that, by default, the ``qiskit.ibmq`` device uses the simulator backend
 
 When getting a ``qiskit.ibmq`` device a Qiskit provider is used to connect to the IBM Q systems.
 
+Specifying providers
+~~~~~~~~~~~~~~~~~~~~
+
 Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is created:
 
 .. code-block:: python
