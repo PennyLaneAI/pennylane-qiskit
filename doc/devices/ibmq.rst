@@ -5,35 +5,21 @@ PennyLane-Qiskit supports running PennyLane on IBM Q hardware via the ``qistkit.
 You can choose between different backends - either simulators tailor-made to emulate the real hardware,
 or the real hardware itself.
 
-Find out which backends are available by calling
-
-.. code-block:: python
-
-    import pennylane as qml
-
-    dev = qml.device('qiskit.ibmq', wires=2)
-    dev.capabilities()['backend']
-
 Accounts and Tokens
 ~~~~~~~~~~~~~~~~~~~
 
 By default, the ``qiskit.ibmq`` device will attempt to use an already active or stored
-IBM Q account. If it finds no account it will raise an error
+IBM Q account. If the device finds no account it will raise an error:
 
-``qiskit.providers.ibmq.exceptions.IBMQAccountError: 'No active IBM Q account, and no IBM Q token provided.``
+.. code::
 
-To allow the ``qiskit.ibmq`` device to use your account , you may directly pass your IBM Q API token,
-as well as an optional URL, to the device:
+    'No active IBM Q account, and no IBM Q token provided.
 
-.. code-block:: python
-
-    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX")
-
-
-However, in order to avoid accidentally publishing your token, it is best to store it using the
-``qiskit.IBMQ.save_account()`` function. Alternatively, you can specify the token or URL via the
+You can use the ``qiskit.IBMQ.save_account("<my_token>")`` function to permanently store an account,
+and the ``qiskit.IBMQ.load_account()`` function to load the stored account in a given session.
+Alternatively, you can specify the token with PennyLane via the
 `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`__ by
-adding a section such as
+adding the section
 
 .. code::
 
@@ -41,7 +27,15 @@ adding a section such as
 
     [qiskit.ibmq]
     ibmqx_token = "XXX"
-    ibmqx_url = "XXX"
+
+You may also directly pass your IBM Q API token to the device:
+
+.. code-block:: python
+
+    dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX")
+
+
+.. warning:: Never publish code containing your token online.
 
 Backends
 ~~~~~~~~
@@ -53,7 +47,9 @@ By default, the ``qiskit.ibmq`` device uses the simulator backend
 
     dev.capabilities()['backend']
 
-When creating a ``qiskit.ibmq`` device a Qiskit provider is used to connect to the IBM Q systems.
+Most of the backends of the ``qiskit.ibmq`` device, such as ``ibmq_london`` or ``ibmq_16_melbourne``,
+are *hardware backends*. Running PennyLane with these backends means to send the circuit as a job to the actual quantum
+computer and retrieve the results via the cloud.
 
 Specifying providers
 ~~~~~~~~~~~~~~~~~~~~
@@ -68,10 +64,10 @@ Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is cre
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', provider=provider)
 
-If no provider is passed explicitly, then the official provider is used,
-with options of ``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
+If no provider is passed explicitly, then the official provider options are used,
+``hub='ibm-q'``, ``group='open'`` and ``project='main'``.
 
-Custom provider options can be passed as keyword arguments when creating a device:
+Custom provider options can also be passed as keyword arguments when creating a device:
 
 .. code-block:: python
 
