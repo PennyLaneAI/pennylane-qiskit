@@ -3,7 +3,7 @@ The BasicAer device
 
 While the ``'qiskit.aer'`` device is the standard go-to simulator that is provided along
 the Qiskit main package installation, there exists a natively included python simulator
-that is slower but will work usually without the need to check out other dependencies
+that is slower but will work usually without the need to install other dependencies
 (gcc, blas and so on). This simulator can be used through the device ``'qiskit.basicaer'``:
 
 .. code-block:: python
