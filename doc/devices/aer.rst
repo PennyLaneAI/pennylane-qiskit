@@ -55,7 +55,7 @@ or, alternatively,
 
 .. note::
 
-    Currently, PennyLane currently does not support the ``'pulse_simulator'`` backend.
+    Currently, PennyLane does not support the ``'pulse_simulator'`` backend.
 
 You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument when creating the ``device``:
 
