@@ -15,7 +15,7 @@ PennyLane-Qiskit Plugin
 
 .. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=popout-square
     :alt: Read the Docs
-    :target: https://pennylane-qiskit.readthedocs.io
+    :target: https://pennylaneqiskit.readthedocs.io
 
 .. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=popout-square
     :alt: PyPI
@@ -79,7 +79,7 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 
 .. note::
 
-    Tests on the `IBMQ device <https://pennylane-qiskit.readthedocs.io/en/latest/code/ibmq.html>`_ can
+    Tests on the `IBMQ device <https://pennylaneqiskit.readthedocs.io/en/latest/devices/ibmq.html>`_ can
     only be run if a ``ibmqx_token`` for the
     `IBM Q experience <https://quantum-computing.ibm.com/>`_ is
     configured in the `PennyLane configuration file
@@ -93,7 +93,7 @@ in the source folder. Tests restricted to a specific provider can be run by exec
 
 .. installation-end-inclusion-marker-do-not-remove
 
-Please refer to the `plugin documentation <https://pennylane-qiskit.readthedocs.io/>`_ as
+Please refer to the `plugin documentation <https://pennylaneqiskit.readthedocs.io/>`_ as
 well as to the `PennyLane documentation <https://pennylane.readthedocs.io/>`_ for further reference.
 
 Contributing
