@@ -1,4 +1,4 @@
-PennyLane Qiskit Plugin
+PennyLane-Qiskit Plugin
 #######################
 
 .. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
@@ -68,7 +68,7 @@ Installation of this plugin, as well as all dependencies, can be done using ``pi
 
     pip install pennylane-qiskit
 
-To test that the PennyLane Qiskit plugin is working correctly you can run
+To test that the PennyLane-Qiskit plugin is working correctly you can run
 
 .. code-block:: bash
 

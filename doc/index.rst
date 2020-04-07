@@ -2,8 +2,6 @@ PennyLane-Qiskit Plugin
 #######################
 
 :Release: |release|
-:Date: |today|
-
 
 .. image:: _static/puzzle.png
     :align: center
