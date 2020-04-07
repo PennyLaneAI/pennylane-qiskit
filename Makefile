@@ -44,6 +44,7 @@ docs:
 
 .PHONY : clean-docs
 clean-docs:
+	rm -rf doc/code/api
 	make -C doc clean
 
 test:
