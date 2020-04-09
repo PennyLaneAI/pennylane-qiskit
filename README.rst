@@ -43,6 +43,7 @@ learning, automatic differentiation, and optimization of hybrid quantum-classica
 
 `Qiskit <https://qiskit.org/documentation/>`_ is an open-source framework for quantum computing.
 
+.. header-end-inclusion-marker-do-not-remove
 
 Features
 ========
@@ -55,7 +56,6 @@ Features
 * Combine Qiskit's high performance simulator and hardware backend support with PennyLane's automatic
   differentiation and optimization.
 
-.. header-end-inclusion-marker-do-not-remove
 .. installation-start-inclusion-marker-do-not-remove
 
 Installation

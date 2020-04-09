@@ -7,7 +7,7 @@
     <p class="caption">{{ theme_project_nav_name or shorttitle }}</p>
     <ul>
       <li class="caption toctree-l1 {{'current' if pagename == 'index' }}">
-        <a class="reference internal" href="{{ pathto('index') }}">About</a>
+        <a class="reference internal" href="{{ pathto('index') }}">Overview</a>
       </li>
     </ul>
     {% set toctree = toctree(maxdepth=1, collapse=True, includehidden=True) %}
