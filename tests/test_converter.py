@@ -262,7 +262,6 @@ class TestConverter:
         q2 = QuantumRegister(2)
         qc = QuantumCircuit(q2)
 
-        # Calling the QuantumCircuit method unbound
         qiskit_operation(qc, 0.5, q2[0], q2[1])
 
 
@@ -286,7 +285,6 @@ class TestConverter:
         q2 = QuantumRegister(2)
         qc = QuantumCircuit(q2)
 
-        # Calling the QuantumCircuit method unbound
         qc.cry(0.5, q2[0], q2[1])
 
         quantum_circuit = load(qc)
