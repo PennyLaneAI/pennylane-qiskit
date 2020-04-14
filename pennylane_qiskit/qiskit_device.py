@@ -69,13 +69,15 @@ QISKIT_OPERATION_MAP = {
     "T": ex.TGate,
 
     # Adding the following for conversion compatibility
-    "CSWAP": ex.FredkinGate,
-    "CRZ": ex.CrzGate,
+    "CSWAP": ex.CSwapGate,
+    "CRX": ex.CRXGate,
+    "CRY": ex.CRYGate,
+    "CRZ": ex.CRZGate,
     "PhaseShift": ex.U1Gate,
     "QubitStateVector": ex.Initialize,
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
-    "Toffoli": ex.ToffoliGate,
+    "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
 }
 
