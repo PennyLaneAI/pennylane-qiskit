@@ -59,8 +59,8 @@ QISKIT_OPERATION_MAP = {
     "PauliY": ex.YGate,
     "PauliZ": ex.ZGate,
     "Hadamard": ex.HGate,
-    "CNOT": ex.CnotGate,
-    "CZ": ex.CzGate,
+    "CNOT": ex.CXGate,
+    "CZ": ex.CZGate,
     "SWAP": ex.SwapGate,
     "RX": ex.RXGate,
     "RY": ex.RYGate,
@@ -198,6 +198,9 @@ class QiskitDevice(Device, abc.ABC):
                 raise ValueError("State vector must be of length 2**wires.")
 
             qregs = list(reversed(qregs))
+
+            # TODO: once a fix is available in Qiskit-Aer, remove the following:
+            par = (x.tolist() for x in par if isinstance(x, np.ndarray))
 
         if operation == "QubitUnitary":
 
