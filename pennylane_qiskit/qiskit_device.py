@@ -67,7 +67,6 @@ QISKIT_OPERATION_MAP = {
     "RZ": ex.RZGate,
     "S": ex.SGate,
     "T": ex.TGate,
-
     # Adding the following for conversion compatibility
     "CSWAP": ex.CSwapGate,
     "CRX": ex.CRXGate,
@@ -119,9 +118,11 @@ class QiskitDevice(Device, abc.ABC):
     operations = set(_operation_map.keys())
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
-    hw_analytic_warning_message = "The analytic calculation of expectations and variances "\
-                                  "is only supported on statevector backends, not on the {}. "\
-                                  "The obtained result is based on sampling."
+    hw_analytic_warning_message = (
+        "The analytic calculation of expectations and variances "
+        "is only supported on statevector backends, not on the {}. "
+        "The obtained result is based on sampling."
+    )
 
     _eigs = {}
 
@@ -194,14 +195,16 @@ class QiskitDevice(Device, abc.ABC):
         if operation == "QubitStateVector":
 
             if self.backend_name == "unitary_simulator":
-                raise QuantumFunctionError("The QubitStateVector operation is not supported on the unitary simulator backend.")
+                raise QuantumFunctionError(
+                    "The QubitStateVector operation is not supported on the unitary simulator backend."
+                )
 
             if len(par[0]) != 2 ** len(wires):
                 raise ValueError("State vector must be of length 2**wires.")
 
             qregs = list(reversed(qregs))
 
-            # TODO: once a fix is available in Qiskit-Aer, remove the following:
+            # Once a fix is available in Qiskit-Aer, remove the following:
             par = (x.tolist() for x in par if isinstance(x, np.ndarray))
 
         if operation == "QubitUnitary":
@@ -310,7 +313,11 @@ class QiskitDevice(Device, abc.ABC):
         for e in self.obs_queue:
             # Add unitaries if a different expectation value is given
             # Exclude unitary_simulator as it does not support memory=True
-            if hasattr(e, "return_type") and e.return_type == Sample and self.backend_name != 'unitary_simulator':
+            if (
+                hasattr(e, "return_type")
+                and e.return_type == Sample
+                and self.backend_name != "unitary_simulator"
+            ):
                 self.memory = True  # make sure to return samples
 
             if isinstance(e.name, list):
@@ -338,9 +345,7 @@ class QiskitDevice(Device, abc.ABC):
 
         if self.analytic:
             # Raise a warning if backend is a hardware simulator
-            warnings.warn(self.hw_analytic_warning_message.
-                          format(self.backend),
-                          UserWarning)
+            warnings.warn(self.hw_analytic_warning_message.format(self.backend), UserWarning)
 
         # estimate the ev
         return np.mean(self.sample(observable, wires, par))
@@ -354,9 +359,7 @@ class QiskitDevice(Device, abc.ABC):
 
         if self.analytic:
             # Raise a warning if backend is a hardware simulator
-            warnings.warn(self.hw_analytic_warning_message.
-                          format(self.backend),
-                          UserWarning)
+            warnings.warn(self.hw_analytic_warning_message.format(self.backend), UserWarning)
 
         return np.var(self.sample(observable, wires, par))
 
