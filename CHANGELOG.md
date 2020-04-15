@@ -6,6 +6,9 @@
 
 ### Improvements
 
+* Added a test for returning probabilities when using the `IBMQDevice`.
+  [(#82)](https://github.com/XanaduAI/pennylane-qiskit/pull/82)
+
 ### Documentation
 
 * Major redesign of the documentation, making it easier to navigate.
@@ -13,9 +16,15 @@
 
 ### Bug fixes
 
+* Added a type conversion of parameters for parametrized gates and renamed
+  various gates for Qiskit version 0.18.0 support.
+  [(#81)](https://github.com/XanaduAI/pennylane-qiskit/pull/81)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Josh Izaac, Maria Schuld, Antal Száva
 
 ---
 
