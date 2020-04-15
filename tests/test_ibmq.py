@@ -161,6 +161,8 @@ def test_probability(token, x, tol, shots):
     prob = qml.QNode(circuit, dev)
     prob_analytic = qml.QNode(circuit, dev_analytic)
 
-    assert np.isclose(prob(x).sum(), 1, atol=tol, rtol=0)
-    assert np.allclose(prob_analytic(x), prob(x), atol=0.1, rtol=0)
+    called_prob = prob(x)
+
+    assert np.isclose(called_prob.sum(), 1, **tol)
+    assert np.allclose(prob_analytic(x), prob(x), **tol)
     assert not np.array_equal(prob_analytic(x), prob(x))
