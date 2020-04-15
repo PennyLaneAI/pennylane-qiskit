@@ -13,9 +13,14 @@
 
 ### Bug fixes
 
+* Renamed `QiskitDevice.probabilities` to `QiskitDevice.probability` to overload `pennylane.Device.probability`. This fixes a bug that raises `NotImplementedError` when a QNode is used to compute probabilities on a IBMQ device.
+ [(#80)](https://github.com/XanaduAI/pennylane-qiskit/pull/80)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Rafael Haenel
 
 ---
 
