@@ -200,7 +200,7 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -224,7 +224,7 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -240,7 +240,7 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(func(theta) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -255,7 +255,7 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -270,7 +270,7 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -293,7 +293,7 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -309,6 +309,6 @@ class TestHardwareApply:
         dev._obs_queue = []
         dev.pre_measure()
 
-        res = np.fromiter(dev.probabilities().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(func(theta) @ state) ** 2
         assert np.allclose(res, expected, **tol)

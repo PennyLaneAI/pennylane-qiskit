@@ -340,7 +340,7 @@ class QiskitDevice(Device, abc.ABC):
         if self.backend_name in self._state_backends and self.analytic:
             # exact expectation value
             eigvals = self.eigvals(observable, wires, par)
-            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            prob = np.fromiter(self.probability(wires=wires).values(), dtype=np.float64)
             return (eigvals @ prob).real
 
         if self.analytic:
@@ -354,7 +354,7 @@ class QiskitDevice(Device, abc.ABC):
         if self.backend_name in self._state_backends and self.analytic:
             # exact variance value
             eigvals = self.eigvals(observable, wires, par)
-            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            prob = np.fromiter(self.probability(wires=wires).values(), dtype=np.float64)
             return (eigvals ** 2) @ prob - (eigvals @ prob).real ** 2
 
         if self.analytic:
@@ -371,7 +371,7 @@ class QiskitDevice(Device, abc.ABC):
         if self.backend_name in self._state_backends:
             # software simulator. Need to sample from probabilities.
             eigvals = self.eigvals(observable, wires, par)
-            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            prob = np.fromiter(self.probability(wires=wires).values(), dtype=np.float64)
             return np.random.choice(eigvals, self.shots, p=prob)
 
         # a hardware simulator
@@ -385,7 +385,7 @@ class QiskitDevice(Device, abc.ABC):
         else:
             # Need to convert counts into samples
             samples = np.vstack(
-                [np.vstack([s] * int(self.shots * p)) for s, p in self.probabilities().items()]
+                [np.vstack([s] * int(self.shots * p)) for s, p in self.probability().items()]
             )
 
         if isinstance(observable, str) and observable in {"PauliX", "PauliY", "PauliZ", "Hadamard"}:
@@ -405,7 +405,7 @@ class QiskitDevice(Device, abc.ABC):
     def state(self):
         return self._state
 
-    def probabilities(self, wires=None):
+    def probability(self, wires=None):
         """Return the (marginal) probability of each computational basis
         state from the last run of the device.
 
