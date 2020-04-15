@@ -204,7 +204,7 @@ class QiskitDevice(Device, abc.ABC):
 
             qregs = list(reversed(qregs))
 
-            # Once a fix is available in Qiskit-Aer, remove the following:
+            # TODO: Once a fix is available in Qiskit-Aer, remove the following:
             par = (x.tolist() for x in par if isinstance(x, np.ndarray))
 
         if operation == "QubitUnitary":
