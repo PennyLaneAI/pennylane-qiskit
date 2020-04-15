@@ -146,10 +146,9 @@ def test_simple_circuit(token, tol, shots):
 @pytest.mark.parametrize("x", [[0.2, 0.5], [0.4, 0.9], [0.8, 0.3]])
 @pytest.mark.parametrize("shots", [1000])
 def test_probability(token, x, tol, shots):
-    """Test that the probability function works when analytic=False"""
+    """Test that the probs function works."""
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
-    # dev = qml.device("default.qubit", wires=2, analytic=False)
     dev_analytic = qml.device("default.qubit", wires=2, analytic=True)
 
     def circuit(x):
