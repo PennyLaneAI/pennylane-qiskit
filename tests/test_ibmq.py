@@ -140,3 +140,28 @@ def test_simple_circuit(token, tol, shots):
     res = circuit(theta, phi)
     expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
     assert np.allclose(res, expected, **tol)
+
+
+@pytest.mark.parametrize("analytic", [False])
+@pytest.mark.parametrize("x", [[0.2, 0.5], [0.4, 0.9], [0.8, 0.3]])
+@pytest.mark.parametrize("shots", [1000])
+def test_probability(token, x, tol, shots):
+    """Test that the probs function works."""
+    IBMQ.enable_account(token)
+    dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
+    dev_analytic = qml.device("default.qubit", wires=2, analytic=True)
+
+    def circuit(x):
+        qml.RX(x[0], wires=0)
+        qml.RY(x[1], wires=0)
+        qml.CNOT(wires=[0, 1])
+        return qml.probs(wires=[0, 1])
+
+    prob = qml.QNode(circuit, dev)
+    prob_analytic = qml.QNode(circuit, dev_analytic)
+
+    called_prob = prob(x)
+
+    assert np.isclose(called_prob.sum(), 1, **tol)
+    assert np.allclose(prob_analytic(x), prob(x), **tol)
+    assert not np.array_equal(prob_analytic(x), prob(x))
