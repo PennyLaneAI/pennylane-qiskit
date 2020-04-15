@@ -4,7 +4,14 @@
 
 ### Breaking changes
 
+* Now supports Qiskit version 0.18.0. As a result of breaking changes
+  within Qiskit, version 0.17 and below are no longer supported.
+  [(#81)](https://github.com/XanaduAI/pennylane-qiskit/pull/81)
+
 ### Improvements
+
+* Added a test for returning probabilities when using the `IBMQDevice`.
+  [(#82)](https://github.com/XanaduAI/pennylane-qiskit/pull/82)
 
 ### Documentation
 
@@ -13,9 +20,21 @@
 
 ### Bug fixes
 
+* Added a type conversion of parameters for parametrized gates, and renamed
+  various gates for Qiskit version 0.18.0 support.
+  [(#81)](https://github.com/XanaduAI/pennylane-qiskit/pull/81)
+
+* Renamed `QiskitDevice.probabilities` to `QiskitDevice.probability` to overload
+  `pennylane.Device.probability`. This fixes a bug that raises `NotImplementedError`
+  when a QNode is used to compute probabilities on a IBMQ device.
+  [(#80)](https://github.com/XanaduAI/pennylane-qiskit/pull/80)
+
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Rafael Haenel, Josh Izaac, Maria Schuld, Antal Száva
 
 ---
 

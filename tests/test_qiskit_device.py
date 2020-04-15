@@ -35,7 +35,7 @@ class TestProbabilities:
         """Test that the probabilities function returns
         None if no job has yet been run."""
         dev = AerDevice(backend="statevector_simulator", wires=1, analytic=True)
-        assert dev.probabilities() is None
+        assert dev.probability() is None
 
 
 class TestAnalyticWarningHWSimulator:
