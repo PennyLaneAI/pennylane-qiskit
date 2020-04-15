@@ -22,7 +22,7 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=0.16",
+    "qiskit>=0.18",
     "pennylane>=0.8.1",
     "numpy"
 ]
