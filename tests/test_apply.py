@@ -199,8 +199,8 @@ class TestHardwareApply:
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
 
-        res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
+        expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])

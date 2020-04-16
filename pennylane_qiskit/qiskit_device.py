@@ -42,23 +42,24 @@ QISKIT_OPERATION_MAP = {
     "PauliY": ex.YGate,
     "PauliZ": ex.ZGate,
     "Hadamard": ex.HGate,
-    "CNOT": ex.CnotGate,
-    "CZ": ex.CzGate,
+    "CNOT": ex.CXGate,
+    "CZ": ex.CZGate,
     "SWAP": ex.SwapGate,
     "RX": ex.RXGate,
     "RY": ex.RYGate,
     "RZ": ex.RZGate,
     "S": ex.SGate,
     "T": ex.TGate,
-
     # Adding the following for conversion compatibility
-    "CSWAP": ex.FredkinGate,
-    "CRZ": ex.CrzGate,
+    "CSWAP": ex.CSwapGate,
+    "CRX": ex.CRXGate,
+    "CRY": ex.CRYGate,
+    "CRZ": ex.CRZGate,
     "PhaseShift": ex.U1Gate,
     "QubitStateVector": ex.Initialize,
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
-    "Toffoli": ex.ToffoliGate,
+    "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
 }
 
@@ -100,9 +101,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
     operations = set(_operation_map.keys())
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
-    hw_analytic_warning_message = "The analytic calculation of expectations and variances "\
-                                  "is only supported on statevector backends, not on the {}. "\
-                                  "The obtained result is based on sampling."
+    hw_analytic_warning_message = (
+        "The analytic calculation of expectations and variances "
+        "is only supported on statevector backends, not on the {}. "
+        "The obtained result is based on sampling."
+    )
 
     _eigs = {}
 
@@ -258,6 +261,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in wires]
 
+            # TODO: Once a fix is available in Qiskit-Aer, remove the
+            # following:
+            par = (x.tolist() for x in par if isinstance(x, np.ndarray))
+
             if operation == "QubitUnitary":
 
                 if len(par[0]) != 2 ** len(wires):
@@ -353,14 +360,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if self.backend_name in self._state_backends and self.analytic:
             # exact variance value
             eigvals = self.eigvals(observable, wires, par)
-            prob = np.fromiter(self.probabilities(wires=wires).values(), dtype=np.float64)
+            prob = np.fromiter(self.probability(wires=wires).values(), dtype=np.float64)
             return (eigvals ** 2) @ prob - (eigvals @ prob).real ** 2
 
         if self.analytic:
             # Raise a warning if backend is a hardware simulator
-            warnings.warn(self.hw_analytic_warning_message.
-                          format(self.backend),
-                          UserWarning)
+            warnings.warn(self.hw_analytic_warning_message.format(self.backend), UserWarning)
 
         return np.var(self.sample(observable, wires, par))
 
