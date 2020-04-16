@@ -6,3 +6,4 @@ pybind11
 qiskit
 git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
 dc-qiskit-algorithms
+sphinx-automodapi

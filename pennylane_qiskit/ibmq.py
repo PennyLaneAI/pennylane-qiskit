@@ -12,25 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-IBMQ Device
-===========
-
-**Module name:** :mod:`pennylane_qiskit.ibmq`
-
-.. currentmodule:: pennylane_qiskit.ibmq
-
 This module contains the :class:`~.IBMQDevice` class, a PennyLane device that allows
 evaluation and differentiation of IBM Q's Quantum Processing Units (QPUs)
 using PennyLane.
-
-Classes
--------
-
-.. autosummary::
-   IBMQDevice
-
-Code details
-~~~~~~~~~~~~
 """
 import os
 

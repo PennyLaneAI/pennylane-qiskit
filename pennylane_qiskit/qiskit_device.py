@@ -12,21 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-Base Qiskit device class
-========================
-
-.. currentmodule:: pennylane_qiskit.qiskit_device
-
 This module contains a base class for constructing Qiskit devices for PennyLane.
-
-Classes
--------
-
-.. autosummary::
-   QiskitDevice
-
-Code details
-~~~~~~~~~~~~
 """
 # pylint: disable=too-many-instance-attributes
 
