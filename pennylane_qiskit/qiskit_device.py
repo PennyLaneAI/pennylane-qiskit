@@ -351,61 +351,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # Need to convert counts into samples
         result = self._current_job.result()
-        print('counts: ', result.get_counts())
 
         # sort the counts and reverse qubit order to match PennyLane convention
-        nonzero_prob = {
-            tuple(int(i) for i in s[::-1]): c / self.shots
+        unsorted_samples_with_counts = {
+            tuple(int(i) for i in s[::-1]): c
             for s, c in result.get_counts().items()
         }
-
-        # marginal probabilities not required
-        probs = OrderedDict(tuple(sorted(nonzero_prob.items())))
-
-        print('probs: ', nonzero_prob)
-        # 
-        return np.vstack(
-            [np.vstack([s] * int(self.shots * p)) for s, p in probs.items()]
+        sorted_samples_with_counts = dict(sorted(unsorted_samples_with_counts.items()))
+        samples = np.vstack(
+            [np.vstack([s] * c) for s, c in sorted_samples_with_counts.items()]
         )
-
-        if self.backend_name in self._state_backends:
-            # statevector simulator
-            # TODO: use marginal probabilities
-            prob = np.abs(self.state.reshape([2] * self.num_wires)) ** 2
-        else:
-            # hardware/hardware simulator
-            result = self._current_job.result()
-
-            # reverse qubit order to match PennyLane convention
-            nonzero_prob = {
-                tuple(int(i) for i in s[::-1]): c / self.shots
-                for s, c in result.get_counts().items()
-            }
-
-            return nonzero_prob.values()
-
-    def probability(self, wires=None):
-        if self._current_job is None:
-            return None
-
-        print('not none branch')
-        if self.backend_name in self._state_backends:
-            # statevector simulator
-            prob = np.abs(self.state.reshape([2] * self.num_wires)) ** 2
-            print('asdnot none branch')
-        else:
-            # hardware simulator
-            result = self._current_job.result()
-
-            # sort the counts and reverse qubit order to match PennyLane convention
-            nonzero_prob = {
-                tuple(int(i) for i in s[::-1]): c / self.shots
-                for s, c in result.get_counts().items()
-            }
-
-            if wires is None:
-                # marginal probabilities not required
-                return OrderedDict(tuple(sorted(nonzero_prob.items())))
+        return samples
 
     def expval(self, observable):
         if self.backend_name not in self._state_backends and self.analytic:

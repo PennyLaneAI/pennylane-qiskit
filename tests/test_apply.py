@@ -175,12 +175,10 @@ class TestHardwareApply:
         wires = [0]
 
         dev.apply([qml.QubitStateVector(state, wires=wires)])
-        # dev._samples = dev.generate_samples()
+        dev._samples = dev.generate_samples()
 
-        print(dev._samples, state, dev.probability())
-        res = np.fromiter(dev.probability().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(state) ** 2
-        print(res, expected)
         assert np.allclose(res, expected, **tol)
 
     def test_invalid_qubit_state_vector(self, hardware_simulator_device):
