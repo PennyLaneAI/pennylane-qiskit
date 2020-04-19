@@ -180,6 +180,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
             par = operation.parameters
             operation = operation.name
 
+            # TODO: Once a fix is available in Qiskit-Aer, remove the
+            # following:
+            if any(isinstance(x, np.ndarray) for x in par):
+                par = list(x if not isinstance(x, np.ndarray) else x.tolist() for x in par)
+
             mapped_operation = self._operation_map[operation]
 
             qregs = [self._reg[i] for i in wires]
@@ -221,6 +226,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             for qr, cr in zip(self._reg, self._creg):
                 measure(self._circuit, qr, cr)
 
+        # These operations need to run for all devices
         qobj = self.compile()
         self.run(qobj)
 
@@ -263,7 +269,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             # TODO: Once a fix is available in Qiskit-Aer, remove the
             # following:
-            par = (x.tolist() for x in par if isinstance(x, np.ndarray))
+            if any(isinstance(x, np.ndarray) for x in par):
+                par = list(x if not isinstance(x, np.ndarray) else x.tolist() for x in par)
 
             if operation == "QubitUnitary":
 
@@ -343,9 +350,62 @@ class QiskitDevice(QubitDevice, abc.ABC):
             return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
         # Need to convert counts into samples
+        result = self._current_job.result()
+        print('counts: ', result.get_counts())
+
+        # sort the counts and reverse qubit order to match PennyLane convention
+        nonzero_prob = {
+            tuple(int(i) for i in s[::-1]): c / self.shots
+            for s, c in result.get_counts().items()
+        }
+
+        # marginal probabilities not required
+        probs = OrderedDict(tuple(sorted(nonzero_prob.items())))
+
+        print('probs: ', nonzero_prob)
+        # 
         return np.vstack(
-            [np.vstack([s] * int(self.shots * p)) for s, p in self.probabilities().items()]
+            [np.vstack([s] * int(self.shots * p)) for s, p in probs.items()]
         )
+
+        if self.backend_name in self._state_backends:
+            # statevector simulator
+            # TODO: use marginal probabilities
+            prob = np.abs(self.state.reshape([2] * self.num_wires)) ** 2
+        else:
+            # hardware/hardware simulator
+            result = self._current_job.result()
+
+            # reverse qubit order to match PennyLane convention
+            nonzero_prob = {
+                tuple(int(i) for i in s[::-1]): c / self.shots
+                for s, c in result.get_counts().items()
+            }
+
+            return nonzero_prob.values()
+
+    def probability(self, wires=None):
+        if self._current_job is None:
+            return None
+
+        print('not none branch')
+        if self.backend_name in self._state_backends:
+            # statevector simulator
+            prob = np.abs(self.state.reshape([2] * self.num_wires)) ** 2
+            print('asdnot none branch')
+        else:
+            # hardware simulator
+            result = self._current_job.result()
+
+            # sort the counts and reverse qubit order to match PennyLane convention
+            nonzero_prob = {
+                tuple(int(i) for i in s[::-1]): c / self.shots
+                for s, c in result.get_counts().items()
+            }
+
+            if wires is None:
+                # marginal probabilities not required
+                return OrderedDict(tuple(sorted(nonzero_prob.items())))
 
     def expval(self, observable):
         if self.backend_name not in self._state_backends and self.analytic:
@@ -422,3 +482,41 @@ class QiskitDevice(QubitDevice, abc.ABC):
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
 
+        """
+    def probability(self, wires=None):
+        """
+        """Return the (marginal) probability of each computational basis
+        state from the last run of the device.
+        Args:
+            wires (Sequence[int]): Sequence of wires to return
+                marginal probabilities for. Wires not provided
+                are traced out of the system.
+        Returns:
+            OrderedDict[tuple, float]: Dictionary mapping a tuple representing the state
+            to the resulting probability. The dictionary should be sorted such that the
+            state tuples are in lexicographical order.
+        """
+        """
+        # Note: Qiskit uses the convention that the first qubit is the
+        # least significant qubit.
+        if self._current_job is None:
+            return None
+
+        if wires is None:
+            # sort the counts and
+            # marginal probabilities not required
+            return OrderedDict(tuple(sorted(self._samples.items())))
+
+        prob = np.zeros([2] * self.num_wires)
+
+        for s, p in tuple(sorted(nonzero_prob.items())):
+            prob[s] = p
+
+        wires = wires or range(self.num_wires)
+        wires = np.hstack(wires)
+
+        basis_states = itertools.product(range(2), repeat=len(wires))
+        inactive_wires = list(set(range(self.num_wires)) - set(wires))
+        prob = np.apply_over_axes(np.sum, prob, inactive_wires).flatten()
+        return OrderedDict(zip(basis_states, prob))
+        """

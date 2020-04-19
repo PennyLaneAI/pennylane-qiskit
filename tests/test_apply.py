@@ -67,7 +67,7 @@ class TestStateApply:
     """Test application of PennyLane operations to state simulators."""
 
     def test_qubit_state_vector(self, init_state, device, tol):
-        """Test PauliX application"""
+        """TODO: Test PauliX application"""
         dev = device(1)
         state = init_state(1)
 
@@ -79,7 +79,7 @@ class TestStateApply:
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
     def test_single_qubit_operations_no_parameters(self, init_state, device, operation, tol):
-        """Test PauliX application"""
+        """TODO: Test PauliX application"""
         dev = device(1)
         state = init_state(1)
         applied_operation = operation(wires=[0])
@@ -91,9 +91,9 @@ class TestStateApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
-    @pytest.mark.parametrize("operation", single_qubit_operations)
+    @pytest.mark.parametrize("operation", single_qubit_operations_param)
     def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
-        """Test PauliX application"""
+        """TODO: Test PauliX application"""
         dev = device(1)
         state = init_state(1)
         applied_operation = operation(theta, wires=[0])
@@ -105,8 +105,8 @@ class TestStateApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", two_qubit)
-    def test_two_qubit_no_parameters(self, init_state, device, operation, tol):
-        """Test PauliX application"""
+    def test_two_qubit_operations_no_parameters(self, init_state, device, operation, tol):
+        """TODO: Test PauliX application"""
         dev = device(2)
         state = init_state(2)
         wires = [0, 1]
@@ -119,28 +119,29 @@ class TestStateApply:
         expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
-    @pytest.mark.parametrize("operation", three_qubit)
-    def test_three_qubit_no_parameters(self, init_state, device, operation, tol):
-        dev = device(3)
-        state = init_state(3)
-        applied_operation = operation(wires=[0, 1, 2])
-
-        dev.apply([qml.QubitStateVector(state, wires=[0, 1, 2]), applied_operation])
-
-        res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix @ state) ** 2
-        assert np.allclose(res, expected, **tol)
-
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", two_qubit_param)
-    def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
-        """Test PauliX application"""
+    def test_two_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
+        """TODO: Test PauliX application"""
         dev = device(2)
         state = init_state(2)
         wires = [0, 1]
         applied_operation = operation(theta, wires=wires)
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+
+        res = np.abs(dev.state) ** 2
+        expected = np.abs(applied_operation.matrix @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("operation", three_qubit)
+    def test_three_qubit_operations_no_parameters(self, init_state, device, operation, tol):
+        """TODO: Test PauliX application"""
+        dev = device(3)
+        state = init_state(3)
+        applied_operation = operation(wires=[0, 1, 2])
+
+        dev.apply([qml.QubitStateVector(state, wires=[0, 1, 2]), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix @ state) ** 2
@@ -167,22 +168,25 @@ class TestStateApplyUnitarySimulator:
 class TestHardwareApply:
     """Test application of PennyLane operations on hardware simulators."""
 
-    def test_qubit_state_vector(self, init_state, device, tol):
+    def test_qubit_state_vector(self, init_state, hardware_simulator_device, tol):
         """Test PauliX application"""
-        dev = device(1)
+        dev = hardware_simulator_device(1)
         state = init_state(1)
         wires = [0]
 
         dev.apply([qml.QubitStateVector(state, wires=wires)])
+        # dev._samples = dev.generate_samples()
 
-        res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
+        print(dev._samples, state, dev.probability())
+        res = np.fromiter(dev.probability().values(), dtype=np.float64)
         expected = np.abs(state) ** 2
+        print(res, expected)
         assert np.allclose(res, expected, **tol)
 
-    def test_invalid_qubit_state_vector(self, device):
+    def test_invalid_qubit_state_vector(self, hardware_simulator_device):
         """Test that an exception is raised if the state
         vector is the wrong size"""
-        dev = device(2)
+        dev = hardware_simulator_device(2)
         state = np.array([0, 123.432])
         wires = [0, 1]
 
@@ -190,24 +194,24 @@ class TestHardwareApply:
             dev.apply([qml.QubitStateVector(state, wires=wires)])
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
-    def test_single_qubit_operations_no_parameters(self, init_state, device, operation, tol):
+    def test_single_qubit_operations_no_parameters(self, init_state, hardware_simulator_device, operation, tol):
         """Test PauliX application"""
-        dev = device(1)
+        dev = hardware_simulator_device(1)
         state = init_state(1)
         wires = [0]
         applied_operation = operation(wires=wires)
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
 
-        res = np.fromiter(dev.probability().values(), dtype=np.float64)
+        res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", single_qubit_operations)
-    def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
+    def test_single_qubit_operations_parameters(self, init_state, hardware_simulator_device, operation, theta, tol):
         """Test PauliX application"""
-        dev = device(1)
+        dev = hardware_simulator_device(1)
         state = init_state(1)
         wires = [0]
         applied_operation = operation(theta, wires=wires)
@@ -219,9 +223,9 @@ class TestHardwareApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", two_qubit)
-    def test_two_qubit_no_parameters(self, init_state, device, operation, tol):
+    def test_two_qubit_no_parameters(self, init_state, hardware_simulator_device, operation, tol):
         """Test PauliX application"""
-        dev = device(2)
+        dev = hardware_simulator_device(2)
         state = init_state(2)
         wires = [0, 1]
 
@@ -234,9 +238,9 @@ class TestHardwareApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("mat", [U, U2])
-    def test_qubit_unitary(self, init_state, device, mat, tol):
+    def test_qubit_unitary(self, init_state, hardware_simulator_device, mat, tol):
         N = int(np.log2(len(mat)))
-        dev = device(N)
+        dev = hardware_simulator_device(N)
         state = init_state(N)
         wires = list(range(N))
 
@@ -246,18 +250,18 @@ class TestHardwareApply:
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
-    def test_invalid_qubit_state_unitary(self, device):
+    def test_invalid_qubit_state_unitary(self, hardware_simulator_device):
         """Test that an exception is raised if the
         unitary matrix is the wrong size"""
-        dev = device(2)
+        dev = hardware_simulator_device(2)
         state = np.array([[0, 123.432], [-0.432, 023.4]])
 
         with pytest.raises(ValueError, match=r"Unitary matrix must be of shape"):
             dev.apply("QubitUnitary", [0, 1], [state])
 
     @pytest.mark.parametrize("operation", three_qubit)
-    def test_three_qubit_no_parameters(self, init_state, device, operation, tol):
-        dev = device(3)
+    def test_three_qubit_no_parameters(self, init_state, hardware_simulator_device, operation, tol):
+        dev = hardware_simulator_device(3)
         state = init_state(3)
         applied_operation = operation(wires=[0, 1, 2])
         wires = [0, 1, 2]
@@ -270,9 +274,9 @@ class TestHardwareApply:
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", two_qubit_param)
-    def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
+    def test_single_qubit_operations_parameters(self, init_state, hardware_simulator_device, operation, theta, tol):
         """Test PauliX application"""
-        dev = device(2)
+        dev = hardware_simulator_device(2)
         state = init_state(2)
         wires = [0, 1]
 
