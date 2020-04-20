@@ -370,36 +370,16 @@ class QiskitDevice(QubitDevice, abc.ABC):
                           format(self.backend),
                           UserWarning)
 
-        super().expval(observable)
+        return super().expval(observable)
 
     def var(self, observable, wires, par):
-        if self.backend_name in self._state_backends and self.analytic:
-            # exact variance value
-            eigvals = self.eigvals(observable, wires, par)
-            prob = np.fromiter(self.probability(wires=wires).values(), dtype=np.float64)
-            return (eigvals ** 2) @ prob - (eigvals @ prob).real ** 2
+        if self.backend_name not in self._state_backends and self.analytic:
+            # Raise a warning if backend is a hardware simulator and the analytic attribute is set to True
+            warnings.warn(self.hw_analytic_warning_message.
+                          format(self.backend),
+                          UserWarning)
 
-        if self.analytic:
-            # Raise a warning if backend is a hardware simulator
-            warnings.warn(self.hw_analytic_warning_message.format(self.backend), UserWarning)
-
-        return np.var(self.sample(observable, wires, par))
-
-    """
-    def sample(self, observable, wires, par):
-        if isinstance(observable, str) and observable in {"PauliX", "PauliY", "PauliZ", "Hadamard"}:
-            return 1 - 2 * samples[:, wires[0]]
-
-        eigvals = self.eigvals(observable, wires, par)
-        wires = np.hstack(wires)
-        res = samples[:, np.array(wires)]
-        samples = np.zeros([self.shots])
-
-        for w, b in zip(eigvals, itertools.product([0, 1], repeat=len(wires))):
-            samples = np.where(np.all(res == b, axis=1), w, samples)
-
-        return samples
-    """
+        return super().var(observable)
 
     @property
     def state(self):
@@ -437,42 +417,3 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # wires = self.remap_wires(wires)
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
-
-        """
-    def probability(self, wires=None):
-        """
-        """Return the (marginal) probability of each computational basis
-        state from the last run of the device.
-        Args:
-            wires (Sequence[int]): Sequence of wires to return
-                marginal probabilities for. Wires not provided
-                are traced out of the system.
-        Returns:
-            OrderedDict[tuple, float]: Dictionary mapping a tuple representing the state
-            to the resulting probability. The dictionary should be sorted such that the
-            state tuples are in lexicographical order.
-        """
-        """
-        # Note: Qiskit uses the convention that the first qubit is the
-        # least significant qubit.
-        if self._current_job is None:
-            return None
-
-        if wires is None:
-            # sort the counts and
-            # marginal probabilities not required
-            return OrderedDict(tuple(sorted(self._samples.items())))
-
-        prob = np.zeros([2] * self.num_wires)
-
-        for s, p in tuple(sorted(nonzero_prob.items())):
-            prob[s] = p
-
-        wires = wires or range(self.num_wires)
-        wires = np.hstack(wires)
-
-        basis_states = itertools.product(range(2), repeat=len(wires))
-        inactive_wires = list(set(range(self.num_wires)) - set(wires))
-        prob = np.apply_over_axes(np.sum, prob, inactive_wires).flatten()
-        return OrderedDict(zip(basis_states, prob))
-        """

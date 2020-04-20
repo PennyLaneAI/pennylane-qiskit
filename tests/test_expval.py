@@ -16,23 +16,23 @@ VARPHI = np.linspace(0.02, 1, 3)
 @pytest.mark.parametrize("theta, phi", list(zip(THETA, PHI)))
 @pytest.mark.parametrize("analytic", [True, False])
 @pytest.mark.parametrize("shots", [8192])
+@pytest.mark.usefixtures("skip_unitary")
 class TestExpval:
     """Test expectation values"""
 
     def test_identity_expectation(self, theta, phi, device, shots, tol):
         """Test that identity expectation value (i.e. the trace) is 1"""
         dev = device(2)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
+        dev.apply([qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])])
 
         O = qml.Identity
-        name = "Identity"
 
         dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        dev.pre_measure()
 
-        res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
+        if not dev.analytic:
+            dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O(wires=[0])), dev.expval(O(wires=[1]))])
 
         assert np.allclose(res, np.array([1, 1]), **tol)
 
