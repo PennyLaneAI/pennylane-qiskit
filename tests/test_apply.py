@@ -231,10 +231,10 @@ class TestHardwareApply:
 
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires)])
+        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
-        res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
+        res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -248,7 +248,7 @@ class TestHardwareApply:
         dev.apply([qml.QubitStateVector(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
         dev._samples = dev.generate_samples()
 
-        res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
+        res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -259,7 +259,7 @@ class TestHardwareApply:
         state = np.array([[0, 123.432], [-0.432, 023.4]])
 
         with pytest.raises(ValueError, match=r"Unitary matrix must be of shape"):
-            dev.apply("QubitUnitary", [0, 1], [state])
+            dev.apply([qml.QubitUnitary(state, wires=[0, 1])])
 
     @pytest.mark.parametrize("operation", three_qubit)
     def test_three_qubit_no_parameters(self, init_state, hardware_simulator_device, operation, tol):
@@ -268,10 +268,10 @@ class TestHardwareApply:
         applied_operation = operation(wires=[0, 1, 2])
         wires = [0, 1, 2]
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
+        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
-        res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
+        res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
@@ -288,6 +288,6 @@ class TestHardwareApply:
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
-        res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
+        res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
