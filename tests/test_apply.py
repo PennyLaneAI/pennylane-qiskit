@@ -200,9 +200,10 @@ class TestHardwareApply:
         applied_operation = operation(wires=wires)
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
-        expected = np.abs(mat @ state) ** 2
+        expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
@@ -215,6 +216,7 @@ class TestHardwareApply:
         applied_operation = operation(theta, wires=wires)
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
@@ -227,9 +229,10 @@ class TestHardwareApply:
         state = init_state(2)
         wires = [0, 1]
 
-        applied_operation = operation(theta, wires=wires)
+        applied_operation = operation(wires=wires)
 
         dev.apply([qml.QubitStateVector(state, wires=wires)])
+        dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
@@ -243,6 +246,7 @@ class TestHardwareApply:
         wires = list(range(N))
 
         dev.apply([qml.QubitStateVector(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
+        dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
         expected = np.abs(mat @ state) ** 2
@@ -265,6 +269,7 @@ class TestHardwareApply:
         wires = [0, 1, 2]
 
         dev.apply([qml.QubitStateVector(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
+        dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
@@ -281,6 +286,7 @@ class TestHardwareApply:
         applied_operation = operation(theta, wires=wires)
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.marginal_prob(np.abs(state) ** 2, wires), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
