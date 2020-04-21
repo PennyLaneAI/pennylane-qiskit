@@ -113,14 +113,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
         super().__init__(wires=wires, shots=shots)
 
         # Keep track if the user specified analytic to be True
-        analytic_was_specified = "analytic" in kwargs
+        analytic_was_specified = "analytic" in kwargs and kwargs["analytic"]
         self.analytic = kwargs.pop("analytic", False)
 
         if self.analytic and backend not in self._state_backends:
 
             if analytic_was_specified:
-                # Raise a warning if the analytic attribute was set
-                # and leave it undefined
+                # Raise a warning if the analytic attribute was set to True
                 warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
             self.analytic = False
