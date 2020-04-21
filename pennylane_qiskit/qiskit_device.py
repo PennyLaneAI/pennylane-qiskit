@@ -102,9 +102,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
 
     hw_analytic_warning_message = (
-        "The analytic calculation of expectations and variances "
-        "is only supported on statevector backends, not on the {}. "
-        "The obtained result is based on sampling."
+        "The analytic calculation of expectations, variances and "
+        "probabilities is only supported on statevector backends, not on the {}. "
+        "Such statistics obtained from this device are estimates based on samples."
     )
 
     _eigs = {}
@@ -112,7 +112,20 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
+        # Keep track if the user specified analytic to be True
+        analytic_was_specified = "analytic" in kwargs
         self.analytic = kwargs.pop("analytic", False)
+
+        if self.analytic and backend not in self._state_backends:
+
+            if analytic_was_specified:
+                # Raise a warning if the analytic attribute was set
+                # and leave it undefined
+                warnings.warn(self.hw_analytic_warning_message.
+                              format(backend),
+                              UserWarning)
+
+            self.analytic = False
 
         if "verbose" not in kwargs:
             kwargs["verbose"] = False
