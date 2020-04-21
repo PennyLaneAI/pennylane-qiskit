@@ -14,14 +14,12 @@
 r"""
 This module contains a base class for constructing Qiskit devices for PennyLane.
 """
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
+
 
 import abc
-import functools
 import inspect
-import itertools
 import warnings
-from collections import OrderedDict
 
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -31,7 +29,6 @@ from qiskit.compiler import assemble, transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from pennylane import QubitDevice, QuantumFunctionError
-from pennylane.operation import Sample
 
 from ._version import __version__
 
@@ -219,7 +216,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """
         circuits = []
 
-        for i, operation in enumerate(operations):
+        for operation in operations:
             # Apply the circuit operations
             wires = operation.wires
             par = operation.parameters
@@ -237,7 +234,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in wires]
 
-            if operation == "QubitUnitary" or operation == "QubitStateVector":
+            if operation in ("QubitUnitary", "QubitStateVector"):
                 # Need to revert the order of the quantum registers used in
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
@@ -292,10 +289,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(qobj, **self.run_args)
-        result = self._current_job.result()
+        self._result = self._current_job.result()
 
         if self.backend_name in self._state_backends:
-            self._state = self._get_state(result)
+            self._state = self._get_state(self._result)
 
     def _get_state(self, result):
         """Returns the statevector for state simulator backends.
@@ -321,11 +318,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def counts(self):
-        """Returns the counts for the results obtained."""
-        if result is None:
+        """Returns the counts for the results obtained.
+
+        Returns:
+            dict[str, int]: a map of basis states to number of counts
+        """
+        if self._result is None:
             return None
 
-        return result.get_counts()
+        return self._result.get_counts()
 
     def generate_samples(self):
 
