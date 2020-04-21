@@ -339,7 +339,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
             # software simulator. Need to sample from probabilities.
-            super().generate_samples()
+            return super().generate_samples()
 
         # a hardware simulator
         if self.memory:

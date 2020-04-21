@@ -27,30 +27,23 @@ class TestExpval:
 
         O = qml.Identity
 
-        dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-
         if not dev.analytic:
             dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O(wires=[0])), dev.expval(O(wires=[1]))])
-
         assert np.allclose(res, np.array([1, 1]), **tol)
 
     def test_pauliz_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliZ expectation value is correct"""
         dev = device(2)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
+        dev.apply([qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])])
 
         O = qml.PauliZ
-        name = "PauliZ"
 
-        dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        dev.pre_measure()
+        if not dev.analytic:
+            dev._samples = dev.generate_samples()
 
-        res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
-
+        res = np.array([dev.expval(O(wires=[0])), dev.expval(O(wires=[1]))])
         assert np.allclose(res, np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]), **tol)
 
     def test_paulix_expectation(self, theta, phi, device, shots, tol):
