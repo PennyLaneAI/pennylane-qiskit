@@ -51,10 +51,6 @@ single_qubit_operations = [
     qml.T
 ]
 
-#TODO: do we need to include
-#("T.inv", T.conj().T),?
-# single_qubit_operations_inverses = [
-
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ]
 two_qubit_param = [qml.CRZ]
@@ -67,7 +63,7 @@ class TestStateApply:
     """Test application of PennyLane operations to state simulators."""
 
     def test_qubit_state_vector(self, init_state, device, tol):
-        """TODO: Test PauliX application"""
+        """Test that the QubitStateVector operation works fine with the apply method."""
         dev = device(1)
         state = init_state(1)
 
@@ -79,7 +75,8 @@ class TestStateApply:
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
     def test_single_qubit_operations_no_parameters(self, init_state, device, operation, tol):
-        """TODO: Test PauliX application"""
+        """Test that single qubit operations that take no parameters work fine
+        with the apply method."""
         dev = device(1)
         state = init_state(1)
         applied_operation = operation(wires=[0])
@@ -93,7 +90,8 @@ class TestStateApply:
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", single_qubit_operations_param)
     def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
-        """TODO: Test PauliX application"""
+        """Test that single qubit parametrized operations work fine with the
+        apply method."""
         dev = device(1)
         state = init_state(1)
         applied_operation = operation(theta, wires=[0])
@@ -106,7 +104,8 @@ class TestStateApply:
 
     @pytest.mark.parametrize("operation", two_qubit)
     def test_two_qubit_operations_no_parameters(self, init_state, device, operation, tol):
-        """TODO: Test PauliX application"""
+        """Test that two qubit operations that take no parameters work fine
+        with the apply method."""
         dev = device(2)
         state = init_state(2)
         wires = [0, 1]
@@ -122,7 +121,8 @@ class TestStateApply:
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", two_qubit_param)
     def test_two_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
-        """TODO: Test PauliX application"""
+        """Test that two qubit parametrized operations work fine with the
+        apply method."""
         dev = device(2)
         state = init_state(2)
         wires = [0, 1]
@@ -136,7 +136,8 @@ class TestStateApply:
 
     @pytest.mark.parametrize("operation", three_qubit)
     def test_three_qubit_operations_no_parameters(self, init_state, device, operation, tol):
-        """TODO: Test PauliX application"""
+        """Test that three qubit operations that take no parameters work fine
+        with the apply method."""
         dev = device(3)
         state = init_state(3)
         applied_operation = operation(wires=[0, 1, 2])
