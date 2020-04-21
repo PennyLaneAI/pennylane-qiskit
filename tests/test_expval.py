@@ -24,8 +24,8 @@ class TestExpval:
         """Test that identity expectation value (i.e. the trace) is 1"""
         dev = device(2)
 
-        O1 = qml.expval(qml.Identity(wires=[0]))
-        O2 = qml.expval(qml.Identity(wires=[1]))
+        O1 = qml.Identity(wires=[0])
+        O2 = qml.Identity(wires=[1])
 
         dev.apply(
             [
@@ -44,8 +44,8 @@ class TestExpval:
     def test_pauliz_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliZ expectation value is correct"""
         dev = device(2)
-        O1 = qml.expval(qml.PauliZ(wires=[0]))
-        O2 = qml.expval(qml.PauliZ(wires=[1]))
+        O1 = qml.PauliZ(wires=[0])
+        O2 = qml.PauliZ(wires=[1])
 
         dev.apply(
             [
@@ -64,8 +64,8 @@ class TestExpval:
     def test_paulix_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliX expectation value is correct"""
         dev = device(2)
-        O1 = qml.expval(qml.PauliX(wires=[0]))
-        O2 = qml.expval(qml.PauliX(wires=[1]))
+        O1 = qml.PauliX(wires=[0])
+        O2 = qml.PauliX(wires=[1])
 
         dev.apply(
             [
@@ -84,8 +84,8 @@ class TestExpval:
     def test_pauliy_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliY expectation value is correct"""
         dev = device(2)
-        O1 = qml.expval(qml.PauliY(wires=[0]))
-        O2 = qml.expval(qml.PauliY(wires=[1]))
+        O1 = qml.PauliY(wires=[0])
+        O2 = qml.PauliY(wires=[1])
 
         dev.apply(
             [
@@ -104,8 +104,8 @@ class TestExpval:
     def test_hadamard_expectation(self, theta, phi, device, shots, tol):
         """Test that Hadamard expectation value is correct"""
         dev = device(2)
-        O1 = qml.expval(qml.Hadamard(wires=[0]))
-        O2 = qml.expval(qml.Hadamard(wires=[1]))
+        O1 = qml.Hadamard(wires=[0])
+        O2 = qml.Hadamard(wires=[1])
 
         dev.apply(
             [
@@ -127,8 +127,8 @@ class TestExpval:
     def test_hermitian_expectation(self, theta, phi, device, shots, tol):
         """Test that arbitrary Hermitian expectation values are correct"""
         dev = device(2)
-        O1 = qml.expval(qml.Hermitian(A, wires=[0]))
-        O2 = qml.expval(qml.Hermitian(A, wires=[1]))
+        O1 = qml.Hermitian(A, wires=[0])
+        O2 = qml.Hermitian(A, wires=[1])
 
         dev.apply(
             [
@@ -164,7 +164,7 @@ class TestExpval:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
-        O1 = qml.expval(qml.Hermitian(A, wires=[0, 1]))
+        O1 = qml.Hermitian(A, wires=[0, 1])
 
         dev.apply(
             [

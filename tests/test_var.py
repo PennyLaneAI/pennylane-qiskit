@@ -25,14 +25,20 @@ class TestVar:
         """Tests for variance calculation"""
         dev = device(2)
 
+        O = qml.PauliZ(wires=[0])
+
+        dev.apply(
+            [
+                qml.RX(phi, wires=[0]),
+                qml.RY(theta, wires=[0]),
+            ],
+            rotations=[*O.diagonalizing_gates()]
+        )
+
+        dev._samples = dev.generate_samples()
+
         # test correct variance for <Z> of a rotated state
-        dev.apply("RX", wires=[0], par=[phi])
-        dev.apply("RY", wires=[0], par=[theta])
-
-        dev._obs_queue = [qml.PauliZ(wires=[0], do_queue=False)]
-        dev.pre_measure()
-
-        var = dev.var("PauliZ", [0], [])
+        var = dev.var(O)
         expected = 0.25 * (3 - np.cos(2 * theta) - 2 * np.cos(theta) ** 2 * np.cos(2 * phi))
 
         assert np.allclose(var, expected, **tol)
