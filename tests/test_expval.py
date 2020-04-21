@@ -2,6 +2,7 @@ import pytest
 
 import numpy as np
 import pennylane as qml
+from pennylane.circuit_graph import CircuitGraph
 
 from conftest import U, U2, A
 
@@ -23,75 +24,94 @@ class TestExpval:
     def test_identity_expectation(self, theta, phi, device, shots, tol):
         """Test that identity expectation value (i.e. the trace) is 1"""
         dev = device(2)
-        dev.apply([qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])])
 
-        O = qml.Identity
+        O1 = qml.expval(qml.Identity(wires=[0]))
+        O2 = qml.expval(qml.Identity(wires=[1]))
 
-        if not dev.analytic:
-            dev._samples = dev.generate_samples()
+        circuit_graph = CircuitGraph(
+            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
+            {}
+        )
 
-        res = np.array([dev.expval(O(wires=[0])), dev.expval(O(wires=[1]))])
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
+
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([1, 1]), **tol)
 
     def test_pauliz_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliZ expectation value is correct"""
         dev = device(2)
-        dev.apply([qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])])
 
-        O = qml.PauliZ
+        O1 = qml.expval(qml.PauliZ(wires=[0]))
+        O2 = qml.expval(qml.PauliZ(wires=[1]))
 
-        if not dev.analytic:
-            dev._samples = dev.generate_samples()
+        circuit_graph = CircuitGraph(
+            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
+            {}
+        )
 
-        res = np.array([dev.expval(O(wires=[0])), dev.expval(O(wires=[1]))])
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
+
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]), **tol)
 
     def test_paulix_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliX expectation value is correct"""
         dev = device(2)
-        dev.apply("RY", wires=[0], par=[theta])
-        dev.apply("RY", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
+        O1 = qml.expval(qml.PauliX(wires=[0]))
+        O2 = qml.expval(qml.PauliX(wires=[1]))
 
-        O = qml.PauliX
-        name = "PauliX"
+        circuit_graph = CircuitGraph(
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
+            {}
+        )
 
-        dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        dev.pre_measure()
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
-        res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([np.sin(theta) * np.sin(phi), np.sin(phi)]), **tol)
 
     def test_pauliy_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliY expectation value is correct"""
         dev = device(2)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
 
-        O = qml.PauliY
-        name = "PauliY"
+        O1 = qml.expval(qml.PauliY(wires=[0]))
+        O2 = qml.expval(qml.PauliY(wires=[1]))
 
-        dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        dev.pre_measure()
+        circuit_graph = CircuitGraph(
+            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
+            {}
+        )
 
-        res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
+
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([0, -np.cos(theta) * np.sin(phi)]), **tol)
 
     def test_hadamard_expectation(self, theta, phi, device, shots, tol):
         """Test that Hadamard expectation value is correct"""
         dev = device(2)
-        dev.apply("RY", wires=[0], par=[theta])
-        dev.apply("RY", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
+        O1 = qml.expval(qml.Hadamard(wires=[0]))
+        O2 = qml.expval(qml.Hadamard(wires=[1]))
 
-        O = qml.Hadamard
-        name = "Hadamard"
+        circuit_graph = CircuitGraph(
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
+            {}
+        )
 
-        dev._obs_queue = [O(wires=[0], do_queue=False), O(wires=[1], do_queue=False)]
-        dev.pre_measure()
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
-        res = np.array([dev.expval(name, [0], []), dev.expval(name, [1], [])])
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1), dev.expval(O2)])
         expected = np.array(
             [np.sin(theta) * np.sin(phi) + np.cos(theta), np.cos(theta) * np.cos(phi) + np.sin(phi)]
         ) / np.sqrt(2)
@@ -100,17 +120,19 @@ class TestExpval:
     def test_hermitian_expectation(self, theta, phi, device, shots, tol):
         """Test that arbitrary Hermitian expectation values are correct"""
         dev = device(2)
-        dev.apply("RY", wires=[0], par=[theta])
-        dev.apply("RY", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
+        O1 = qml.expval(qml.Hermitian(A, wires=[0]))
+        O2 = qml.expval(qml.Hermitian(A, wires=[1]))
 
-        O = qml.Hermitian
-        name = "Hermitian"
+        circuit_graph = CircuitGraph(
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
+            {}
+        )
 
-        dev._obs_queue = [O(A, wires=[0], do_queue=False), O(A, wires=[1], do_queue=False)]
-        dev.pre_measure()
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
-        res = np.array([dev.expval(name, [0], [A]), dev.expval(name, [1], [A])])
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1), dev.expval(O2)])
 
         a = A[0, 0]
         re_b = A[0, 1].real
@@ -121,15 +143,10 @@ class TestExpval:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_multi_mode_hermitian_expectation(self, theta, phi, device, shots, tol):
-        """Test that arbitrary multi-mode Hermitian expectation values are correct"""
+    def test_multi_qubit_hermitian_expectation(self, theta, phi, device, shots, tol):
+        """Test that arbitrary multi-qubit Hermitian expectation values are
+        correct"""
         dev = device(2)
-        dev.apply("RY", wires=[0], par=[theta])
-        dev.apply("RY", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-
-        O = qml.Hermitian
-        name = "Hermitian"
 
         A = np.array(
             [
@@ -139,11 +156,18 @@ class TestExpval:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
+        O1 = qml.expval(qml.Hermitian(A, wires=[0, 1]))
 
-        dev._obs_queue = [O(A, wires=[0, 1], do_queue=False)]
-        dev.pre_measure()
+        circuit_graph = CircuitGraph(
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1],
+            {}
+        )
 
-        res = np.array([dev.expval(name, [0, 1], [A])])
+        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
+
+        dev._samples = dev.generate_samples()
+
+        res = np.array([dev.expval(O1)])
 
         # below is the analytic expectation value for this circuit with arbitrary
         # Hermitian observable A
@@ -165,73 +189,80 @@ class TestTensorExpval:
     """Test tensor expectation values"""
 
     def test_paulix_pauliy(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving PauliX and PauliY works correctly"""
+        """Test that a tensor product involving PauliX and PauliY works
+        correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
+        obs = qml.PauliX(0) @ qml.PauliY(2)
 
-        dev._obs_queue = [
-            qml.PauliX(0, do_queue=False) @ qml.PauliY(2, do_queue=False)
-        ]
-        dev.pre_measure()
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
 
-        res = dev.expval(["PauliX", "PauliY"], [[0], [2]], [[], [], []])
+        dev._samples = dev.generate_samples()
+        res = dev.expval(obs)
+
         expected = np.sin(theta) * np.sin(phi) * np.sin(varphi)
 
         assert np.allclose(res, expected, **tol)
 
     def test_pauliz_identity(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving PauliZ and Identity works correctly"""
+        """Test that a tensor product involving PauliZ and Identity works
+        correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
+        obs = qml.PauliZ(0) @ qml.Identity(1) @ qml.PauliZ(2)
 
-        dev._obs_queue = [
-            qml.PauliZ(0, do_queue=False) @ qml.Identity(1, do_queue=False) @ qml.PauliZ(2, do_queue=False)
-        ]
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
 
-        dev.post_apply()
-        dev.pre_measure()
+        dev._samples = dev.generate_samples()
+        res = dev.expval(obs)
 
-        res = dev.expval(["PauliZ", "Identity", "PauliZ"], [[0], [1], [2]], [[], [], []])
         expected = np.cos(varphi)*np.cos(phi)
 
         assert np.allclose(res, expected, **tol)
 
-    def test_pauliz_hadamard(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving PauliZ and PauliY and hadamard works correctly"""
+    def test_pauliz_hadamard_pauliy(self, theta, phi, varphi, device, shots, tol):
+        """Test that a tensor product involving PauliZ and PauliY and hadamard
+        works correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
+        obs = qml.PauliZ(0) @ qml.Hadamard(1) @ qml.PauliY(2)
 
-        dev._obs_queue = [
-            qml.PauliZ(0, do_queue=False) @ qml.Hadamard(1, do_queue=False) @ qml.PauliY(2, do_queue=False)
-        ]
-        dev.pre_measure()
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
 
-        res = dev.expval(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []])
+        dev._samples = dev.generate_samples()
+        res = dev.expval(obs)
         expected = -(np.cos(varphi) * np.sin(phi) + np.sin(varphi) * np.cos(theta)) / np.sqrt(2)
 
         assert np.allclose(res, expected, **tol)
 
     def test_hermitian(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving qml.Hermitian works correctly"""
+        """Test that a tensor product involving qml.Hermitian works
+        correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
-
         A = np.array(
             [
                 [-6, 2 + 1j, -3, -5 + 2j],
@@ -241,12 +272,21 @@ class TestTensorExpval:
             ]
         )
 
-        dev._obs_queue = [
-            qml.PauliZ(0, do_queue=False) @ qml.Hermitian(A, [1, 2], do_queue=False)
-        ]
-        dev.pre_measure()
+        obs = qml.PauliZ(0) @ qml.Hermitian(A, wires=[1, 2])
 
-        res = dev.expval(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
+
+        dev._samples = dev.generate_samples()
+        res = dev.expval(obs)
         expected = 0.5 * (
             -6 * np.cos(theta) * (np.cos(varphi) + 1)
             - 2 * np.sin(varphi) * (np.cos(theta) + np.sin(phi) - 2 * np.cos(phi))
@@ -257,14 +297,9 @@ class TestTensorExpval:
         assert np.allclose(res, expected, **tol)
 
     def test_hermitian_hermitian(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving two Hermitian matrices works correctly"""
+        """Test that a tensor product involving two Hermitian matrices works
+        correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
-
         A1 = np.array([[1, 2],
                        [2, 4]])
 
@@ -276,13 +311,21 @@ class TestTensorExpval:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
+        obs = qml.Hermitian(A1, wires=[0]) @ qml.Hermitian(A2, wires=[1, 2])
 
-        dev._obs_queue = [
-            qml.Hermitian(A1, 0, do_queue=False) @ qml.Hermitian(A2, [1, 2], do_queue=False)
-        ]
-        dev.pre_measure()
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
 
-        res = dev.expval(["Hermitian", "Hermitian"], [[0], [1, 2]], [[A1], [A2]])
+        dev._samples = dev.generate_samples()
+        res = dev.expval(obs)
         expected = 0.25 * (
             -30
             + 4 * np.cos(phi) * np.sin(theta)
@@ -302,16 +345,23 @@ class TestTensorExpval:
         assert np.allclose(res, expected, **tol)
 
     def test_hermitian_identity_expectation(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving an Hermitian matrix and the identity works correctly"""
+        """Test that a tensor product involving an Hermitian matrix and the
+        identity works correctly"""
         dev = device(2)
-        dev.apply("RY", wires=[0], par=[theta])
-        dev.apply("RY", wires=[1], par=[phi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
 
-        dev._obs_queue = [qml.Hermitian(A, 0, do_queue=False) @ qml.Identity(1, do_queue=False)]
-        dev.pre_measure()
+        obs = qml.Hermitian(A, wires=[0]) @ qml.Identity(1)
 
-        res = dev.expval(["Hermitian", "Identity"], [[0], [1]], [[A], []])
+        dev.apply(
+            [
+                qml.RY(theta, wires=[0]),
+                qml.RY(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1]),
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
+
+        dev._samples = dev.generate_samples()
+        res = dev.expval(obs)
 
         a = A[0, 0]
         re_b = A[0, 1].real

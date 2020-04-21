@@ -219,7 +219,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         rotation_circuits = self.get_rotation_circuits(rotations)
 
         for circuit in rotation_circuits:
-            self._circuit += circuits
+            self._circuit += circuit
 
         if self.backend_name not in self._state_backends:
             # Add measurements if they are needed
