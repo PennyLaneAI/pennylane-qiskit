@@ -2,7 +2,6 @@ import pytest
 
 import numpy as np
 import pennylane as qml
-from pennylane.circuit_graph import CircuitGraph
 
 from conftest import U, U2, A
 
@@ -28,12 +27,14 @@ class TestExpval:
         O1 = qml.expval(qml.Identity(wires=[0]))
         O2 = qml.expval(qml.Identity(wires=[1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
-            {}
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
         dev._samples = dev.generate_samples()
 
@@ -43,16 +44,17 @@ class TestExpval:
     def test_pauliz_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliZ expectation value is correct"""
         dev = device(2)
-
         O1 = qml.expval(qml.PauliZ(wires=[0]))
         O2 = qml.expval(qml.PauliZ(wires=[1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
-            {}
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
         dev._samples = dev.generate_samples()
 
@@ -65,12 +67,14 @@ class TestExpval:
         O1 = qml.expval(qml.PauliX(wires=[0]))
         O2 = qml.expval(qml.PauliX(wires=[1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
-            {}
+        dev.apply(
+            [
+                qml.RY(theta, wires=[0]),
+                qml.RY(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
         dev._samples = dev.generate_samples()
 
@@ -80,16 +84,17 @@ class TestExpval:
     def test_pauliy_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliY expectation value is correct"""
         dev = device(2)
-
         O1 = qml.expval(qml.PauliY(wires=[0]))
         O2 = qml.expval(qml.PauliY(wires=[1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
-            {}
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
         dev._samples = dev.generate_samples()
 
@@ -102,12 +107,14 @@ class TestExpval:
         O1 = qml.expval(qml.Hadamard(wires=[0]))
         O2 = qml.expval(qml.Hadamard(wires=[1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
-            {}
+        dev.apply(
+            [
+                qml.RY(theta, wires=[0]),
+                qml.RY(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
 
         dev._samples = dev.generate_samples()
 
@@ -123,13 +130,14 @@ class TestExpval:
         O1 = qml.expval(qml.Hermitian(A, wires=[0]))
         O2 = qml.expval(qml.Hermitian(A, wires=[1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1, O2],
-            {}
+        dev.apply(
+            [
+                qml.RY(theta, wires=[0]),
+                qml.RY(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
-
         dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
@@ -158,13 +166,14 @@ class TestExpval:
         )
         O1 = qml.expval(qml.Hermitian(A, wires=[0, 1]))
 
-        circuit_graph = CircuitGraph(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])] + [O1],
-            {}
+        dev.apply(
+            [
+                qml.RY(theta, wires=[0]),
+                qml.RY(phi, wires=[1]),
+                qml.CNOT(wires=[0, 1])
+            ],
+            rotations=[*O1.diagonalizing_gates()]
         )
-
-        dev.apply(circuit_graph.operations, rotations=circuit_graph.diagonalizing_gates)
-
         dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1)])
