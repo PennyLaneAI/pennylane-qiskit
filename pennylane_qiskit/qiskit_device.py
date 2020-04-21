@@ -97,6 +97,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _state_backends = {"statevector_simulator", "unitary_simulator"}
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
+    _hw_backends = {"qasm_simulator", "ibmq_qasm_simulator"}
+    """set[str]: Set of backend names that define the backends that support
+    hardware or hardware simulator execution and storing samples in memory."""
 
     operations = set(_operation_map.keys())
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
@@ -154,9 +157,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._circuit = None
         self._current_job = None
         self._state = None  # statevector of a simulator backend
-
-        # job execution options
-        self.memory = False  # do not return samples, just counts
 
         # determine if backend supports backend options and noise models,
         # and properly put together backend run arguments
@@ -310,11 +310,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
         then the target is simply the backend."""
         compile_backend = self.compile_backend or self.backend
         compiled_circuits = transpile(self._circuit, backend=compile_backend)
+
+        # Specify to have a memory for hw/hw simulators
+        memory = str(compile_backend) in self._hw_backends
+
         return assemble(
             experiments=compiled_circuits,
             backend=compile_backend,
             shots=self.shots,
-            memory=self.memory,
+            memory=memory,
         )
 
     def run(self, qobj):
@@ -347,52 +351,26 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
 
+    @property
+    def counts(self):
+        """Returns the counts for the results obtained."""
+        if result is None:
+            return None
+
+        return result.get_counts()
+
     def generate_samples(self):
 
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
-            # software simulator. Need to sample from probabilities.
+            # software simulator: need to sample from probabilities
             return super().generate_samples()
 
-        # a hardware simulator
-        if self.memory:
-            # get the samples
-            samples = self._current_job.result().get_memory()
+        # hardware or hardware simulator
+        samples = self._current_job.result().get_memory()
 
-            # reverse qubit order to match PennyLane convention
-            return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
-
-        # Need to convert counts into samples
-        result = self._current_job.result()
-
-        # sort the counts and reverse qubit order to match PennyLane convention
-        unsorted_samples_with_counts = {
-            tuple(int(i) for i in s[::-1]): c
-            for s, c in result.get_counts().items()
-        }
-        sorted_samples_with_counts = dict(sorted(unsorted_samples_with_counts.items()))
-        samples = np.vstack(
-            [np.vstack([s] * c) for s, c in sorted_samples_with_counts.items()]
-        )
-        return samples
-
-    def expval(self, observable):
-        if self.backend_name not in self._state_backends and self.analytic:
-            # Raise a warning if backend is a hardware simulator and the analytic attribute is set to True
-            warnings.warn(self.hw_analytic_warning_message.
-                          format(self.backend),
-                          UserWarning)
-
-        return super().expval(observable)
-
-    def var(self, observable, wires, par):
-        if self.backend_name not in self._state_backends and self.analytic:
-            # Raise a warning if backend is a hardware simulator and the analytic attribute is set to True
-            warnings.warn(self.hw_analytic_warning_message.
-                          format(self.backend),
-                          UserWarning)
-
-        return super().var(observable)
+        # reverse qubit order to match PennyLane convention
+        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
     @property
     def state(self):
