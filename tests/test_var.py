@@ -26,19 +26,19 @@ class TestVar:
         dev = device(2)
 
         # test correct variance for <Z> of a rotated state
-        O = qml.PauliZ(wires=[0])
+        observable = qml.PauliZ(wires=[0])
 
         dev.apply(
             [
                 qml.RX(phi, wires=[0]),
                 qml.RY(theta, wires=[0]),
             ],
-            rotations=[*O.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()]
         )
 
         dev._samples = dev.generate_samples()
 
-        var = dev.var(O)
+        var = dev.var(observable)
         expected = 0.25 * (3 - np.cos(2 * theta) - 2 * np.cos(theta) ** 2 * np.cos(2 * phi))
 
         assert np.allclose(var, expected, **tol)
@@ -50,19 +50,19 @@ class TestVar:
         # test correct variance for <H> of a rotated state
         H = np.array([[4, -1 + 6j], [-1 - 6j, 2]])
 
-        O = qml.Hermitian(H, wires=[0])
+        observable = qml.Hermitian(H, wires=[0])
 
         dev.apply(
             [
                 qml.RX(phi, wires=[0]),
                 qml.RY(theta, wires=[0]),
             ],
-            rotations=[*O.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()]
         )
 
         dev._samples = dev.generate_samples()
 
-        var = dev.var(O)
+        var = dev.var(observable)
         expected = 0.5 * (
             2 * np.sin(2 * theta) * np.cos(phi) ** 2
             + 24 * np.sin(phi) * np.cos(phi) * (np.sin(theta) - np.cos(theta))
