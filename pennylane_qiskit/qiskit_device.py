@@ -121,9 +121,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             if analytic_was_specified:
                 # Raise a warning if the analytic attribute was set
                 # and leave it undefined
-                warnings.warn(self.hw_analytic_warning_message.
-                              format(backend),
-                              UserWarning)
+                warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
             self.analytic = False
 
@@ -255,8 +253,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """Input check for the the QubitStateVector operation."""
         if operation == "QubitStateVector":
             if self.backend_name == "unitary_simulator":
-                raise QuantumFunctionError("The QubitStateVector operation "\
-                    "is not supported on the unitary simulator backend.")
+                raise QuantumFunctionError(
+                    "The QubitStateVector operation "
+                    "is not supported on the unitary simulator backend."
+                )
 
             if len(par[0]) != 2 ** len(wires):
                 raise ValueError("State vector must be of length 2**wires.")
@@ -266,8 +266,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """Input check for the the QubitUnitary operation."""
         if operation == "QubitUnitary":
             if len(par[0]) != 2 ** len(wires):
-                raise ValueError("Unitary matrix must be of shape (2**wires,\
-                        2**wires).")
+                raise ValueError(
+                    "Unitary matrix must be of shape (2**wires,\
+                        2**wires)."
+                )
 
     def compile(self):
         """Compile the quantum circuit to target
@@ -280,10 +282,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         memory = str(compile_backend) in self._hw_backends
 
         return assemble(
-            experiments=compiled_circuits,
-            backend=compile_backend,
-            shots=self.shots,
-            memory=memory,
+            experiments=compiled_circuits, backend=compile_backend, shots=self.shots, memory=memory,
         )
 
     def run(self, qobj):
