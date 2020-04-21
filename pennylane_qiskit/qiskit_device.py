@@ -287,10 +287,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(qobj, **self.run_args)
-        self._result = self._current_job.result()
+        result = self._current_job.result()
 
         if self.backend_name in self._state_backends:
-            self._state = self._get_state(self._result)
+            self._state = self._get_state(result)
 
     def _get_state(self, result):
         """Returns the statevector for state simulator backends.
@@ -313,18 +313,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
-
-    @property
-    def counts(self):
-        """Returns the counts for the results obtained.
-
-        Returns:
-            dict[str, int]: a map of basis states to number of counts
-        """
-        if self._result is None:
-            return None
-
-        return self._result.get_counts()
 
     def generate_samples(self):
 
