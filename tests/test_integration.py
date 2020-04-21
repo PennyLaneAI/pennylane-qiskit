@@ -89,40 +89,30 @@ class TestDeviceIntegration:
         assert np.allclose(circuit(a, b, c), expected, **tol)
 
     def test_gradient_for_tensor_product(self):
+        """Test that the gradient of a circuit containing a tensor product is
+        computed without any errors."""
         n_qubits = 2
         depth = 2
-        noise = 0.1
-
-        np.random.seed(42)
 
         def ansatz(weights):
             weights = weights.reshape(depth, n_qubits, 3)
             qml.templates.StronglyEntanglingLayers(weights, wires=list(range(n_qubits)))
             return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
 
-        from qiskit.providers.aer.noise import NoiseModel
-        from qiskit.providers.aer.noise.errors.standard_errors import (
-            depolarizing_error,
-            amplitude_damping_error,
-        )
-
-        noise_model = NoiseModel()
-        noise_model.add_all_qubit_quantum_error(depolarizing_error(noise, 1), ["u1", "u2", "u3"])
-
         dev_qsk = qml.device(
-                        "qiskit.aer",
-                        wires=n_qubits,
-                        shots=10000,
-                        noise_model=noise_model,
-                        backend="qasm_simulator",
-                    )
+                    "qiskit.aer",
+                    wires=n_qubits,
+                    shots=1000,
+                    backend="qasm_simulator",
+                )
 
         weights = np.random.random((depth, n_qubits, 3)).flatten()
 
-        exp_sampled = qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift") # Want to get expectation value and gradient
+        # Want to get expectation value and gradient
+        exp_sampled = qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift")
         grad_shift = qml.grad(exp_sampled, argnum=0)
-        print(exp_sampled(weights))
-        print(grad_shift(weights))
+        exp_sampled(weights)
+        grad_shift(weights)
 
 class TestKeywordArguments:
     """Test keyword argument logic is correct"""
