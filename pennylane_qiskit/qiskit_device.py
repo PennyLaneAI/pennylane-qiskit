@@ -151,12 +151,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
             )
 
-        # Inner state
-        self._reg = QuantumRegister(wires, "q")
-        self._creg = ClassicalRegister(wires, "c")
-        self._circuit = None
-        self._current_job = None
-        self._state = None  # statevector of a simulator backend
+        # Initialize inner state
+        self.reset()
 
         # determine if backend supports backend options and noise models,
         # and properly put together backend run arguments
@@ -175,8 +171,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs
-
-        self.reset()
 
     @property
     def backend(self):
@@ -377,10 +371,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return self._state
 
     def reset(self):
+        self._reg = QuantumRegister(self.num_wires, "q")
+        self._creg = ClassicalRegister(self.num_wires, "c")
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
-        self._state = None
 
-        # TODO: what about resetting?: self._current_job = None
+        self._current_job = None
+        self._state = None  # statevector of a simulator backend
 
     def analytic_probability(self, wires=None):
         # TODO: how should these two be related
