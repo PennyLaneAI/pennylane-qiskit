@@ -177,55 +177,22 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """The Qiskit simulation backend object"""
         return self.provider.get_backend(self.backend_name)
 
-    def apply(self, operations, **kwargs):
+    def reset(self):
+        self._reg = QuantumRegister(self.num_wires, "q")
+        self._creg = ClassicalRegister(self.num_wires, "c")
+        self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
 
+        self._current_job = None
+        self._state = None  # statevector of a simulator backend
+
+    def apply(self, operations, **kwargs):
         rotations = kwargs.get("rotations", [])
 
-        # Apply the circuit operations
-        for i, operation in enumerate(operations):
-            wires = operation.wires
-            par = operation.parameters
-            operation = operation.name
+        applied_operations = self.apply_operations(operations)
+        rotation_circuits = self.apply_operations(rotations)
+        applied_operations.extend(rotation_circuits)
 
-            # TODO: Once a fix is available in Qiskit-Aer, remove the
-            # following:
-            if any(isinstance(x, np.ndarray) for x in par):
-                par = list(x if not isinstance(x, np.ndarray) else x.tolist() for x in par)
-
-            mapped_operation = self._operation_map[operation]
-
-            qregs = [self._reg[i] for i in wires]
-
-            if operation == "QubitStateVector":
-
-                if self.backend_name == "unitary_simulator":
-                    raise QuantumFunctionError("The QubitStateVector operation is not supported on the unitary simulator backend.")
-
-                if len(par[0]) != 2 ** len(wires):
-                    raise ValueError("State vector must be of length 2**wires.")
-
-                qregs = QiskitDevice.revert_quantum_register_order(qregs)
-
-            if operation == "QubitUnitary":
-
-                if len(par[0]) != 2 ** len(wires):
-                    raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
-
-                qregs = QiskitDevice.revert_quantum_register_order(qregs)
-
-            dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-            gate = mapped_operation(*par)
-
-            if operation.endswith(".inv"):
-                gate = gate.inverse()
-
-            dag.apply_operation_back(gate, qargs=qregs)
-            qc = dag_to_circuit(dag)
-            self._circuit += qc
-
-        rotation_circuits = self.get_rotation_circuits(rotations)
-
-        for circuit in rotation_circuits:
+        for circuit in applied_operations:
             self._circuit += circuit
 
         if self.backend_name not in self._state_backends:
@@ -237,34 +204,22 @@ class QiskitDevice(QubitDevice, abc.ABC):
         qobj = self.compile()
         self.run(qobj)
 
-    @staticmethod
-    def revert_quantum_register_order(qregs):
-        """Reverts the order of the quantum registers used in Qiskit such
-        that it matches the PennyLane ordering.
-
-        Args:
-            qregs (Sequence(QuantumRegister)): the Qiskit quantum registers
-
-        Returns:
-            list(QuantumRegister): list of reverse quantum registers
-        """
-        return list(reversed(qregs))
-
-    def get_rotation_circuits(self, rotations):
-        """Apply the circuit rotations.
+    def apply_operations(self, operations):
+        """Apply the circuit operations.
 
         This method serves as an auxiliary method to :meth:`~.QiskitDevice.apply`.
 
         Args:
-            rotations (List[pennylane.Operation]): operations that rotate into the
+            operations (List[pennylane.Operation]): operations that rotate into the
                 measurement basis
 
         Returns:
-            pyquil.Program: the pyquil Program that specifies the corresponding rotations
+            list[QuantumCircuit]: a list of quantum circuit objects that
+                specify the corresponding operations
         """
         circuits = []
 
-        for i, operation in enumerate(rotations):
+        for i, operation in enumerate(operations):
             # Apply the circuit operations
             wires = operation.wires
             par = operation.parameters
@@ -272,18 +227,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             mapped_operation = self._operation_map[operation]
 
-            qregs = [self._reg[i] for i in wires]
-
             # TODO: Once a fix is available in Qiskit-Aer, remove the
             # following:
             if any(isinstance(x, np.ndarray) for x in par):
                 par = list(x if not isinstance(x, np.ndarray) else x.tolist() for x in par)
 
-            if operation == "QubitUnitary":
+            self.qubit_unitary_check(operation, par, wires)
+            self.qubit_state_vector_check(operation, par, wires)
 
-                if len(par[0]) != 2 ** len(wires):
-                    raise ValueError("Unitary matrix must be of shape (2**wires, 2**wires).")
+            qregs = [self._reg[i] for i in wires]
 
+            if operation == "QubitUnitary" or operation == "QubitStateVector":
+                # Need to revert the order of the quantum registers used in
+                # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
@@ -297,6 +253,24 @@ class QiskitDevice(QubitDevice, abc.ABC):
             circuits.append(circuit)
 
         return circuits
+
+    def qubit_state_vector_check(self, operation, par, wires):
+        """Input check for the the QubitStateVector operation."""
+        if operation == "QubitStateVector":
+            if self.backend_name == "unitary_simulator":
+                raise QuantumFunctionError("The QubitStateVector operation "\
+                    "is not supported on the unitary simulator backend.")
+
+            if len(par[0]) != 2 ** len(wires):
+                raise ValueError("State vector must be of length 2**wires.")
+
+    @staticmethod
+    def qubit_unitary_check(operation, par, wires):
+        """Input check for the the QubitUnitary operation."""
+        if operation == "QubitUnitary":
+            if len(par[0]) != 2 ** len(wires):
+                raise ValueError("Unitary matrix must be of shape (2**wires,\
+                        2**wires).")
 
     def compile(self):
         """Compile the quantum circuit to target
@@ -370,20 +344,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def state(self):
         return self._state
 
-    def reset(self):
-        self._reg = QuantumRegister(self.num_wires, "q")
-        self._creg = ClassicalRegister(self.num_wires, "c")
-        self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
-
-        self._current_job = None
-        self._state = None  # statevector of a simulator backend
-
     def analytic_probability(self, wires=None):
-        # TODO: how should these two be related
-        if self._current_job is None or self._state is None:
+        if self._state is None:
             return None
 
         wires = wires or range(self.num_wires)
-        # wires = self.remap_wires(wires)
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
