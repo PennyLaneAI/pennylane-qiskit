@@ -201,8 +201,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         This method serves as an auxiliary method to :meth:`~.QiskitDevice.apply`.
 
         Args:
-            operations (List[pennylane.Operation]): operations that rotate into the
-                measurement basis
+            operations (List[pennylane.Operation]): operations to be applied
 
         Returns:
             list[QuantumCircuit]: a list of quantum circuit objects that
