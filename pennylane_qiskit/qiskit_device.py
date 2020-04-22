@@ -94,9 +94,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _state_backends = {"statevector_simulator", "unitary_simulator"}
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
-    _hw_backends = {"qasm_simulator", "ibmq_qasm_simulator"}
-    """set[str]: Set of backend names that define the backends that support
-    hardware or hardware simulator execution and storing samples in memory."""
 
     operations = set(_operation_map.keys())
     observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
@@ -278,7 +275,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         compiled_circuits = transpile(self._circuit, backend=compile_backend)
 
         # Specify to have a memory for hw/hw simulators
-        memory = str(compile_backend) in self._hw_backends
+        memory = str(compile_backend) not in self._state_backends
 
         return assemble(
             experiments=compiled_circuits, backend=compile_backend, shots=self.shots, memory=memory,
