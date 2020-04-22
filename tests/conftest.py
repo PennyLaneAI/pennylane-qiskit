@@ -85,13 +85,6 @@ def state_vector_device(request, statevector_backend, shots, analytic):
 
     return _device
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
-def hardware_simulator_device(request, hardware_backend, shots, analytic):
-    def _device(n):
-        return request.param(wires=n, backend=hardware_backend, shots=shots, analytic=analytic)
-
-    return _device
-
 
 @pytest.fixture(scope="function")
 def mock_device(monkeypatch):
