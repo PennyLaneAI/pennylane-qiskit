@@ -122,7 +122,7 @@ def test_account_error():
 
 
 @pytest.mark.parametrize("analytic", [False])
-@pytest.mark.parametrize("shots", [8192])
+@pytest.mark.parametrize("shots", [1000])
 def test_simple_circuit(token, tol, shots):
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
