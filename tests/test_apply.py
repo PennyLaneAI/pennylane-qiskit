@@ -63,7 +63,8 @@ class TestAnalyticApply:
     """Test application of PennyLane operations with analytic attribute set to True."""
 
     def test_qubit_state_vector(self, init_state, device, tol):
-        """Test that the QubitStateVector operation works fine with the apply method."""
+        """Test that the QubitStateVector operation produces the expected
+        result with the apply method."""
         dev = device(1)
         state = init_state(1)
 
@@ -170,8 +171,8 @@ class TestNonAnalyticApply:
     """Test application of PennyLane operations with the analytic attribute set to False."""
 
     def test_qubit_state_vector(self, init_state, device, tol):
-        """Test that the QubitStateVector operation works fine with the apply
-        method."""
+        """Test that the QubitStateVector operation produces the expected
+        result with the apply method."""
         dev = device(1)
         state = init_state(1)
         wires = [0]
@@ -195,8 +196,8 @@ class TestNonAnalyticApply:
 
     @pytest.mark.parametrize("mat", [U, U2])
     def test_qubit_unitary(self, init_state, device, mat, tol):
-        """Test that the QubitUnitary operation works fine with the apply
-        method."""
+        """Test that the QubitUnitary operation produces the expected result
+        with the apply method."""
         N = int(np.log2(len(mat)))
         dev = device(N)
         state = init_state(N)
