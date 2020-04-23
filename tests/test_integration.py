@@ -95,8 +95,11 @@ class TestDeviceIntegration:
         depth = 2
 
         def ansatz(weights):
-            weights = weights.reshape(depth, n_qubits, 3)
-            qml.templates.StronglyEntanglingLayers(weights, wires=list(range(n_qubits)))
+            weights = weights.reshape(depth, n_qubits)
+            qml.RX(weights[0][0], wires=[0])
+            qml.RZ(weights[0][1], wires=[0])
+            qml.RX(weights[1][0], wires=[0])
+            qml.RZ(weights[1][1], wires=[0])
             return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
 
         dev_qsk = qml.device(
@@ -106,7 +109,7 @@ class TestDeviceIntegration:
                     backend="qasm_simulator",
                 )
 
-        weights = np.random.random((depth, n_qubits, 3)).flatten()
+        weights = np.random.random((depth, n_qubits)).flatten()
 
         # Want to get expectation value and gradient
         exp_sampled = qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift")
