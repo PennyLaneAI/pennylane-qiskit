@@ -180,6 +180,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
+
+        # Rotating the state for measurement in the computational basis
         rotation_circuits = self.apply_operations(rotations)
         applied_operations.extend(rotation_circuits)
 
