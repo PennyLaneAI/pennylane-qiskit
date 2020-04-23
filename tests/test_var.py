@@ -26,13 +26,19 @@ class TestVar:
         dev = device(2)
 
         # test correct variance for <Z> of a rotated state
-        dev.apply("RX", wires=[0], par=[phi])
-        dev.apply("RY", wires=[0], par=[theta])
+        observable = qml.PauliZ(wires=[0])
 
-        dev._obs_queue = [qml.PauliZ(wires=[0], do_queue=False)]
-        dev.pre_measure()
+        dev.apply(
+            [
+                qml.RX(phi, wires=[0]),
+                qml.RY(theta, wires=[0]),
+            ],
+            rotations=[*observable.diagonalizing_gates()]
+        )
 
-        var = dev.var("PauliZ", [0], [])
+        dev._samples = dev.generate_samples()
+
+        var = dev.var(observable)
         expected = 0.25 * (3 - np.cos(2 * theta) - 2 * np.cos(theta) ** 2 * np.cos(2 * phi))
 
         assert np.allclose(var, expected, **tol)
@@ -43,13 +49,20 @@ class TestVar:
 
         # test correct variance for <H> of a rotated state
         H = np.array([[4, -1 + 6j], [-1 - 6j, 2]])
-        dev.apply("RX", wires=[0], par=[phi])
-        dev.apply("RY", wires=[0], par=[theta])
 
-        dev._obs_queue = [qml.Hermitian(H, wires=[0], do_queue=False)]
-        dev.pre_measure()
+        observable = qml.Hermitian(H, wires=[0])
 
-        var = dev.var("Hermitian", [0], [H])
+        dev.apply(
+            [
+                qml.RX(phi, wires=[0]),
+                qml.RY(theta, wires=[0]),
+            ],
+            rotations=[*observable.diagonalizing_gates()]
+        )
+
+        dev._samples = dev.generate_samples()
+
+        var = dev.var(observable)
         expected = 0.5 * (
             2 * np.sin(2 * theta) * np.cos(phi) ** 2
             + 24 * np.sin(phi) * np.cos(phi) * (np.sin(theta) - np.cos(theta))
@@ -69,18 +82,21 @@ class TestTensorVar:
     def test_paulix_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliX and PauliY works correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
+        obs = qml.PauliX(0) @ qml.PauliY(2)
 
-        dev._obs_queue = [
-            qml.PauliX(0, do_queue=False) @ qml.PauliY(2, do_queue=False)
-        ]
-        dev.pre_measure()
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
 
-        res = dev.var(["PauliX", "PauliY"], [[0], [2]], [[], [], []])
+        dev._samples = dev.generate_samples()
+        res = dev.var(obs)
 
         expected = (
             8 * np.sin(theta) ** 2 * np.cos(2 * varphi) * np.sin(phi) ** 2
@@ -93,21 +109,24 @@ class TestTensorVar:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_pauliz_hadamard(self, theta, phi, varphi, device, shots, tol):
+    def test_pauliz_hadamard_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliZ and PauliY and hadamard works correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
+        obs = qml.PauliZ(0) @ qml.Hadamard(1) @ qml.PauliY(2)
 
-        dev._obs_queue = [
-            qml.PauliZ(0, do_queue=False) @ qml.Hadamard(1, do_queue=False) @ qml.PauliY(2, do_queue=False)
-        ]
-        dev.pre_measure()
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
 
-        res = dev.var(["PauliZ", "Hadamard", "PauliY"], [[0], [1], [2]], [[], [], []])
+        dev._samples = dev.generate_samples()
+        res = dev.var(obs)
 
         expected = (
             3
@@ -121,11 +140,6 @@ class TestTensorVar:
     def test_hermitian(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving qml.Hermitian works correctly"""
         dev = device(3)
-        dev.apply("RX", wires=[0], par=[theta])
-        dev.apply("RX", wires=[1], par=[phi])
-        dev.apply("RX", wires=[2], par=[varphi])
-        dev.apply("CNOT", wires=[0, 1], par=[])
-        dev.apply("CNOT", wires=[1, 2], par=[])
 
         A = np.array(
             [
@@ -135,10 +149,21 @@ class TestTensorVar:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
+        obs = qml.PauliZ(0) @ qml.Hermitian(A, wires=[1, 2])
 
-        dev._obs_queue = [qml.PauliZ(0, do_queue=False) @ qml.Hermitian(A, [1, 2], do_queue=False)]
-        dev.pre_measure()
-        res = dev.var(["PauliZ", "Hermitian"], [[0], [1, 2]], [[], [A]])
+        dev.apply(
+            [
+                qml.RX(theta, wires=[0]),
+                qml.RX(phi, wires=[1]),
+                qml.RX(varphi, wires=[2]),
+                qml.CNOT(wires=[0, 1]),
+                qml.CNOT(wires=[1, 2])
+            ],
+            rotations=obs.diagonalizing_gates()
+        )
+
+        dev._samples = dev.generate_samples()
+        res = dev.var(obs)
 
         expected = (
             1057

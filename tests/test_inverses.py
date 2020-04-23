@@ -2,6 +2,7 @@ import pytest
 
 import pennylane as qml
 import math
+import cmath
 import numpy as np
 
 # defaults
@@ -17,6 +18,8 @@ class TestInverses:
         ("PauliY", -1),
         ("PauliZ", 1),
         ("Hadamard", 0),
+        ("S", 1),
+        ("T", 1),
     ])
     def test_supported_gate_inverse_single_wire_no_parameters(self, name, expected_output):
         """Tests the inverse of supported gates that act on a single wire that are not
@@ -151,30 +154,36 @@ class TestInverses:
             return qml.expval(qml.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
-    def test_s_gate_inverses(self):
+
+    @pytest.mark.parametrize("par", [np.pi/i for i in range(1, 5)])
+    def test_s_gate_inverses(self, par):
         """Tests the inverse of the S gate"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
-        expected_output = 1
+        expected_output = -0.5 * 1j * cmath.exp(-1j*par)*(-1 + cmath.exp(2j*par))
 
         @qml.qnode(dev)
         def circuit():
+            qml.Hadamard(0)
+            qml.RZ(par, wires=[0])
             qml.S(wires=[0]).inv()
-            return qml.expval(qml.PauliZ(0))
+            return qml.expval(qml.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
-    def test_t_gate_inverses(self):
+    @pytest.mark.parametrize("par", [np.pi/i for i in range(1, 5)])
+    def test_t_gate_inverses(self, par):
         """Tests the inverse of the T gate"""
 
         dev = qml.device('qiskit.aer', backend='statevector_simulator', wires=2, analytic=True)
 
-        expected_output = 1
+        expected_output = -math.sin(par) / math.sqrt(2)
 
         @qml.qnode(dev)
         def circuit():
-            qml.S(wires=[0]).inv()
-            return qml.expval(qml.PauliZ(0))
+            qml.RX(par, wires=[0])
+            qml.T(wires=[0]).inv()
+            return qml.expval(qml.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)

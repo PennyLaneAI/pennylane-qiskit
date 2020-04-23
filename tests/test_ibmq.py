@@ -122,7 +122,7 @@ def test_account_error():
 
 
 @pytest.mark.parametrize("analytic", [False])
-@pytest.mark.parametrize("shots", [8192])
+@pytest.mark.parametrize("shots", [1000])
 def test_simple_circuit(token, tol, shots):
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
@@ -143,13 +143,14 @@ def test_simple_circuit(token, tol, shots):
 
 
 @pytest.mark.parametrize("analytic", [False])
-@pytest.mark.parametrize("x", [[0.2, 0.5], [0.4, 0.9], [0.8, 0.3]])
 @pytest.mark.parametrize("shots", [1000])
-def test_probability(token, x, tol, shots):
+def test_probability(token, tol, shots):
     """Test that the probs function works."""
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
     dev_analytic = qml.device("default.qubit", wires=2, analytic=True)
+
+    x = [0.2, 0.5]
 
     def circuit(x):
         qml.RX(x[0], wires=0)
@@ -160,8 +161,9 @@ def test_probability(token, x, tol, shots):
     prob = qml.QNode(circuit, dev)
     prob_analytic = qml.QNode(circuit, dev_analytic)
 
-    called_prob = prob(x)
+    # Calling the hardware only once
+    hw_prob = prob(x)
 
-    assert np.isclose(called_prob.sum(), 1, **tol)
-    assert np.allclose(prob_analytic(x), prob(x), **tol)
-    assert not np.array_equal(prob_analytic(x), prob(x))
+    assert np.isclose(hw_prob.sum(), 1, **tol)
+    assert np.allclose(prob_analytic(x), hw_prob, **tol)
+    assert not np.array_equal(prob_analytic(x), hw_prob)
