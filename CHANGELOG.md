@@ -10,6 +10,10 @@
 
 ### Improvements
 
+* Ported the ``QiskitDevice`` class to inherit from the ``QubitDevice`` class
+  defined in PennyLane to use unified qubit operations and ease development.
+  [(#83)](https://github.com/XanaduAI/pennylane-qiskit/pull/83)
+
 * Added a test for returning probabilities when using the `IBMQDevice`.
   [(#82)](https://github.com/XanaduAI/pennylane-qiskit/pull/82)
 
