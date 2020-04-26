@@ -219,11 +219,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             mapped_operation = self._operation_map[operation]
 
-            # TODO: Once Qiskit-Aer version >0.5.0 is released, remove the
-            # following:
-            if any(isinstance(x, np.ndarray) for x in par):
-                par = list(x if not isinstance(x, np.ndarray) else x.tolist() for x in par)
-
             self.qubit_unitary_check(operation, par, wires)
             self.qubit_state_vector_check(operation, par, wires)
 
