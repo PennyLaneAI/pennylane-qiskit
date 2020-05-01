@@ -982,8 +982,8 @@ class TestConverterIntegration:
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
         qc.rx(qiskit_params[2], 2)
-        qc.cnot(0, 1)
-        qc.cnot(1, 2)
+        qc.cx(0, 1)
+        qc.cx(1, 2)
 
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
