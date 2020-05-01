@@ -254,7 +254,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: 0.5, phi: 0.3})
 
-    @pytest.mark.parametrize("qiskit_operation, pennylane_name", [(QuantumCircuit.crx, "CRX"), (QuantumCircuit.crz, "CRZ"), (QuantumCircuit.crz, "CRZ")])
+    @pytest.mark.parametrize("qiskit_operation, pennylane_name", [(QuantumCircuit.crx, "CRX"), (QuantumCircuit.crz, "CRZ"), (QuantumCircuit.cry, "CRY")])
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit controlled rotations (except
         for CRY)."""
