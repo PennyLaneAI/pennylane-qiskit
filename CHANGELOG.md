@@ -4,10 +4,11 @@
 
 ### Breaking changes
 
-* Now supports Qiskit version 0.18.3. As a result of breaking changes
-  within Qiskit, version 0.17 and below are no longer supported.
+* Now supports Qiskit version 0.19.1. As a result of breaking changes
+  within Qiskit, version 0.18 and below are no longer supported.
   [(#81)](https://github.com/XanaduAI/pennylane-qiskit/pull/81)
   [(#85)](https://github.com/XanaduAI/pennylane-qiskit/pull/85)
+  [(#86)](https://github.com/XanaduAI/pennylane-qiskit/pull/86)
 
 ### Improvements
 
