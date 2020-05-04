@@ -254,7 +254,7 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: 0.5, phi: 0.3})
 
-    @pytest.mark.parametrize("qiskit_operation, pennylane_name", [(QuantumCircuit.crx, "CRX"), (QuantumCircuit.crz, "CRZ")])
+    @pytest.mark.parametrize("qiskit_operation, pennylane_name", [(QuantumCircuit.crx, "CRX"), (QuantumCircuit.crz, "CRZ"), (QuantumCircuit.cry, "CRY")])
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit controlled rotations (except
         for CRY)."""
@@ -274,39 +274,6 @@ class TestConverter:
         assert recorder.queue[0].name == pennylane_name
         assert recorder.queue[0].params == [0.5]
         assert recorder.queue[0].wires == [0, 1]
-
-    def test_cry(self, recorder):
-        """Tests that the decomposition of the controlled-Y operation is being
-        loaded."""
-        # This test will be merged into the test_controlled_rotations test once
-        # the native CRY is used in Qiskit and not a set of instructions
-        # yielded from decomposition is being added
-
-        q2 = QuantumRegister(2)
-        qc = QuantumCircuit(q2)
-
-        qc.cry(0.5, q2[0], q2[1])
-
-        quantum_circuit = load(qc)
-
-        with recorder:
-            quantum_circuit()
-
-        assert len(recorder.queue) == 4
-        assert recorder.queue[0].name == "U3"
-        assert recorder.queue[0].params == [0.25, 0, 0]
-        assert recorder.queue[0].wires == [1]
-
-        assert recorder.queue[1].name == "CNOT"
-        assert recorder.queue[1].wires == [0, 1]
-
-        assert recorder.queue[2].name == "U3"
-        assert recorder.queue[2].params == [-0.25, 0, 0]
-        assert recorder.queue[2].wires == [1]
-
-        assert recorder.queue[3].name == "CNOT"
-        assert recorder.queue[3].wires == [0, 1]
-
 
     def test_one_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the one-qubit operations supported by PennyLane."""
@@ -1015,8 +982,8 @@ class TestConverterIntegration:
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
         qc.rx(qiskit_params[2], 2)
-        qc.cnot(0, 1)
-        qc.cnot(1, 2)
+        qc.cx(0, 1)
+        qc.cx(1, 2)
 
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
