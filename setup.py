@@ -23,7 +23,7 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.19.1",
-    "pennylane>=0.8.1",
+    "pennylane>=0.9.0",
     "numpy"
 ]
 
