@@ -1,4 +1,5 @@
 qiskit>=0.19.1
 pennylane
 numpy
-networkx==2.3
+networkx>=2.2;python_version>'3.5'
+networkx>=2.2,<2.4;python_version=='3.5'
