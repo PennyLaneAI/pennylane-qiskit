@@ -24,7 +24,7 @@ with open("README.rst", "r") as fh:
 requirements = [
     "qiskit>=0.19.1",
     "pennylane>=0.9.0",
-    "numpy"
+    "numpy",
     "networkx>=2.2;python_version>'3.5'",
     # Networkx 2.4 is the final version with python 3.5 support.
     "networkx>=2.2,<2.4;python_version=='3.5'",
