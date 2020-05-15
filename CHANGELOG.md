@@ -1,4 +1,4 @@
-# Release 0.9.0-dev
+# Release 0.9.0
 
 ### New features since last release
 
@@ -23,6 +23,7 @@
 
 * Major redesign of the documentation, making it easier to navigate.
   [(#78)](https://github.com/XanaduAI/pennylane-qiskit/pull/78)
+  [(#79)](https://github.com/XanaduAI/pennylane-qiskit/pull/79)
 
 ### Bug fixes
 
