@@ -213,7 +213,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         for operation in operations:
             # Apply the circuit operations
-            wires = operation.wires
+            wires = operation.wires.tolist()
             par = operation.parameters
             operation = operation.name
 
