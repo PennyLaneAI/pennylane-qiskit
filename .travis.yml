@@ -11,7 +11,7 @@ before_install:
 - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 - sudo apt update && sudo apt -y install g++-7 cmake libopenblas-dev
 - pip install pip --upgrade
-- pip install -e git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
+- pip install -e git+https://github.com/XanaduAI/pennylane.git@undo_653
 - pip install --upgrade -r requirements.txt
 - pip install --upgrade pytest pytest-cov wheel codecov
 install:
