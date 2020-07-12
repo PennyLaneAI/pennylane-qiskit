@@ -4,7 +4,7 @@ nbsphinx
 pygments-github-lexers
 pybind11
 qiskit
-pygments==2.4
+pygments==2.6.1
 git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
 dc-qiskit-algorithms
 sphinx-automodapi
