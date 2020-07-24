@@ -175,7 +175,7 @@ def load(quantum_circuit: QuantumCircuit):
                 # variable from the var_ref_map dictionary.
 
                 parameters = []
-                for p in op[0].params:
+                for p in op[0].data:
 
                     _check_parameter_bound(p, var_ref_map)
 
