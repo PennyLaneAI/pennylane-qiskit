@@ -41,7 +41,7 @@ class TestConverter:
 
         assert len(recorder.queue) == 1
         assert recorder.queue[0].name == 'RZ'
-        assert recorder.queue[0].data == [angle]
+        assert recorder.queue[0].parameters == [angle]
         assert recorder.queue[0].wires == [0]
 
     def test_quantum_circuit_by_passing_parameters(self, recorder):
@@ -61,7 +61,7 @@ class TestConverter:
 
         assert len(recorder.queue) == 1
         assert recorder.queue[0].name == 'RZ'
-        assert recorder.queue[0].data == [angle]
+        assert recorder.queue[0].parameters == [angle]
         assert recorder.queue[0].wires == [0]
 
     def test_loaded_quantum_circuit_and_further_pennylane_operations(self, recorder):
@@ -83,13 +83,13 @@ class TestConverter:
 
         assert len(recorder.queue) == 3
         assert recorder.queue[0].name == 'PauliZ'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == [0]
         assert recorder.queue[1].name == 'RZ'
-        assert recorder.queue[1].data == [angle]
+        assert recorder.queue[1].parameters == [angle]
         assert recorder.queue[1].wires == [0]
         assert recorder.queue[2].name == 'Hadamard'
-        assert recorder.queue[2].data == []
+        assert recorder.queue[2].parameters == []
         assert recorder.queue[2].wires == [0]
 
     def test_quantum_circuit_with_multiple_parameters(self, recorder):
@@ -112,10 +112,10 @@ class TestConverter:
 
         assert len(recorder.queue) == 2
         assert recorder.queue[0].name == 'RX'
-        assert recorder.queue[0].data == [angle1]
+        assert recorder.queue[0].parameters == [angle1]
         assert recorder.queue[0].wires == [1]
         assert recorder.queue[1].name == 'RZ'
-        assert recorder.queue[1].data == [angle2]
+        assert recorder.queue[1].parameters == [angle2]
         assert recorder.queue[1].wires == [0]
 
     def test_quantum_circuit_with_gate_requiring_multiple_parameters(self, recorder):
@@ -139,8 +139,8 @@ class TestConverter:
             quantum_circuit(params={phi: angle1, lam: angle2, theta: angle3})
 
         assert recorder.queue[0].name == 'U3'
-        assert len(recorder.queue[0].data) == 3
-        assert recorder.queue[0].data == [0.5, 0.3, 0.1]
+        assert len(recorder.queue[0].parameters) == 3
+        assert recorder.queue[0].parameters == [0.5, 0.3, 0.1]
         assert recorder.queue[0].wires == [0]
 
     def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
@@ -164,13 +164,13 @@ class TestConverter:
 
         assert len(recorder.queue) == 3
         assert recorder.queue[0].name == 'RZ'
-        assert recorder.queue[0].data == [angle1]
+        assert recorder.queue[0].parameters == [angle1]
         assert recorder.queue[0].wires == [0]
         assert recorder.queue[1].name == 'RZ'
-        assert recorder.queue[1].data == [angle2]
+        assert recorder.queue[1].parameters == [angle2]
         assert recorder.queue[1].wires == [0]
         assert recorder.queue[2].name == 'RZ'
-        assert recorder.queue[2].data == [angle3]
+        assert recorder.queue[2].parameters == [angle3]
         assert recorder.queue[2].wires == [0]
 
     def test_quantum_circuit_with_bound_parameters(self, recorder):
@@ -189,7 +189,7 @@ class TestConverter:
 
         assert len(recorder.queue) == 1
         assert recorder.queue[0].name == 'RZ'
-        assert recorder.queue[0].data == [0.5]
+        assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == [0]
 
     def test_pass_parameters_to_bind(self, recorder):
@@ -207,7 +207,7 @@ class TestConverter:
 
         assert len(recorder.queue) == 1
         assert recorder.queue[0].name == 'RZ'
-        assert recorder.queue[0].data == [0.5]
+        assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == [0]
 
     def test_parameter_was_not_bound(self, recorder):
@@ -272,7 +272,7 @@ class TestConverter:
 
         assert len(recorder.queue) == 1
         assert recorder.queue[0].name == pennylane_name
-        assert recorder.queue[0].data == [0.5]
+        assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == [0, 1]
 
     def test_one_qubit_operations_supported_by_pennylane(self, recorder):
@@ -295,27 +295,27 @@ class TestConverter:
         assert len(recorder.queue) == 6
 
         assert recorder.queue[0].name == 'PauliX'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == single_wire
 
         assert recorder.queue[1].name == 'PauliY'
-        assert recorder.queue[1].data == []
+        assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == single_wire
 
         assert recorder.queue[2].name == 'PauliZ'
-        assert recorder.queue[2].data == []
+        assert recorder.queue[2].parameters == []
         assert recorder.queue[2].wires == single_wire
 
         assert recorder.queue[3].name == 'Hadamard'
-        assert recorder.queue[3].data == []
+        assert recorder.queue[3].parameters == []
         assert recorder.queue[3].wires == single_wire
 
         assert recorder.queue[4].name == 'S'
-        assert recorder.queue[4].data == []
+        assert recorder.queue[4].parameters == []
         assert recorder.queue[4].wires == single_wire
 
         assert recorder.queue[5].name == 'T'
-        assert recorder.queue[5].data == []
+        assert recorder.queue[5].parameters == []
         assert recorder.queue[5].wires == single_wire
 
     def test_one_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
@@ -343,29 +343,29 @@ class TestConverter:
             quantum_circuit()
 
         assert recorder.queue[0].name == 'PhaseShift'
-        assert recorder.queue[0].data == [angle]
+        assert recorder.queue[0].parameters == [angle]
         assert recorder.queue[0].wires == single_wire
 
         assert recorder.queue[1].name == 'RX'
-        assert recorder.queue[1].data == [angle]
+        assert recorder.queue[1].parameters == [angle]
         assert recorder.queue[1].wires == single_wire
 
         assert recorder.queue[2].name == 'RY'
-        assert recorder.queue[2].data == [angle]
+        assert recorder.queue[2].parameters == [angle]
         assert recorder.queue[2].wires == single_wire
 
         assert recorder.queue[3].name == 'RZ'
-        assert recorder.queue[3].data == [angle]
+        assert recorder.queue[3].parameters == [angle]
         assert recorder.queue[3].wires == single_wire
 
         assert recorder.queue[4].name == 'U2'
-        assert len(recorder.queue[4].data) == 2
-        assert recorder.queue[4].data == [0.3, 0.4]
+        assert len(recorder.queue[4].parameters) == 2
+        assert recorder.queue[4].parameters == [0.3, 0.4]
         assert recorder.queue[4].wires == [0]
 
         assert recorder.queue[5].name == 'U3'
-        assert len(recorder.queue[5].data) == 3
-        assert recorder.queue[5].data == [0.3, 0.4, 0.2]
+        assert len(recorder.queue[5].parameters) == 3
+        assert recorder.queue[5].parameters == [0.3, 0.4, 0.2]
         assert recorder.queue[5].wires == [0]
 
     def test_two_qubit_operations_supported_by_pennylane(self, recorder):
@@ -394,20 +394,20 @@ class TestConverter:
         assert len(recorder.queue) == 4
 
         assert recorder.queue[0].name == 'CNOT'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == two_wires
 
         assert recorder.queue[1].name == 'CZ'
-        assert recorder.queue[1].data == []
+        assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == two_wires
 
         assert recorder.queue[2].name == 'SWAP'
-        assert recorder.queue[2].data == []
+        assert recorder.queue[2].parameters == []
         assert recorder.queue[2].wires == two_wires
 
         assert recorder.queue[3].name == 'QubitUnitary'
-        assert len(recorder.queue[3].data) == 1
-        assert np.array_equal(recorder.queue[3].data[0], np.array(unitary_op))
+        assert len(recorder.queue[3].parameters) == 1
+        assert np.array_equal(recorder.queue[3].parameters[0], np.array(unitary_op))
         assert recorder.queue[3].wires == two_wires
 
     def test_two_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
@@ -427,7 +427,7 @@ class TestConverter:
         assert len(recorder.queue) == 1
 
         assert recorder.queue[0].name == 'CRZ'
-        assert recorder.queue[0].data == [angle]
+        assert recorder.queue[0].parameters == [angle]
         assert recorder.queue[0].wires == two_wires
 
     def test_three_qubit_operations_supported_by_pennylane(self, recorder):
@@ -444,11 +444,11 @@ class TestConverter:
             quantum_circuit()
 
         assert recorder.queue[0].name == 'CSWAP'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == three_wires
 
         assert recorder.queue[1].name == 'Toffoli'
-        assert len(recorder.queue[1].data) == 0
+        assert len(recorder.queue[1].parameters) == 0
         assert recorder.queue[1].wires == three_wires
 
     def test_wires_two_different_quantum_registers(self, recorder):
@@ -468,7 +468,7 @@ class TestConverter:
             quantum_circuit()
 
         assert recorder.queue[0].name == 'CSWAP'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == three_wires
 
     def test_wires_quantum_circuit_init_with_two_different_quantum_registers(self, recorder):
@@ -489,7 +489,7 @@ class TestConverter:
             quantum_circuit(wires=three_wires)
 
         assert recorder.queue[0].name == 'CSWAP'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == three_wires
 
     def test_wires_pass_different_wires_than_for_circuit(self, recorder):
@@ -509,7 +509,7 @@ class TestConverter:
             quantum_circuit(wires=three_wires)
 
         assert recorder.queue[0].name == 'CSWAP'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == three_wires
 
     def test_operations_sdg_and_tdg(self, recorder):
@@ -525,11 +525,11 @@ class TestConverter:
             quantum_circuit()
 
         assert recorder.queue[0].name == 'S.inv'
-        assert len(recorder.queue[0].data) == 0
+        assert len(recorder.queue[0].parameters) == 0
         assert recorder.queue[0].wires == [0]
 
         assert recorder.queue[1].name == 'T.inv'
-        assert len(recorder.queue[1].data) == 0
+        assert len(recorder.queue[1].parameters) == 0
         assert recorder.queue[1].wires == [0]
 
     def test_operation_transformed_into_qubit_unitary(self, recorder):
@@ -545,8 +545,8 @@ class TestConverter:
             quantum_circuit()
 
         assert recorder.queue[0].name == 'QubitUnitary'
-        assert len(recorder.queue[0].data) == 1
-        assert np.array_equal(recorder.queue[0].data[0], ex.CHGate().to_matrix())
+        assert len(recorder.queue[0].parameters) == 1
+        assert np.array_equal(recorder.queue[0].parameters[0], ex.CHGate().to_matrix())
         assert recorder.queue[0].wires == [0, 1]
 
     def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
@@ -787,27 +787,27 @@ class TestConverterQasm:
         assert len(recorder.queue) == 6
 
         assert recorder.queue[0].name == 'PauliX'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == [0]
 
         assert recorder.queue[1].name == 'PauliX'
-        assert recorder.queue[1].data == []
+        assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == [2]
 
         assert recorder.queue[2].name == 'Hadamard'
-        assert recorder.queue[2].data == []
+        assert recorder.queue[2].parameters == []
         assert recorder.queue[2].wires == [0]
 
         assert recorder.queue[3].name == 'Hadamard'
-        assert recorder.queue[3].data == []
+        assert recorder.queue[3].parameters == []
         assert recorder.queue[3].wires == [1]
 
         assert recorder.queue[4].name == 'Hadamard'
-        assert recorder.queue[4].data == []
+        assert recorder.queue[4].parameters == []
         assert recorder.queue[4].wires == [2]
 
         assert recorder.queue[5].name == 'Hadamard'
-        assert recorder.queue[5].data == []
+        assert recorder.queue[5].parameters == []
         assert recorder.queue[5].wires == [3]
 
         assert len(record) == 11
@@ -847,11 +847,11 @@ class TestConverterQasm:
         assert len(recorder.queue) == 2
 
         assert recorder.queue[0].name == 'PauliX'
-        assert recorder.queue[0].data == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == [0]
 
         assert recorder.queue[1].name == 'CNOT'
-        assert recorder.queue[1].data == []
+        assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == [2, 0]
 
 
