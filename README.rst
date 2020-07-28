@@ -1,27 +1,27 @@
 PennyLane-Qiskit Plugin
 #######################
 
-.. image:: https://img.shields.io/travis/com/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
-    :alt: Travis
-    :target: https://travis-ci.com/XanaduAI/pennylane-qiskit
+.. image:: https://img.shields.io/github/workflow/status/PennyLaneAI/pennylane/Tests/master?logo=github&style=flat-square
+    :alt: GitHub Workflow Status (branch)
+    :target: https://github.com/PennyLaneAI/pennylane-qiskit/actions?query=workflow%3ATests
 
-.. image:: https://img.shields.io/codecov/c/github/XanaduAI/pennylane-qiskit/master.svg?style=popout-square
+.. image:: https://img.shields.io/codecov/c/github/PennyLaneAI/pennylane-qiskit/master.svg?style=flat-square
     :alt: Codecov coverage
-    :target: https://codecov.io/gh/XanaduAI/pennylane-qiskit
+    :target: https://codecov.io/gh/PennyLaneAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=popout-square
+.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=flat-square
     :alt: Codacy grade
-    :target: https://www.codacy.com/app/XanaduAI/pennylane-qiskit
+    :target: https://www.codacy.com/app/PennyLaneAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=popout-square
+.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=flat-square
     :alt: Read the Docs
     :target: https://pennylaneqiskit.readthedocs.io
 
-.. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=popout-square
+.. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=flat-square
     :alt: PyPI
     :target: https://pypi.org/project/PennyLane-qiskit
 
-.. image:: https://img.shields.io/pypi/pyversions/PennyLane-qiskit.svg?style=popout-square
+.. image:: https://img.shields.io/pypi/pyversions/PennyLane-qiskit.svg?style=flat-square
     :alt: PyPI - Python Version
     :target: https://pypi.org/project/PennyLane-qiskit
 
@@ -109,7 +109,7 @@ or applications built on PennyLane.
 Authors
 =======
 
-PennyLane-Qiskit is the work of `many contributors <https://github.com/XanaduAI/pennylane-qiskit/graphs/contributors>`_.
+PennyLane-Qiskit is the work of `many contributors <https://github.com/PennyLaneAI/pennylane-qiskit/graphs/contributors>`_.
 
 If you are doing research using PennyLane and PennyLane-Qiskit, please cite `our paper <https://arxiv.org/abs/1811.04968>`_:
 
@@ -123,8 +123,8 @@ If you are doing research using PennyLane and PennyLane-Qiskit, please cite `our
 Support
 =======
 
-- **Source Code:** https://github.com/XanaduAI/pennylane-qiskit
-- **Issue Tracker:** https://github.com/XanaduAI/pennylane-qiskit/issues
+- **Source Code:** https://github.com/PennyLaneAI/pennylane-qiskit
+- **Issue Tracker:** https://github.com/PennyLaneAI/pennylane-qiskit/issues
 - **PennyLane Forum:** https://discuss.pennylane.ai
 
 If you are having issues, please let us know by posting the issue on our Github issue tracker, or
