@@ -59,9 +59,9 @@ class IBMQDevice(QiskitDevice):
         url = os.getenv("IBMQX_URL") or kwargs.get("ibmqx_url", None)
 
         # Specify a single hub, group and project
-        hub = kwargs.get("hub", 'ibm-q')
-        group = kwargs.get("group", 'open')
-        project = kwargs.get("project", 'main')
+        hub = kwargs.get("hub", "ibm-q")
+        group = kwargs.get("group", "open")
+        project = kwargs.get("project", "main")
 
         if token is not None:
             # token was provided by the user, so attempt to enable an
