@@ -1,7 +1,7 @@
 PennyLane-Qiskit Plugin
 #######################
 
-.. image:: https://img.shields.io/github/workflow/status/PennyLaneAI/pennylane/Tests/master?logo=github&style=flat-square
+.. image:: https://img.shields.io/github/workflow/status/PennyLaneAI/pennylane-qiskit/Tests/master?logo=github&style=flat-square
     :alt: GitHub Workflow Status (branch)
     :target: https://github.com/PennyLaneAI/pennylane-qiskit/actions?query=workflow%3ATests
 
@@ -9,9 +9,9 @@ PennyLane-Qiskit Plugin
     :alt: Codecov coverage
     :target: https://codecov.io/gh/PennyLaneAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codacy/grade/f4132f03ce224f82bd3e8ba436b52af3.svg?style=flat-square
-    :alt: Codacy grade
-    :target: https://www.codacy.com/app/PennyLaneAI/pennylane-qiskit
+.. image:: https://img.shields.io/codefactor/grade/github/PennyLaneAI/pennylane-qiskit/master?style=flat-square
+    :alt: CodeFactor Grade
+    :target: https://www.codefactor.io/repository/github/pennylaneai/pennylane-qiskit
 
 .. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=flat-square
     :alt: Read the Docs
