@@ -25,14 +25,6 @@ PennyLane-Qiskit Plugin
     :alt: PyPI - Python Version
     :target: https://pypi.org/project/PennyLane-qiskit
 
-
-.. image:: doc/_static/puzzle.png
-    :align: center
-    :width: 200px
-    :target: javascript:void(0);
-
-|
-
 .. header-start-inclusion-marker-do-not-remove
 
 The PennyLane-Qiskit plugin integrates the Qiskit quantum computing framework with PennyLane's
