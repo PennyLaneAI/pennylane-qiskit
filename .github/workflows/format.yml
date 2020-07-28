@@ -10,4 +10,4 @@ jobs:
     - name: Black Code Formatter
       uses: lgeiger/black-action@v1.0.1
       with:
-        args: "-l 100 pennylane/ --check"
+        args: "-l 100 pennylane_qiskit/ --check"
