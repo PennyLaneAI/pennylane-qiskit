@@ -5,15 +5,15 @@ PennyLane-Qiskit Plugin
     :alt: GitHub Workflow Status (branch)
     :target: https://github.com/PennyLaneAI/pennylane-qiskit/actions?query=workflow%3ATests
 
-.. image:: https://img.shields.io/codecov/c/github/PennyLaneAI/pennylane-qiskit/master.svg?style=flat-square
+.. image:: https://img.shields.io/codecov/c/github/PennyLaneAI/pennylane-qiskit/master.svg?logo=codecov&style=flat-square
     :alt: Codecov coverage
     :target: https://codecov.io/gh/PennyLaneAI/pennylane-qiskit
 
-.. image:: https://img.shields.io/codefactor/grade/github/PennyLaneAI/pennylane-qiskit/master?style=flat-square
+.. image:: https://img.shields.io/codefactor/grade/github/PennyLaneAI/pennylane-qiskit/master?logo=codefactor&style=flat-square
     :alt: CodeFactor Grade
     :target: https://www.codefactor.io/repository/github/pennylaneai/pennylane-qiskit
 
-.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?style=flat-square
+.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?logo=read-the-docs&style=flat-square
     :alt: Read the Docs
     :target: https://pennylaneqiskit.readthedocs.io
 
