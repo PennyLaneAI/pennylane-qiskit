@@ -72,7 +72,7 @@ To test that the PennyLane-Qiskit plugin is working correctly you can run
 
 .. code-block:: bash
 
-    $ make test
+    make test
 
 in the source folder. Tests restricted to a specific provider can be run by executing
 ``make test-basicaer``, ``make test-aer``, and ``make test-ibmq``.
