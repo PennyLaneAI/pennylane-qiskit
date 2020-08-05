@@ -98,7 +98,7 @@ def mock_device(monkeypatch):
 
 @pytest.fixture(scope="function")
 def recorder():
-    return qml.utils.OperationRecorder()
+    return qml._queuing.OperationRecorder()
 
 
 @pytest.fixture(scope="function")

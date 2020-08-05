@@ -809,7 +809,7 @@ class TestConverterQasm:
         assert recorder.queue[4].wires == Wires([2])
 
         assert recorder.queue[5].name == 'Hadamard'
-        assert recorder.queue[5].params == []
+        assert recorder.queue[5].parameters == []
         assert recorder.queue[5].wires == Wires([3])
 
         assert len(record) == 11

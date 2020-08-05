@@ -213,16 +213,16 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         for operation in operations:
             # Apply the circuit operations
-            registers = self.wire_map(operation.wires)
+            device_wires = self.map_wires(operation.wires)
             par = operation.parameters
             operation = operation.name
 
             mapped_operation = self._operation_map[operation]
 
-            self.qubit_unitary_check(operation, par, registers)
-            self.qubit_state_vector_check(operation, par, registers)
+            self.qubit_unitary_check(operation, par, device_wires)
+            self.qubit_state_vector_check(operation, par, device_wires)
 
-            qregs = [self._reg[i] for i in registers]
+            qregs = [self._reg[i] for i in device_wires.labels]
 
             if operation in ("QubitUnitary", "QubitStateVector"):
                 # Need to revert the order of the quantum registers used in
