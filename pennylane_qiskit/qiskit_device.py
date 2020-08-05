@@ -28,7 +28,7 @@ from qiskit.circuit.measure import measure
 from qiskit.compiler import assemble, transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from pennylane import QubitDevice, QuantumFunctionError
+from pennylane import QubitDevice, DeviceError
 
 from ._version import __version__
 
@@ -247,7 +247,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """Input check for the the QubitStateVector operation."""
         if operation == "QubitStateVector":
             if self.backend_name == "unitary_simulator":
-                raise QuantumFunctionError(
+                raise DeviceError(
                     "The QubitStateVector operation "
                     "is not supported on the unitary simulator backend."
                 )
