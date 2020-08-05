@@ -63,7 +63,9 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.
     return {k: v for k, v in params.items() if isinstance(v, qml.variable.Variable)}
 
 
-def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: dict, diff_params: dict) -> QuantumCircuit:
+def _check_circuit_and_bind_parameters(
+    quantum_circuit: QuantumCircuit, params: dict, diff_params: dict
+) -> QuantumCircuit:
     """Utility function for checking for a valid quantum circuit and then binding parameters.
 
     Args:
@@ -76,7 +78,9 @@ def _check_circuit_and_bind_parameters(quantum_circuit: QuantumCircuit, params: 
         QuantumCircuit: quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
-        raise ValueError("The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit))
+        raise ValueError(
+            "The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit)
+        )
 
     if params is None:
         return quantum_circuit
@@ -106,8 +110,10 @@ def map_wires(wires: list, qc_wires: list) -> dict:
     if len(qc_wires) == len(wires):
         return dict(zip(qc_wires, wires))
 
-    raise qml.QuantumFunctionError("The specified number of wires - {} - does not match "
-                                   "the number of wires the loaded quantum circuit acts on.".format(len(wires)))
+    raise qml.QuantumFunctionError(
+        "The specified number of wires - {} - does not match "
+        "the number of wires the loaded quantum circuit acts on.".format(len(wires))
+    )
 
 
 def execute_supported_operation(operation_name: str, parameters: list, wires: list):
@@ -122,7 +128,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
 
     if not parameters:
         operation(wires=wires)
-    elif operation_name == 'QubitStateVector':
+    elif operation_name == "QubitStateVector":
         operation(np.array(parameters), wires=wires)
     else:
         operation(*parameters, wires=wires)
@@ -184,9 +190,11 @@ def load(quantum_circuit: QuantumCircuit):
                             # p.parameters must be a single parameter, as PennyLane
                             # does not support expressions of variables currently.
                             if len(p.parameters) > 1:
-                                raise ValueError("Operation {} has invalid parameter {}. PennyLane does not support "
-                                                 "expressions containing differentiable parameters as operation "
-                                                 "arguments".format(instruction_name, p))
+                                raise ValueError(
+                                    "Operation {} has invalid parameter {}. PennyLane does not support "
+                                    "expressions containing differentiable parameters as operation "
+                                    "arguments".format(instruction_name, p)
+                                )
 
                             param = min(p.parameters)
                             parameters.append(var_ref_map.get(param))
@@ -197,14 +205,14 @@ def load(quantum_circuit: QuantumCircuit):
 
                 execute_supported_operation(inv_map[instruction_name], parameters, operation_wires)
 
-            elif instruction_name == 'SdgGate':
+            elif instruction_name == "SdgGate":
 
-                sgate = getattr(pennylane_ops, 'S')
+                sgate = getattr(pennylane_ops, "S")
                 sgate(wires=operation_wires).inv()
 
-            elif instruction_name == 'TdgGate':
+            elif instruction_name == "TdgGate":
 
-                tgate = getattr(pennylane_ops, 'T')
+                tgate = getattr(pennylane_ops, "T")
                 tgate(wires=operation_wires).inv()
 
             else:
@@ -212,10 +220,11 @@ def load(quantum_circuit: QuantumCircuit):
                     operation_matrix = op[0].to_matrix()
                     pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
                 except (AttributeError, QiskitError):
-                    warnings.warn(__name__ + ": The {} instruction is not supported by PennyLane,"
-                                             " and has not been added to the template.".
-                                  format(instruction_name),
-                                  UserWarning)
+                    warnings.warn(
+                        __name__ + ": The {} instruction is not supported by PennyLane,"
+                        " and has not been added to the template.".format(instruction_name),
+                        UserWarning,
+                    )
 
     return _function
 
