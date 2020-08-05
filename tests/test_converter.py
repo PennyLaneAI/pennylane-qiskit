@@ -849,21 +849,12 @@ class TestConverterQasm:
         assert len(recorder.queue) == 2
 
         assert recorder.queue[0].name == 'PauliX'
-<<<<<<< HEAD
-        assert recorder.queue[0].params == []
+        assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == Wires([0])
 
         assert recorder.queue[1].name == 'CNOT'
-        assert recorder.queue[1].params == []
-        assert recorder.queue[1].wires == Wires([2, 0])
-=======
-        assert recorder.queue[0].parameters == []
-        assert recorder.queue[0].wires == [0]
-
-        assert recorder.queue[1].name == 'CNOT'
         assert recorder.queue[1].parameters == []
-        assert recorder.queue[1].wires == [2, 0]
->>>>>>> master
+        assert recorder.queue[1].wires == Wires([2, 0])
 
 
 class TestConverterIntegration:
