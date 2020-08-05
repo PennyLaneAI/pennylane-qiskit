@@ -76,8 +76,8 @@ jobs:
 
       - name: Run tests
         run: |
-          pl-device-test --device=qiskit.basicaer --tb=short --skip-ops --analytic=False --shots=10000 --device-kwargs backend=qasm_simulator
-          pl-device-test --device=qiskit.aer --tb=short --skip-ops --analytic=False --shots=10000 --device-kwargs backend=qasm_simulator
+          pl-device-test --device=qiskit.basicaer --tb=short --skip-ops --analytic=False --shots=20000 --device-kwargs backend=qasm_simulator
+          pl-device-test --device=qiskit.aer --tb=short --skip-ops --analytic=False --shots=20000 --device-kwargs backend=qasm_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --analytic=True --device-kwargs backend=statevector_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --analytic=True --device-kwargs backend=unitary_simulator
 
