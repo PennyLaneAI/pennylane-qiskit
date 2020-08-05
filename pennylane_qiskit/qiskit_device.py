@@ -234,6 +234,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             if operation.endswith(".inv"):
                 gate = gate.inverse()
+                if "QubitUnitary" in operation:
+                    qregs = list(reversed(qregs))
 
             dag.apply_operation_back(gate, qargs=qregs)
             circuit = dag_to_circuit(dag)
