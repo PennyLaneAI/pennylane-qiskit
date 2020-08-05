@@ -224,7 +224,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in wires]
 
-            if operation in ("QubitUnitary", "QubitStateVector"):
+            if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
                 # Need to revert the order of the quantum registers used in
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
@@ -234,8 +234,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             if operation.endswith(".inv"):
                 gate = gate.inverse()
-                if "QubitUnitary" in operation:
-                    qregs = list(reversed(qregs))
 
             dag.apply_operation_back(gate, qargs=qregs)
             circuit = dag_to_circuit(dag)
