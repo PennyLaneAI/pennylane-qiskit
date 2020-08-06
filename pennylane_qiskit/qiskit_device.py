@@ -137,7 +137,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # perform validation against backend
         b = self.backend
-        if wires > b.configuration().n_qubits:
+        if len(self.wires) > b.configuration().n_qubits:
             raise ValueError(
                 "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
             )
@@ -213,16 +213,16 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         for operation in operations:
             # Apply the circuit operations
-            wires = operation.wires
+            device_wires = self.map_wires(operation.wires)
             par = operation.parameters
             operation = operation.name
 
             mapped_operation = self._operation_map[operation]
 
-            self.qubit_unitary_check(operation, par, wires)
-            self.qubit_state_vector_check(operation, par, wires)
+            self.qubit_unitary_check(operation, par, device_wires)
+            self.qubit_state_vector_check(operation, par, device_wires)
 
-            qregs = [self._reg[i] for i in wires]
+            qregs = [self._reg[i] for i in device_wires.labels]
 
             if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
                 # Need to revert the order of the quantum registers used in
