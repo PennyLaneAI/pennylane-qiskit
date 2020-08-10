@@ -36,7 +36,10 @@ class IBMQDevice(QiskitDevice):
     there is a credit system to limit access to the quantum devices.
 
     Args:
-        wires (int): The number of qubits of the device
+        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+            or strings (``['ancilla', 'q1', 'q2']``). Note that for some backends, the number
+            of wires has to match the number of qubits accessible.
         provider (Provider): The IBM Q provider you wish to use. If not provided,
             then the default provider returned by ``IBMQ.get_provider()`` is used.
         backend (str): the desired provider backend

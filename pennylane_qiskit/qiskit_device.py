@@ -69,7 +69,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
 
     Args:
-        wires (int): The number of qubits of the device
+        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+            or strings (``['ancilla', 'q1', 'q2']``).
         provider (Provider): The Qiskit simulation provider
         backend (str): the desired backend
         shots (int): Number of circuit evaluations/random samples used
@@ -84,7 +86,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             Default value is ``False``.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.9.0"
+    pennylane_requires = ">=0.11.0"
     version = "0.9.0"
     plugin_version = __version__
     author = "Xanadu"
@@ -328,6 +330,5 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if self._state is None:
             return None
 
-        wires = wires or range(self.num_wires)
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob

@@ -33,7 +33,9 @@ class AerDevice(QiskitDevice):
     `Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_.
 
     Args:
-        wires (int): The number of qubits of the device
+        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+            or strings (``['ancilla', 'q1', 'q2']``).
         backend (str): the desired backend
         shots (int): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables
