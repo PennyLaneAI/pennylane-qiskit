@@ -84,7 +84,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             Default value is ``False``.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.9.0"
+    pennylane_requires = ">=0.11.0"
     version = "0.9.0"
     plugin_version = __version__
     author = "Xanadu"
@@ -328,6 +328,5 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if self._state is None:
             return None
 
-        wires = wires or range(self.num_wires)
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
