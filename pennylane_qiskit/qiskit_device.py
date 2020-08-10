@@ -69,7 +69,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
 
     Args:
-        wires (int): The number of qubits of the device
+        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+            or strings (``['ancilla', 'q1', 'q2']``).
         provider (Provider): The Qiskit simulation provider
         backend (str): the desired backend
         shots (int): Number of circuit evaluations/random samples used
