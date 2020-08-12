@@ -761,14 +761,8 @@ class TestConverterQasm:
                'x q[2];' \
                'barrier q;' \
                'h q[0];' \
-               'cu1(pi/2) q[1],q[0];' \
                'h q[1];' \
-               'cu1(pi/4) q[2],q[0];' \
-               'cu1(pi/2) q[2],q[1];' \
                'h q[2];' \
-               'cu1(pi/8) q[3],q[0];' \
-               'cu1(pi/4) q[3],q[1];' \
-               'cu1(pi/2) q[3],q[2];' \
                'h q[3];' \
                'measure q -> c;'
 
@@ -812,15 +806,12 @@ class TestConverterQasm:
         assert recorder.queue[5].parameters == []
         assert recorder.queue[5].wires == Wires([3])
 
-        assert len(record) == 11
+        assert len(record) == 5
         # check that the message matches
         assert record[0].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
                                             " PennyLane, and has not been added to the template."\
             .format('Barrier')
         assert record[1].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
-                                            " PennyLane, and has not been added to the template."\
-            .format('CU1Gate')
-        assert record[7].message.args[0] == "pennylane_qiskit.converter: The {} instruction is not supported by" \
                                             " PennyLane, and has not been added to the template."\
             .format('Measure')
 
