@@ -1,4 +1,4 @@
-# Release 0.10.0-dev
+# Release 0.12.0-dev
 
 ### New features since last release
 
@@ -13,6 +13,44 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+---
+
+# Release 0.11.0
+
+### New features since last release
+
+* Qiskit devices now support custom wire labels.
+  [(#99)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/99)
+  [(#100)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/100)
+
+  One can now specify any string or number as a custom wire label,
+  and use these labels to address subsystems on the device:
+
+  ```python
+  dev = qml.device('qiskit.ibmq', wires=['q1', 'ancilla', 0, 1])
+
+  def circuit():
+    qml.Hadamard(wires='q1')
+    qml.CNOT(wires=[1, 'ancilla'])
+  ```
+
+### Improvements
+
+* Adds support for Qiskit v0.20.
+  [(#101)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/101)
+
+### Bug fixes
+
+* When converting QASM or Qiskit circuit to PennyLane templates, the `CU1` gate
+  is now natively supported and converted to a `QubitUnitary`.
+  [(#101)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/101)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Maria Schuld, Antal Száva
 
 ---
 

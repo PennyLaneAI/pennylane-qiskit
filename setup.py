@@ -22,8 +22,8 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=0.19.1",
-    "pennylane>=0.9.0",
+    "qiskit>=0.20",
+    "pennylane>=0.11.0",
     "numpy",
     "networkx>=2.2;python_version>'3.5'",
     # Networkx 2.4 is the final version with python 3.5 support.
