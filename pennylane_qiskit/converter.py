@@ -231,19 +231,19 @@ def load(quantum_circuit: QuantumCircuit):
 
 def load_qasm(qasm_string: str):
     """Loads a PennyLane template from a QASM string.
-        Args:
-            qasm_string (str): the name of the QASM string
-        Returns:
-            function: the new PennyLane template
+    Args:
+        qasm_string (str): the name of the QASM string
+    Returns:
+        function: the new PennyLane template
     """
     return load(QuantumCircuit.from_qasm_str(qasm_string))
 
 
 def load_qasm_from_file(file: str):
     """Loads a PennyLane template from a QASM file.
-        Args:
-            file (str): the name of the QASM file
-        Returns:
-            function: the new PennyLane template
+    Args:
+        file (str): the name of the QASM file
+    Returns:
+        function: the new PennyLane template
     """
     return load(QuantumCircuit.from_qasm_file(file))
