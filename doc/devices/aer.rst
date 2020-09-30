@@ -124,4 +124,4 @@ which you can instantiate and apply to the device as follows
     print(circuit(0.2, 0.1, 0.3))
 
 Please refer to the Qiskit documentation for more information on
-`noise models <https://qiskit.org/documentation/tutorials/advanced/aer/3_building_noise_models.html>`_.
+`noise models <https://qiskit.org/documentation/tutorials/simulators/3_building_noise_models.html>`_.
