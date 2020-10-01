@@ -36,8 +36,7 @@ Backends
 
 Qiskit's Aer layer has several backends, for example ``'qasm_simulator'``,
 ``'statevector_simulator'``, ``'unitary_simulator'``. For more information on backends, please visit the
-`Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_ and the
-`Qiskit Aer tutorials <https://qiskit.org/documentation/tutorials/advanced/aer/1_aer_provider.html>`_.
+`Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_.
 
 
 To get a current overview what backends are available you can query
@@ -124,4 +123,4 @@ which you can instantiate and apply to the device as follows
     print(circuit(0.2, 0.1, 0.3))
 
 Please refer to the Qiskit documentation for more information on
-`noise models <https://qiskit.org/documentation/tutorials/advanced/aer/3_building_noise_models.html>`_.
+`noise models <https://qiskit.org/documentation/tutorials/simulators/3_building_noise_models.html>`_.
