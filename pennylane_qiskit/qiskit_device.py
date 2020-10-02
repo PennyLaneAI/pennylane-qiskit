@@ -276,7 +276,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         memory = str(compile_backend) not in self._state_backends
 
         return assemble(
-            experiments=compiled_circuits, backend=compile_backend, shots=self.shots, memory=memory,
+            experiments=compiled_circuits,
+            backend=compile_backend,
+            shots=self.shots,
+            memory=memory,
         )
 
     def run(self, qobj):
