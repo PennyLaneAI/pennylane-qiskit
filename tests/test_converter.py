@@ -989,8 +989,8 @@ class TestConverterIntegration:
             qc_pl(qiskit_param_mapping)
             return qml.expval(qml.PauliX(0) @ qml.PauliY(2))
 
-        dcircuit = qml.grad(circuit, 0)
-        res = dcircuit([theta, phi, varphi])
+        dcircuit = qml.grad(circuit)
+        res = dcircuit(np.array([theta, phi, varphi]))
         expected = [
             np.cos(theta) * np.sin(phi) * np.sin(varphi),
             np.sin(theta) * np.cos(phi) * np.sin(varphi),
