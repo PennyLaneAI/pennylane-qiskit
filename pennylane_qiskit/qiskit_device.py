@@ -285,7 +285,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
                         2**wires)."
                 )
 
-    def compile(self, temp_transpile_args):
+    def compile(self, temp_transpile_args={}):
         """Compile the quantum circuit to target
         the provided compile_backend. If compile_backend is None,
         then the target is simply the backend.
