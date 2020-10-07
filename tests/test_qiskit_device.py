@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import pennylane as qml
-from pennylane_qiskit import AerDevice
+from pennylane_qiskit import AerDevice, BasicAerDevice
 
 
 class TestProbabilities:
@@ -14,6 +14,21 @@ class TestProbabilities:
         dev = AerDevice(backend="statevector_simulator", wires=1, analytic=True)
         assert dev.probability() is None
 
+@pytest.mark.parametrize("qiskit_device", [AerDevice, BasicAerDevice])
+@pytest.mark.parametrize("wires", [1,2])
+@pytest.mark.transpile_args_test
+class TestTranspilationOptionInitialization:
+    """Tests for passing the transpilation options to qiskit at time of device init"""
+
+    def test_no_transpilation_options(self, qiskit_device, wires):
+        """Test that the transpilation options must me {} if not provided."""
+        dev = qiskit_device(wires=wires)
+        assert dev.transpile_args == {}
+
+    def test_with_transpilation_options(self, qiskit_device, wires):
+        """test that the transpilation options are set as expected during device init"""
+        dev = qiskit_device(wires=wires, abc=123, optimization_level=2)
+        assert dev.transpile_args == {'optimization_level':2}
 
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""

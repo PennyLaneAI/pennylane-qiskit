@@ -51,10 +51,45 @@ single_qubit_operations = [
     qml.T
 ]
 
+test_transpile_options = [
+    {},
+    {'optimization_level':2},
+    {'optimization_level':2, 'seed_transpiler':22}
+]
+
+test_device_options = [
+    {},
+    {'optimization_level':3},
+    {'optimization_level':1}
+]
+
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ]
 two_qubit_param = [qml.CRZ]
 three_qubit = [qml.Toffoli, qml.CSWAP]
+
+@pytest.mark.parametrize("qiskit_device", [AerDevice, BasicAerDevice])
+@pytest.mark.parametrize("wires", [1,2])
+@pytest.mark.parametrize("transpile_options", test_transpile_options)
+@pytest.mark.parametrize("device_options", test_device_options)
+@pytest.mark.parametrize("persist", [True, False])
+@pytest.mark.transpile_args_test
+class TestTranspileOptionsUpdations:
+    """Test the updation of transpilation options passed while applying operations"""
+
+    def test_transpilation_options(self, init_state, qiskit_device, wires,
+        transpile_options, device_options, persist):
+        """test that the transpilation options are updated as
+            expected during device init"""
+        dev = qiskit_device(wires=wires, **device_options)
+        assert dev.transpile_args == device_options
+        state = init_state(wires)
+        dev.apply([qml.QubitStateVector(state, wires=range(wires))],
+            persist_transpile_options=persist, **transpile_options)
+        if persist:
+            assert dev.transpile_args == {**device_options, **transpile_options}
+        else:
+            assert dev.transpile_args == device_options
 
 @pytest.mark.parametrize("analytic", [True])
 @pytest.mark.parametrize("shots", [8192])
