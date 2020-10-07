@@ -161,9 +161,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self.run_args["noise_model"] = kwargs.pop("noise_model")
             else:
                 raise ValueError("Backend {} does not support noisy simulations".format(backend))
+        
+        # set transpile_args 
+        self.transpile_args =  {}
+        transpile_sig = inspect.signature(transpile).parameters
+        self.set_args(kwargs, transpile_sig, self.transpile_args)
 
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs
+
+    def set_args(self, source, signature, destination):
+        for arg in signature.keys():
+            if arg in source:
+                destination[arg] = source[arg]
 
     @property
     def backend(self):
@@ -178,7 +188,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = None
         self._state = None  # statevector of a simulator backend
 
-    def apply(self, operations, **kwargs):
+    def apply(self, operations, persist_transpile_options=False, **kwargs):
+        ''' Args:
+                operations (List[pennylane.Operation]): operations to be applied
+                persist_transpile_options (Boolean): If true, transpile options 
+                    will be used for furture runs
+                **kwargs (Dict): pass transpile options
+        '''
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -196,7 +212,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 measure(self._circuit, qr, cr)
 
         # These operations need to run for all devices
-        qobj = self.compile()
+        temp_transpile_args = {}
+        transpile_sig = inspect.signature(transpile).parameters
+        self.set_args(kwargs, transpile_sig, 
+            (self.transpile_args if persist_transpile_options else temp_transpile_args))
+        qobj = self.compile(temp_transpile_args)
         self.run(qobj)
 
     def apply_operations(self, operations):
@@ -265,12 +285,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
                         2**wires)."
                 )
 
-    def compile(self):
+    def compile(self, temp_transpile_args):
         """Compile the quantum circuit to target
         the provided compile_backend. If compile_backend is None,
-        then the target is simply the backend."""
+        then the target is simply the backend.
+        Args:
+            temp_transpile_args(Dict): this dictionary will be used to override/add 
+            transpile parameters for current transpilation only.
+        """
         compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(self._circuit, backend=compile_backend)
+        t_args = {**self.transpile_args, **temp_transpile_args}
+        t_args.pop('circuit',None)
+        t_args.pop('backend',None)
+        compiled_circuits = transpile(self._circuit, backend=compile_backend, **t_args)
 
         # Specify to have a memory for hw/hw simulators
         memory = str(compile_backend) not in self._state_backends
