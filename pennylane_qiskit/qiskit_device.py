@@ -172,12 +172,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @staticmethod
     def set_args(source, signature, destination):
-        """
-        This static method is for fetching all signature matching parameters from source dict and appending them to destination dict.
+        """This static method is for fetching all signature matching parameters from source dict and appending them to destination dict.
+
         Args:
-            source(Dict) : the source dictionary
-            signature(Iterable) : the iterable of params to filter
-            destination(Dict) : te destination dictionary
+            source (Dict): The source dictionary
+            signature (Iterable): The iterable of params to filter
+            destination (Dict): The destination dictionary
         """
         for arg in signature:
             if arg in source:
@@ -197,11 +197,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._state = None  # statevector of a simulator backend
 
     def apply(self, operations, persist_transpile_options=False, **kwargs):
-        """Args:
-        operations (List[pennylane.Operation]): operations to be applied
-        persist_transpile_options (Boolean): If true, transpile options
-            will be used for furture runs
-        **kwargs (Dict): pass transpile options
+        """This method applies the given set of operations on the qiskit ciruit.
+
+        Args:
+            operations (List[PennyLane.operation]): operations to be applied
+            persist_transpile_options (bool, optional): If true, transpile options
+            will be used for furture runs. Defaults to False.
         """
         rotations = kwargs.get("rotations", [])
 
@@ -297,12 +298,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 )
 
     def compile(self, temp_transpile_args=None):
-        """Compile the quantum circuit to target
-        the provided compile_backend. If compile_backend is None,
-        then the target is simply the backend.
+        """Compile the quantum circuit to target the provided compile_backend. If compile_backend is None,then the target is simply the backend.
+
         Args:
-            temp_transpile_args(Dict): this dictionary will be used to override/add
-            transpile parameters for current transpilation only.
+            temp_transpile_args ([Dict], optional): This dictionary will be used to override/add transpile parameters for current transpilation only. Defaults to None.
+
+        Returns:
+            A ``Qobj`` that can be run on a backend. Depending on the type of input, this will be either a ``QasmQobj`` or a ``PulseQobj``.
         """
         temp_transpile_args = {} if temp_transpile_args is None else temp_transpile_args
         compile_backend = self.compile_backend or self.backend
