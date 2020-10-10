@@ -163,7 +163,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 raise ValueError("Backend {} does not support noisy simulations".format(backend))
 
         # set transpile_args
-        self.transpile_args =  {}
+        self.transpile_args = {}
         transpile_sig = inspect.signature(transpile).parameters
         self.set_args(kwargs, transpile_sig, self.transpile_args)
 
@@ -172,13 +172,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @staticmethod
     def set_args(source, signature, destination):
-        '''
+        """
         This static method is for fetching all signature matching parameters from source dict and appending them to destination dict.
         Args:
             source(Dict) : the source dictionary
             signature(Iterable) : the iterable of params to filter
             destination(Dict) : te destination dictionary
-        '''
+        """
         for arg in signature:
             if arg in source:
                 destination[arg] = source[arg]
@@ -197,12 +197,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._state = None  # statevector of a simulator backend
 
     def apply(self, operations, persist_transpile_options=False, **kwargs):
-        ''' Args:
-                operations (List[pennylane.Operation]): operations to be applied
-                persist_transpile_options (Boolean): If true, transpile options
-                    will be used for furture runs
-                **kwargs (Dict): pass transpile options
-        '''
+        """Args:
+        operations (List[pennylane.Operation]): operations to be applied
+        persist_transpile_options (Boolean): If true, transpile options
+            will be used for furture runs
+        **kwargs (Dict): pass transpile options
+        """
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -222,8 +222,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # These operations need to run for all devices
         temp_transpile_args = {}
         transpile_sig = inspect.signature(transpile).parameters
-        self.set_args(kwargs, transpile_sig,
-            (self.transpile_args if persist_transpile_options else temp_transpile_args))
+        self.set_args(
+            kwargs,
+            transpile_sig,
+            (self.transpile_args if persist_transpile_options else temp_transpile_args),
+        )
         qobj = self.compile(temp_transpile_args)
         self.run(qobj)
 
@@ -304,8 +307,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         temp_transpile_args = {} if temp_transpile_args is None else temp_transpile_args
         compile_backend = self.compile_backend or self.backend
         t_args = {**self.transpile_args, **temp_transpile_args}
-        t_args.pop('circuits',None)
-        t_args.pop('backend',None)
+        t_args.pop("circuits", None)
+        t_args.pop("backend", None)
         compiled_circuits = transpile(self._circuit, backend=compile_backend, **t_args)
 
         # Specify to have a memory for hw/hw simulators
