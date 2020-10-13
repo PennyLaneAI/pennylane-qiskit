@@ -69,7 +69,7 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.
             if isinstance(v, qml.variable.Variable):
                 variable_refs[k] = v
 
-    return variable_refs   # map qiskit parameters to PennyLane differentiable Variables.
+    return variable_refs  # map qiskit parameters to PennyLane differentiable Variables.
 
 
 def _check_circuit_and_bind_parameters(
