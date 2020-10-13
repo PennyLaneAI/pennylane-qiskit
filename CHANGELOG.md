@@ -10,9 +10,15 @@
 
 ### Bug fixes
 
+* Removes PySCF from the plugin ``setup.py`` and ``requirements.txt``.
+  [(#103)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/103)
+  [(#104)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/104)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Josh Izaac, Nathan Killoran, Antal Száva
 
 ---
 
