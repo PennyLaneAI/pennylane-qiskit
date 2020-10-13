@@ -56,11 +56,20 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.
         dict[qiskit.circuit.Parameter, pennylane.variable.Variable]: a dictionary mapping
             qiskit parameters to PennyLane variables
     """
+    variable_refs = {}
     # map qiskit parameters to PennyLane differentiable Variables.
-    if params is None:
-        return {}
+    if params is not None:
+        for k, v in params.items():
 
-    return {k: v for k, v in params.items() if isinstance(v, qml.variable.Variable)}
+            # Values can be arrays of size 1, need to extract the Python scalar
+            # (this can happen e.g. when indexing into a PennyLane numpy array)
+            if isinstance(v, np.ndarray):
+                v = v.item()
+
+            if isinstance(v, qml.variable.Variable):
+                variable_refs[k] = v
+
+    return variable_refs   # map qiskit parameters to PennyLane differentiable Variables.
 
 
 def _check_circuit_and_bind_parameters(
