@@ -1,12 +1,4 @@
-# Release 0.12.0-dev
-
-### New features since last release
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
+# Release 0.12.0
 
 ### Bug fixes
 
