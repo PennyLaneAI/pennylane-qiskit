@@ -168,7 +168,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs
 
-    def set_transpile_args(self, **kwargs): 
+    def set_transpile_args(self, **kwargs):
         transpile_sig = inspect.signature(transpile).parameters
         self.transpile_args = {arg : kwargs[arg] for arg in transpile_sig if arg in kwargs}
         self.transpile_args.pop("circuits", None)
