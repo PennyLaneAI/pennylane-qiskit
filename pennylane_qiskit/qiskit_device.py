@@ -163,25 +163,16 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 raise ValueError("Backend {} does not support noisy simulations".format(backend))
 
         # set transpile_args
-        self.transpile_args = {}
-        transpile_sig = inspect.signature(transpile).parameters
-        self.set_args(kwargs, transpile_sig, self.transpile_args)
+        self.set_transpile_args(**kwargs)
 
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs
 
-    @staticmethod
-    def set_args(source, signature, destination):
-        """This static method is for fetching all signature matching parameters from source dict and appending them to destination dict.
-
-        Args:
-            source (Dict): The source dictionary
-            signature (Iterable): The iterable of params to filter
-            destination (Dict): The destination dictionary
-        """
-        for arg in signature:
-            if arg in source:
-                destination[arg] = source[arg]
+    def set_transpile_args(self, **kwargs): 
+        transpile_sig = inspect.signature(transpile).parameters
+        self.transpile_args = {arg : kwargs[arg] for arg in transpile_sig if arg in kwargs}
+        self.transpile_args.pop("circuits", None)
+        self.transpile_args.pop("backend", None)
 
     @property
     def backend(self):
@@ -196,14 +187,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = None
         self._state = None  # statevector of a simulator backend
 
-    def apply(self, operations, persist_transpile_options=False, **kwargs):
-        """This method applies the given set of operations on the qiskit ciruit.
-
-        Args:
-            operations (List[PennyLane.operation]): operations to be applied
-            persist_transpile_options (bool, optional): If true, transpile options
-            will be used for furture runs. Defaults to False.
-        """
+    def apply(self, operations, **kwargs):
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -221,14 +205,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 measure(self._circuit, qr, cr)
 
         # These operations need to run for all devices
-        temp_transpile_args = {}
-        transpile_sig = inspect.signature(transpile).parameters
-        self.set_args(
-            kwargs,
-            transpile_sig,
-            (self.transpile_args if persist_transpile_options else temp_transpile_args),
-        )
-        qobj = self.compile(temp_transpile_args)
+        qobj = self.compile()
         self.run(qobj)
 
     def apply_operations(self, operations):
@@ -297,21 +274,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
                         2**wires)."
                 )
 
-    def compile(self, temp_transpile_args=None):
-        """Compile the quantum circuit to target the provided compile_backend. If compile_backend is None,then the target is simply the backend.
-
-        Args:
-            temp_transpile_args ([Dict], optional): This dictionary will be used to override/add transpile parameters for current transpilation only. Defaults to None.
-
-        Returns:
-            A ``Qobj`` that can be run on a backend. Depending on the type of input, this will be either a ``QasmQobj`` or a ``PulseQobj``.
-        """
-        temp_transpile_args = {} if temp_transpile_args is None else temp_transpile_args
+    def compile(self):
+        """Compile the quantum circuit to target
+        the provided compile_backend. If compile_backend is None,	
+        then the target is simply the backend."""
         compile_backend = self.compile_backend or self.backend
-        t_args = {**self.transpile_args, **temp_transpile_args}
-        t_args.pop("circuits", None)
-        t_args.pop("backend", None)
-        compiled_circuits = transpile(self._circuit, backend=compile_backend, **t_args)
+        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
 
         # Specify to have a memory for hw/hw simulators
         memory = str(compile_backend) not in self._state_backends
