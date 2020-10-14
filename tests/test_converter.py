@@ -998,3 +998,42 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("analytic", [True])
+    def test_differentiable_param_is_array(self, analytic, tol):
+        """Test that extracting the differentiable parameters works correctly
+        for arrays"""
+        qc = QuantumCircuit(3)
+        qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
+
+        theta = 0.53
+        phi = -1.23
+        varphi = 0.8654
+        params = [qml.numpy.tensor(theta), qml.numpy.tensor(phi), qml.numpy.tensor(varphi)]
+
+        qc.rx(qiskit_params[0], 0)
+        qc.rx(qiskit_params[1], 1)
+        qc.rx(qiskit_params[2], 2)
+        qc.cx(0, 1)
+        qc.cx(1, 2)
+
+        # convert to a PennyLane circuit
+        qc_pl = qml.from_qiskit(qc)
+
+        dev = qml.device("default.qubit", wires=3, analytic=analytic)
+
+        @qml.qnode(dev)
+        def circuit(params):
+            qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
+            qc_pl(qiskit_param_mapping)
+            return qml.expval(qml.PauliX(0) @ qml.PauliY(2))
+
+        dcircuit = qml.grad(circuit, 0)
+        res = dcircuit(params)
+        expected = [
+            np.cos(theta) * np.sin(phi) * np.sin(varphi),
+            np.sin(theta) * np.cos(phi) * np.sin(varphi),
+            np.sin(theta) * np.sin(phi) * np.cos(varphi)
+        ]
+
+        assert np.allclose(res, expected, **tol)
