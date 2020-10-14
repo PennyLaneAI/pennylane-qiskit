@@ -176,7 +176,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def backend(self):
-        """The Qiskit simulation backend object"""
+        """The Qiskit simulation backend object."""
         return self.provider.get_backend(self.backend_name)
 
     def reset(self):
@@ -275,9 +275,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 )
 
     def compile(self):
-        """Compile the quantum circuit to target
-        the provided compile_backend. If compile_backend is None,	
-        then the target is simply the backend."""
+        """Compile the quantum circuit to target the provided compile_backend.
+
+        If compile_backend is None, then the target is simply the
+        backend.
+        """
         compile_backend = self.compile_backend or self.backend
         compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
 
