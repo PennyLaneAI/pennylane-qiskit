@@ -6,6 +6,10 @@
   [(#103)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/103)
   [(#104)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/104)
 
+* Fixed a bug related to extracting differentiable parameters for the Qiskit
+  converter and PennyLane array indexing.
+  [(#106)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/106)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
