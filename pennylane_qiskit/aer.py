@@ -27,10 +27,15 @@ class AerDevice(QiskitDevice):
     Please refer to the `Qiskit documentation <https://qiskit.org/documentation/>`_ for
     for further information to the noise model and backend options.
 
-    A range of :code:`backend_options` can be given as kwargs that will be passed to the simulator.
+    A range of :code:`backend_options` that will be passed to the simulator and
+    a range of :code:`parameters` for `qiskit.compiler.transpile <https://qiskit.org/documentation/_modules/qiskit/compiler/transpile.html>`_
+    can be given as kwargs.
 
     For more information on backends, please visit the
     `Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_.
+
+    For more information on transpilation parameters, please visit the
+    `Qiskit Transpile documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
