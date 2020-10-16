@@ -31,7 +31,8 @@ class TestProbabilities:
 @pytest.mark.parametrize("device_options", test_device_options)
 @pytest.mark.transpile_args_test
 class TestTranspilationOptionInitialization:
-    """Tests for passing the transpilation options to qiskit at time of device init"""
+    """Tests for passing the transpilation options to qiskit at time of device 
+    initialization."""
 
     def test_device_with_transpilation_options(self, device, wires, device_options):
         """Test that the transpilation options must be persisted if provided."""
@@ -40,7 +41,7 @@ class TestTranspilationOptionInitialization:
 
     @pytest.mark.parametrize("transpile_options", test_transpile_options)
     def test_transpilation_option_update(self, device, wires, device_options, transpile_options):
-        """test that the transpilation options are updated as expected"""
+        """Test that the transpilation options are updated as expected."""
         dev = device(wires, device_options)
         assert dev.transpile_args == device_options
         dev.set_transpile_args(**transpile_options)
