@@ -52,12 +52,17 @@ QISKIT_OPERATION_MAP = {
     "CRX": ex.CRXGate,
     "CRY": ex.CRYGate,
     "CRZ": ex.CRZGate,
-    "PhaseShift": ex.U1Gate,
+    "PhaseShift": ex.PhaseGate,
     "QubitStateVector": ex.Initialize,
-    "U2": ex.U2Gate,
-    "U3": ex.U3Gate,
+
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
+    "U": ex.UGate,
+
+    # Qiskit gates being deprecated
+    "U1": ex.U1Gate,
+    "U2": ex.U2Gate,
+    "U3": ex.U3Gate
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
