@@ -131,7 +131,7 @@ class TestKeywordArguments:
         """Test that the noise model argument is properly
         extracted if the backend supports it"""
         dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
-        assert dev.run_args["noise_model"] == "test value"
+        assert dev.noise_model == "test value"
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
