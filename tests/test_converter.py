@@ -571,14 +571,14 @@ class TestConverter:
         """Tests that the load method for a QuantumCircuit raises a TypeError,
         if the wrong type of arguments were passed."""
 
-        angle = 'some_string_instead_of_an_angle'
+        angle = np.zeros(4)
 
         qc = QuantumCircuit(3, 1)
         qc.rz(angle, [0])
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(TypeError, match="parameter expected, got <class 'str'>"):
+        with pytest.raises(TypeError, match="Real scalar parameter expected"):
             with recorder:
                 quantum_circuit()
 

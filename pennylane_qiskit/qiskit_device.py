@@ -156,11 +156,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if "compile_backend" in kwargs:
             self.compile_backend = kwargs.pop("compile_backend")
 
+        self.noise_model = None
         if "noise_model" in kwargs:
-            if "noise_model" in s.parameters:
-                self.run_args["noise_model"] = kwargs.pop("noise_model")
-            else:
+            if str(provider) != "AerProvider" or backend != "qasm_simulator":
                 raise ValueError("Backend {} does not support noisy simulations".format(backend))
+
+            self.noise_model = kwargs.pop("noise_model")
 
         if "backend_options" in s.parameters:
             self.run_args["backend_options"] = kwargs
@@ -177,6 +178,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         self._current_job = None
         self._state = None  # statevector of a simulator backend
+        self.noise_model = None
 
     def apply(self, operations, **kwargs):
         rotations = kwargs.get("rotations", [])
@@ -284,6 +286,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
+        backend = self.backend
+
+        if self.noise_model:
+            # Set the noise model before execution
+            backend.set_options(noise_model=noise_model)
+
         self._current_job = self.backend.run(qobj, **self.run_args)
         result = self._current_job.result()
 
