@@ -170,24 +170,22 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Initialize inner state
         self.reset()
 
-        # determine if backend supports backend options and noise models,
-        # and properly put together backend run arguments
-        s = inspect.signature(b.run)
-        self.run_args = {}
         self.compile_backend = None
-
         if "compile_backend" in kwargs:
             self.compile_backend = kwargs.pop("compile_backend")
 
+        aer_provider = str(provider) == "AerProvider"
         self.noise_model = None
         if "noise_model" in kwargs:
-            if str(provider) != "AerProvider" or backend != "qasm_simulator":
+            if not aer_provider or backend != "qasm_simulator":
                 raise ValueError("Backend {} does not support noisy simulations".format(backend))
 
             self.noise_model = kwargs.pop("noise_model")
 
-        if "backend_options" in s.parameters:
-            self.run_args["backend_options"] = kwargs
+        self.run_args = {}
+        if aer_provider:
+            # Consider the remaining kwargs as keyword arguments to run
+            self.run_args.update(kwargs)
 
     @property
     def backend(self):
