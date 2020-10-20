@@ -182,10 +182,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             self.noise_model = kwargs.pop("noise_model")
 
+        # Get further arguments for run
+        s = inspect.signature(b.run)
         self.run_args = {}
+
         if aer_provider:
             # Consider the remaining kwargs as keyword arguments to run
             self.run_args.update(kwargs)
+
+        elif "backend_options" in s.parameters:
+            # BasicAer
+            self.run_args["backend_options"] = kwargs
 
     @property
     def backend(self):

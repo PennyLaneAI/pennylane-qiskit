@@ -600,21 +600,6 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: angle})
 
-    def test_quantum_circuit_error_by_calling_wrong_parameters(self, recorder):
-        """Tests that the load method for a QuantumCircuit raises a TypeError,
-        if the wrong type of arguments were passed."""
-
-        angle = np.zeros(4)
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(angle, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(TypeError, match="Real scalar parameter expected"):
-            with recorder:
-                quantum_circuit()
-
     def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
         """Tests the load method raises a QiskitError if arguments
         that are not required were passed."""
