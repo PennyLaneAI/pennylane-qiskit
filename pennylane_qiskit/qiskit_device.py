@@ -33,6 +33,24 @@ from pennylane import QubitDevice, DeviceError
 from ._version import __version__
 
 
+# Auxiliary functions for gates subject to deprecation
+def U1Gate(theta):
+    """Auxiliary function for the ``U1Gate``."""
+    return ex.PhaseGate(theta)
+
+def U2Gate(phi, lam):
+    """Auxiliary function for the ``U2Gate``.
+
+    Uses the equation ``u2(phi, lam) = u(pi/2, phi, lam)``.
+    """
+    return ex.U(np.pi/2, phi, lam)
+
+def U3Gate(theta, phi, lam):
+    """Auxiliary function for the ``U3Gate``."""
+    return ex.U(theta, phi, lam)
+
+
+
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
@@ -59,10 +77,11 @@ QISKIT_OPERATION_MAP = {
     "QubitUnitary": ex.UnitaryGate,
     "U": ex.UGate,
 
-    # Qiskit gates being deprecated
-    "U1": ex.U1Gate,
-    "U2": ex.U2Gate,
-    "U3": ex.U3Gate
+    # Qiskit gates subject to deprecation (using custom definitions that depend on
+    # the latest recommended gates)
+    "U1": U1Gate,
+    "U2": U2Gate,
+    "U3": U3Gate
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
@@ -295,7 +314,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         if self.noise_model:
             # Set the noise model before execution
-            backend.set_options(noise_model=noise_model)
+            backend.set_options(noise_model=self.noise_model)
 
         self._current_job = self.backend.run(qobj, **self.run_args)
         result = self._current_job.result()

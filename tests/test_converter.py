@@ -548,7 +548,7 @@ class TestConverter:
     def test_qiskit_gates_to_be_deprecated(self, recorder):
         """Tests the Qiskit gates taht will be deprecated in an upcoming Qiskit version.
         
-        This test case will have to be removed once the gates are finally deprecated.
+        This test case can be removed once the gates are finally deprecated.
         """
         qc = QuantumCircuit(1, 1)
 
