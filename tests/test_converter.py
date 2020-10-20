@@ -546,7 +546,7 @@ class TestConverter:
         assert recorder.queue[0].wires == Wires([0, 1])
 
     def test_qiskit_gates_to_be_deprecated(self, recorder):
-        """Tests the Qiskit gates taht will be deprecated in an upcoming Qiskit version.
+        """Tests the Qiskit gates that will be deprecated in an upcoming Qiskit version.
         
         This test case can be removed once the gates are finally deprecated.
         """
