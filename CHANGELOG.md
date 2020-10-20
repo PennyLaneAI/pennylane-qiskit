@@ -2,7 +2,7 @@
 
 ### Bug fixes
 
-* Removes PySCF from the plugin ``setup.py`` and ``requirements.txt``.
+* Removes PySCF from the plugin `setup.py` and `requirements.txt`.
   [(#103)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/103)
   [(#104)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/104)
 
