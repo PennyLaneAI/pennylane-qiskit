@@ -1,7 +1,7 @@
 name: Upload
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   upload:
