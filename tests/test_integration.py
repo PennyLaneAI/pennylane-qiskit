@@ -131,7 +131,7 @@ class TestKeywordArguments:
         """Test that the noise model argument is properly
         extracted if the backend supports it"""
         dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
-        assert dev.run_args["noise_model"] == "test value"
+        assert dev.noise_model == "test value"
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
@@ -139,12 +139,11 @@ class TestKeywordArguments:
         with pytest.raises(ValueError, match="does not support noisy simulations"):
             dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
 
-    @pytest.mark.parametrize("d", pldevices)
-    def test_overflow_backend_options(self, d):
-        """Test all overflow backend options are extracted"""
-        dev = qml.device(d[0], wires=2, k1="v1", k2="v2")
-        assert dev.run_args["backend_options"]["k1"] == "v1"
-        assert dev.run_args["backend_options"]["k2"] == "v2"
+    def test_overflow_kwargs(self):
+        """Test all overflow kwargs are extracted for the AerDevice"""
+        dev = qml.device('qiskit.aer', wires=2, k1="v1", k2="v2")
+        assert dev.run_args["k1"] == "v1"
+        assert dev.run_args["k2"] == "v2"
 
 
 class TestLoadIntegration:

@@ -184,6 +184,11 @@ def load(quantum_circuit: QuantumCircuit):
 
             operation_wires = [wire_map[(qubit.register.name, qubit.index)] for qubit in op[1]]
 
+            # New Qiskit gates that are not natively supported by PL (identical
+            # gates exist with a different name)
+            # TODO: remove the following when gates have been renamed in PennyLane
+            instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
+
             if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
                 # Extract the bound parameters from the operation. If the bound parameters are a
                 # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
