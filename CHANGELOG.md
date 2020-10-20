@@ -1,5 +1,10 @@
 # Release 0.12.0
 
+### Improvements
+
+* The provided devices are now compatible with Qiskit 0.23.
+  [(#112)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/112)
+
 ### Bug fixes
 
 * Removes PySCF from the plugin `setup.py` and `requirements.txt`.
