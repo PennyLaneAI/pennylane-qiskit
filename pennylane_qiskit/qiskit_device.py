@@ -33,6 +33,25 @@ from pennylane import QubitDevice, DeviceError
 from ._version import __version__
 
 
+# Auxiliary functions for gates subject to deprecation
+def U1Gate(theta):
+    """Auxiliary function for the ``U1Gate``."""
+    return ex.PhaseGate(theta)
+
+
+def U2Gate(phi, lam):
+    """Auxiliary function for the ``U2Gate``.
+
+    Uses the equation ``u2(phi, lam) = u(pi/2, phi, lam)``.
+    """
+    return ex.U(np.pi / 2, phi, lam)
+
+
+def U3Gate(theta, phi, lam):
+    """Auxiliary function for the ``U3Gate``."""
+    return ex.U(theta, phi, lam)
+
+
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
@@ -52,12 +71,16 @@ QISKIT_OPERATION_MAP = {
     "CRX": ex.CRXGate,
     "CRY": ex.CRYGate,
     "CRZ": ex.CRZGate,
-    "PhaseShift": ex.U1Gate,
+    "PhaseShift": ex.PhaseGate,
     "QubitStateVector": ex.Initialize,
-    "U2": ex.U2Gate,
-    "U3": ex.U3Gate,
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
+    "U": ex.UGate,
+    # Qiskit gates subject to deprecation (using custom definitions that depend on
+    # the latest recommended gates)
+    "U1": U1Gate,
+    "U2": U2Gate,
+    "U3": U3Gate,
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
@@ -86,8 +109,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
             Default value is ``False``.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.11.0"
-    version = "0.11.0"
+    pennylane_requires = ">=0.12.0"
+    version = "0.12.0"
     plugin_version = __version__
     author = "Xanadu"
 
@@ -147,25 +170,31 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Initialize inner state
         self.reset()
 
-        # determine if backend supports backend options and noise models,
-        # and properly put together backend run arguments
-        s = inspect.signature(b.run)
-        self.run_args = {}
         self.compile_backend = None
-
         if "compile_backend" in kwargs:
             self.compile_backend = kwargs.pop("compile_backend")
 
+        aer_provider = str(provider) == "AerProvider"
+        self.noise_model = None
         if "noise_model" in kwargs:
-            if "noise_model" in s.parameters:
-                self.run_args["noise_model"] = kwargs.pop("noise_model")
-            else:
+            if not aer_provider or backend != "qasm_simulator":
                 raise ValueError("Backend {} does not support noisy simulations".format(backend))
+
+            self.noise_model = kwargs.pop("noise_model")
 
         # set transpile_args
         self.set_transpile_args(**kwargs)
 
-        if "backend_options" in s.parameters:
+        # Get further arguments for run
+        s = inspect.signature(b.run)
+        self.run_args = {}
+
+        if aer_provider:
+            # Consider the remaining kwargs as keyword arguments to run
+            self.run_args.update(kwargs)
+
+        elif "backend_options" in s.parameters:
+            # BasicAer
             self.run_args["backend_options"] = kwargs
 
     def set_transpile_args(self, **kwargs):
@@ -187,6 +216,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         self._current_job = None
         self._state = None  # statevector of a simulator backend
+        self.noise_model = None
 
     def apply(self, operations, **kwargs):
         rotations = kwargs.get("rotations", [])
@@ -288,14 +318,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         memory = str(compile_backend) not in self._state_backends
 
         return assemble(
-            experiments=compiled_circuits,
-            backend=compile_backend,
-            shots=self.shots,
-            memory=memory,
+            experiments=compiled_circuits, backend=compile_backend, shots=self.shots, memory=memory
         )
 
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
+        backend = self.backend
+
+        if self.noise_model:
+            # Set the noise model before execution
+            backend.set_options(noise_model=self.noise_model)
+
         self._current_job = self.backend.run(qobj, **self.run_args)
         result = self._current_job.result()
 
