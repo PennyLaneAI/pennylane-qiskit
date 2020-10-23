@@ -25,17 +25,13 @@ class BasicAerDevice(QiskitDevice):
     """A PennyLane device for the native Python Qiskit simulator.
 
     Please see the `Qiskit documentations <https://qiskit.org/documentation/>`_
-    for more details.
+    further information on the backend options and transpile options.
 
     A range of :code:`backend_options` that will be passed to the simulator and
-    a range of :code:`parameters` for `qiskit.compiler.transpile <https://qiskit.org/documentation/_modules/qiskit/compiler/transpile.html>`_
-    can be given as kwargs.
+    a range of transpile options can be given as kwargs.
 
     For more information on backends, please visit the
     `Basic Aer provider documentation <https://qiskit.org/documentation/apidoc/providers_basicaer.html>`_.
-
-    For more information on transpilation parameters, please visit the
-    `Qiskit Transpile documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
