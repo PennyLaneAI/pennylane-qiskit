@@ -18,6 +18,9 @@ This release contains contributions from (in alphabetical order):
 
 ### Improvements
 
+* Qiskit devices are now allowed to pass transpilation options.
+  [(#108)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/108)
+
 * The provided devices are now compatible with Qiskit 0.23.
   [(#112)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/112)
 
@@ -35,7 +38,7 @@ This release contains contributions from (in alphabetical order):
 
 This release contains contributions from (in alphabetical order):
 
-Josh Izaac, Nathan Killoran, Antal Száva
+Josh Izaac, Nathan Killoran, Sagar Pahwa, Antal Száva
 
 ---
 
