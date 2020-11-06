@@ -25,9 +25,10 @@ class BasicAerDevice(QiskitDevice):
     """A PennyLane device for the native Python Qiskit simulator.
 
     Please see the `Qiskit documentations <https://qiskit.org/documentation/>`_
-    for more details.
+    further information on the backend options and transpile options.
 
-    A range of :code:`backend_options` can be given in as kwargs that will be passed to the simulator.
+    A range of :code:`backend_options` that will be passed to the simulator and
+    a range of transpile options can be given as kwargs.
 
     For more information on backends, please visit the
     `Basic Aer provider documentation <https://qiskit.org/documentation/apidoc/providers_basicaer.html>`_.
