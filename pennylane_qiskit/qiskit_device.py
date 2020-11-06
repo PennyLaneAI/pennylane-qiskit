@@ -206,7 +206,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         self._current_job = None
         self._state = None  # statevector of a simulator backend
-        self.noise_model = None
 
     def apply(self, operations, **kwargs):
         rotations = kwargs.get("rotations", [])
