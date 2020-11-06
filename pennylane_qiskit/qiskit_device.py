@@ -182,6 +182,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             self.noise_model = kwargs.pop("noise_model")
 
+        # set transpile_args
+        self.set_transpile_args(**kwargs)
+
         # Get further arguments for run
         s = inspect.signature(b.run)
         self.run_args = {}
@@ -194,9 +197,16 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # BasicAer
             self.run_args["backend_options"] = kwargs
 
+    def set_transpile_args(self, **kwargs):
+        """The transpile argument setter."""
+        transpile_sig = inspect.signature(transpile).parameters
+        self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
+        self.transpile_args.pop("circuits", None)
+        self.transpile_args.pop("backend", None)
+
     @property
     def backend(self):
-        """The Qiskit simulation backend object"""
+        """The Qiskit simulation backend object."""
         return self.provider.get_backend(self.backend_name)
 
     def reset(self):
@@ -295,11 +305,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 )
 
     def compile(self):
-        """Compile the quantum circuit to target
-        the provided compile_backend. If compile_backend is None,
-        then the target is simply the backend."""
+        """Compile the quantum circuit to target the provided compile_backend.
+
+        If compile_backend is None, then the target is simply the
+        backend.
+        """
         compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(self._circuit, backend=compile_backend)
+        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
 
         # Specify to have a memory for hw/hw simulators
         memory = str(compile_backend) not in self._state_backends

@@ -72,8 +72,10 @@ def device(request, backend, shots, analytic):
     if backend not in state_backends and analytic == True:
         pytest.skip("Hardware simulators do not support analytic mode")
 
-    def _device(n):
-        return request.param(wires=n, backend=backend, shots=shots, analytic=analytic)
+    def _device(n, device_options=None):
+        if device_options is None:
+            device_options = {}
+        return request.param(wires=n, backend=backend, shots=shots, analytic=analytic, **device_options)
 
     return _device
 
