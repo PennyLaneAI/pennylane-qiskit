@@ -4,6 +4,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 import qiskit
+import qiskit.providers.aer.noise as noise
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
@@ -332,3 +333,23 @@ class TestInverses:
 
         for x in angles:
             assert np.allclose(circuit_with_inverses(x), circuit_with_inverses_default_qubit(x))
+
+class TestNoise:
+    """Integration test for the noise models."""
+
+    def test_noise_applied(self):
+        """Test that the qiskit noise model is applied correctly"""
+        dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
+
+        noise_model = noise.NoiseModel()
+        bit_flip = noise.pauli_error([('X', 1), ('I', 0)])
+
+        # Create a noise model where the RX operation always flips the bit
+        noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.RX(0, wires=[0])
+            return qml.expval(qml.PauliZ(wires=0))
+
+        assert circuit() == -1
