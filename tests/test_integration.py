@@ -339,13 +339,13 @@ class TestNoise:
 
     def test_noise_applied(self):
         """Test that the qiskit noise model is applied correctly"""
-        dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
-
         noise_model = noise.NoiseModel()
         bit_flip = noise.pauli_error([('X', 1), ('I', 0)])
 
         # Create a noise model where the RX operation always flips the bit
         noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
+
+        dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
 
         @qml.qnode(dev)
         def circuit():
