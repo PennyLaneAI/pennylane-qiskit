@@ -173,6 +173,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self.process_kwargs(kwargs)
 
     def process_kwargs(self, kwargs):
+        """Processing the keyword arguments that were provided upon device creation.
+
+        Args:
+            kwargs (dict): keyword arguments to be set for the device
+        """
         aer_provider = str(self.provider) == "AerProvider"
 
         # Clear Aer backend options that may have persisted since the previous
