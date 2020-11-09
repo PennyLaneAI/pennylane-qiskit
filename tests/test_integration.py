@@ -134,9 +134,9 @@ class TestKeywordArguments:
 
         cache = []
         with monkeypatch.context() as m:
-            m.setattr(aer.QasmSimulator, set_options, lambda a: cache.append(a))
+            m.setattr(aer.QasmSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs))
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
-        assert cache[0] == "test value"
+        assert cache[0] == {'noise_model': 'test value'}
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
