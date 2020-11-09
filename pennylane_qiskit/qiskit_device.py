@@ -191,7 +191,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         if "noise_model" in kwargs:
             if not aer_provider or self.backend_name != "qasm_simulator":
-                raise ValueError("Backend {} does not support noisy simulations".format(self.backend_name))
+                raise ValueError(
+                    "Backend {} does not support noisy simulations".format(self.backend_name)
+                )
 
             noise_model = kwargs.pop("noise_model")
             self.backend.set_options(noise_model=noise_model)
