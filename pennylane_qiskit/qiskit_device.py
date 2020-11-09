@@ -170,9 +170,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Initialize inner state
         self.reset()
 
-        aer_provider = str(provider) == "AerProvider"
+        self.process_kwargs(kwargs)
 
-        # Clear Aer backend options that may have persisted on a previous
+    def process_kwargs(self, kwargs):
+        aer_provider = str(self.provider) == "AerProvider"
+
+        # Clear Aer backend options that may have persisted since the previous
         # device creation
         if aer_provider:
             self.backend.clear_options()
@@ -182,8 +185,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self.compile_backend = kwargs.pop("compile_backend")
 
         if "noise_model" in kwargs:
-            if not aer_provider or backend != "qasm_simulator":
-                raise ValueError("Backend {} does not support noisy simulations".format(backend))
+            if not aer_provider or self.backend_name != "qasm_simulator":
+                raise ValueError("Backend {} does not support noisy simulations".format(self.backend_name))
 
             noise_model = kwargs.pop("noise_model")
             self.backend.set_options(noise_model=noise_model)
@@ -192,7 +195,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self.set_transpile_args(**kwargs)
 
         # Get further arguments for run
-        s = inspect.signature(b.run)
+        s = inspect.signature(self.backend.run)
         self.run_args = {}
 
         if aer_provider:
@@ -330,8 +333,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
-        backend = self.backend
-
         self._current_job = self.backend.run(qobj, **self.run_args)
         result = self._current_job.result()
 
