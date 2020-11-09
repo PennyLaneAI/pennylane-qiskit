@@ -4,7 +4,7 @@ import numpy as np
 import pennylane as qml
 import pytest
 import qiskit
-import qiskit.providers.aer.noise as noise
+import qiskit.providers.aer as aer
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
@@ -128,11 +128,15 @@ class TestKeywordArguments:
         dev = qml.device(d[0], wires=2, compile_backend="test value")
         assert dev.compile_backend == "test value"
 
-    def test_noise_model(self):
+    def test_noise_model_qasm_simulator(self, monkeypatch):
         """Test that the noise model argument is properly
         extracted if the backend supports it"""
-        dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
-        assert dev.noise_model == "test value"
+
+        cache = []
+        with monkeypatch.context() as m:
+            m.setattr(aer.QasmSimulator, set_options, lambda a: cache.append(a))
+            dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
+        assert cache[0] == "test value"
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
@@ -339,8 +343,8 @@ class TestNoise:
 
     def test_noise_applied(self):
         """Test that the qiskit noise model is applied correctly"""
-        noise_model = noise.NoiseModel()
-        bit_flip = noise.pauli_error([('X', 1), ('I', 0)])
+        noise_model = aer.noise.NoiseModel()
+        bit_flip = aer.noise.pauli_error([('X', 1), ('I', 0)])
 
         # Create a noise model where the RX operation always flips the bit
         noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])

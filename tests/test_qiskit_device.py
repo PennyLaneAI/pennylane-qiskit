@@ -3,6 +3,7 @@ import pytest
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
+import qiskit.providers.aer.noise as noise
 
 test_transpile_options = [
     {},
@@ -73,3 +74,21 @@ class TestAnalyticWarningHWSimulator:
 
         # check that no warnings were raised
         assert len(recwarn) == 0
+
+class TestAerBackendOptions:
+    """Test the backend options of Aer backends."""
+
+    def test_backend_options_cleaned(self):
+        """Test that the backend options are cleared upon new Aer device
+        initialization."""
+        noise_model = noise.NoiseModel()
+        bit_flip = noise.pauli_error([('X', 1), ('I', 0)])
+
+        # Create a noise model where the RX operation always flips the bit
+        noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
+
+        dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
+        assert 'noise_model' in dev.backend.options
+
+        dev2 = qml.device('qiskit.aer', wires=2)
+        assert 'noise_model' not in dev2.backend.options
