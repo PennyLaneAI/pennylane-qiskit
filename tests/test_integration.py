@@ -306,6 +306,47 @@ class TestPLOperations:
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
 
 
+class TestPLTemplates:
+    """Integration tests for checking certain PennyLane templates."""
+
+    def test_random_layers_tensor_unwrapped(self, monkeypatch):
+        """Test that if random_layer() receives a one element PennyLane tensor,
+        then it is unwrapped successfully.
+
+        The test involves using RandomLayers, which then calls random_layer
+        internally. Eventually each gate used by random_layer receives a single
+        scalar.
+        """
+        dev = qml.device("qiskit.aer", wires=4)
+
+        lst = []
+
+        # Mock function that accumulates gate parameters
+        mock_func = lambda par, wires: lst.append(par)
+
+        with monkeypatch.context() as m:
+
+            # Mock the gates used in RandomLayers
+            m.setattr(qml.templates.layers.random, "RX", mock_func)
+            m.setattr(qml.templates.layers.random, "RY", mock_func)
+            m.setattr(qml.templates.layers.random, "RZ", mock_func)
+
+            @qml.qnode(dev)
+            def circuit(phi=None):
+
+                # Random quantum circuit
+                qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
+
+                return qml.expval(qml.PauliZ(0))
+
+            phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+
+            # Call the QNode, accumulate parameters
+            circuit(phi=phi)
+
+            # Check parameters
+            assert all([isinstance(x, float) for x in lst])
+
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
 
