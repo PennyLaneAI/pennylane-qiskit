@@ -333,10 +333,7 @@ class TestPLTemplates:
 
             @qml.qnode(dev)
             def circuit(phi=None):
-
-                # Random quantum circuit
                 qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
-
                 return qml.expval(qml.PauliZ(0))
 
             phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
@@ -348,9 +345,10 @@ class TestPLTemplates:
             assert all([isinstance(x, float) for x in lst])
 
     def test_tensor_unwrapped_gradient_no_error(self, monkeypatch):
-        """Tests that gradient calculations of a circuit that contains
-        RandomLayers taking a differentiable PennyLane tensor execute
-        without error.
+        """Tests that the gradient calculation of a circuit that contains a
+        RandomLayers template taking a PennyLane tensor as differentiable
+        argument executes without error.
+
         The main aim of the test is to check that unwrapping a single element
         tensor does not cause errors.
         """
@@ -358,13 +356,12 @@ class TestPLTemplates:
 
         @qml.qnode(dev)
         def circuit(phi):
-
-            # Random quantum circuit
-            RandomLayers(phi, wires=list(range(4)))
+            qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
             return qml.expval(qml.PauliZ(0))
 
-        phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+        phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
 
+        # Check that the jacobian executes without errors
         qml.jacobian(circuit)(phi)
 
 class TestInverses:
