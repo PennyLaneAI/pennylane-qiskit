@@ -10,7 +10,7 @@
 ### Bug fixes
 
 * The Aer devices store the noise models correctly.
-  [(#112)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/112)
+  [(#114)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/114)
 
 ### Documentation
 
