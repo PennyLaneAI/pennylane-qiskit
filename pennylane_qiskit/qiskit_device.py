@@ -170,23 +170,39 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Initialize inner state
         self.reset()
 
+        self.process_kwargs(kwargs)
+
+    def process_kwargs(self, kwargs):
+        """Processing the keyword arguments that were provided upon device creation.
+
+        Args:
+            kwargs (dict): keyword arguments to be set for the device
+        """
+        aer_provider = str(self.provider) == "AerProvider"
+
+        # Clear Aer backend options that may have persisted since the previous
+        # device creation
+        if aer_provider:
+            self.backend.clear_options()
+
         self.compile_backend = None
         if "compile_backend" in kwargs:
             self.compile_backend = kwargs.pop("compile_backend")
 
-        aer_provider = str(provider) == "AerProvider"
-        self.noise_model = None
         if "noise_model" in kwargs:
-            if not aer_provider or backend != "qasm_simulator":
-                raise ValueError("Backend {} does not support noisy simulations".format(backend))
+            if not aer_provider or self.backend_name != "qasm_simulator":
+                raise ValueError(
+                    "Backend {} does not support noisy simulations".format(self.backend_name)
+                )
 
-            self.noise_model = kwargs.pop("noise_model")
+            noise_model = kwargs.pop("noise_model")
+            self.backend.set_options(noise_model=noise_model)
 
         # set transpile_args
         self.set_transpile_args(**kwargs)
 
         # Get further arguments for run
-        s = inspect.signature(b.run)
+        s = inspect.signature(self.backend.run)
         self.run_args = {}
 
         if aer_provider:
@@ -210,13 +226,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return self.provider.get_backend(self.backend_name)
 
     def reset(self):
+        # Reset only internal data, not the options that are determined on
+        # device creation
         self._reg = QuantumRegister(self.num_wires, "q")
         self._creg = ClassicalRegister(self.num_wires, "c")
         self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
 
         self._current_job = None
         self._state = None  # statevector of a simulator backend
-        self.noise_model = None
 
     def apply(self, operations, **kwargs):
         rotations = kwargs.get("rotations", [])
@@ -323,12 +340,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     def run(self, qobj):
         """Run the compiled circuit, and query the result."""
-        backend = self.backend
-
-        if self.noise_model:
-            # Set the noise model before execution
-            backend.set_options(noise_model=self.noise_model)
-
         self._current_job = self.backend.run(qobj, **self.run_args)
         result = self._current_job.result()
 
