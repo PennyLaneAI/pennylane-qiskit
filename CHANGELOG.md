@@ -18,7 +18,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Antal Száva
+Olivia Di Matteo, Josh Izaac, Antal Száva
 
 ---
 
