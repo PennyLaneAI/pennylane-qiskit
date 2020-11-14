@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import pennylane as qml
+from pennylane.numpy import tensor
 import pytest
 import qiskit
 import qiskit.providers.aer as aer
@@ -381,7 +382,7 @@ class TestPLTemplates:
                     qml.RX(x, wires=idx)
             return qml.expval(qml.PauliZ(0))
 
-        phi = np.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+        phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
 
         circuit(phi=phi)
 
@@ -396,7 +397,7 @@ class TestPLTemplates:
                 qml.Rot(*x, wires=idx)
             return qml.expval(qml.PauliZ(0))
 
-        phi = np.tensor([[0.04439891, 0.14490549, 3.29725643]])
+        phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
         circuit(phi=phi)
 
