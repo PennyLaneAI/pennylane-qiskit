@@ -369,6 +369,37 @@ class TestPLTemplates:
         # Check that the jacobian executes without errors
         qml.jacobian(circuit)(phi)
 
+    def test_single_gate_parameter(self):
+        """Test that a QNode handles passing multiple tensor objects to the
+        same gate without an error"""
+        dev = qml.device("qiskit.aer", wires=4)
+
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            for y in phi:
+                for idx, x in enumerate(y):
+                    qml.RX(x, wires=idx)
+            return qml.expval(qml.PauliZ(0))
+
+        phi = np.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+
+        circuit(phi=phi)
+
+    def test_multiple_gate_parameter(self):
+        """Test that a QNode handles passing multiple tensor objects to the
+        same gate without an error"""
+        dev = qml.device("qiskit.aer", wires=1)
+
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            for idx, x in enumerate(phi):
+                qml.Rot(*x, wires=idx)
+            return qml.expval(qml.PauliZ(0))
+
+        phi = np.tensor([[0.04439891, 0.14490549, 3.29725643]])
+
+        circuit(phi=phi)
+
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
 
