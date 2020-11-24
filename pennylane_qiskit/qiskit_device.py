@@ -146,6 +146,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             self.analytic = False
 
+        self._backend = None
+
         if "verbose" not in kwargs:
             kwargs["verbose"] = False
 
@@ -223,7 +225,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
     @property
     def backend(self):
         """The Qiskit simulation backend object."""
-        return self.provider.get_backend(self.backend_name)
+        if self._backend is None:
+            self._backend = self.provider.get_backend(self.backend_name)
+        return self._backend
 
     def reset(self):
         # Reset only internal data, not the options that are determined on
