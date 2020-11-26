@@ -370,9 +370,9 @@ class TestPLTemplates:
         # Check that the jacobian executes without errors
         qml.jacobian(circuit)(phi)
 
-    def test_single_gate_parameter(self):
-        """Test that a QNode handles passing multiple tensor objects to the
-        same gate without an error"""
+    def test_single_gate_parameter(self, monkeypatch):
+        """Test that when supplied a PennyLane tensor, a QNode passes an
+        unwrapped tensor as the argument to a gate taking a single parameter"""
         dev = qml.device("qiskit.aer", wires=4)
 
         @qml.qnode(dev)
@@ -384,7 +384,18 @@ class TestPLTemplates:
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
 
-        circuit(phi=phi)
+        with qml._queuing.OperationRecorder() as rec:
+            circuit(phi=phi)
+
+        for i in range(phi.shape[1]):
+            # Test each rotation applied
+            assert rec.queue[0].name == "RX"
+            assert len(rec.queue[0].parameters) == 1
+
+            # Test that the gate parameter is not a PennyLane tensor, but a
+            # float
+            assert not isinstance(rec.queue[0].parameters[0], tensor)
+            assert isinstance(rec.queue[0].parameters[0], float)
 
     def test_multiple_gate_parameter(self):
         """Test that a QNode handles passing multiple tensor objects to the
@@ -400,6 +411,38 @@ class TestPLTemplates:
         phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
         circuit(phi=phi)
+
+    def test_multiple_gate_parameter(self):
+        """Test that when supplied a PennyLane tensor, a QNode passes arguments
+        as unwrapped tensors to a gate taking multiple parameters"""
+        dev = qml.device("qiskit.aer", wires=1)
+
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            for idx, x in enumerate(phi):
+                qml.Rot(*x, wires=idx)
+            return qml.expval(qml.PauliZ(0))
+
+        phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
+
+
+        with qml._queuing.OperationRecorder() as rec:
+            circuit(phi=phi)
+
+        # Test the rotation applied
+        assert rec.queue[0].name == "Rot"
+        assert len(rec.queue[0].parameters) == 3
+
+        # Test that the gate parameters are not PennyLane tensors, but a
+        # floats
+        assert not isinstance(rec.queue[0].parameters[0], tensor)
+        assert isinstance(rec.queue[0].parameters[0], float)
+
+        assert not isinstance(rec.queue[0].parameters[1], tensor)
+        assert isinstance(rec.queue[0].parameters[1], float)
+
+        assert not isinstance(rec.queue[0].parameters[2], tensor)
+        assert isinstance(rec.queue[0].parameters[2], float)
 
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
