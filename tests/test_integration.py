@@ -342,6 +342,8 @@ class TestPLTemplates:
                 qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
                 return qml.expval(qml.PauliZ(0))
 
+            # RandomLayers loops over the random_layer function, with each call to random_layer
+            # being passed a `np.tensor` scalar.
             phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
 
             # Call the QNode, accumulate parameters
@@ -433,8 +435,8 @@ class TestPLTemplates:
         assert rec.queue[0].name == "Rot"
         assert len(rec.queue[0].parameters) == 3
 
-        # Test that the gate parameters are not PennyLane tensors, but a
-        # floats
+        # Test that the gate parameters are not PennyLane tensors,
+        # but are instead floats
         assert not isinstance(rec.queue[0].parameters[0], tensor)
         assert isinstance(rec.queue[0].parameters[0], float)
 
