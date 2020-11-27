@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import pennylane as qml
+from pennylane.numpy import tensor
 import pytest
 import qiskit
 import qiskit.providers.aer as aer
@@ -310,6 +311,140 @@ class TestPLOperations:
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
 
+
+class TestPLTemplates:
+    """Integration tests for checking certain PennyLane templates."""
+
+    def test_random_layers_tensor_unwrapped(self, monkeypatch):
+        """Test that if random_layer() receives a one element PennyLane tensor,
+        then it is unwrapped successfully.
+
+        The test involves using RandomLayers, which then calls random_layer
+        internally. Eventually each gate used by random_layer receives a single
+        scalar.
+        """
+        dev = qml.device("qiskit.aer", wires=4)
+
+        lst = []
+
+        # Mock function that accumulates gate parameters
+        mock_func = lambda par, wires: lst.append(par)
+
+        with monkeypatch.context() as m:
+
+            # Mock the gates used in RandomLayers
+            m.setattr(qml.templates.layers.random, "RX", mock_func)
+            m.setattr(qml.templates.layers.random, "RY", mock_func)
+            m.setattr(qml.templates.layers.random, "RZ", mock_func)
+
+            @qml.qnode(dev)
+            def circuit(phi=None):
+                qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
+                return qml.expval(qml.PauliZ(0))
+
+            # RandomLayers loops over the random_layer function, with each call to random_layer
+            # being passed a `np.tensor` scalar.
+            phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+
+            # Call the QNode, accumulate parameters
+            circuit(phi=phi)
+
+            # Check parameters
+            assert all([isinstance(x, float) for x in lst])
+
+    def test_tensor_unwrapped_gradient_no_error(self, monkeypatch):
+        """Tests that the gradient calculation of a circuit that contains a
+        RandomLayers template taking a PennyLane tensor as differentiable
+        argument executes without error.
+
+        The main aim of the test is to check that unwrapping a single element
+        tensor does not cause errors.
+        """
+        dev = qml.device("qiskit.aer", wires=4)
+
+        @qml.qnode(dev)
+        def circuit(phi):
+            qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
+            return qml.expval(qml.PauliZ(0))
+
+        phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+
+        # Check that the jacobian executes without errors
+        qml.jacobian(circuit)(phi)
+
+    def test_single_gate_parameter(self, monkeypatch):
+        """Test that when supplied a PennyLane tensor, a QNode passes an
+        unwrapped tensor as the argument to a gate taking a single parameter"""
+        dev = qml.device("qiskit.aer", wires=4)
+
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            for y in phi:
+                for idx, x in enumerate(y):
+                    qml.RX(x, wires=idx)
+            return qml.expval(qml.PauliZ(0))
+
+        phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+
+        with qml._queuing.OperationRecorder() as rec:
+            circuit(phi=phi)
+
+        for i in range(phi.shape[1]):
+            # Test each rotation applied
+            assert rec.queue[0].name == "RX"
+            assert len(rec.queue[0].parameters) == 1
+
+            # Test that the gate parameter is not a PennyLane tensor, but a
+            # float
+            assert not isinstance(rec.queue[0].parameters[0], tensor)
+            assert isinstance(rec.queue[0].parameters[0], float)
+
+    def test_multiple_gate_parameter(self):
+        """Test that a QNode handles passing multiple tensor objects to the
+        same gate without an error"""
+        dev = qml.device("qiskit.aer", wires=1)
+
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            for idx, x in enumerate(phi):
+                qml.Rot(*x, wires=idx)
+            return qml.expval(qml.PauliZ(0))
+
+        phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
+
+        circuit(phi=phi)
+
+    def test_multiple_gate_parameter(self):
+        """Test that when supplied a PennyLane tensor, a QNode passes arguments
+        as unwrapped tensors to a gate taking multiple parameters"""
+        dev = qml.device("qiskit.aer", wires=1)
+
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            for idx, x in enumerate(phi):
+                qml.Rot(*x, wires=idx)
+            return qml.expval(qml.PauliZ(0))
+
+        phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
+
+
+        with qml._queuing.OperationRecorder() as rec:
+            circuit(phi=phi)
+
+        # Test the rotation applied
+        assert rec.queue[0].name == "Rot"
+        assert len(rec.queue[0].parameters) == 3
+
+        # Test that the gate parameters are not PennyLane tensors,
+        # but are instead floats
+        assert not isinstance(rec.queue[0].parameters[0], tensor)
+        assert isinstance(rec.queue[0].parameters[0], float)
+
+        assert not isinstance(rec.queue[0].parameters[1], tensor)
+        assert isinstance(rec.queue[0].parameters[1], float)
+
+        assert not isinstance(rec.queue[0].parameters[2], tensor)
+        assert isinstance(rec.queue[0].parameters[2], float)
 
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
