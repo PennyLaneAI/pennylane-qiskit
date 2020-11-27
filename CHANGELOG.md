@@ -1,18 +1,14 @@
-# Release 0.13.0-dev
-
-### New features since last release
+# Release 0.13.0
 
 ### Improvements
 
-* The provided devices are now compatible with Qiskit 0.23.
+* The provided devices are now compatible with Qiskit 0.23.1.
   [(#116)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/116)
 
 ### Bug fixes
 
 * The Aer devices store the noise models correctly.
   [(#114)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/114)
-
-### Documentation
 
 ### Contributors
 
