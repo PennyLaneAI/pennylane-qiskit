@@ -4,6 +4,8 @@
 
 ### Improvements
 
+### Documentation
+
 ### Bug fixes
 
 ### Contributors
