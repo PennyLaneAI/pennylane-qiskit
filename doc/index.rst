@@ -74,8 +74,7 @@ and simply replace ``'default.qubit'`` with any of the available Qiskit devices,
 You can also try to run tutorials, such as the qubit rotation tutorial, on actual quantum hardware by
 using the ``'qiskit.ibmq'`` device.
 
-To filter tutorials that explicitly use a qiskit device, use the "Qiskit" filter on the right panel of the
-`demos <https://pennylane.ai/qml/demonstrations.html>`_.
+A few of the PennyLane demos make also make extensive use of the plugin:
 
 .. raw:: html
 
@@ -96,6 +95,9 @@ To filter tutorials that explicitly use a qiskit device, use the "Qiskit" filter
 .. raw:: html
 
     </div></div><div style='clear:both'>
+
+Demos that use Qiskit devices can also be found using the "Qiskit" filter on the right panel of the
+`demos <https://pennylane.ai/qml/demonstrations.html>`_.
 
 .. toctree::
    :maxdepth: 2
