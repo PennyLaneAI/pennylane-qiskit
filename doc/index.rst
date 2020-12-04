@@ -77,7 +77,25 @@ using the ``'qiskit.ibmq'`` device.
 To filter tutorials that explicitly use a qiskit device, use the "Qiskit" filter on the right panel of the
 `demos <https://pennylane.ai/qml/demonstrations.html>`_.
 
+.. raw:: html
 
+    <div class="row">
+
+.. demogalleryitem::
+    :name: Ensemble classification with Forest and Qiskit devices
+    :figure: _static/ensemble_diagram.png
+    :link:  https://pennylane.ai/qml/demos/tutorial_ensemble_multi_qpu.html
+    :tooltip: Use multiple QPUs to improve classification.
+
+.. demogalleryitem::
+    :name: Quantum volume
+    :figure: _static/quantum_volume_thumbnail.png
+    :link:  https://pennylane.ai/qml/demos/quantum_volume.html
+    :tooltip: Learn how to compute the quantum volume of a quantum processor
+
+.. raw:: html
+
+    </div></div><div style='clear:both'>
 
 .. toctree::
    :maxdepth: 2
@@ -100,5 +118,3 @@ To filter tutorials that explicitly use a qiskit device, use the "Qiskit" filter
    :maxdepth: 1
    :caption: API
    :hidden:
-
-   code

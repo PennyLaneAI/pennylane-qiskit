@@ -18,6 +18,8 @@ from docutils.parsers.rst import Directive, directives
 from docutils.statemachine import StringList
 from docutils import nodes
 
+import os
+
 GALLERY_TEMPLATE = """
 .. raw:: html
 
@@ -83,6 +85,92 @@ class CustomDeviceGalleryItemDirective(Directive):
         thumbnail_rst = GALLERY_TEMPLATE.format(name=name,
                                                 description=description,
                                                 link=link)
+        thumbnail = StringList(thumbnail_rst.split('\n'))
+        thumb = nodes.paragraph()
+        self.state.nested_parse(thumbnail, self.content_offset, thumb)
+        return [thumb]
+
+
+DEMO_GALLERY_TEMPLATE = """
+.. raw:: html
+
+   <a href={link}>
+    <div class="card" style="width: 250px; height: 300px; margin: 10px;" tooltip="{tooltip}">
+         <div class="card-header" align="center">
+              <b>{name}</b>
+         </div>
+         <div class="card-body" align="center">
+           <img src="{figure}" style="vertical-align: middle; max-height: 200px;" alt={name}>
+         </div>
+    </div>
+   </a>
+"""
+
+class CustomDemoGalleryItemDirective(Directive):
+    """Create a sphinx gallery style thumbnail for demos.
+
+    Example usage:
+
+    .. customgalleryitem::
+        :name: Demo title
+        :tooltip: Tooltip text
+        :figure: /_static/path/to/image
+        :link: https://pennylaneqiskit.readthedocs.io/en/latest/
+
+    """
+
+    required_arguments = 0
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {'name' : directives.unchanged,
+                   'tooltip': directives.unchanged,
+                   'figure': directives.unchanged,
+                   'link': directives.unchanged}
+
+    has_content = False
+    add_index = False
+
+    def run(self):
+        try:
+            if 'name' in self.options:
+                name = self.options['name']
+            else:
+                raise ValueError('name not found')
+
+            if 'tooltip' in self.options:
+                tooltip = self.options['tooltip'][:195]
+            else:
+                raise ValueError('tooltip not found')
+
+            if 'figure' in self.options:
+                env = self.state.document.settings.env
+                rel_figname, figname = env.relfn2path(self.options['figure'])
+                thumbnail = os.path.join('_static/', os.path.basename(figname))
+
+                try:
+                    os.makedirs('_static/thumbs')
+                except FileExistsError:
+                    pass
+
+                #sphinx_gallery.gen_rst.scale_image(figname, thumbnail, 400, 280)
+            else:
+                thumbnail = '_static/code.png'
+
+            if 'link' in self.options:
+                link = self.options['link']
+
+        except FileNotFoundError as e:
+            print(e)
+            return []
+        except ValueError as e:
+            print(e)
+            raise
+            return []
+
+        thumbnail_rst = DEMO_GALLERY_TEMPLATE.format(name=name,
+                                                     tooltip=tooltip,
+                                                     figure=thumbnail,
+                                                     link=link)
         thumbnail = StringList(thumbnail_rst.split('\n'))
         thumb = nodes.paragraph()
         self.state.nested_parse(thumbnail, self.content_offset, thumb)
