@@ -82,7 +82,7 @@ A few of the PennyLane demos make extensive use of the plugin:
 
 .. demogalleryitem::
     :name: Ensemble classification with Forest and Qiskit devices
-    :figure: _static/ensemble_diagram.png
+    :figure: https://pennylane.ai/qml/_images/ensemble_diagram.png
     :link:  https://pennylane.ai/qml/demos/tutorial_ensemble_multi_qpu.html
     :tooltip: Use multiple QPUs to improve classification.
 

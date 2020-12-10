@@ -144,20 +144,14 @@ class CustomDemoGalleryItemDirective(Directive):
                 raise ValueError('tooltip not found')
 
             if 'figure' in self.options:
-                env = self.state.document.settings.env
-                rel_figname, figname = env.relfn2path(self.options['figure'])
-                thumbnail = os.path.join('_static/', os.path.basename(figname))
-
-                try:
-                    os.makedirs('_static/thumbs')
-                except FileExistsError:
-                    pass
-
+                figure = self.options['figure']
             else:
-                thumbnail = '_static/code.png'
+                raise ValueError('figure not found')
 
             if 'link' in self.options:
                 link = self.options['link']
+            else:
+                raise ValueError('link not found')
 
         except FileNotFoundError as e:
             print(e)
@@ -169,7 +163,7 @@ class CustomDemoGalleryItemDirective(Directive):
 
         thumbnail_rst = DEMO_GALLERY_TEMPLATE.format(name=name,
                                                      tooltip=tooltip,
-                                                     figure=thumbnail,
+                                                     figure=figure,
                                                      link=link)
         thumbnail = StringList(thumbnail_rst.split('\n'))
         thumb = nodes.paragraph()
