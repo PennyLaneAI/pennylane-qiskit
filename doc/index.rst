@@ -120,3 +120,5 @@ Demos that use Qiskit devices can also be found using the "Qiskit" filter on the
    :maxdepth: 1
    :caption: API
    :hidden:
+
+   code
