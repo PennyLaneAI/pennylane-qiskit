@@ -74,7 +74,7 @@ and simply replace ``'default.qubit'`` with any of the available Qiskit devices,
 You can also try to run tutorials, such as the qubit rotation tutorial, on actual quantum hardware by
 using the ``'qiskit.ibmq'`` device.
 
-A few of the PennyLane demos make also make extensive use of the plugin:
+A few of the PennyLane demos make extensive use of the plugin:
 
 .. raw:: html
 
