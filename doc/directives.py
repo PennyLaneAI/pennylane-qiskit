@@ -94,8 +94,8 @@ class CustomDeviceGalleryItemDirective(Directive):
 DEMO_GALLERY_TEMPLATE = """
 .. raw:: html
 
-   <a href={link}>
-    <div class="card" style="width: 15rem; height: 19rem; margin: 10px;" tooltip="{tooltip}">
+   <a href={link} data-toggle="tooltip" title="{tooltip}">
+    <div class="card" style="width: 15rem; height: 19rem; margin: 10px;">
          <div class="card-header d-flex align-items-center justify-content-center" style="height: 4rem;">
               <div align="center"> <b> {name} </b> </div>
          </div>
