@@ -95,16 +95,17 @@ DEMO_GALLERY_TEMPLATE = """
 .. raw:: html
 
    <a href={link}>
-    <div class="card" style="width: 250px; height: 300px; margin: 10px;" tooltip="{tooltip}">
-         <div class="card-header" align="center">
-              <b>{name}</b>
+    <div class="card" style="width: 15rem; height: 19rem; margin: 10px;" tooltip="{tooltip}">
+         <div class="card-header d-flex align-items-center justify-content-center" style="height: 4rem;">
+              <div align="center"> <b> {name} </b> </div>
          </div>
          <div class="card-body" align="center">
-           <img src="{figure}" style="vertical-align: middle; max-height: 200px;" alt={name}>
+           <img src="{figure}" style="max-width: 95%; max-height: 200px;" alt={name}>
          </div>
-    </div>
+     </div>
    </a>
 """
+
 
 class CustomDemoGalleryItemDirective(Directive):
     """Create a sphinx gallery style thumbnail for demos.
@@ -152,7 +153,6 @@ class CustomDemoGalleryItemDirective(Directive):
                 except FileExistsError:
                     pass
 
-                #sphinx_gallery.gen_rst.scale_image(figname, thumbnail, 400, 280)
             else:
                 thumbnail = '_static/code.png'
 

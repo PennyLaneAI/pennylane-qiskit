@@ -94,7 +94,7 @@ A few of the PennyLane demos make also make extensive use of the plugin:
 
 .. raw:: html
 
-    </div></div><div style='clear:both'>
+    </div></div><div style='clear:both'> <br/>
 
 Demos that use Qiskit devices can also be found using the "Qiskit" filter on the right panel of the
 `demos <https://pennylane.ai/qml/demonstrations.html>`_.
