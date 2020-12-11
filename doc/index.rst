@@ -62,19 +62,7 @@ For more details on the ``qasm_simulator``, including available backend options,
 Tutorials
 ~~~~~~~~~
 
-To see the PennyLane-Qiskit plugin in action, you can use any of the qubit based `demos
-from the PennyLane documentation <https://pennylane.ai/qml/demonstrations.html>`_, for example
-the tutorial on `qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_,
-and simply replace ``'default.qubit'`` with any of the available Qiskit devices, such as ``'qiskit.aer'``:
-
-.. code-block:: python
-
-    dev = qml.device('qiskit.aer', wires=XXX)
-
-You can also try to run tutorials, such as the qubit rotation tutorial, on actual quantum hardware by
-using the ``'qiskit.ibmq'`` device.
-
-A few of the PennyLane demos make extensive use of the plugin:
+Check out these demos to see the PennyLane-Qiskit plugin in action:
 
 .. raw:: html
 
@@ -96,8 +84,17 @@ A few of the PennyLane demos make extensive use of the plugin:
 
     </div></div><div style='clear:both'> <br/>
 
-Demos that use Qiskit devices can also be found using the "Qiskit" filter on the right panel of the
-`demos <https://pennylane.ai/qml/demonstrations.html>`_.
+
+You can also try it out using any of the qubit based `demos from the PennyLane documentation
+<https://pennylane.ai/qml/demonstrations.html>`_, for example the tutorial on
+`qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_.
+Simply replace ``'default.qubit'`` with any of the available Qiskit devices,
+such as ``'qiskit.aer'``, or ``'qiskit.ibmq'`` if you have an API key for
+hardware access.
+
+.. raw:: html
+
+    <br/>
 
 .. toctree::
    :maxdepth: 2
