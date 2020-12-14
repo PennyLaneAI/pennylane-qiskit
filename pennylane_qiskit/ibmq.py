@@ -58,8 +58,8 @@ class IBMQDevice(QiskitDevice):
     short_name = "qiskit.ibmq"
 
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
-        token = os.getenv("IBMQX_TOKEN") or kwargs.get("ibmqx_token", None)
-        url = os.getenv("IBMQX_URL") or kwargs.get("ibmqx_url", None)
+        token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
+        url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 
         # Specify a single hub, group and project
         hub = kwargs.get("hub", "ibm-q")
