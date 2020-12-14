@@ -30,6 +30,12 @@ def test_load_from_env(token, monkeypatch):
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
 
+def test_load_kwargs_takes_precedence(token, monkeypatch):
+    """Test that with a potentially valid token stored as an environment
+    variable, passing the token as a keyword argument takes precedence."""
+    monkeypatch.setenv("IBMQX_TOKEN", "SomePotentiallyValidToken")
+    dev = IBMQDevice(wires=1, ibmqx_token=token)
+    assert dev.provider.credentials.is_ibmq()
 
 def test_account_already_loaded(token):
     """Test loading an IBMQ device using
