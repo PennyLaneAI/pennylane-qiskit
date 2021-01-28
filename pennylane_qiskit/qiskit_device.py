@@ -267,24 +267,29 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # Apply the circuit operations
             device_wires = self.map_wires(operation.wires)
             par = operation.parameters
-            operation = operation.name
+            operation_name = operation.name
 
-            mapped_operation = self._operation_map[operation]
+            mapped_operation = self._operation_map[operation_name]
 
-            self.qubit_unitary_check(operation, par, device_wires)
-            self.qubit_state_vector_check(operation, par, device_wires)
+            # cannot pass numpy arrays or pennylane tensor objects
+            unwrapped_par = []
+            if len(par)!=0:
+                unwrapped_par = [x for x in par]
+
+            self.qubit_unitary_check(operation_name, unwrapped_par, device_wires)
+            self.qubit_state_vector_check(operation_name, unwrapped_par, device_wires)
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
-            if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
+            if operation.base_name in ("QubitUnitary", "QubitStateVector"):
                 # Need to revert the order of the quantum registers used in
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-            gate = mapped_operation(*par)
+            gate = mapped_operation(*unwrapped_par)
 
-            if operation.endswith(".inv"):
+            if operation.inverse:
                 gate = gate.inverse()
 
             dag.apply_operation_back(gate, qargs=qregs)
