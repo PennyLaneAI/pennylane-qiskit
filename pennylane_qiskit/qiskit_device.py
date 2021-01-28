@@ -257,8 +257,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
             device_wires = self.map_wires(operation.wires)
             par = operation.parameters
 
-            if isinstance(par, np.ndarray):
-                par = par.tolist()
+            for idx, p in enumerate(par):
+                if isinstance(p, np.ndarray):
+                    par[idx] = p.tolist()
 
             operation = operation.name
 
