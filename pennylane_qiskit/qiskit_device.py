@@ -256,6 +256,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # Apply the circuit operations
             device_wires = self.map_wires(operation.wires)
             par = operation.parameters
+
+            if isinstance(par, np.ndarray):
+                par = par.tolist()
+
             operation = operation.name
 
             mapped_operation = self._operation_map[operation]
