@@ -259,6 +259,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             for idx, p in enumerate(par):
                 if isinstance(p, np.ndarray):
+                    # Convert arrays so that Qiskit accepts the parameters
                     par[idx] = p.tolist()
 
             operation = operation.name
