@@ -33,23 +33,12 @@ from pennylane import QubitDevice, DeviceError
 from ._version import __version__
 
 
-# Auxiliary functions for gates subject to deprecation
-def U1Gate(theta):
-    """Auxiliary function for the ``U1Gate``."""
-    return ex.PhaseGate(theta)
-
-
 def U2Gate(phi, lam):
     """Auxiliary function for the ``U2Gate``.
 
     Uses the equation ``u2(phi, lam) = u(pi/2, phi, lam)``.
     """
-    return ex.U(np.pi / 2, phi, lam)
-
-
-def U3Gate(theta, phi, lam):
-    """Auxiliary function for the ``U3Gate``."""
-    return ex.U(theta, phi, lam)
+    return ex.UGate(np.pi / 2, phi, lam)
 
 
 QISKIT_OPERATION_MAP = {
@@ -78,9 +67,9 @@ QISKIT_OPERATION_MAP = {
     "U": ex.UGate,
     # Qiskit gates subject to deprecation (using custom definitions that depend on
     # the latest recommended gates)
-    "U1": U1Gate,
+    "U1": ex.PhaseGate,
     "U2": U2Gate,
-    "U3": U3Gate,
+    "U3": ex.UGate,
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
