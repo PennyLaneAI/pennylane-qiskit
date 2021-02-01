@@ -61,12 +61,11 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.
     if params is not None:
         for k, v in params.items():
 
-            # Values can be arrays of size 1, need to extract the Python scalar
-            # (this can happen e.g. when indexing into a PennyLane numpy array)
-            if isinstance(v, np.ndarray):
-                v = v.item()
-
             if getattr(v,'requires_grad', True):
+                # Values can be arrays of size 1, need to extract the Python scalar
+                # (this can happen e.g. when indexing into a PennyLane numpy array)
+                if isinstance(v, np.ndarray):
+                    v = v.item()
                 variable_refs[k] = v
 
     return variable_refs  # map qiskit parameters to PennyLane differentiable Variables.

@@ -247,6 +247,8 @@ class TestConverter:
 
         theta = Parameter('θ')
         phi = Parameter('φ')
+        x = np.tensor(0.5, requires_grad=False)
+        y = np.tensor(0.3, requires_grad=False)
 
         qc = QuantumCircuit(3, 1)
 
@@ -254,7 +256,7 @@ class TestConverter:
 
         with pytest.raises(QiskitError):
             with recorder:
-                quantum_circuit(params={theta: 0.5, phi: 0.3})
+                quantum_circuit(params={theta: x, phi: y})
 
     @pytest.mark.parametrize("qiskit_operation, pennylane_name", [(QuantumCircuit.crx, "CRX"), (QuantumCircuit.crz, "CRZ"), (QuantumCircuit.cry, "CRY")])
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
@@ -589,7 +591,7 @@ class TestConverter:
         if the wrong type of arguments were passed."""
 
         theta = Parameter('θ')
-        angle = 'some_string_instead_of_an_angle'
+        angle = np.tensor('some_string_instead_of_an_angle', requires_grad=False)
 
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
@@ -605,7 +607,7 @@ class TestConverter:
         that are not required were passed."""
 
         theta = Parameter('θ')
-        angle = 0.5
+        angle = np.tensor(0.5, requires_grad=False)
 
         qc = QuantumCircuit(3, 1)
         qc.z([0])
