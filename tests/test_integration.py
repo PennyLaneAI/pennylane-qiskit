@@ -41,7 +41,9 @@ class TestDeviceIntegration:
         with pytest.raises(TypeError, match="missing 1 required positional argument"):
             qml.device("qiskit.aer")
 
-        with pytest.raises(qml.DeviceError, match="specified number of shots needs to be at least 1"):
+        with pytest.raises(
+            qml.DeviceError, match="specified number of shots needs to be at least 1"
+        ):
             qml.device("qiskit.aer", backend="qasm_simulator", wires=1, shots=0)
 
     @pytest.mark.parametrize("d", pldevices)
@@ -105,11 +107,11 @@ class TestDeviceIntegration:
             return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
 
         dev_qsk = qml.device(
-                    "qiskit.aer",
-                    wires=n_qubits,
-                    shots=1000,
-                    backend="qasm_simulator",
-                )
+            "qiskit.aer",
+            wires=n_qubits,
+            shots=1000,
+            backend="qasm_simulator",
+        )
 
         weights = np.random.random((depth, n_qubits)).flatten()
 
@@ -118,6 +120,7 @@ class TestDeviceIntegration:
         grad_shift = qml.grad(exp_sampled, argnum=0)
         exp_sampled(weights)
         grad_shift(weights)
+
 
 class TestKeywordArguments:
     """Test keyword argument logic is correct"""
@@ -135,9 +138,11 @@ class TestKeywordArguments:
 
         cache = []
         with monkeypatch.context() as m:
-            m.setattr(aer.QasmSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs))
+            m.setattr(
+                aer.QasmSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
+            )
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
-        assert cache[0] == {'noise_model': 'test value'}
+        assert cache[0] == {"noise_model": "test value"}
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
@@ -147,7 +152,7 @@ class TestKeywordArguments:
 
     def test_overflow_kwargs(self):
         """Test all overflow kwargs are extracted for the AerDevice"""
-        dev = qml.device('qiskit.aer', wires=2, k1="v1", k2="v2")
+        dev = qml.device("qiskit.aer", wires=2, k1="v1", k2="v2")
         assert dev.run_args["k1"] == "v1"
         assert dev.run_args["k2"] == "v2"
 
@@ -156,23 +161,20 @@ class TestLoadIntegration:
     """Integration tests for the PennyLane load function. This test ensures that the PennyLane-Qiskit
     specific load functions integrate properly with the PennyLane-Qiskit plugin."""
 
-    hadamard_qasm = 'OPENQASM 2.0;' \
-                    'include "qelib1.inc";' \
-                    'qreg q[1];' \
-                    'h q[0];'
+    hadamard_qasm = "OPENQASM 2.0;" 'include "qelib1.inc";' "qreg q[1];" "h q[0];"
 
     def test_load_qiskit_circuit(self):
         """Test that the default load function works correctly."""
-        theta = qiskit.circuit.Parameter('θ')
+        theta = qiskit.circuit.Parameter("θ")
 
         qc = qiskit.QuantumCircuit(2)
         qc.rx(theta, 0)
 
-        my_template = qml.load(qc, format='qiskit')
+        my_template = qml.load(qc, format="qiskit")
 
-        dev = qml.device('default.qubit', wires=2)
+        dev = qml.device("default.qubit", wires=2)
 
-        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.])
+        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.0])
 
         @qml.qnode(dev)
         def loaded_quantum_circuit(angle):
@@ -190,7 +192,7 @@ class TestLoadIntegration:
     def test_load_from_qasm_string(self):
         """Test that quantum circuits can be loaded from a qasm string."""
 
-        dev = qml.device('default.qubit', wires=2)
+        dev = qml.device("default.qubit", wires=2)
 
         @qml.qnode(dev)
         def loaded_quantum_circuit():
@@ -214,7 +216,7 @@ class TestLoadIntegration:
 
         hadamard = qml.from_qasm_file(apply_hadamard)
 
-        dev = qml.device('default.qubit', wires=2)
+        dev = qml.device("default.qubit", wires=2)
 
         @qml.qnode(dev)
         def loaded_quantum_circuit():
@@ -267,7 +269,9 @@ class TestPLOperations:
 
         qubitstatevector_and_rot()
 
-        assert np.allclose(np.abs(dev.state) ** 2, np.abs(rz(c) @ ry(b) @ rz(a) @ state) ** 2, **tol)
+        assert np.allclose(
+            np.abs(dev.state) ** 2, np.abs(rz(c) @ ry(b) @ rz(a) @ state) ** 2, **tol
+        )
 
     @pytest.mark.parametrize("shots", [1000])
     @pytest.mark.parametrize("analytic", [True, False])
@@ -285,14 +289,16 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2**dev.num_wires)
+        expected_state = np.zeros(2 ** dev.num_wires)
         expected_state[2] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
 
     @pytest.mark.parametrize("shots", [1000])
     @pytest.mark.parametrize("analytic", [True, False])
-    def test_basisstate_init_all_zero_states(self, init_state, state_vector_device, shots, analytic, tol):
+    def test_basisstate_init_all_zero_states(
+        self, init_state, state_vector_device, shots, analytic, tol
+    ):
         """Test that the Basisstate that receives the all zero state is decomposed using
         a Qiskit device with statevector backend"""
 
@@ -306,7 +312,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2**dev.num_wires)
+        expected_state = np.zeros(2 ** dev.num_wires)
         expected_state[0] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
@@ -410,7 +416,6 @@ class TestPLTemplates:
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
-
         with qml._queuing.OperationRecorder() as rec:
             circuit(phi=phi)
 
@@ -425,17 +430,20 @@ class TestPLTemplates:
 
         assert isinstance(rec.queue[0].parameters[2], tensor)
 
+
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""
 
     def test_inverse_of_operation(self):
         """Test that the inverse of operations works as expected
         by comparing a simple circuit with default.qubit."""
-        dev = qml.device('default.qubit', wires=2)
+        dev = qml.device("default.qubit", wires=2)
 
-        dev2 = qml.device('qiskit.aer', backend='statevector_simulator', shots=5, wires=2, analytic=True)
+        dev2 = qml.device(
+            "qiskit.aer", backend="statevector_simulator", shots=5, wires=2, analytic=True
+        )
 
-        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.])
+        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.0])
 
         @qml.qnode(dev)
         def circuit_with_inverses(angle):
@@ -452,18 +460,19 @@ class TestInverses:
         for x in angles:
             assert np.allclose(circuit_with_inverses(x), circuit_with_inverses_default_qubit(x))
 
+
 class TestNoise:
     """Integration test for the noise models."""
 
     def test_noise_applied(self):
         """Test that the qiskit noise model is applied correctly"""
         noise_model = aer.noise.NoiseModel()
-        bit_flip = aer.noise.pauli_error([('X', 1), ('I', 0)])
+        bit_flip = aer.noise.pauli_error([("X", 1), ("I", 0)])
 
         # Create a noise model where the RX operation always flips the bit
         noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
 
-        dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
+        dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
 
         @qml.qnode(dev)
         def circuit():

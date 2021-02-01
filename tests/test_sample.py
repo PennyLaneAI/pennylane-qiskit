@@ -33,7 +33,7 @@ class TestSample:
             [
                 qml.RX(par, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -58,7 +58,7 @@ class TestSample:
             [
                 qml.RX(theta, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -95,12 +95,8 @@ class TestSample:
         observable = qml.Hermitian(A, wires=[0, 1])
 
         dev.apply(
-            [
-                qml.RX(theta, wires=[0]),
-                qml.RY(2 * theta, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*observable.diagonalizing_gates()]
+            [qml.RX(theta, wires=[0]), qml.RY(2 * theta, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -143,9 +139,9 @@ class TestTensorSample:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -182,9 +178,9 @@ class TestTensorSample:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -227,9 +223,9 @@ class TestTensorSample:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()

@@ -28,12 +28,8 @@ class TestExpval:
         O2 = qml.Identity(wires=[1])
 
         dev.apply(
-            [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
+            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -48,12 +44,8 @@ class TestExpval:
         O2 = qml.PauliZ(wires=[1])
 
         dev.apply(
-            [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
+            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -68,12 +60,8 @@ class TestExpval:
         O2 = qml.PauliX(wires=[1])
 
         dev.apply(
-            [
-                qml.RY(theta, wires=[0]),
-                qml.RY(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -88,12 +76,8 @@ class TestExpval:
         O2 = qml.PauliY(wires=[1])
 
         dev.apply(
-            [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
+            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -108,12 +92,8 @@ class TestExpval:
         O2 = qml.Hadamard(wires=[1])
 
         dev.apply(
-            [
-                qml.RY(theta, wires=[0]),
-                qml.RY(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -131,12 +111,8 @@ class TestExpval:
         O2 = qml.Hermitian(A, wires=[1])
 
         dev.apply(
-            [
-                qml.RY(theta, wires=[0]),
-                qml.RY(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()]
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
         dev._samples = dev.generate_samples()
 
@@ -167,12 +143,8 @@ class TestExpval:
         O1 = qml.Hermitian(A, wires=[0, 1])
 
         dev.apply(
-            [
-                qml.RY(theta, wires=[0]),
-                qml.RY(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*O1.diagonalizing_gates()]
+            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*O1.diagonalizing_gates()],
         )
         dev._samples = dev.generate_samples()
 
@@ -209,9 +181,9 @@ class TestTensorExpval:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -233,15 +205,15 @@ class TestTensorExpval:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
         res = dev.expval(obs)
 
-        expected = np.cos(varphi)*np.cos(phi)
+        expected = np.cos(varphi) * np.cos(phi)
 
         assert np.allclose(res, expected, **tol)
 
@@ -257,9 +229,9 @@ class TestTensorExpval:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -289,9 +261,9 @@ class TestTensorExpval:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -309,8 +281,7 @@ class TestTensorExpval:
         """Test that a tensor product involving two Hermitian matrices works
         correctly"""
         dev = device(3)
-        A1 = np.array([[1, 2],
-                       [2, 4]])
+        A1 = np.array([[1, 2], [2, 4]])
 
         A2 = np.array(
             [
@@ -328,9 +299,9 @@ class TestTensorExpval:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -340,7 +311,8 @@ class TestTensorExpval:
             + 4 * np.cos(phi) * np.sin(theta)
             + 3 * np.cos(varphi) * (-10 + 4 * np.cos(phi) * np.sin(theta) - 3 * np.sin(phi))
             - 3 * np.sin(phi)
-            - 2 * (5 + np.cos(phi) * (6 + 4 * np.sin(theta)) + (-3 + 8 * np.sin(theta)) * np.sin(phi))
+            - 2
+            * (5 + np.cos(phi) * (6 + 4 * np.sin(theta)) + (-3 + 8 * np.sin(theta)) * np.sin(phi))
             * np.sin(varphi)
             + np.cos(theta)
             * (
@@ -366,7 +338,7 @@ class TestTensorExpval:
                 qml.RY(phi, wires=[1]),
                 qml.CNOT(wires=[0, 1]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()

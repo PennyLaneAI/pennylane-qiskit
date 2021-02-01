@@ -33,7 +33,7 @@ class TestVar:
                 qml.RX(phi, wires=[0]),
                 qml.RY(theta, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -57,7 +57,7 @@ class TestVar:
                 qml.RX(phi, wires=[0]),
                 qml.RY(theta, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -90,9 +90,9 @@ class TestTensorVar:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -120,9 +120,9 @@ class TestTensorVar:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -157,9 +157,9 @@ class TestTensorVar:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
