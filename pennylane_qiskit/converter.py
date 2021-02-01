@@ -66,7 +66,7 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.
             if isinstance(v, np.ndarray):
                 v = v.item()
 
-            if isinstance(v, qml.variable.Variable):
+            if getattr(v,'requires_grad', True):
                 variable_refs[k] = v
 
     return variable_refs  # map qiskit parameters to PennyLane differentiable Variables.
