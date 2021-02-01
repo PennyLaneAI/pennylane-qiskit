@@ -42,18 +42,15 @@ def init_state(scope="session"):
 
     return _init_state
 
-
 @pytest.fixture
 def skip_unitary(backend):
     if backend == "unitary_simulator":
         pytest.skip("This test does not support the unitary simulator backend.")
 
-
 @pytest.fixture
 def run_only_for_unitary(backend):
     if backend != "unitary_simulator":
         pytest.skip("This test only supports the unitary simulator.")
-
 
 @pytest.fixture(params=state_backends + hw_backends)
 def backend(request):
@@ -78,9 +75,7 @@ def device(request, backend, shots, analytic):
     def _device(n, device_options=None):
         if device_options is None:
             device_options = {}
-        return request.param(
-            wires=n, backend=backend, shots=shots, analytic=analytic, **device_options
-        )
+        return request.param(wires=n, backend=backend, shots=shots, analytic=analytic, **device_options)
 
     return _device
 
@@ -99,7 +94,7 @@ def mock_device(monkeypatch):
 
     with monkeypatch.context() as m:
         dev = qml.Device
-        m.setattr(dev, "__abstractmethods__", frozenset())
+        m.setattr(dev, '__abstractmethods__', frozenset())
         yield qml.Device()
 
 
@@ -110,9 +105,9 @@ def recorder():
 
 @pytest.fixture(scope="function")
 def qubit_device_single_wire():
-    return qml.device("default.qubit", wires=1)
+    return qml.device('default.qubit', wires=1)
 
 
 @pytest.fixture(scope="function")
 def qubit_device_2_wires():
-    return qml.device("default.qubit", wires=2)
+    return qml.device('default.qubit', wires=2)

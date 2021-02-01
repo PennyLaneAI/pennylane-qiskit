@@ -27,37 +27,40 @@ requirements = [
     "numpy",
     "networkx>=2.2;python_version>'3.5'",
     # Networkx 2.4 is the final version with python 3.5 support.
-    "networkx>=2.2,<2.4;python_version=='3.5'",
+    "networkx>=2.2,<2.4;python_version=='3.5'"
 ]
 
 info = {
-    "name": "PennyLane-qiskit",
-    "version": version,
-    "maintainer": "Xanadu",
-    "maintainer_email": "software@xanadu.ai",
-    "url": "https://github.com/XanaduAI/pennylane-qiskit",
-    "license": "Apache License 2.0",
-    "packages": ["pennylane_qiskit"],
-    "entry_points": {
-        "pennylane.plugins": [
-            "qiskit.aer = pennylane_qiskit:AerDevice",
-            "qiskit.basicaer = pennylane_qiskit:BasicAerDevice",
-            "qiskit.ibmq = pennylane_qiskit:IBMQDevice",
-        ],
-        "pennylane.io": [
-            "qiskit = pennylane_qiskit:load",
-            "qasm = pennylane_qiskit:load_qasm",
-            "qasm_file = pennylane_qiskit:load_qasm_from_file",
-        ],
-    },
-    "description": "PennyLane plugin for qiskit-terra",
-    "long_description": open("README.rst").read(),
-    "provides": ["pennylane_qiskit"],
-    "install_requires": requirements,
+    'name': 'PennyLane-qiskit',
+    'version': version,
+    'maintainer': 'Xanadu',
+    'maintainer_email': 'software@xanadu.ai',
+    'url': 'https://github.com/XanaduAI/pennylane-qiskit',
+    'license': 'Apache License 2.0',
+    'packages': [
+        'pennylane_qiskit'
+    ],
+    'entry_points': {
+        'pennylane.plugins': [
+            'qiskit.aer = pennylane_qiskit:AerDevice',
+            'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
+            'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
+            ],
+        'pennylane.io': [
+            'qiskit = pennylane_qiskit:load',
+            'qasm = pennylane_qiskit:load_qasm',
+            'qasm_file = pennylane_qiskit:load_qasm_from_file',
+            ],
+        },
+    'description': 'PennyLane plugin for qiskit-terra',
+    'long_description': open('README.rst').read(),
+    'provides': ["pennylane_qiskit"],
+    'install_requires': requirements,
     # 'extras_require': extra_requirements,
-    "command_options": {
-        "build_sphinx": {"version": ("setup.py", version), "release": ("setup.py", version)}
-    },
+    'command_options': {
+        'build_sphinx': {
+            'version': ('setup.py', version),
+            'release': ('setup.py', version)}}
 }
 
 classifiers = [
@@ -71,13 +74,13 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Scientific/Engineering :: Physics",
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3 :: Only',
+    "Topic :: Scientific/Engineering :: Physics"
 ]
 
 setup(classifiers=classifiers, **(info))

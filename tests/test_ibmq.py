@@ -30,7 +30,6 @@ def test_load_from_env(token, monkeypatch):
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
 
-
 def test_load_kwargs_takes_precedence(token, monkeypatch):
     """Test that with a potentially valid token stored as an environment
     variable, passing the token as a keyword argument takes precedence."""
@@ -38,14 +37,12 @@ def test_load_kwargs_takes_precedence(token, monkeypatch):
     dev = IBMQDevice(wires=1, ibmqx_token=token)
     assert dev.provider.credentials.is_ibmq()
 
-
 def test_account_already_loaded(token):
     """Test loading an IBMQ device using
     an already loaded account"""
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
-
 
 class MockQiskitDeviceInit:
     """A mocked version of the QiskitDevice __init__ method which
@@ -56,7 +53,6 @@ class MockQiskitDeviceInit:
         called with."""
         self.provider = provider
 
-
 def test_custom_provider(monkeypatch):
     """Tests that a custom provider can be passed when creating an IBMQ
     device."""
@@ -64,21 +60,19 @@ def test_custom_provider(monkeypatch):
     mock_qiskit_device = MockQiskitDeviceInit()
 
     with monkeypatch.context() as m:
-        m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
+        m.setattr(ibmq.QiskitDevice, "__init__",mock_qiskit_device.mocked_init)
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
         m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
-        dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", provider=mock_provider)
+        dev = IBMQDevice(wires=2, backend='ibmq_qasm_simulator', provider=mock_provider)
 
     assert mock_qiskit_device.provider == mock_provider
-
 
 def mock_get_provider(*args, **kwargs):
     """A mock function for the get_provider Qiskit function to record the
     arguments which it was called with."""
     return (args, kwargs)
-
 
 def test_default_provider(monkeypatch):
     """Tests that the default provider is used when no custom provider was
@@ -92,11 +86,10 @@ def test_default_provider(monkeypatch):
 
         # Here mocking to a value such that it is not None
         m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
-        dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator")
+        dev = IBMQDevice(wires=2, backend='ibmq_qasm_simulator')
 
     assert mock_qiskit_device.provider[0] == ()
-    assert mock_qiskit_device.provider[1] == {"hub": "ibm-q", "group": "open", "project": "main"}
-
+    assert mock_qiskit_device.provider[1] == {'hub': 'ibm-q', 'group': 'open', 'project': 'main'}
 
 def test_custom_provider_hub_group_project(monkeypatch):
     """Tests that the custom arguments passed during device instantiation are
@@ -114,20 +107,10 @@ def test_custom_provider_hub_group_project(monkeypatch):
 
         # Here mocking to a value such that it is not None
         m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
-        dev = IBMQDevice(
-            wires=2,
-            backend="ibmq_qasm_simulator",
-            hub=custom_hub,
-            group=custom_group,
-            project=custom_project,
-        )
+        dev = IBMQDevice(wires=2, backend='ibmq_qasm_simulator', hub=custom_hub, group=custom_group, project=custom_project)
 
     assert mock_qiskit_device.provider[0] == ()
-    assert mock_qiskit_device.provider[1] == {
-        "hub": custom_hub,
-        "group": custom_group,
-        "project": custom_project,
-    }
+    assert mock_qiskit_device.provider[1] == {'hub': custom_hub, 'group': custom_group, 'project': custom_project}
 
 
 def test_load_from_disk(token):

@@ -50,27 +50,25 @@ class CustomDeviceGalleryItemDirective(Directive):
     required_arguments = 0
     optional_arguments = 4
     final_argument_whitespace = True
-    option_spec = {
-        "name": directives.unchanged,
-        "description": directives.unchanged,
-        "link": directives.unchanged,
-    }
+    option_spec = {'name': directives.unchanged,
+                   'description': directives.unchanged,
+                   'link': directives.unchanged}
 
     has_content = False
     add_index = False
 
     def run(self):
         try:
-            if "name" in self.options:
-                name = self.options["name"]
+            if 'name' in self.options:
+                name = self.options['name']
 
-            if "description" in self.options:
-                description = self.options["description"]
+            if 'description' in self.options:
+                description = self.options['description']
             else:
-                raise ValueError("description not found")
+                raise ValueError('description not found')
 
-            if "link" in self.options:
-                link = self.options["link"]
+            if 'link' in self.options:
+                link = self.options['link']
             else:
                 link = "code/qml_templates"
 
@@ -82,8 +80,10 @@ class CustomDeviceGalleryItemDirective(Directive):
             raise
             return []
 
-        thumbnail_rst = GALLERY_TEMPLATE.format(name=name, description=description, link=link)
-        thumbnail = StringList(thumbnail_rst.split("\n"))
+        thumbnail_rst = GALLERY_TEMPLATE.format(name=name,
+                                                description=description,
+                                                link=link)
+        thumbnail = StringList(thumbnail_rst.split('\n'))
         thumb = nodes.paragraph()
         self.state.nested_parse(thumbnail, self.content_offset, thumb)
         return [thumb]
