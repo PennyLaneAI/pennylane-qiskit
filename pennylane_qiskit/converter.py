@@ -61,7 +61,7 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]
     if params is not None:
         for k, v in params.items():
 
-            if getattr(v,'requires_grad', True):
+            if getattr(v, "requires_grad", True):
                 # Values can be arrays of size 1, need to extract the Python scalar
                 # (this can happen e.g. when indexing into a PennyLane numpy array)
                 if isinstance(v, np.ndarray):

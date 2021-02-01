@@ -590,8 +590,8 @@ class TestConverter:
         """Tests the load method for a QuantumCircuit raises a QiskitError,
         if the wrong type of arguments were passed."""
 
-        theta = Parameter('θ')
-        angle = np.tensor('some_string_instead_of_an_angle', requires_grad=False)
+        theta = Parameter("θ")
+        angle = np.tensor("some_string_instead_of_an_angle", requires_grad=False)
 
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
