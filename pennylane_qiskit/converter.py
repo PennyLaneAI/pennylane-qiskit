@@ -32,20 +32,20 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, qml.variable.Variable]):
+def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
         param (qiskit.circuit.Parameter): the parameter to be checked
-        var_ref_map (dict[qiskit.circuit.Parameter, Float]):
+        var_ref_map (dict[qiskit.circuit.Parameter, Any]):
             a dictionary mapping qiskit parameters to trainable parameter values
     """
     if isinstance(param, Parameter) and param not in var_ref_map:
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
 
-def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Float]:
+def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]:
     """Iterate through the parameter mapping to be bound to the circuit,
     and return a dictionary containing the trainable parameters.
 
@@ -53,7 +53,7 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Floa
         params (dict): dictionary of the parameters in the circuit to their corresponding values
 
     Returns:
-        dict[qiskit.circuit.Parameter, Float]: a dictionary mapping
+        dict[qiskit.circuit.Parameter, Any]: a dictionary mapping
             qiskit parameters to trainable parameter values
     """
     variable_refs = {}
