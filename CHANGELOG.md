@@ -1,4 +1,4 @@
-# Release 0.14.0-dev
+# Release 0.14.0
 
 ### New features
 
@@ -8,9 +8,17 @@
 
 ### Bug fixes
 
+* With the release of Qiskit 0.23.3 gate parameters cannot be arrays.  The device now converts arrays to lists.
+  [(#126)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/126)
+
+* When parsing the IBMQ token and the IBMQ URL, the values passed as keywords take precedence over environment variables.
+  [(#121)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/121)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Christina Lee, Antal Szava
 
 ---
 
