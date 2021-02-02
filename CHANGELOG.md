@@ -8,9 +8,14 @@
 
 ### Bug fixes
 
+* When loading Qiskit circuits to PennyLane templates using `load` in `converter.py`, parameters with `requires_grad=False` are bound to the circuit.  The old version bound objects that were not PennyLane `Variable`'s, but that object class is now deprecated.
+  [(#127)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/127)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Christina Lee
 
 ---
 
