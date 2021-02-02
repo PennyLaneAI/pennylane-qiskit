@@ -1,12 +1,12 @@
-# Release 0.14.0-dev
-
-### New features
-
-### Improvements
-
-### Documentation
+# Release 0.14.0
 
 ### Bug fixes
+
+* With the release of Qiskit 0.23.3 gate parameters cannot be arrays.  The device now converts arrays to lists.
+  [(#126)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/126)
+
+* When parsing the IBMQ token and the IBMQ URL, the values passed as keywords take precedence over environment variables.
+  [(#121)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/121)
 
 * When loading Qiskit circuits to PennyLane templates using `load` in `converter.py`, parameters with `requires_grad=False` are bound to the circuit.  The old version bound objects that were not PennyLane `Variable`'s, but that object class is now deprecated.
   [(#127)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/127)
@@ -15,8 +15,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Christina Lee
-
+Christina Lee, Antal Szava
 ---
 
 # Release 0.13.0
