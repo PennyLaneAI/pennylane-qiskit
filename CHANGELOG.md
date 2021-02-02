@@ -34,6 +34,7 @@ This release contains contributions from (in alphabetical order):
 This release contains contributions from (in alphabetical order):
 
 Christina Lee, Antal Szava
+
 ---
 
 # Release 0.13.0
