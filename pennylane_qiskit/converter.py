@@ -32,44 +32,43 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 
-def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, qml.variable.Variable]):
+def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
         param (qiskit.circuit.Parameter): the parameter to be checked
-        var_ref_map (dict[qiskit.circuit.Parameter, pennylane.variable.Variable]):
-            a dictionary mapping qiskit parameters to PennyLane variables
+        var_ref_map (dict[qiskit.circuit.Parameter, Any]):
+            a dictionary mapping qiskit parameters to trainable parameter values
     """
     if isinstance(param, Parameter) and param not in var_ref_map:
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
 
-def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, qml.variable.Variable]:
+def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]:
     """Iterate through the parameter mapping to be bound to the circuit,
-    and return a dictionary containing the differentiable parameters.
+    and return a dictionary containing the trainable parameters.
 
     Args:
         params (dict): dictionary of the parameters in the circuit to their corresponding values
 
     Returns:
-        dict[qiskit.circuit.Parameter, pennylane.variable.Variable]: a dictionary mapping
-            qiskit parameters to PennyLane variables
+        dict[qiskit.circuit.Parameter, Any]: a dictionary mapping
+            qiskit parameters to trainable parameter values
     """
     variable_refs = {}
-    # map qiskit parameters to PennyLane differentiable Variables.
+    # map qiskit parameters to PennyLane trainable parameter values
     if params is not None:
         for k, v in params.items():
 
-            # Values can be arrays of size 1, need to extract the Python scalar
-            # (this can happen e.g. when indexing into a PennyLane numpy array)
-            if isinstance(v, np.ndarray):
-                v = v.item()
-
-            if isinstance(v, qml.variable.Variable):
+            if getattr(v, "requires_grad", True):
+                # Values can be arrays of size 1, need to extract the Python scalar
+                # (this can happen e.g. when indexing into a PennyLane numpy array)
+                if isinstance(v, np.ndarray):
+                    v = v.item()
                 variable_refs[k] = v
 
-    return variable_refs  # map qiskit parameters to PennyLane differentiable Variables.
+    return variable_refs  # map qiskit parameters to trainable parameter values
 
 
 def _check_circuit_and_bind_parameters(
@@ -80,9 +79,8 @@ def _check_circuit_and_bind_parameters(
     Args:
         quantum_circuit (QuantumCircuit): the quantum circuit to check and bind the parameters for
         params (dict): dictionary of the parameters in the circuit to their corresponding values
-        diff_params (dict): dictionary mapping the differentiable parameters to PennyLane
-            Variable instances
-
+        diff_params (dict): dictionary mapping the differentiable parameters to trainable parameter
+            values
     Returns:
         QuantumCircuit: quantum circuit with bound parameters
     """
@@ -95,7 +93,7 @@ def _check_circuit_and_bind_parameters(
         return quantum_circuit
 
     for k in diff_params:
-        # Since we cannot bind Variables to Qiskit circuits,
+        # Since we don't bind trainable values to Qiskit circuits,
         # we must remove them from the binding dictionary before binding.
         del params[k]
 

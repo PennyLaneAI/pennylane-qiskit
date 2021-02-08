@@ -350,7 +350,7 @@ class TestPLTemplates:
             circuit(phi=phi)
 
             # Check parameters
-            assert all([isinstance(x, float) for x in lst])
+            assert all([isinstance(x, tensor) for x in lst])
 
     def test_tensor_unwrapped_gradient_no_error(self, monkeypatch):
         """Tests that the gradient calculation of a circuit that contains a
@@ -391,28 +391,11 @@ class TestPLTemplates:
 
         for i in range(phi.shape[1]):
             # Test each rotation applied
-            assert rec.queue[0].name == "RX"
-            assert len(rec.queue[0].parameters) == 1
+            assert rec.queue[i].name == "RX"
+            assert len(rec.queue[i].parameters) == 1
 
-            # Test that the gate parameter is not a PennyLane tensor, but a
-            # float
-            assert not isinstance(rec.queue[0].parameters[0], tensor)
-            assert isinstance(rec.queue[0].parameters[0], float)
-
-    def test_multiple_gate_parameter(self):
-        """Test that a QNode handles passing multiple tensor objects to the
-        same gate without an error"""
-        dev = qml.device("qiskit.aer", wires=1)
-
-        @qml.qnode(dev)
-        def circuit(phi=None):
-            for idx, x in enumerate(phi):
-                qml.Rot(*x, wires=idx)
-            return qml.expval(qml.PauliZ(0))
-
-        phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
-
-        circuit(phi=phi)
+            # Test that the gate parameter is a PennyLane tensor
+            assert isinstance(rec.queue[i].parameters[0], tensor)
 
     def test_multiple_gate_parameter(self):
         """Test that when supplied a PennyLane tensor, a QNode passes arguments
@@ -435,16 +418,12 @@ class TestPLTemplates:
         assert rec.queue[0].name == "Rot"
         assert len(rec.queue[0].parameters) == 3
 
-        # Test that the gate parameters are not PennyLane tensors,
-        # but are instead floats
-        assert not isinstance(rec.queue[0].parameters[0], tensor)
-        assert isinstance(rec.queue[0].parameters[0], float)
+        # Test that the gate parameters are PennyLane tensors,
+        assert isinstance(rec.queue[0].parameters[0], tensor)
 
-        assert not isinstance(rec.queue[0].parameters[1], tensor)
-        assert isinstance(rec.queue[0].parameters[1], float)
+        assert isinstance(rec.queue[0].parameters[1], tensor)
 
-        assert not isinstance(rec.queue[0].parameters[2], tensor)
-        assert isinstance(rec.queue[0].parameters[2], float)
+        assert isinstance(rec.queue[0].parameters[2], tensor)
 
 class TestInverses:
     """Integration tests checking that the inverse of the operations are applied."""

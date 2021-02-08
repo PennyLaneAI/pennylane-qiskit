@@ -33,25 +33,6 @@ from pennylane import QubitDevice, DeviceError
 from ._version import __version__
 
 
-# Auxiliary functions for gates subject to deprecation
-def U1Gate(theta):
-    """Auxiliary function for the ``U1Gate``."""
-    return ex.PhaseGate(theta)
-
-
-def U2Gate(phi, lam):
-    """Auxiliary function for the ``U2Gate``.
-
-    Uses the equation ``u2(phi, lam) = u(pi/2, phi, lam)``.
-    """
-    return ex.U(np.pi / 2, phi, lam)
-
-
-def U3Gate(theta, phi, lam):
-    """Auxiliary function for the ``U3Gate``."""
-    return ex.U(theta, phi, lam)
-
-
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
@@ -75,12 +56,9 @@ QISKIT_OPERATION_MAP = {
     "QubitStateVector": ex.Initialize,
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
-    "U": ex.UGate,
-    # Qiskit gates subject to deprecation (using custom definitions that depend on
-    # the latest recommended gates)
-    "U1": U1Gate,
-    "U2": U2Gate,
-    "U3": U3Gate,
+    "U1": ex.U1Gate,
+    "U2": ex.U2Gate,
+    "U3": ex.U3Gate,
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
@@ -110,7 +88,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.12.0"
-    version = "0.12.0"
+    version = "0.14.0"
     plugin_version = __version__
     author = "Xanadu"
 
@@ -278,6 +256,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # Apply the circuit operations
             device_wires = self.map_wires(operation.wires)
             par = operation.parameters
+
+            for idx, p in enumerate(par):
+                if isinstance(p, np.ndarray):
+                    # Convert arrays so that Qiskit accepts the parameter
+                    par[idx] = p.tolist()
+
             operation = operation.name
 
             mapped_operation = self._operation_map[operation]
