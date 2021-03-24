@@ -16,8 +16,7 @@ VARPHI = np.linspace(0.02, 1, 3)
 
 
 @pytest.mark.parametrize("theta, phi", list(zip(THETA, PHI)))
-@pytest.mark.parametrize("analytic", [True, False])
-@pytest.mark.parametrize("shots", [8192])
+@pytest.mark.parametrize("shots", [None, 8192])
 class TestVar:
     """Tests for the variance"""
 
@@ -33,7 +32,7 @@ class TestVar:
                 qml.RX(phi, wires=[0]),
                 qml.RY(theta, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -57,7 +56,7 @@ class TestVar:
                 qml.RX(phi, wires=[0]),
                 qml.RY(theta, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -74,8 +73,7 @@ class TestVar:
 
 
 @pytest.mark.parametrize("theta, phi, varphi", list(zip(THETA, PHI, VARPHI)))
-@pytest.mark.parametrize("analytic", [True, False])
-@pytest.mark.parametrize("shots", [8192])
+@pytest.mark.parametrize("shots", [None, 8192])
 class TestTensorVar:
     """Tests for variance of tensor observables"""
 
@@ -90,9 +88,9 @@ class TestTensorVar:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -120,9 +118,9 @@ class TestTensorVar:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()
@@ -157,9 +155,9 @@ class TestTensorVar:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=obs.diagonalizing_gates()
+            rotations=obs.diagonalizing_gates(),
         )
 
         dev._samples = dev.generate_samples()

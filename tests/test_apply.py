@@ -42,25 +42,18 @@ crz = lambda theta: np.array(
 )
 
 
-single_qubit_operations = [
-    qml.PauliX,
-    qml.PauliY,
-    qml.PauliZ,
-    qml.Hadamard,
-    qml.S,
-    qml.T
-]
+single_qubit_operations = [qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T]
 
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ]
 two_qubit_param = [qml.CRZ]
 three_qubit = [qml.Toffoli, qml.CSWAP]
 
-@pytest.mark.parametrize("analytic", [True])
-@pytest.mark.parametrize("shots", [8192])
+
+@pytest.mark.parametrize("shots", [None])
 @pytest.mark.usefixtures("skip_unitary")
 class TestAnalyticApply:
-    """Test application of PennyLane operations with analytic attribute set to True."""
+    """Test application of PennyLane operations with analytic calculation."""
 
     def test_qubit_state_vector(self, init_state, device, tol):
         """Test that the QubitStateVector operation produces the expected
@@ -149,8 +142,8 @@ class TestAnalyticApply:
         expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
-@pytest.mark.parametrize("analytic", [True])
-@pytest.mark.parametrize("shots", [8192])
+
+@pytest.mark.parametrize("shots", [None])
 @pytest.mark.usefixtures("run_only_for_unitary")
 class TestStateApplyUnitarySimulator:
     """Test application of PennyLane operations to the unitary simulator."""
@@ -161,14 +154,17 @@ class TestStateApplyUnitarySimulator:
         dev = device(1)
         state = init_state(1)
 
-        with pytest.raises(qml.DeviceError, match="The QubitStateVector operation is not supported on the unitary simulator backend"):
+        with pytest.raises(
+            qml.DeviceError,
+            match="The QubitStateVector operation is not supported on the unitary simulator backend",
+        ):
             dev.apply([qml.QubitStateVector(state, wires=[0])])
 
+
 @pytest.mark.parametrize("shots", [8192])
-@pytest.mark.parametrize("analytic", [False])
 @pytest.mark.usefixtures("skip_unitary")
 class TestNonAnalyticApply:
-    """Test application of PennyLane operations with the analytic attribute set to False."""
+    """Test application of PennyLane operations with non-analytic calculation."""
 
     def test_qubit_state_vector(self, init_state, device, tol):
         """Test that the QubitStateVector operation produces the expected
@@ -302,4 +298,3 @@ class TestNonAnalyticApply:
         res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(applied_operation.matrix @ state) ** 2
         assert np.allclose(res, expected, **tol)
-

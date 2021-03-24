@@ -38,16 +38,14 @@ class BasicAerDevice(QiskitDevice):
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
         backend (str): the desired backend
-        shots (int): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables
+        shots (int or None): number of circuit evaluations/random samples used
+            to estimate expectation values and variances of observables. For statevector backends,
+            setting to None computes the expectation values and variances analytically.
 
     Keyword Args:
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
-        analytic (bool): For statevector backends, determines if the
-            expectation values and variances are to be computed analytically.
-            Default value is ``False``.
     """
 
     short_name = "qiskit.basicaer"
