@@ -409,8 +409,9 @@ inheritance_node_attrs = dict(color='lightskyblue1', style='filled')
 #autodoc_default_flags = ['members']
 autosummary_generate = True
 
-from directives import CustomDeviceGalleryItemDirective, CustomDemoGalleryItemDirective
+from directives import UsageDetails, CustomDeviceGalleryItemDirective, CustomDemoGalleryItemDirective
 
 def setup(app):
     app.add_directive('devicegalleryitem', CustomDeviceGalleryItemDirective)
     app.add_directive('demogalleryitem', CustomDemoGalleryItemDirective)
+    app.add_directive("usagedetails", UsageDetails)

@@ -20,6 +20,42 @@ from docutils import nodes
 
 import os
 
+USAGE_DETAILS_TEMPLATE = """
+.. raw:: html
+
+    <a class="usage-details-header collapse-header" data-toggle="collapse" href="#usageDetails" aria-expanded="false" aria-controls="usageDetails">
+        <h2 style="font-size: 24px;">
+            <i class="fas fa-angle-down rotate" style="float: right;"></i> Usage Details
+        </h2>
+    </a>
+    <div class="collapse" id="usageDetails">
+
+{content}
+
+.. raw:: html
+
+    </div>
+"""
+
+
+class UsageDetails(Directive):
+    """Create a collapsed Usage Details section in the documentation."""
+
+    # defines the parameter the directive expects
+    # directives.unchanged means you get the raw value from RST
+    required_arguments = 0
+    optional_arguments = 0
+    final_argument_whitespace = False
+    has_content = True
+
+    def run(self):
+        rst = USAGE_DETAILS_TEMPLATE.format(content="\n".join(self.content))
+        string_list = StringList(rst.split('\n'))
+        node = nodes.section()
+        self.state.nested_parse(string_list, self.content_offset, node)
+        return [node]
+
+
 GALLERY_TEMPLATE = """
 .. raw:: html
 
