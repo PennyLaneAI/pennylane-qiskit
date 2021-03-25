@@ -86,7 +86,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.12.0"
-    version = "0.15.0"
+    version = "0.14.0"
     plugin_version = __version__
     author = "Xanadu"
 
@@ -113,7 +113,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Keep track if the user specified analytic to be True
         if shots is None and backend not in self._state_backends:
 
-            # Raise a warning if the analytic attribute was set to True
+            # Raise a warning if no shots were specified for a hardware device
             warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
             self.shots = 1024
