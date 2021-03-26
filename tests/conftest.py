@@ -27,7 +27,7 @@ hw_backends = ["qasm_simulator"]
 
 @pytest.fixture
 def tol(shots):
-    if not shots:
+    if shots is None:
         return {"atol": 0.01, "rtol": 0}
 
     return {"atol": 0.05, "rtol": 0.1}
