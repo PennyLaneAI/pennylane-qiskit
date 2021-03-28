@@ -75,16 +75,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
             or strings (``['ancilla', 'q1', 'q2']``).
         provider (Provider): The Qiskit simulation provider
         backend (str): the desired backend
-        shots (int): Number of circuit evaluations/random samples used
-            to estimate expectation values of observables.
+        shots (int or None): number of circuit evaluations/random samples used
+            to estimate expectation values and variances of observables. For statevector backends,
+            setting to ``None`` results in computing statistics like expectation values and variances analytically.
 
     Keyword Args:
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
-        analytic (bool): For statevector backends, determines if the
-            expectation values and variances are to be computed analytically.
-            Default value is ``False``.
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.12.0"
@@ -113,16 +111,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         super().__init__(wires=wires, shots=shots)
 
         # Keep track if the user specified analytic to be True
-        user_specified_analytic = "analytic" in kwargs and kwargs["analytic"]
-        self.analytic = kwargs.pop("analytic", False)
+        if shots is None and backend not in self._state_backends:
 
-        if self.analytic and backend not in self._state_backends:
+            # Raise a warning if no shots were specified for a hardware device
+            warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
-            if user_specified_analytic:
-                # Raise a warning if the analytic attribute was set to True
-                warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
-
-            self.analytic = False
+            self.shots = 1024
 
         self._backend = None
 

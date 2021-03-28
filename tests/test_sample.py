@@ -15,7 +15,6 @@ PHI = np.linspace(0.32, 1, 3)
 VARPHI = np.linspace(0.02, 1, 3)
 
 
-@pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 class TestSample:
     """Tests for the sample return type"""
@@ -33,7 +32,7 @@ class TestSample:
             [
                 qml.RX(par, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -58,7 +57,7 @@ class TestSample:
             [
                 qml.RX(theta, wires=[0]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -95,12 +94,8 @@ class TestSample:
         observable = qml.Hermitian(A, wires=[0, 1])
 
         dev.apply(
-            [
-                qml.RX(theta, wires=[0]),
-                qml.RY(2 * theta, wires=[1]),
-                qml.CNOT(wires=[0, 1])
-            ],
-            rotations=[*observable.diagonalizing_gates()]
+            [qml.RX(theta, wires=[0]), qml.RY(2 * theta, wires=[1]), qml.CNOT(wires=[0, 1])],
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -126,7 +121,6 @@ class TestSample:
 
 
 @pytest.mark.parametrize("theta, phi, varphi", list(zip(THETA, PHI, VARPHI)))
-@pytest.mark.parametrize("analytic", [False])
 @pytest.mark.parametrize("shots", [8192])
 class TestTensorSample:
     """Test tensor expectation values"""
@@ -143,9 +137,9 @@ class TestTensorSample:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -182,9 +176,9 @@ class TestTensorSample:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()
@@ -227,9 +221,9 @@ class TestTensorSample:
                 qml.RX(phi, wires=[1]),
                 qml.RX(varphi, wires=[2]),
                 qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2])
+                qml.CNOT(wires=[1, 2]),
             ],
-            rotations=[*observable.diagonalizing_gates()]
+            rotations=[*observable.diagonalizing_gates()],
         )
 
         dev._samples = dev.generate_samples()

@@ -26,8 +26,8 @@ hw_backends = ["qasm_simulator"]
 
 
 @pytest.fixture
-def tol(analytic):
-    if analytic:
+def tol(shots):
+    if shots is None:
         return {"atol": 0.01, "rtol": 0}
 
     return {"atol": 0.05, "rtol": 0.1}
@@ -42,15 +42,18 @@ def init_state(scope="session"):
 
     return _init_state
 
+
 @pytest.fixture
 def skip_unitary(backend):
     if backend == "unitary_simulator":
         pytest.skip("This test does not support the unitary simulator backend.")
 
+
 @pytest.fixture
 def run_only_for_unitary(backend):
     if backend != "unitary_simulator":
         pytest.skip("This test only supports the unitary simulator.")
+
 
 @pytest.fixture(params=state_backends + hw_backends)
 def backend(request):
@@ -68,22 +71,22 @@ def hardware_backend(request):
 
 
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
-def device(request, backend, shots, analytic):
-    if backend not in state_backends and analytic == True:
+def device(request, backend, shots):
+    if backend not in state_backends and shots is None:
         pytest.skip("Hardware simulators do not support analytic mode")
 
     def _device(n, device_options=None):
         if device_options is None:
             device_options = {}
-        return request.param(wires=n, backend=backend, shots=shots, analytic=analytic, **device_options)
+        return request.param(wires=n, backend=backend, shots=shots, **device_options)
 
     return _device
 
 
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
-def state_vector_device(request, statevector_backend, shots, analytic):
+def state_vector_device(request, statevector_backend, shots):
     def _device(n):
-        return request.param(wires=n, backend=statevector_backend, shots=shots, analytic=analytic)
+        return request.param(wires=n, backend=statevector_backend, shots=shots)
 
     return _device
 
@@ -94,20 +97,20 @@ def mock_device(monkeypatch):
 
     with monkeypatch.context() as m:
         dev = qml.Device
-        m.setattr(dev, '__abstractmethods__', frozenset())
+        m.setattr(dev, "__abstractmethods__", frozenset())
         yield qml.Device()
 
 
 @pytest.fixture(scope="function")
 def recorder():
-    return qml._queuing.OperationRecorder()
+    return qml.tape.OperationRecorder()
 
 
 @pytest.fixture(scope="function")
 def qubit_device_single_wire():
-    return qml.device('default.qubit', wires=1)
+    return qml.device("default.qubit", wires=1)
 
 
 @pytest.fixture(scope="function")
 def qubit_device_2_wires():
-    return qml.device('default.qubit', wires=2)
+    return qml.device("default.qubit", wires=2)
