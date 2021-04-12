@@ -25,9 +25,8 @@ import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.circuit.measure import measure
-from qiskit.compiler import assemble, transpile
+from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.providers.aer.library import save_state
 
 from pennylane import QubitDevice, DeviceError
 
