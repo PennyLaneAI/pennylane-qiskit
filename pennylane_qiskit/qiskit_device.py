@@ -169,7 +169,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self.set_transpile_args(**kwargs)
 
         # Get further arguments for run
-        s = inspect.signature(self.backend.run)
         self.run_args = {}
 
         # Specify to have a memory for hw/hw simulators
