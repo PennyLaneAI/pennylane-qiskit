@@ -27,6 +27,7 @@ from qiskit import extensions as ex
 from qiskit.circuit.measure import measure
 from qiskit.compiler import assemble, transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+from qiskit.providers.aer.library import save_state
 
 from pennylane import QubitDevice, DeviceError
 
@@ -85,14 +86,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.12.0"
-    version = "0.14.0"
+    pennylane_requires = ">=0.15.0"
+    version = "0.15.0"
     plugin_version = __version__
     author = "Xanadu"
 
     _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
     _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
-    _state_backends = {"statevector_simulator", "unitary_simulator"}
+    _state_backends = {"statevector_simulator", "unitary_simulator", "aer_simulator_statevector", "aer_simulator_unitary"}
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
 
@@ -164,11 +165,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self.compile_backend = kwargs.pop("compile_backend")
 
         if "noise_model" in kwargs:
-            if not aer_provider or self.backend_name != "qasm_simulator":
-                raise ValueError(
-                    "Backend {} does not support noisy simulations".format(self.backend_name)
-                )
-
             noise_model = kwargs.pop("noise_model")
             self.backend.set_options(noise_model=noise_model)
 
@@ -179,13 +175,20 @@ class QiskitDevice(QubitDevice, abc.ABC):
         s = inspect.signature(self.backend.run)
         self.run_args = {}
 
+        # Specify to have a memory for hw/hw simulators
+        compile_backend = self.compile_backend or self.backend
+        memory = str(compile_backend) not in self._state_backends
+
+        if memory:
+            kwargs["memory"] = True
+
         if aer_provider:
             # Consider the remaining kwargs as keyword arguments to run
             self.run_args.update(kwargs)
 
         elif "backend_options" in s.parameters:
             # BasicAer
-            self.run_args["backend_options"] = kwargs
+            self.run_args = kwargs
 
     def set_transpile_args(self, **kwargs):
         """The transpile argument setter."""
@@ -221,12 +224,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
         applied_operations.extend(rotation_circuits)
 
         for circuit in applied_operations:
-            self._circuit += circuit
+            self._circuit &= circuit
 
         if self.backend_name not in self._state_backends:
             # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
                 measure(self._circuit, qr, cr)
+        else:
+            if "aer" in self.backend_name:
+                self._circuit.save_state()
 
         # These operations need to run for all devices
         qobj = self.compile()
@@ -285,7 +291,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def qubit_state_vector_check(self, operation, par, wires):
         """Input check for the the QubitStateVector operation."""
         if operation == "QubitStateVector":
-            if self.backend_name == "unitary_simulator":
+            if "unitary" in self.backend_name:
                 raise DeviceError(
                     "The QubitStateVector operation "
                     "is not supported on the unitary simulator backend."
@@ -312,17 +318,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """
         compile_backend = self.compile_backend or self.backend
         compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
+        return compiled_circuits
 
-        # Specify to have a memory for hw/hw simulators
-        memory = str(compile_backend) not in self._state_backends
-
-        return assemble(
-            experiments=compiled_circuits, backend=compile_backend, shots=self.shots, memory=memory
-        )
-
-    def run(self, qobj):
+    def run(self, qcirc):
         """Run the compiled circuit, and query the result."""
-        self._current_job = self.backend.run(qobj, **self.run_args)
+        self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
         if self.backend_name in self._state_backends:
@@ -337,10 +337,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         Returns:
             array[float]: size ``(2**num_wires,)`` statevector
         """
-        if self.backend_name == "statevector_simulator":
+        if "statevector" in self.backend_name:
             state = np.asarray(result.get_statevector())
 
-        elif self.backend_name == "unitary_simulator":
+        elif "unitary" in self.backend_name:
             unitary = np.asarray(result.get_unitary())
             initial_state = np.zeros([2 ** self.num_wires])
             initial_state[0] = 1

@@ -772,11 +772,9 @@ class TestConverterWarnings:
             with recorder:
                 quantum_circuit(params={})
 
-        # check that only one warning was raised
-        assert len(record) == 1
         # check that the message matches
         assert (
-            record[0].message.args[0]
+            record[-1].message.args[0]
             == "pennylane_qiskit.converter: The Barrier instruction is not supported by"
             " PennyLane, and has not been added to the template."
         )
@@ -839,19 +837,6 @@ class TestConverterQasm:
         assert recorder.queue[5].name == "Hadamard"
         assert recorder.queue[5].parameters == []
         assert recorder.queue[5].wires == Wires([3])
-
-        assert len(record) == 5
-        # check that the message matches
-        assert record[0].message.args[
-            0
-        ] == "pennylane_qiskit.converter: The {} instruction is not supported by" " PennyLane, and has not been added to the template.".format(
-            "Barrier"
-        )
-        assert record[1].message.args[
-            0
-        ] == "pennylane_qiskit.converter: The {} instruction is not supported by" " PennyLane, and has not been added to the template.".format(
-            "Measure"
-        )
 
     def test_qasm_file_not_found_error(self):
         """Tests that an error is propagated, when a non-existing file is specified for parsing."""

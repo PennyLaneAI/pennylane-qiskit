@@ -1,4 +1,4 @@
-qiskit>=0.23.4
+qiskit>=0.25
 git+https://github.com/PennyLaneAI/pennylane.git
 numpy
 networkx>=2.2;python_version>'3.5'

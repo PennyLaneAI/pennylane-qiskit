@@ -38,6 +38,7 @@ class AerDevice(QiskitDevice):
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
         backend (str): the desired backend
+        method (str): the desired method
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. For statevector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
@@ -53,5 +54,8 @@ class AerDevice(QiskitDevice):
 
     short_name = "qiskit.aer"
 
-    def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
+    def __init__(self, wires, shots=1024, backend="aer_simulator", method="automatic", **kwargs):
+        if method != "automatic":
+            backend += "_" + method
+
         super().__init__(wires, provider=qiskit.Aer, backend=backend, shots=shots, **kwargs)

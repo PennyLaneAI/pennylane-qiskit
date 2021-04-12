@@ -34,7 +34,7 @@ class TestDeviceIntegration:
     def test_incorrect_backend_wires(self):
         """Test that exception is raised if number of wires is too large"""
         with pytest.raises(ValueError, match=r"Backend 'statevector\_simulator' supports maximum"):
-            qml.device("qiskit.aer", wires=100, backend="statevector_simulator")
+            qml.device("qiskit.aer", wires=100, method="statevector")
 
     def test_args(self):
         """Test that the device requires correct arguments"""
@@ -44,7 +44,7 @@ class TestDeviceIntegration:
         with pytest.raises(
             qml.DeviceError, match="specified number of shots needs to be at least 1"
         ):
-            qml.device("qiskit.aer", backend="qasm_simulator", wires=1, shots=0)
+            qml.device("qiskit.aer", wires=1, shots=0)
 
     @pytest.mark.parametrize("d", pldevices)
     @pytest.mark.parametrize("shots", [None, 8192])
@@ -73,6 +73,11 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("shots", [8192])
     def test_one_qubit_circuit(self, shots, d, backend, tol):
         """Integration test for the BasisState and Rot operations for non-analytic mode."""
+
+        if d[0] == "qiskit.aer" in d[0] and "aer" not in backend \
+          or d[1] == "qiskit.basic_aer" and "aer" in backend:
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
         dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
 
         a = 0
