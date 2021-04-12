@@ -171,7 +171,7 @@ def load(quantum_circuit: QuantumCircuit):
         qc = _check_circuit_and_bind_parameters(quantum_circuit, params, var_ref_map)
 
         # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
-        qc_wires = [(q.register.name, q.index) for q in quantum_circuit.qubits]
+        qc_wires = [(reg.name, qubit_ind) for reg in quantum_circuit.qregs for qubit_ind, _ in enumerate(reg)]
 
         wire_map = map_wires(wires, qc_wires)
 
