@@ -157,13 +157,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         Args:
             kwargs (dict): keyword arguments to be set for the device
         """
-        aer_provider = str(self.provider) == "AerProvider"
-
-        # Clear Aer backend options that may have persisted since the previous
-        # device creation
-        if aer_provider:
-            self.backend.clear_options()
-
         self.compile_backend = None
         if "compile_backend" in kwargs:
             self.compile_backend = kwargs.pop("compile_backend")
@@ -186,13 +179,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if memory:
             kwargs["memory"] = True
 
-        if aer_provider:
-            # Consider the remaining kwargs as keyword arguments to run
-            self.run_args.update(kwargs)
-
-        elif "backend_options" in s.parameters:
-            # BasicAer
-            self.run_args = kwargs
+        # Consider the remaining kwargs as keyword arguments to run
+        self.run_args.update(kwargs)
 
     def set_transpile_args(self, **kwargs):
         """The transpile argument setter."""
