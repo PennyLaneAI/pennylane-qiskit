@@ -93,7 +93,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
     _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
-    _state_backends = {"statevector_simulator", "unitary_simulator", "aer_simulator_statevector", "aer_simulator_unitary"}
+    _state_backends = {
+        "statevector_simulator",
+        "unitary_simulator",
+        "aer_simulator_statevector",
+        "aer_simulator_unitary",
+    }
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
 
@@ -235,8 +240,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self._circuit.save_state()
 
         # These operations need to run for all devices
-        qobj = self.compile()
-        self.run(qobj)
+        compiled_circuit = self.compile()
+        self.run(compiled_circuit)
 
     def apply_operations(self, operations):
         """Apply the circuit operations.

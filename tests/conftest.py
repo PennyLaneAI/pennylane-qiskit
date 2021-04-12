@@ -79,6 +79,8 @@ def device(request, backend, shots):
       or (issubclass(request.param, BasicAerDevice) and "aer" in backend):
         pytest.skip("Only the AerSimulator is supported on AerDevice")
 
+    print(request.param, backend)
+
     def _device(n, device_options=None):
         if device_options is None:
             device_options = {}
