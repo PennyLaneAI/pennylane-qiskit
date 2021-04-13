@@ -63,7 +63,7 @@ Backend Methods and Options
 
 This ``AerSimulator`` backend has several available methods, which
 can be passed via the ``method`` keyword argument. For example
-``'automatica'``, ``'statevector'``, and ``'unitary'``.
+``'automatic'``, ``'statevector'``, and ``'unitary'``.
 
 .. code-block:: python
 
