@@ -38,7 +38,9 @@ class AerDevice(QiskitDevice):
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
         backend (str): the desired backend
-        method (str): the desired method
+        method (str): The desired simulation method. A list of supported simulation
+            methods can be returned using ``qiskit.Aer.available_methods()``, or by referring
+            to the ``AerSimulator`` `documentation <https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html>`__.
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. For statevector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
