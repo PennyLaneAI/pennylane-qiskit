@@ -171,11 +171,7 @@ def load(quantum_circuit: QuantumCircuit):
         qc = _check_circuit_and_bind_parameters(quantum_circuit, params, var_ref_map)
 
         # Wires from a qiskit circuit are unique w.r.t. a register name and a qubit index
-        qc_wires = [
-            (reg.name, qubit_ind)
-            for reg in quantum_circuit.qregs
-            for qubit_ind, _ in enumerate(reg)
-        ]
+        qc_wires = [hash(q) for q in qc.qubits]
 
         wire_map = map_wires(wires, qc_wires)
 
@@ -184,7 +180,7 @@ def load(quantum_circuit: QuantumCircuit):
 
             instruction_name = op[0].__class__.__name__
 
-            operation_wires = [wire_map[(qubit.register.name, qubit.index)] for qubit in op[1]]
+            operation_wires = [wire_map[hash(qubit)] for qubit in op[1]]
 
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
