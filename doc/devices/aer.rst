@@ -34,11 +34,7 @@ You can then execute the circuit like any other function to get the quantum mech
 Backends
 ~~~~~~~~
 
-Qiskit's Aer layer has several backends, for example ``'qasm_simulator'``,
-``'statevector_simulator'``, ``'unitary_simulator'``. For more information on backends, please visit the
-`Aer provider documentation <https://qiskit.org/documentation/apidoc/aer_provider.html>`_.
-
-
+The default backend is the ``AerSimulator``. However, multiple other backends might be available.
 To get a current overview what backends are available you can query
 
 .. code-block:: python
@@ -60,25 +56,35 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+    dev = qml.device('qiskit.aer', wires=2, backend='aer_simulator_statevector')
 
-Backend options
-~~~~~~~~~~~~~~~
+Backend Methods and Options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Qiskit's backends can take different *backend options*, for example to specify the numerical
-precision of the simulation.
-You can find a list of backend options in the backends' respective API documentations:
-
-* `'qasm_simulator' <https://qiskit.org/documentation/stubs/qiskit.providers.aer.QasmSimulator.html>`_
-* `'statevector_simulator' <https://qiskit.org/documentation/stubs/qiskit.providers.aer.StatevectorSimulator.html>`_
-* `'unitary_simulator' <https://qiskit.org/documentation/stubs/qiskit.providers.aer.UnitarySimulator.html>`_
-
-The options are set via
+This ``AerSimulator`` backend has several available methods, which
+can be passed via the ``method`` keyword argument. For example
+``'automatica'``, ``'statevector'``, and ``'unitary'``.
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator',
-                     backend_options={"validation_threshold": 1e-6})
+    dev = qml.device("qiskit.aer", wires=2, method="automatic")
+
+Each of these methods can take different *run options*, for example to specify the numerical
+precision of the simulation.
+
+The options are set via additional keyword arguments:
+
+.. code-block:: python
+
+    dev = qml.device(
+        'qiskit.aer',
+        wires=2,
+        backend='unitary_simulator',
+        validation_threshold=1e-6
+    )
+
+For more information on available methods and their options, please visit the `AerSimulator
+documentation <https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html>`_.
 
 Noise models
 ~~~~~~~~~~~~
