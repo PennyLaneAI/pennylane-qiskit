@@ -20,6 +20,10 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("d", pldevices)
     def test_load_device(self, d, backend):
         """Test that the qiskit device loads correctly"""
+        if (d[0] == "qiskit.aer" and "aer" not in backend) \
+          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
         dev = qml.device(d[0], wires=2, backend=backend, shots=1024)
         assert dev.num_wires == 2
         assert dev.shots == 1024
@@ -33,8 +37,8 @@ class TestDeviceIntegration:
 
     def test_incorrect_backend_wires(self):
         """Test that exception is raised if number of wires is too large"""
-        with pytest.raises(ValueError, match=r"Backend 'statevector\_simulator' supports maximum"):
-            qml.device("qiskit.aer", wires=100, backend="statevector_simulator")
+        with pytest.raises(ValueError, match=r"Backend 'aer_simulator\_statevector' supports maximum"):
+            qml.device("qiskit.aer", wires=100, method="statevector")
 
     def test_args(self):
         """Test that the device requires correct arguments"""
@@ -44,7 +48,7 @@ class TestDeviceIntegration:
         with pytest.raises(
             qml.DeviceError, match="specified number of shots needs to be at least 1"
         ):
-            qml.device("qiskit.aer", backend="qasm_simulator", wires=1, shots=0)
+            qml.device("qiskit.aer", wires=1, shots=0)
 
     @pytest.mark.parametrize("d", pldevices)
     @pytest.mark.parametrize("shots", [None, 8192])
@@ -73,6 +77,11 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("shots", [8192])
     def test_one_qubit_circuit(self, shots, d, backend, tol):
         """Integration test for the BasisState and Rot operations for non-analytic mode."""
+
+        if (d[0] == "qiskit.aer" and "aer" not in backend) \
+          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
         dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
 
         a = 0
@@ -136,15 +145,15 @@ class TestKeywordArguments:
         cache = []
         with monkeypatch.context() as m:
             m.setattr(
-                aer.QasmSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
+                aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
             )
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
-        assert cache[0] == {"noise_model": "test value"}
+        assert cache[-1] == {"noise_model": "test value"}
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
         if the backend does not support it"""
-        with pytest.raises(ValueError, match="does not support noisy simulations"):
+        with pytest.raises(AttributeError, match="field noise_model is not valid for this backend"):
             dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
 
     def test_overflow_kwargs(self):
@@ -238,7 +247,7 @@ class TestPLOperations:
 
         dev = state_vector_device(1)
 
-        if dev.backend_name == "unitary_simulator":
+        if "unitary" in dev.backend_name:
             pytest.skip("Test only runs for backends that are not the unitary simulator.")
 
         state = init_state(1)
@@ -331,9 +340,9 @@ class TestPLTemplates:
         with monkeypatch.context() as m:
 
             # Mock the gates used in RandomLayers
-            m.setattr(qml.templates.layers.random, "RX", mock_func)
-            m.setattr(qml.templates.layers.random, "RY", mock_func)
-            m.setattr(qml.templates.layers.random, "RZ", mock_func)
+            m.setattr(qml, "RX", mock_func)
+            m.setattr(qml, "RY", mock_func)
+            m.setattr(qml, "RZ", mock_func)
 
             @qml.qnode(dev)
             def circuit(phi=None):
@@ -460,13 +469,13 @@ class TestNoise:
         bit_flip = aer.noise.pauli_error([("X", 1), ("I", 0)])
 
         # Create a noise model where the RX operation always flips the bit
-        noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
+        noise_model.add_all_qubit_quantum_error(bit_flip, ["z"])
 
         dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
 
         @qml.qnode(dev)
         def circuit():
-            qml.RX(0, wires=[0])
+            qml.PauliZ(wires=[0])
             return qml.expval(qml.PauliZ(wires=0))
 
         assert circuit() == -1

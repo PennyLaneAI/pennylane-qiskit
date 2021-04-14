@@ -1,10 +1,18 @@
-# Release 0.15.0-dev
+# Release 0.15.0
 
 ### New features since last release
 
 ### Breaking changes
 
+* For compatibility with PennyLane v0.15, the `analytic` keyword argument
+  has been removed from all devices. Statistics can still be computed analytically
+  by setting `shots=None`.
+  [(#130)](https://github.com/XanaduAI/pennylane-qiskit/pull/130)
+
 ### Improvements
+
+* PennyLane-Qiskit has been upgraded to work with Qiskit version 0.25.
+  [(#132)](https://github.com/XanaduAI/pennylane-qiskit/pull/132)
 
 ### Documentation
 
@@ -13,6 +21,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Olivia Di Matteo, Josh Izaac, Antal Száva
 
 ---
 

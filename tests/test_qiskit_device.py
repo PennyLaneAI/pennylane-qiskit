@@ -20,14 +20,13 @@ class TestProbabilities:
     def test_probability_no_results(self):
         """Test that the probabilities function returns
         None if no job has yet been run."""
-        dev = AerDevice(backend="statevector_simulator", wires=1, shots=None)
+        dev = AerDevice(backend="aer_simulator_statevector", wires=1, shots=None)
         assert dev.probability() is None
 
 
 @pytest.mark.parametrize("wires", [1, 2, 3])
 @pytest.mark.parametrize("shots", [None])
 @pytest.mark.parametrize("device_options", test_device_options)
-@pytest.mark.transpile_args_test
 class TestTranspilationOptionInitialization:
     """Tests for passing the transpilation options to qiskit at time of device
     initialization."""
@@ -52,6 +51,8 @@ class TestAnalyticWarningHWSimulator:
     def test_warning_raised_for_hardware_backend_analytic_expval(self, hardware_backend, recorder):
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
+        if "aer" in hardware_backend:
+            pytest.skip("Not supported on basicaer")
 
         with pytest.warns(UserWarning) as record:
             dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, shots=None)
@@ -71,6 +72,8 @@ class TestAnalyticWarningHWSimulator:
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
+        if "aer" in statevector_backend:
+            pytest.skip("Not supported on basicaer")
 
         dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, shots=None)
 
@@ -91,7 +94,7 @@ class TestAerBackendOptions:
         noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
 
         dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
-        assert "noise_model" in dev.backend.options
+        assert dev.backend.options.get("noise_model") is not None
 
         dev2 = qml.device("qiskit.aer", wires=2)
-        assert "noise_model" not in dev2.backend.options
+        assert dev2.backend.options.get("noise_model") is None
