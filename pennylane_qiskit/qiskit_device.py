@@ -221,9 +221,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
                 measure(self._circuit, qr, cr)
-        else:
-            if "aer" in self.backend_name:
-                self._circuit.save_state()
+        elif "aer" in self.backend_name:
+            self._circuit.save_state()
 
         # These operations need to run for all devices
         compiled_circuit = self.compile()

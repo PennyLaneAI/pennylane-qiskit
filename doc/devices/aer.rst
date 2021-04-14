@@ -34,7 +34,7 @@ You can then execute the circuit like any other function to get the quantum mech
 Backends
 ~~~~~~~~
 
-The default backend is the ``AerSimulator``. However, multiple other backends might be available.
+The default backend is the ``AerSimulator``. However, multiple other backends are also available.
 To get a current overview what backends are available you can query
 
 .. code-block:: python
