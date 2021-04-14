@@ -86,6 +86,11 @@ The options are set via additional keyword arguments:
 For more information on available methods and their options, please visit the `AerSimulator
 documentation <https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html>`_.
 
+.. warnings::
+
+    The ``AerSimulator`` methods ``"stabilizer"``, ``"extended_stabilizer"``, ``"matrix_product_state"``,
+    and ``"superop"`` are currently not supported.
+
 Noise models
 ~~~~~~~~~~~~
 
