@@ -22,7 +22,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Olivia Di Matteo, Josh Izaac, Antal Szava
+Olivia Di Matteo, Josh Izaac, Antal Száva
 
 ---
 
