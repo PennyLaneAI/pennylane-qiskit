@@ -5,8 +5,8 @@
 ### Breaking changes
 
 * For compatibility with PennyLane v0.15, the `analytic` keyword argument
-  has been removed from all devices. Analytic expectation values can
-  still be computed by setting `shots=None`.
+  has been removed from all devices. Statistics can still be computed analytically
+  by setting `shots=None`.
   [(#130)](https://github.com/XanaduAI/pennylane-qiskit/pull/130)
 
 ### Improvements
