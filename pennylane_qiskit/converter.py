@@ -100,13 +100,13 @@ def _check_circuit_and_bind_parameters(
     return quantum_circuit.bind_parameters(params)
 
 
-def map_wires(wires: list, qc_wires: list) -> dict:
+def map_wires(qc_wires: list, wires: list) -> dict:
     """Utility function mapping the wires specified in a quantum circuit with the wires
     specified by the user for the template.
 
     Args:
-        wires (list): wires specified for the template
         qc_wires (list): wires from the converted quantum circuit
+        wires (list): wires specified for the template
 
     Returns:
         dict[int, int]: map from quantum circuit wires to the user defined wires
@@ -173,7 +173,7 @@ def load(quantum_circuit: QuantumCircuit):
         # Wires from a qiskit circuit have unique IDs, so their hashes are unique too
         qc_wires = [hash(q) for q in qc.qubits]
 
-        wire_map = map_wires(wires, qc_wires)
+        wire_map = map_wires(qc_wires, wires)
 
         # Processing the dictionary of parameters passed
         for op in qc.data:

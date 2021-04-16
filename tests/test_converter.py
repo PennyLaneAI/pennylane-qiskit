@@ -705,7 +705,7 @@ class TestConverterUtils:
         qc = QuantumCircuit(1)
         qc_wires = [hash(q) for q in qc.qubits]
 
-        assert map_wires(qc_wires, wires) == {0: hash(qc.qubits[0])}
+        assert map_wires(wires, qc_wires) == {0: hash(qc.qubits[0])}
 
     def test_map_wires_instantiate_quantum_circuit_with_registers(self, recorder):
         """Tests the map_wires function for wires of a quantum circuit instantiated
@@ -718,7 +718,7 @@ class TestConverterUtils:
         qc = QuantumCircuit(qr1, qr2, qr3)
         qc_wires = [hash(q) for q in qc.qubits]
 
-        mapped_wires = map_wires(qc_wires, wires)
+        mapped_wires = map_wires(wires, qc_wires)
 
         assert len(mapped_wires) == len(wires)
         assert list(mapped_wires.keys()) == wires
@@ -732,7 +732,7 @@ class TestConverterUtils:
         qc = QuantumCircuit(3)
         qc_wires = [hash(q) for q in qc.qubits]
 
-        mapped_wires = map_wires(qc_wires, wires)
+        mapped_wires = map_wires(wires, qc_wires)
 
         for q in qc.qubits:
             assert hash(q) in mapped_wires.values()
@@ -756,7 +756,7 @@ class TestConverterUtils:
             match="The specified number of wires - {} - does not match "
             "the number of wires the loaded quantum circuit acts on.".format(len(wires)),
         ):
-            map_wires(wires, qc_wires)
+            map_wires(qc_wires, wires)
 
 
 class TestConverterWarnings:
