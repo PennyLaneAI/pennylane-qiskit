@@ -1,7 +1,5 @@
 # Release 0.15.0
 
-### New features since last release
-
 ### Breaking changes
 
 * For compatibility with PennyLane v0.15, the `analytic` keyword argument
@@ -14,15 +12,11 @@
 * PennyLane-Qiskit has been upgraded to work with Qiskit version 0.25.
   [(#132)](https://github.com/XanaduAI/pennylane-qiskit/pull/132)
 
-### Documentation
-
-### Bug fixes
-
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
-Olivia Di Matteo, Josh Izaac, Antal Száva
+Christina Lee, Olivia Di Matteo, Josh Izaac, Antal Száva
 
 ---
 
