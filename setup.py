@@ -23,7 +23,7 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.25",
-    "pennylane @ git+https://github.com/PennyLaneAI/pennylane.git@master",
+    "pennylane>=0.15",
     "numpy",
     "networkx>=2.2;python_version>'3.5'",
     # Networkx 2.4 is the final version with python 3.5 support.
