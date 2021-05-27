@@ -2,6 +2,9 @@
 
 ### New features since last release
 
+* Added Projector observable to QiskitDevice.
+  [(#137)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/137)
+
 ### Breaking changes
 
 ### Improvements
