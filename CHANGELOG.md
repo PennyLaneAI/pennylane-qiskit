@@ -17,6 +17,8 @@
 
 This release contains contributions from (in alphabetical order):
 
+Vincent Wong
+
 # Release 0.15.0
 
 ### Breaking changes
