@@ -196,6 +196,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return self._backend
 
     def reset(self):
+        """Reset the device"""
         # Reset only internal data, not the options that are determined on
         # device creation
         self._reg = QuantumRegister(self.num_wires, "q")
@@ -341,7 +342,20 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return state.reshape([2] * self.num_wires).T.flatten()
 
     def generate_samples(self):
+        r"""Returns the computational basis samples generated for all wires.
 
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        .. warning::
+
+            This method should be overwritten on devices that
+            generate their own computational basis samples, with the resulting
+            computational basis samples stored as ``self._samples``.
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
             # software simulator: need to sample from probabilities
@@ -355,9 +369,32 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def state(self):
+        """Returns the state vector of the circuit prior to measurement."""
         return self._state
 
     def analytic_probability(self, wires=None):
+        r"""Return the (marginal) probability of each computational basis
+        state from the last run of the device.
+
+        PennyLane uses the convention
+        :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where :math:`q_0` is the most
+        significant bit.
+
+        If no wires are specified, then all the basis states representable by
+        the device are considered and no marginalization takes place.
+
+        .. note::
+
+            :meth:`marginal_prob` may be used as a utility method
+            to calculate the marginal probability distribution.
+
+        Args:
+            wires (Iterable[Number, str], Number, str, Wires): wires to return
+                marginal probabilities for. Wires not provided are traced out of the system.
+
+        Returns:
+            List[float]: list of the probabilities
+        """
         if self._state is None:
             return None
 
