@@ -196,7 +196,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return self._backend
 
     def reset(self):
-        """Reset the device"""
         # Reset only internal data, not the options that are determined on
         # device creation
         self._reg = QuantumRegister(self.num_wires, "q")
@@ -207,45 +206,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._state = None  # statevector of a simulator backend
 
     def apply(self, operations, **kwargs):
-        """Apply quantum operations, rotate the circuit into the measurement
-        basis, and compile and execute the quantum circuit.
-
-        This method receives a list of quantum operations queued by the QNode,
-        and should be responsible for:
-
-        * Constructing the quantum program
-        * (Optional) Rotating the quantum circuit using the rotation
-          operations provided. This diagonalizes the circuit so that arbitrary
-          observables can be measured in the computational basis.
-        * Compile the circuit
-        * Execute the quantum circuit
-
-        Both arguments are provided as lists of PennyLane :class:`~.Operation`
-        instances. Useful properties include :attr:`~.Operation.name`,
-        :attr:`~.Operation.wires`, and :attr:`~.Operation.parameters`,
-        and :attr:`~.Operation.inverse`:
-
-        >>> op = qml.RX(0.2, wires=[0])
-        >>> op.name # returns the operation name
-        "RX"
-        >>> op.wires # returns a Wires object representing the wires that the operation acts on
-        <Wires = [0]>
-        >>> op.parameters # returns a list of parameters
-        [0.2]
-        >>> op.inverse # check if the operation should be inverted
-        False
-        >>> op = qml.RX(0.2, wires=[0]).inv
-        >>> op.inverse
-        True
-
-        Args:
-            operations (list[~.Operation]): operations to apply to the device
-
-        Keyword args:
-            rotations (list[~.Operation]): operations that rotate the circuit
-                pre-measurement into the eigenbasis of the observables.
-            hash (int): the hash value of the circuit constructed by `CircuitGraph.hash`
-        """
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -381,20 +341,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return state.reshape([2] * self.num_wires).T.flatten()
 
     def generate_samples(self):
-        r"""Returns the computational basis samples generated for all wires.
 
-        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
-        :math:`q_0` is the most significant bit.
-
-        .. warning::
-
-            This method should be overwritten on devices that
-            generate their own computational basis samples, with the resulting
-            computational basis samples stored as ``self._samples``.
-
-        Returns:
-             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
-        """
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
             # software simulator: need to sample from probabilities
@@ -408,32 +355,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def state(self):
-        """Returns the state vector of the circuit prior to measurement."""
         return self._state
 
     def analytic_probability(self, wires=None):
-        r"""Return the (marginal) probability of each computational basis
-        state from the last run of the device.
-
-        PennyLane uses the convention
-        :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where :math:`q_0` is the most
-        significant bit.
-
-        If no wires are specified, then all the basis states representable by
-        the device are considered and no marginalization takes place.
-
-        .. note::
-
-            :meth:`marginal_prob` may be used as a utility method
-            to calculate the marginal probability distribution.
-
-        Args:
-            wires (Iterable[Number, str], Number, str, Wires): wires to return
-                marginal probabilities for. Wires not provided are traced out of the system.
-
-        Returns:
-            List[float]: list of the probabilities
-        """
         if self._state is None:
             return None
 
