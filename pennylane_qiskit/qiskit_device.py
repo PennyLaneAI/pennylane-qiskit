@@ -207,6 +207,45 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._state = None  # statevector of a simulator backend
 
     def apply(self, operations, **kwargs):
+        """Apply quantum operations, rotate the circuit into the measurement
+        basis, and compile and execute the quantum circuit.
+
+        This method receives a list of quantum operations queued by the QNode,
+        and should be responsible for:
+
+        * Constructing the quantum program
+        * (Optional) Rotating the quantum circuit using the rotation
+          operations provided. This diagonalizes the circuit so that arbitrary
+          observables can be measured in the computational basis.
+        * Compile the circuit
+        * Execute the quantum circuit
+
+        Both arguments are provided as lists of PennyLane :class:`~.Operation`
+        instances. Useful properties include :attr:`~.Operation.name`,
+        :attr:`~.Operation.wires`, and :attr:`~.Operation.parameters`,
+        and :attr:`~.Operation.inverse`:
+
+        >>> op = qml.RX(0.2, wires=[0])
+        >>> op.name # returns the operation name
+        "RX"
+        >>> op.wires # returns a Wires object representing the wires that the operation acts on
+        <Wires = [0]>
+        >>> op.parameters # returns a list of parameters
+        [0.2]
+        >>> op.inverse # check if the operation should be inverted
+        False
+        >>> op = qml.RX(0.2, wires=[0]).inv
+        >>> op.inverse
+        True
+
+        Args:
+            operations (list[~.Operation]): operations to apply to the device
+
+        Keyword args:
+            rotations (list[~.Operation]): operations that rotate the circuit
+                pre-measurement into the eigenbasis of the observables.
+            hash (int): the hash value of the circuit constructed by `CircuitGraph.hash`
+        """
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
