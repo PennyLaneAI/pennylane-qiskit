@@ -102,7 +102,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     that support returning the underlying quantum statevector"""
 
     operations = set(_operation_map.keys())
-    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian"}
+    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian", "Projector"}
 
     hw_analytic_warning_message = (
         "The analytic calculation of expectations, variances and "

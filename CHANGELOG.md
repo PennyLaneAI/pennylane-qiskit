@@ -2,6 +2,10 @@
 
 ### New features since last release
 
+* Added support for the new `qml.Projector` observable in
+  PennyLane v0.16 to the Qiskit devices.
+  [(#137)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/137)
+
 ### Breaking changes
 
 ### Improvements
@@ -13,6 +17,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Vincent Wong
 
 # Release 0.15.0
 
