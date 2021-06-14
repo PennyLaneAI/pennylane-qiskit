@@ -20,7 +20,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Vincent Wong
+Christina Lee, Vincent Wong
 
 # Release 0.15.0
 
