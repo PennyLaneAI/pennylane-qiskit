@@ -22,6 +22,7 @@ import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression
 from qiskit.exceptions import QiskitError
+from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops.qubit as pennylane_ops
@@ -176,11 +177,11 @@ def load(quantum_circuit: QuantumCircuit):
         wire_map = map_wires(qc_wires, wires)
 
         # Processing the dictionary of parameters passed
-        for op in qc.data:
+        for op, qargs, cargs in qc.data:
 
-            instruction_name = op[0].__class__.__name__
+            instruction_name = op.__class__.__name__
 
-            operation_wires = [wire_map[hash(qubit)] for qubit in op[1]]
+            operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
 
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
@@ -192,30 +193,26 @@ def load(quantum_circuit: QuantumCircuit):
                 # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
                 # variable from the var_ref_map dictionary.
 
-                parameters = []
-                for p in op[0].params:
+                pl_parameters = []
+                for p in op.params:
 
                     _check_parameter_bound(p, var_ref_map)
 
                     if isinstance(p, ParameterExpression):
-                        if p.parameters:
-                            # p.parameters must be a single parameter, as PennyLane
-                            # does not support expressions of variables currently.
-                            if len(p.parameters) > 1:
-                                raise ValueError(
-                                    "Operation {} has invalid parameter {}. PennyLane does not support "
-                                    "expressions containing differentiable parameters as operation "
-                                    "arguments".format(instruction_name, p)
-                                )
+                        if p.parameters: # non-empty set = has unbound parameters
+                            ordered_params = tuple(p.parameters)
 
-                            param = min(p.parameters)
-                            parameters.append(var_ref_map.get(param))
+                            f = lambdify(ordered_params, p._symbol_expr, 'numpy')
+                            f_args = []
+                            for i_ordered_params in ordered_params:
+                                f_args.append(var_ref_map.get(i_ordered_params))
+                            pl_parameters.append(f(*f_args))
                         else:
-                            parameters.append(float(p))
+                            pl_parameters.append(float(p))
                     else:
-                        parameters.append(p)
+                        pl_parameters.append(p)
 
-                execute_supported_operation(inv_map[instruction_name], parameters, operation_wires)
+                execute_supported_operation(inv_map[instruction_name], pl_parameters, operation_wires)
 
             elif instruction_name == "SdgGate":
 
@@ -229,7 +226,7 @@ def load(quantum_circuit: QuantumCircuit):
 
             else:
                 try:
-                    operation_matrix = op[0].to_matrix()
+                    operation_matrix = op.to_matrix()
                     pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
                 except (AttributeError, QiskitError):
                     warnings.warn(

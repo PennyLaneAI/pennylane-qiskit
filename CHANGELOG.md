@@ -10,6 +10,8 @@
 
 ### Improvements
 
+* The plugin can now load Qiskit circuits with more complicated ``ParameterExpression`` variables.
+
 ### Documentation
 
 ### Bug fixes
