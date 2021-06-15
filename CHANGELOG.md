@@ -11,6 +11,7 @@
 ### Improvements
 
 * The plugin can now load Qiskit circuits with more complicated ``ParameterExpression`` variables.
+[(#139)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/139)
 
 ### Documentation
 

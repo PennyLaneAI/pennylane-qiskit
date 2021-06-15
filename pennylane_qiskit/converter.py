@@ -199,10 +199,10 @@ def load(quantum_circuit: QuantumCircuit):
                     _check_parameter_bound(p, var_ref_map)
 
                     if isinstance(p, ParameterExpression):
-                        if p.parameters: # non-empty set = has unbound parameters
+                        if p.parameters:  # non-empty set = has unbound parameters
                             ordered_params = tuple(p.parameters)
 
-                            f = lambdify(ordered_params, p._symbol_expr, 'numpy')
+                            f = lambdify(ordered_params, p._symbol_expr, modules=qml.numpy)
                             f_args = []
                             for i_ordered_params in ordered_params:
                                 f_args.append(var_ref_map.get(i_ordered_params))
@@ -212,7 +212,9 @@ def load(quantum_circuit: QuantumCircuit):
                     else:
                         pl_parameters.append(p)
 
-                execute_supported_operation(inv_map[instruction_name], pl_parameters, operation_wires)
+                execute_supported_operation(
+                    inv_map[instruction_name], pl_parameters, operation_wires
+                )
 
             elif instruction_name == "SdgGate":
 

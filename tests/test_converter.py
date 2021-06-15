@@ -144,6 +144,29 @@ class TestConverter:
         assert recorder.queue[0].parameters == [0.5, 0.3, 0.1]
         assert recorder.queue[0].wires == Wires([0])
 
+    def test_longer_parameter_expression(self):
+        """Tests parameter expression with arbitrary operations and length"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        a_val = 0.1
+        b_val = 0.2
+        c_val = 0.3
+
+        qc = QuantumCircuit(1, 1)
+        qc.rx(a * np.cos(b) + c, [0])
+
+        quantum_circuit = load(qc)
+
+        with qml.tape.QuantumTape() as tape:
+            quantum_circuit(params={a: a_val, b: b_val, c: c_val}, wires=(0,))
+
+        recorded_op = tape.operations[0]
+        assert isinstance(recorded_op, qml.RX)
+        assert recorded_op.parameters == a_val * np.cos(b_val) + c_val
+
     def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
         """Tests that a loaded quantum circuit can be called multiple times with
         different arguments."""
@@ -227,21 +250,6 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={})
 
-    def test_invalid_parameter_expression(self, recorder):
-        """Tests that an operation with multiple parameters raises an error."""
-
-        theta = Parameter("θ")
-        phi = Parameter("φ")
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(theta * phi, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(ValueError, match="PennyLane does not support expressions"):
-            with recorder:
-                quantum_circuit(params={theta: 0, phi: 1})
-
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were
         passed."""
@@ -258,6 +266,180 @@ class TestConverter:
         with pytest.raises(QiskitError):
             with recorder:
                 quantum_circuit(params={theta: x, phi: y})
+
+    def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
+        """Tests the load method for a QuantumCircuit raises a QiskitError,
+        if the wrong type of arguments were passed."""
+
+        theta = Parameter("θ")
+        angle = np.tensor("some_string_instead_of_an_angle", requires_grad=False)
+
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(QiskitError):
+            with recorder:
+                quantum_circuit(params={theta: angle})
+
+    def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
+        """Tests the load method raises a QiskitError if arguments
+        that are not required were passed."""
+
+        theta = Parameter("θ")
+        angle = np.tensor(0.5, requires_grad=False)
+
+        qc = QuantumCircuit(3, 1)
+        qc.z([0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(QiskitError):
+            with recorder:
+                quantum_circuit(params={theta: angle})
+
+    def test_quantum_circuit_error_parameter_not_bound(self, recorder):
+        """Tests the load method for a QuantumCircuit raises a ValueError,
+        if one of the parameters was not bound correctly."""
+
+        theta = Parameter("θ")
+
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(
+            ValueError, match="The parameter {} was not bound correctly.".format(theta)
+        ):
+            with recorder:
+                quantum_circuit()
+
+    def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
+        """Tests the load method raises a ValueError, if something
+        that is not a QuanctumCircuit was passed."""
+
+        qc = qml.PauliZ(0)
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(ValueError):
+            with recorder:
+                quantum_circuit()
+
+    def test_wires_error_too_few_wires_specified(self, recorder):
+        """Tests that an error is raised when too few wires were specified."""
+
+        only_two_wires = [0, 1]
+        three_wires_for_the_operation = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires_for_the_operation)
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(
+            qml.QuantumFunctionError,
+            match="The specified number of wires - {} - does not match the"
+            " number of wires the loaded quantum circuit acts on.".format(len(only_two_wires)),
+        ):
+            with recorder:
+                quantum_circuit(wires=only_two_wires)
+
+    def test_wires_error_too_many_wires_specified(self, recorder):
+        """Tests that an error is raised when too many wires were specified."""
+
+        more_than_three_wires = [4, 13, 123, 321]
+        three_wires_for_the_operation = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires_for_the_operation)
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(
+            qml.QuantumFunctionError,
+            match="The specified number of wires - {} - does not match the"
+            " number of wires the loaded quantum circuit acts on.".format(
+                len(more_than_three_wires)
+            ),
+        ):
+            with recorder:
+                quantum_circuit(wires=more_than_three_wires)
+
+    def test_wires_two_different_quantum_registers(self, recorder):
+        """Tests loading a circuit with the three-qubit operations supported by PennyLane."""
+
+        three_wires = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires)
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit()
+
+        assert recorder.queue[0].name == "CSWAP"
+        assert recorder.queue[0].parameters == []
+        assert recorder.queue[0].wires == Wires(three_wires)
+
+    def test_wires_quantum_circuit_init_with_two_different_quantum_registers(self, recorder):
+        """Tests that the wires is correct even if the quantum circuit was initiliazed with two
+        separate quantum registers."""
+
+        three_wires = [0, 1, 2]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*three_wires)
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit(wires=three_wires)
+
+        assert recorder.queue[0].name == "CSWAP"
+        assert recorder.queue[0].parameters == []
+        assert recorder.queue[0].wires == Wires(three_wires)
+
+    def test_wires_pass_different_wires_than_for_circuit(self, recorder):
+        """Tests that custom wires can be passed to the loaded template."""
+
+        three_wires = [4, 7, 1]
+
+        qr1 = QuantumRegister(2)
+        qr2 = QuantumRegister(1)
+
+        qc = QuantumCircuit(qr1, qr2)
+
+        qc.cswap(*[0, 1, 2])
+
+        quantum_circuit = load(qc)
+        with recorder:
+            quantum_circuit(wires=three_wires)
+
+        assert recorder.queue[0].name == "CSWAP"
+        assert recorder.queue[0].parameters == []
+        assert recorder.queue[0].wires == Wires(three_wires)
+
+
+class TestConverterGates:
+    """Tests over specific gate related tests"""
 
     @pytest.mark.parametrize(
         "qiskit_operation, pennylane_name",
@@ -448,67 +630,6 @@ class TestConverter:
         assert len(recorder.queue[1].parameters) == 0
         assert recorder.queue[1].wires == Wires(three_wires)
 
-    def test_wires_two_different_quantum_registers(self, recorder):
-        """Tests loading a circuit with the three-qubit operations supported by PennyLane."""
-
-        three_wires = [0, 1, 2]
-
-        qr1 = QuantumRegister(2)
-        qr2 = QuantumRegister(1)
-
-        qc = QuantumCircuit(qr1, qr2)
-
-        qc.cswap(*three_wires)
-
-        quantum_circuit = load(qc)
-        with recorder:
-            quantum_circuit()
-
-        assert recorder.queue[0].name == "CSWAP"
-        assert recorder.queue[0].parameters == []
-        assert recorder.queue[0].wires == Wires(three_wires)
-
-    def test_wires_quantum_circuit_init_with_two_different_quantum_registers(self, recorder):
-        """Tests that the wires is correct even if the quantum circuit was initiliazed with two
-        separate quantum registers."""
-
-        three_wires = [0, 1, 2]
-
-        qr1 = QuantumRegister(2)
-        qr2 = QuantumRegister(1)
-
-        qc = QuantumCircuit(qr1, qr2)
-
-        qc.cswap(*three_wires)
-
-        quantum_circuit = load(qc)
-        with recorder:
-            quantum_circuit(wires=three_wires)
-
-        assert recorder.queue[0].name == "CSWAP"
-        assert recorder.queue[0].parameters == []
-        assert recorder.queue[0].wires == Wires(three_wires)
-
-    def test_wires_pass_different_wires_than_for_circuit(self, recorder):
-        """Tests that custom wires can be passed to the loaded template."""
-
-        three_wires = [4, 7, 1]
-
-        qr1 = QuantumRegister(2)
-        qr2 = QuantumRegister(1)
-
-        qc = QuantumCircuit(qr1, qr2)
-
-        qc.cswap(*[0, 1, 2])
-
-        quantum_circuit = load(qc)
-        with recorder:
-            quantum_circuit(wires=three_wires)
-
-        assert recorder.queue[0].name == "CSWAP"
-        assert recorder.queue[0].parameters == []
-        assert recorder.queue[0].wires == Wires(three_wires)
-
     def test_operations_sdg_and_tdg(self, recorder):
         """Tests loading a circuit with the operations Sdg and Tdg gates."""
 
@@ -584,115 +705,6 @@ class TestConverter:
         assert recorder.queue[2].name == "U3"
         assert recorder.queue[2].parameters == [0.1, 0.2, 0.3]
         assert recorder.queue[2].wires == Wires(single_wire)
-
-    def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
-        """Tests the load method for a QuantumCircuit raises a QiskitError,
-        if the wrong type of arguments were passed."""
-
-        theta = Parameter("θ")
-        angle = np.tensor("some_string_instead_of_an_angle", requires_grad=False)
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(theta, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(QiskitError):
-            with recorder:
-                quantum_circuit(params={theta: angle})
-
-    def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
-        """Tests the load method raises a QiskitError if arguments
-        that are not required were passed."""
-
-        theta = Parameter("θ")
-        angle = np.tensor(0.5, requires_grad=False)
-
-        qc = QuantumCircuit(3, 1)
-        qc.z([0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(QiskitError):
-            with recorder:
-                quantum_circuit(params={theta: angle})
-
-    def test_quantum_circuit_error_parameter_not_bound(self, recorder):
-        """Tests the load method for a QuantumCircuit raises a ValueError,
-        if one of the parameters was not bound correctly."""
-
-        theta = Parameter("θ")
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(theta, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(
-            ValueError, match="The parameter {} was not bound correctly.".format(theta)
-        ):
-            with recorder:
-                quantum_circuit()
-
-    def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
-        """Tests the load method raises a ValueError, if something
-        that is not a QuanctumCircuit was passed."""
-
-        qc = qml.PauliZ(0)
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(ValueError):
-            with recorder:
-                quantum_circuit()
-
-    def test_wires_error_too_few_wires_specified(self, recorder):
-        """Tests that an error is raised when too few wires were specified."""
-
-        only_two_wires = [0, 1]
-        three_wires_for_the_operation = [0, 1, 2]
-
-        qr1 = QuantumRegister(2)
-        qr2 = QuantumRegister(1)
-
-        qc = QuantumCircuit(qr1, qr2)
-
-        qc.cswap(*three_wires_for_the_operation)
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(
-            qml.QuantumFunctionError,
-            match="The specified number of wires - {} - does not match the"
-            " number of wires the loaded quantum circuit acts on.".format(len(only_two_wires)),
-        ):
-            with recorder:
-                quantum_circuit(wires=only_two_wires)
-
-    def test_wires_error_too_many_wires_specified(self, recorder):
-        """Tests that an error is raised when too many wires were specified."""
-
-        more_than_three_wires = [4, 13, 123, 321]
-        three_wires_for_the_operation = [0, 1, 2]
-
-        qr1 = QuantumRegister(2)
-        qr2 = QuantumRegister(1)
-
-        qc = QuantumCircuit(qr1, qr2)
-
-        qc.cswap(*three_wires_for_the_operation)
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(
-            qml.QuantumFunctionError,
-            match="The specified number of wires - {} - does not match the"
-            " number of wires the loaded quantum circuit acts on.".format(
-                len(more_than_three_wires)
-            ),
-        ):
-            with recorder:
-                quantum_circuit(wires=more_than_three_wires)
 
 
 class TestConverterUtils:
@@ -1063,3 +1075,38 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(res, expected, **tol)
+
+    def test_parameterexpression(self):
+        """Tests for functions of parameters passed to qiskit gate"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+
+        qc = QuantumCircuit(2)
+        qc.rx(a + np.cos(b), 0)
+        qc.ry(a * b, 1)
+        qc.cx(0, 1)
+
+        dev = qml.device("default.qubit", wires=2)
+
+        @qml.qnode(dev)
+        def circuit(a_val, b_val):
+            load(qc)({a: a_val, b: b_val}, wires=(0, 1))
+            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(1))
+
+        x = 0.1
+        y = 0.2
+
+        res = circuit(x, y)
+        res_expected = [np.cos(x + np.cos(y)), np.sin(x * y)]
+
+        assert np.allclose(res, res_expected)
+
+        jac = qml.jacobian(circuit)(x, y)
+
+        jac_expected = [
+            [-np.sin(x + np.cos(y)), np.sin(x + np.cos(y)) * np.sin(y)],
+            [np.cos(x * y) * y, np.cos(x * y) * x],
+        ]
+
+        assert np.allclose(jac, jac_expected)
