@@ -1076,8 +1076,8 @@ class TestConverterIntegration:
 
         assert np.allclose(res, expected, **tol)
 
-    def test_parameterexpression(self):
-        """Tests for functions of parameters passed to qiskit gate"""
+    def test_parameter_expression(self):
+        """Tests the output and the gradient of a QNode that contains loaded Qiskit gates taking functions of parameters as argument"""
 
         a = Parameter("a")
         b = Parameter("b")
