@@ -1,5 +1,5 @@
 qiskit>=0.25
-pennylane>=0.15
+pennylane>=0.16
 numpy
 sympy
 networkx>=2.2;python_version>'3.5'
