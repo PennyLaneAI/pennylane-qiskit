@@ -23,7 +23,7 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.25",
-    "pennylane @ git+https://github.com/PennyLaneAI/pennylane.git",
+    "pennylane>=0.16",
     "numpy",
     "networkx>=2.2",
 ]
