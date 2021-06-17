@@ -23,11 +23,9 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.25",
-    "pennylane>=0.15",
+    "pennylane @ git+https://github.com/PennyLaneAI/pennylane.git@v0.16.0-rc0",
     "numpy",
-    "networkx>=2.2;python_version>'3.5'",
-    # Networkx 2.4 is the final version with python 3.5 support.
-    "networkx>=2.2,<2.4;python_version=='3.5'"
+    "networkx>=2.2",
 ]
 
 info = {
@@ -75,10 +73,9 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.5',
-    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3 :: Only',
     "Topic :: Scientific/Engineering :: Physics"
 ]

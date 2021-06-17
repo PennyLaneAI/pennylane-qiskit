@@ -1,4 +1,4 @@
-# Release 0.16.0-dev0
+# Release 0.16.0
 
 ### New features since last release
 
@@ -6,16 +6,10 @@
   PennyLane v0.16 to the Qiskit devices.
   [(#137)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/137)
 
-### Breaking changes
-
 ### Improvements
 
 * The plugin can now load Qiskit circuits with more complicated ``ParameterExpression`` variables.
 [(#139)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/139)
-
-### Documentation
-
-### Bug fixes
 
 ### Contributors
 
