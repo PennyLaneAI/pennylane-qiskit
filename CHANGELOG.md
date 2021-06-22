@@ -6,10 +6,15 @@
   PennyLane v0.16 to the Qiskit devices.
   [(#137)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/137)
 
+### Breaking changes
+
+* Deprecated Python 3.6.
+  [(#140)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/140)
+
 ### Improvements
 
 * The plugin can now load Qiskit circuits with more complicated ``ParameterExpression`` variables.
-[(#139)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/139)
+  [(#139)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/139)
 
 ### Contributors
 
