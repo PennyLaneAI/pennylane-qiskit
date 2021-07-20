@@ -256,7 +256,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             mapped_operation = self._operation_map[operation]
 
-            self.qubit_unitary_check(operation, par, device_wires)
             self.qubit_state_vector_check(operation, par, device_wires)
 
             qregs = [self._reg[i] for i in device_wires.labels]
@@ -289,16 +288,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             if len(par[0]) != 2 ** len(wires):
                 raise ValueError("State vector must be of length 2**wires.")
-
-    @staticmethod
-    def qubit_unitary_check(operation, par, wires):
-        """Input check for the the QubitUnitary operation."""
-        if operation == "QubitUnitary":
-            if len(par[0]) != 2 ** len(wires):
-                raise ValueError(
-                    "Unitary matrix must be of shape (2**wires,\
-                        2**wires)."
-                )
 
     def compile(self):
         """Compile the quantum circuit to target the provided compile_backend.
