@@ -212,7 +212,7 @@ class TestNonAnalyticApply:
         dev = device(2)
         state = np.array([[0, 123.432], [-0.432, 023.4]])
 
-        with pytest.raises(ValueError, match=r"Unitary matrix must be of shape"):
+        with pytest.raises(ValueError, match=r"Input unitary must be of shape"):
             dev.apply([qml.QubitUnitary(state, wires=[0, 1])])
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
