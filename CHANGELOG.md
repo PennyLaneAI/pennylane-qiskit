@@ -1,18 +1,6 @@
-# Release 0.17.0-dev
+# Release 0.17.0
 
-### New features since last release
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
-
-### Bug fixes
-
-### Contributors
-
-This release contains contributions from (in alphabetical order):
+This release only updates the testing suite to account for a change in PennyLane-core.
 
 ---
 
