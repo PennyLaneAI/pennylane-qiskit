@@ -31,7 +31,8 @@ class TestExpval:
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([1, 1]), **tol)
@@ -47,7 +48,8 @@ class TestExpval:
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([np.cos(theta), np.cos(theta) * np.cos(phi)]), **tol)
@@ -63,7 +65,8 @@ class TestExpval:
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([np.sin(theta) * np.sin(phi), np.sin(phi)]), **tol)
@@ -79,7 +82,8 @@ class TestExpval:
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
         assert np.allclose(res, np.array([0, -np.cos(theta) * np.sin(phi)]), **tol)
@@ -95,7 +99,8 @@ class TestExpval:
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
         expected = np.array(
@@ -113,7 +118,8 @@ class TestExpval:
             [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1), dev.expval(O2)])
 
@@ -145,7 +151,8 @@ class TestExpval:
             [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates()],
         )
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         res = np.array([dev.expval(O1)])
 
@@ -184,7 +191,9 @@ class TestTensorExpval:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.expval(obs)
 
         expected = np.sin(theta) * np.sin(phi) * np.sin(varphi)
@@ -208,7 +217,9 @@ class TestTensorExpval:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.expval(obs)
 
         expected = np.cos(varphi) * np.cos(phi)
@@ -232,7 +243,9 @@ class TestTensorExpval:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.expval(obs)
         expected = -(np.cos(varphi) * np.sin(phi) + np.sin(varphi) * np.cos(theta)) / np.sqrt(2)
 
@@ -264,7 +277,9 @@ class TestTensorExpval:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.expval(obs)
         expected = 0.5 * (
             -6 * np.cos(theta) * (np.cos(varphi) + 1)
@@ -302,7 +317,9 @@ class TestTensorExpval:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.expval(obs)
         expected = 0.25 * (
             -30
@@ -339,7 +356,9 @@ class TestTensorExpval:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.expval(obs)
 
         a = A[0, 0]
