@@ -35,7 +35,8 @@ class TestVar:
             rotations=[*observable.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         var = dev.var(observable)
         expected = 0.25 * (3 - np.cos(2 * theta) - 2 * np.cos(theta) ** 2 * np.cos(2 * phi))
@@ -59,7 +60,8 @@ class TestVar:
             rotations=[*observable.diagonalizing_gates()],
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
 
         var = dev.var(observable)
         expected = 0.5 * (
@@ -93,7 +95,9 @@ class TestTensorVar:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.var(obs)
 
         expected = (
@@ -123,7 +127,9 @@ class TestTensorVar:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.var(obs)
 
         expected = (
@@ -160,7 +166,9 @@ class TestTensorVar:
             rotations=obs.diagonalizing_gates(),
         )
 
-        dev._samples = dev.generate_samples()
+        if shots is not None:
+            dev._samples = dev.generate_samples()
+
         res = dev.var(obs)
 
         expected = (
