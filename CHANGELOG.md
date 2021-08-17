@@ -1,18 +1,16 @@
-# Release 0.17.0-dev
-
-### New features since last release
-
-### Breaking changes
+# Release 0.17.0
 
 ### Improvements
 
-### Documentation
-
-### Bug fixes
+* Removed a validation check for `qml.QubitUnitary` that existed in the device and
+  adjusted a related test case.
+  [(#144)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/144)
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Christina Lee, Antal Száva
 
 ---
 
