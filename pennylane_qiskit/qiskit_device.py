@@ -125,9 +125,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         self._backend = None
 
-        if "verbose" not in kwargs:
-            kwargs["verbose"] = False
-
         self.provider = provider
         self.backend_name = backend
         self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
