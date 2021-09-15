@@ -10,6 +10,8 @@
 
 This release contains contributions from (in alphabetical order):
 
+Christina Lee, Jay Soni, Antal Száva
+
 ---
 
 # Release 0.17.0
