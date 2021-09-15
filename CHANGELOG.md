@@ -1,18 +1,10 @@
-# Release 0.18.0-dev
-
-### New features since last release
-
-### Breaking changes
+# Release 0.18.0
 
 ### Improvements
 
 * Removed adding the `verbose` option to the arguments passed to the backend
   such that no warnings are raised.
   [(#151)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/151)
-
-### Documentation
-
-### Bug fixes
 
 ### Contributors
 
