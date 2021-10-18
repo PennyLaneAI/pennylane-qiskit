@@ -1,0 +1,41 @@
+name: Manually Triggered Version Bumps
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "pre_release_version_bump"
+  pre_release_version_bump:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+      - name: Cancel previous actions
+        uses: styfle/cancel-workflow-action@0.5.0.
+        with:
+          access_token: ${{ github.token }}
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+      - name: Run update
+        run: |
+          python vb_script.py --version_path "./pennylane_qiskit/_version.py" --changelog_path "./CHANGELOG.md" --pre_release
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: pre release version bump
+          title: Version Bump
+          body: updated changelog and _version.py
+          branch: pre-release-version-bump
+          reviewers: Jaybsoni 
+          base: main
