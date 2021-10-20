@@ -37,5 +37,5 @@ jobs:
           title: Version Bump
           body: updated changelog and _version.py
           branch: pre-release-version-bump
-          reviewers: Jaybsoni 
+          reviewers: Jaybsoni
           base: main
