@@ -1,6 +1,6 @@
 # This script handles the logic to update the changelog and version.py file
 # for the automated version bumps
-
+import os
 import argparse
 import pennylane as qml
 pl_version = '"' + qml.version() + '"\n'
@@ -120,7 +120,7 @@ def update_changelog(path, new_version, pre_release=True):
 
     with open(path, 'w', encoding="utf8") as f:
         if not pre_release:  # post_release append template to top of the changelog
-            with open("./changelog_template.txt", 'r', encoding="utf8") as template_f:
+            with open("./.github/workflows/changelog_template.txt", 'r', encoding="utf8") as template_f:
                 template_lines = template_f.readlines()
                 template_lines[0] = template_lines[0].replace('x.x.x-dev', new_version)
                 f.writelines(template_lines)
