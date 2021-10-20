@@ -1,6 +1,5 @@
 # This script handles the logic to update the changelog and version.py file
 # for the automated version bumps
-import os
 import argparse
 import pennylane as qml
 pl_version = '"' + qml.version() + '"\n'
