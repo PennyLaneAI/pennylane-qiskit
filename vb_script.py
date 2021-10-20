@@ -154,5 +154,5 @@ if __name__ == "__main__":
                         help="True if this is a pre-release version bump, False if it is post release")
 
     args = parser.parse_args()
-    new_version = update_version_file(args.version_path, args.release_status)
+    updated_version = update_version_file(args.version_path, args.release_status)
     update_changelog(args.changelog_path, new_version, args.release_status)
