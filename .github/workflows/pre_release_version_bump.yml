@@ -29,7 +29,6 @@ jobs:
       - name: Run version bump
         run: |
           python vb_script.py --version_path "./_version.py" --changelog_path "./CHANGELOG.md" --pre_release 
-          
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
