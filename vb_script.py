@@ -155,4 +155,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     updated_version = update_version_file(args.version_path, args.release_status)
-    update_changelog(args.changelog_path, new_version, args.release_status)
+    update_changelog(args.changelog_path, updated_version, args.release_status)
