@@ -349,3 +349,45 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
+
+    def batch_execute(self, circuits):
+        if not isinstance(circuits, list):
+            circuits = [circuits]
+
+        if self.backend_name in self._state_backends:
+            # TODO: how for statevector sims.?
+            return super().batch_execute(circuits)
+
+        original_run_meth = self.run
+
+        circuit_objs = []
+
+        def mock_run(compiled_circuit):
+            circuit_objs.append(compiled_circuit)
+            compiled_circuit.name = f"circ{len(circuit_objs)}"
+
+        self.run = mock_run
+
+        for circuit in circuits:
+            self.apply(circuit.operations, rotations=circuit.diagonalizing_gates)
+
+        job = self.backend.run(circuit_objs, shots=self.shots, **self.run_args)
+
+        results = []
+        for circuit, circuit_obj in zip(circuits, circuit_objs):
+            # we need to reset the device here, else it will
+            # not start the next computation in the zero state
+            # TODO: need reset?
+            self.reset()
+
+            # hardware or hardware simulator
+            samples = job.result().get_memory(circuit_obj)
+
+            # reverse qubit order to match PennyLane convention
+            self._samples = np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+
+            res = self.statistics(circuit.observables)
+            results.append(res)
+
+        self.run = original_run_meth
+        return results
