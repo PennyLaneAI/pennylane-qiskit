@@ -202,7 +202,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = None
         self._state = None  # statevector of a simulator backend
 
-    def apply(self, operations, **kwargs):
+    def _apply(self, operations, **kwargs):
+        # TODO: docstring + rename
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -220,6 +221,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 measure(self._circuit, qr, cr)
         elif "aer" in self.backend_name:
             self._circuit.save_state()
+
+    def apply(self, operations, **kwargs):
+
+        self._apply(operations, **kwargs)
 
         # These operations need to run for all devices
         compiled_circuit = self.compile()
@@ -358,27 +363,25 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # TODO: how for statevector sims.?
             return super().batch_execute(circuits)
 
-        original_run_meth = self.run
-
         circuit_objs = []
 
-        def mock_run(compiled_circuit):
-            circuit_objs.append(compiled_circuit)
-            compiled_circuit.name = f"circ{len(circuit_objs)}"
-
-        self.run = mock_run
-
+        # Compile each of the objects
         for circuit in circuits:
-            self.apply(circuit.operations, rotations=circuit.diagonalizing_gates)
+            # We need to reset the device here, else it will
+            # not start the next computation in the zero state
+            self.reset()
+            self._apply(circuit.operations, rotations=circuit.diagonalizing_gates)
 
+            compiled_circuit = self.compile()
+            compiled_circuit.name = f"circ{len(circuit_objs)}"
+            circuit_objs.append(compiled_circuit)
+
+        # Send the batch of circuit objects using backend.run
         job = self.backend.run(circuit_objs, shots=self.shots, **self.run_args)
 
+        # Process the sample for each circuit object
         results = []
         for circuit, circuit_obj in zip(circuits, circuit_objs):
-            # we need to reset the device here, else it will
-            # not start the next computation in the zero state
-            # TODO: need reset?
-            self.reset()
 
             # hardware or hardware simulator
             samples = job.result().get_memory(circuit_obj)
@@ -389,5 +392,4 @@ class QiskitDevice(QubitDevice, abc.ABC):
             res = self.statistics(circuit.observables)
             results.append(res)
 
-        self.run = original_run_meth
         return results
