@@ -1,94 +1,82 @@
-import os
+from qiskit.ignis.mitigation.expval import expectation_value
+from .ibmq import IBMQDevice
+from qiskit.providers.ibmq import RunnerResult
+import numpy as np
 
-from qiskit import IBMQ
-from qiskit.providers.ibmq.exceptions import IBMQAccountError
+class IBMQCircuitRunnerDevice(IBMQDevice):
 
-from .qiskit_device import QiskitDevice
-
-
-class IBMQRuntimeDevice(QiskitDevice):
-    """A PennyLane device for the IBMQ API (remote) backend.
-
-    For more details, see the `Qiskit documentation <https://qiskit.org/documentation/>`_
-
-    You need to register at `IBMQ <https://quantum-computing.ibm.com/>`_ in order to
-    recieve a token that is used for authentication using the API.
-
-    As of the writing of this documentation, the API is free of charge, although
-    there is a credit system to limit access to the quantum devices.
-
-    Args:
-        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
-            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
-            or strings (``['ancilla', 'q1', 'q2']``). Note that for some backends, the number
-            of wires has to match the number of qubits accessible.
-        provider (Provider): The IBM Q provider you wish to use. If not provided,
-            then the default provider returned by ``IBMQ.get_provider()`` is used.
-        backend (str): the desired provider backend
-        shots (int): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables
-
-    Keyword Args:
-        ibmqx_token (str): The IBM Q API token. If not provided, the environment
-            variable ``IBMQX_TOKEN`` is used.
-        ibmqx_url (str): The IBM Q URL. If not provided, the environment
-            variable ``IBMQX_URL`` is used, followed by the default URL.
-        noise_model (NoiseModel): NoiseModel Object from ``qiskit.providers.aer.noise``.
-            Only applicable for simulator backends.
-    """
-
-    short_name = "qiskit.ibmq.runtime"
+    short_name = "qiskit.ibmq.circuitrunner"
 
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
-        token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
-        url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
-
-        # Specify a single hub, group and project
-        hub = kwargs.get("hub", "ibm-q")
-        group = kwargs.get("group", "open")
-        project = kwargs.get("project", "main")
-
-        if token is not None:
-            # token was provided by the user, so attempt to enable an
-            # IBM Q account manually
-            ibmq_kwargs = {"url": url} if url is not None else {}
-            IBMQ.enable_account(token, **ibmq_kwargs)
-        else:
-            # check if an IBM Q account is already active.
-            #
-            # * IBMQ v2 credentials stored in active_account().
-            #   If no accounts are active, it returns None.
-
-            if IBMQ.active_account() is None:
-                # no active account
-                try:
-                    # attempt to load a v2 account stored on disk
-                    IBMQ.load_account()
-                except IBMQAccountError:
-                    # attempt to enable an account manually using
-                    # a provided token
-                    raise IBMQAccountError(
-                        "No active IBM Q account, and no IBM Q token provided."
-                    ) from None
-
-        # IBM Q account is now enabled
-
-        # get a provider
-        p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
-
-        super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
+        self.kwargs = kwargs
+        super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
 
     def run(self, qcirc):
-        # Specify the program inputs here.
-        program_inputs = {
-            'circuits': qcirc,
-            'optimization_level': 0,
-            'measurement_error_mitigation': False
-        }
+
+        program_inputs = {'circuits': qcirc, 'shots': self.shots}
+
+        # Initial position of virtual qubits
+        # on physical qubits.
+        if self.kwargs.get("initial_layout"):
+            program_inputs["initial_layout"] = self.kwargs.get("initial_layout")
+
+        # Name of layout selection pass
+        # ('trivial', 'dense', 'noise_adaptive', 'sabre')
+        if self.kwargs.get('layout_method'):
+            program_inputs["layout_method"] = self.kwargs.get('layout_method')
+
+        # Name of routing pass ('basic',
+        # 'lookahead', 'stochastic', 'sabre').
+        if self.kwargs.get('routing_method'):
+            program_inputs["routing_method"] = self.kwargs.get('routing_method')  # string
+
+        # Name of translation pass ('unroller',
+        # 'translator', 'synthesis').
+        if self.kwargs.get('translation_method'):
+            program_inputs["translation_method"] = self.kwargs.get('translation_method')  # string
+
+        # Sets random seed for the
+        # stochastic parts of the transpiler.
+        if self.kwargs.get('seed_transpiler'):
+            program_inputs["seed_transpiler"] = self.kwargs.get('seed_transpiler')  # int
+
+        # How much optimization to perform
+        # on the circuits (0-3). Higher
+        # levels generate more optimized circuits.
+        # Default is 1.
+        program_inputs["optimization_level"] = self.kwargs.get('optimization_level', 1) # int
+
+        # Whether to reset the qubits
+        # to the ground state for
+        # each shot.
+        if self.kwargs.get('init_qubits'):
+            program_inputs["init_qubits"] = self.kwargs.get('init_qubits')  # bool
+
+        # Delay between programs in seconds.
+        if self.kwargs.get('rep_delay'):
+            program_inputs["rep_delay"] = self.kwargs.get('rep_delay')  # float
+
+        # Additional compilation options.
+        if self.kwargs.get('transpiler_options'):
+            program_inputs["transpiler_options"] = self.kwargs.get('transpiler_options')  # dict
+
+        # Whether to apply measurement error
+        # mitigation. Default is False.
+        program_inputs["measurement_error_mitigation"] = self.kwargs.get('measurement_error_mitigation', False)  # bool
+
         # Specify the backend.
         options = {'backend_name': self.backend.name()}
 
         # Send circuits to the cloud for execution by the circuit-runner program.
-        self._current_job = self.provider.runtime.run(program_id="circuit-runner",
-                                   options=options,
-                                   inputs=program_inputs)
+        job = self.provider.runtime.run(program_id="circuit-runner",
+                                                      options=options,
+                                                      inputs=program_inputs)
+        self._current_job = job.result(decoder=RunnerResult)
+
+    def generate_samples(self):
+        counts = self._current_job.get_counts()
+        samples = []
+        for key, value in counts.items():
+            for i in range(0, value):
+                samples.append(key)
+        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])

@@ -18,4 +18,4 @@ from .aer import AerDevice
 from .basic_aer import BasicAerDevice
 from .converter import load, load_qasm, load_qasm_from_file
 from .ibmq import IBMQDevice
-from .runtime import IBMQRuntimeDevice
+from .runtime import IBMQCircuitRunnerDevice
