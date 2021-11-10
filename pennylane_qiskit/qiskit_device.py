@@ -335,7 +335,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # hardware or hardware simulator
         samples = self._current_job.result().get_memory()
-
+        print(samples)
+        print(np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples]))
         # reverse qubit order to match PennyLane convention
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
