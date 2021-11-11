@@ -380,7 +380,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     def batch_execute(self, circuits):
 
-        circuit_objs = []
+        compiled_circuits = []
 
         # Compile each of the objects
         for circuit in circuits:
@@ -389,17 +389,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self.reset()
             self.create_circuit_object(circuit.operations, rotations=circuit.diagonalizing_gates)
 
-            compiled_circuit = self.compile()
-            compiled_circuit.name = f"circ{len(circuit_objs)}"
-            circuit_objs.append(compiled_circuit)
+            compiled_circ = self.compile()
+            compiled_circ.name = f"circ{len(compiled_circuits)}"
+            compiled_circuits.append(compiled_circ)
 
         # Send the batch of circuit objects using backend.run
-        self._current_job = self.backend.run(circuit_objs, shots=self.shots, **self.run_args)
+        self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
         # Process the sample for each circuit object
         results = []
-        for circuit, circuit_obj in zip(circuits, circuit_objs):
+        for circuit, circuit_obj in zip(circuits, compiled_circuits):
 
             if self.backend_name in self._state_backends:
                 self._state = self._get_state(result, experiment=circuit_obj)
