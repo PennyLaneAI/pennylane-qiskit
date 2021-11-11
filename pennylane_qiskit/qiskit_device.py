@@ -309,7 +309,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if self.backend_name in self._state_backends:
             self._state = self._get_state(result)
 
-    def _get_state(self, result):
+    def _get_state(self, result, experiment=None):
         """Returns the statevector for state simulator backends.
 
         Args:
@@ -319,10 +319,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
             array[float]: size ``(2**num_wires,)`` statevector
         """
         if "statevector" in self.backend_name:
-            state = np.asarray(result.get_statevector())
+            state = np.asarray(result.get_statevector(experiment))
 
         elif "unitary" in self.backend_name:
-            unitary = np.asarray(result.get_unitary())
+            unitary = np.asarray(result.get_unitary(experiment))
             initial_state = np.zeros([2 ** self.num_wires])
             initial_state[0] = 1
 
@@ -331,7 +331,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
 
-    def generate_samples(self):
+    def generate_samples(self, circuit=None):
 
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
@@ -339,7 +339,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             return super().generate_samples()
 
         # hardware or hardware simulator
-        samples = self._current_job.result().get_memory()
+        samples = self._current_job.result().get_memory(circuit)
 
         # reverse qubit order to match PennyLane convention
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
@@ -359,9 +359,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if not isinstance(circuits, list):
             circuits = [circuits]
 
-        if self.backend_name in self._state_backends:
+        #if self.backend_name in self._state_backends:
             # TODO: how for statevector sims.?
-            return super().batch_execute(circuits)
+        #    return super().batch_execute(circuits)
 
         circuit_objs = []
 
@@ -377,17 +377,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
             circuit_objs.append(compiled_circuit)
 
         # Send the batch of circuit objects using backend.run
-        job = self.backend.run(circuit_objs, shots=self.shots, **self.run_args)
+        self._current_job = self.backend.run(circuit_objs, shots=self.shots, **self.run_args)
+        result = self._current_job.result()
 
         # Process the sample for each circuit object
         results = []
         for circuit, circuit_obj in zip(circuits, circuit_objs):
 
-            # hardware or hardware simulator
-            samples = job.result().get_memory(circuit_obj)
+            if self.backend_name in self._state_backends:
+                self._state = self._get_state(result, experiment=circuit_obj)
 
-            # reverse qubit order to match PennyLane convention
-            self._samples = np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+            # generate computational basis samples
+            if self.shots is not None or circuit.is_sampled:
+                self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit.observables)
             results.append(res)
