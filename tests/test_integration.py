@@ -515,6 +515,7 @@ class TestBatchExecution:
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
+            qml.PauliX(0)
             qml.Hadamard(wires=0)
             qml.Rot(x, y, z, wires=0)
             return qml.expval(qml.PauliZ(0))

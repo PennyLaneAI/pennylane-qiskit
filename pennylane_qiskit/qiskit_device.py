@@ -370,8 +370,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return prob
 
     def batch_execute(self, circuits):
-        if not isinstance(circuits, list):
-            circuits = [circuits]
 
         circuit_objs = []
 
