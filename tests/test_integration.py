@@ -8,6 +8,7 @@ import qiskit
 import qiskit.providers.aer as aer
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
+from pennylane_qiskit.qiskit_device import QiskitDevice
 
 from conftest import state_backends
 
@@ -54,6 +55,10 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("shots", [None, 8192])
     def test_one_qubit_circuit(self, shots, d, backend, tol):
         """Test that devices provide correct result for a simple circuit"""
+        if (d[0] == "qiskit.aer" and "aer" not in backend) \
+          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
@@ -485,18 +490,25 @@ class TestBatchExecution:
 
     @pytest.mark.parametrize("d", pldevices)
     @pytest.mark.parametrize("shots", [None, 8192])
-    def test_one_qubit_circuit_batch_params(self, shots, d, backend, tol):
-        """Test that devices provide correct result for a simple circuit"""
+    def test_one_qubit_circuit_batch_params(self, shots, d, backend, tol, mocker):
+        """Test that devices provide correct result for a simple circuit using
+        the batch_params transform."""
+        if (d[0] == "qiskit.aer" and "aer" not in backend) \
+          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        print(backend)
         dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
 
+        # Batch the input parameters
         batch_dim = 3
         a = np.linspace(0, 0.543, batch_dim)
         b = np.linspace(0, 0.123, batch_dim)
         c = np.linspace(0, 0.987, batch_dim)
+
+        spy = mocker.spy(QiskitDevice, "batch_execute")
 
         @qml.batch_params
         @qml.qnode(dev)
@@ -508,3 +520,6 @@ class TestBatchExecution:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
+
+        # Check that QiskitDevice.batch_execute was called
+        assert spy.call_count == 1
