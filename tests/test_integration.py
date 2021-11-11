@@ -528,9 +528,9 @@ class TestBatchExecution:
 
     @pytest.mark.parametrize("d", pldevices)
     @pytest.mark.parametrize("shots", [None, 8192])
-    def test_gradients_batch_params(self, shots, d, backend, tol, mocker):
-        """Test that devices provide correct result for a simple circuit using
-        the batch_params transform."""
+    def test_batch_execute_parameter_shift(self, shots, d, backend, tol, mocker):
+        """Test that devices provide correct result computing the gradient of a
+        circuit using the parameter-shift rule and the batch execution pipeline."""
         if (d[0] == "qiskit.aer" and "aer" not in backend) \
           or (d[0] == "qiskit.basicaer" and "aer" in backend):
             pytest.skip("Only the AerSimulator is supported on AerDevice")

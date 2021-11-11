@@ -210,7 +210,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             operations (list[~.Operation]): operations to apply to the device
 
         Keyword args:
-            rotations (list[~.Operation]): operations that rotate the circuit
+            rotations (list[~.Operation]): Operations that rotate the circuit
                 pre-measurement into the eigenbasis of the observables.
         """
         rotations = kwargs.get("rotations", [])
@@ -307,8 +307,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         backend.
         """
         compile_backend = self.compile_backend or self.backend
-        circuit_objs = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
-        return circuit_objs
+        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
+        return compiled_circuits
 
     def run(self, qcirc):
         """Run the compiled circuit, and query the result."""
