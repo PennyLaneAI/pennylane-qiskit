@@ -202,8 +202,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = None
         self._state = None  # statevector of a simulator backend
 
-    def _apply(self, operations, **kwargs):
-        # TODO: docstring + rename
+    def create_circuit_object(self, operations, **kwargs):
+        """Builds the circuit objects based on the operations and measurements
+        specified to apply.
+
+        Args:
+            operations (list[~.Operation]): operations to apply to the device
+
+        Keyword args:
+            rotations (list[~.Operation]): operations that rotate the circuit
+                pre-measurement into the eigenbasis of the observables.
+        """
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -224,7 +233,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     def apply(self, operations, **kwargs):
 
-        self._apply(operations, **kwargs)
+        self.create_circuit_object(operations, **kwargs)
 
         # These operations need to run for all devices
         compiled_circuit = self.compile()
@@ -298,8 +307,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         backend.
         """
         compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
-        return compiled_circuits
+        circuit_objs = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
+        return circuit_objs
 
     def run(self, qcirc):
         """Run the compiled circuit, and query the result."""
@@ -378,7 +387,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # We need to reset the device here, else it will
             # not start the next computation in the zero state
             self.reset()
-            self._apply(circuit.operations, rotations=circuit.diagonalizing_gates)
+            self.create_circuit_object(circuit.operations, rotations=circuit.diagonalizing_gates)
 
             compiled_circuit = self.compile()
             compiled_circuit.name = f"circ{len(circuit_objs)}"
