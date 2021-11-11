@@ -75,7 +75,7 @@ class TestDeviceIntegration:
 
     @pytest.mark.parametrize("d", pldevices)
     @pytest.mark.parametrize("shots", [8192])
-    def test_one_qubit_circuit(self, shots, d, backend, tol):
+    def test_basis_state_and_rot(self, shots, d, backend, tol):
         """Integration test for the BasisState and Rot operations for non-analytic mode."""
 
         if (d[0] == "qiskit.aer" and "aer" not in backend) \
@@ -479,3 +479,32 @@ class TestNoise:
             return qml.expval(qml.PauliZ(wires=0))
 
         assert circuit() == -1
+
+class TestBatchExecution:
+    """Test the devices work correctly with the batch execution pipeline."""
+
+    @pytest.mark.parametrize("d", pldevices)
+    @pytest.mark.parametrize("shots", [None, 8192])
+    def test_one_qubit_circuit_batch_params(self, shots, d, backend, tol):
+        """Test that devices provide correct result for a simple circuit"""
+        if backend not in state_backends and shots is None:
+            pytest.skip("Hardware simulators do not support analytic mode")
+
+        print(backend)
+        dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
+
+        batch_dim = 3
+        a = np.linspace(0, 0.543, batch_dim)
+        b = np.linspace(0, 0.123, batch_dim)
+        c = np.linspace(0, 0.987, batch_dim)
+
+        @qml.batch_params
+        @qml.qnode(dev)
+        def circuit(x, y, z):
+            """Reference QNode"""
+            qml.BasisState(np.array([1]), wires=0)
+            qml.Hadamard(wires=0)
+            qml.Rot(x, y, z, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)

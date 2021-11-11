@@ -322,7 +322,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
             array[float]: size ``(2**num_wires,)`` statevector
         """
         if "statevector" in self.backend_name:
-            state = np.asarray(result.get_statevector(experiment))
+            #print(result, experiment)
+            if experiment is not None:
+                state = np.asarray(result.get_statevector(experiment))
+            else:
+                state = np.asarray(result.get_statevector())
 
         elif "unitary" in self.backend_name:
             unitary = np.asarray(result.get_unitary(experiment))
