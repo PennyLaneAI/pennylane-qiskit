@@ -315,6 +315,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
         Args:
             result (qiskit.Result): result object
 
+        Keyword Args:
+            experiment (str): the name of the experiment to get the state for
+
         Returns:
             array[float]: size ``(2**num_wires,)`` statevector
         """
@@ -332,6 +335,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return state.reshape([2] * self.num_wires).T.flatten()
 
     def generate_samples(self, circuit=None):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        Keyword Args:
+            circuit (str): the name of the circuit to get the state for
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
 
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
@@ -358,10 +372,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def batch_execute(self, circuits):
         if not isinstance(circuits, list):
             circuits = [circuits]
-
-        #if self.backend_name in self._state_backends:
-            # TODO: how for statevector sims.?
-        #    return super().batch_execute(circuits)
 
         circuit_objs = []
 
