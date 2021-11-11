@@ -524,3 +524,41 @@ class TestBatchExecution:
         # Check that QiskitDevice.batch_execute was called
         assert spy1.call_count == 1
         assert spy2.call_count == 1
+
+    @pytest.mark.parametrize("d", pldevices)
+    @pytest.mark.parametrize("shots", [None, 8192])
+    def test_gradients_batch_params(self, shots, d, backend, tol, mocker):
+        """Test that devices provide correct result for a simple circuit using
+        the batch_params transform."""
+        if (d[0] == "qiskit.aer" and "aer" not in backend) \
+          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        if backend not in state_backends and shots is None:
+            pytest.skip("Hardware simulators do not support analytic mode")
+
+        dev = qml.device(d[0], wires=3, backend=backend, shots=shots)
+
+        spy1 = mocker.spy(QiskitDevice, "batch_execute")
+        spy2 = mocker.spy(dev.backend, "run")
+
+        @qml.qnode(dev, diff_method="parameter-shift")
+        def circuit(x, y):
+            qml.RX(x, wires=[0])
+            qml.RY(y, wires=[1])
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(0) @ qml.PauliX(1) @ qml.PauliZ(2))
+
+        x = qml.numpy.array(0.543, requires_grad=True)
+        y = qml.numpy.array(0.123, requires_grad=True)
+
+        res = qml.grad(circuit)(x,y)
+        expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
+        assert np.allclose(res, expected, **tol)
+
+        # Check that QiskitDevice.batch_execute was called once
+        assert spy1.call_count == 1
+
+        # Check that run was called twice: for the partial derivatives and for
+        # running the circuit
+        assert spy2.call_count == 2
