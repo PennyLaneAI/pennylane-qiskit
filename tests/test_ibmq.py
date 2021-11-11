@@ -14,6 +14,8 @@ from pennylane_qiskit import qiskit_device as qiskit_device
 
 @pytest.fixture
 def token():
+    """A fixture loading the IBMQ token from the IBMQX_TOKEN_TEST environment
+    variable."""
     t = os.getenv("IBMQX_TOKEN_TEST", None)
 
     if t is None:
@@ -131,6 +133,7 @@ def test_custom_provider_hub_group_project(monkeypatch):
 
 
 def test_load_from_disk(token):
+    """Test loading the account credentials and the device from disk."""
     IBMQ.save_account(token)
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
@@ -138,6 +141,7 @@ def test_load_from_disk(token):
 
 
 def test_account_error(monkeypatch):
+    """Test that an error is raised if there is no active IBMQ account."""
 
     # Token is passed such that the test is skipped if no token was provided
     with pytest.raises(IBMQAccountError, match="No active IBM Q account"):
@@ -148,6 +152,7 @@ def test_account_error(monkeypatch):
 
 @pytest.mark.parametrize("shots", [1000])
 def test_simple_circuit(token, tol, shots):
+    """Test executing a simple circuit submitted to IBMQ."""
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
@@ -167,7 +172,9 @@ def test_simple_circuit(token, tol, shots):
 
 
 @pytest.mark.parametrize("shots", [1000])
-def test_simple_batched_circuit(token, tol, shots, mocker):
+def test_simple_circuit_with_batch_params(token, tol, shots, mocker):
+    """Test that executing a simple circuit with batched parameters is
+    submitted to IBMQ once."""
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
