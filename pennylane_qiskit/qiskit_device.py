@@ -382,8 +382,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         compiled_circuits = []
 
-        # Compile each of the objects
+        # Compile each circuit object
         for circuit in circuits:
+
             # We need to reset the device here, else it will
             # not start the next computation in the zero state
             self.reset()
@@ -397,7 +398,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
-        # Process the sample for each circuit object
+        # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
 
