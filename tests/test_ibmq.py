@@ -205,6 +205,37 @@ def test_simple_circuit_with_batch_params(token, tol, shots, mocker):
 
 
 @pytest.mark.parametrize("shots", [1000])
+def test_batch_execute_parameter_shift(token, tol, shots, mocker):
+    """Test that devices provide correct result computing the gradient of a
+    circuit using the parameter-shift rule and the batch execution pipeline."""
+    IBMQ.enable_account(token)
+    dev = IBMQDevice(wires=3, backend="ibmq_qasm_simulator", shots=shots)
+
+    spy1 = mocker.spy(dev, "batch_execute")
+    spy2 = mocker.spy(dev.backend, "run")
+
+    @qml.qnode(dev, diff_method="parameter-shift")
+    def circuit(x, y):
+        qml.RX(x, wires=[0])
+        qml.RY(y, wires=[1])
+        qml.CNOT(wires=[0, 1])
+        return qml.expval(qml.PauliZ(0) @ qml.PauliX(1) @ qml.PauliZ(2))
+
+    x = qml.numpy.array(0.543, requires_grad=True)
+    y = qml.numpy.array(0.123, requires_grad=True)
+
+    res = qml.grad(circuit)(x,y)
+    expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
+    assert np.allclose(res, expected, **tol)
+
+    # Check that QiskitDevice.batch_execute was called once
+    assert spy1.call_count == 1
+
+    # Check that run was called twice: for the partial derivatives and for
+    # running the circuit
+    assert spy2.call_count == 2
+
+@pytest.mark.parametrize("shots", [1000])
 def test_probability(token, tol, shots):
     """Test that the probs function works."""
     IBMQ.enable_account(token)
