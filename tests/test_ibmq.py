@@ -154,7 +154,7 @@ def test_simple_circuit(token, tol, shots):
     @qml.qnode(dev)
     def circuit(theta, phi):
         qml.RX(theta, wires=0)
-        qml.RX(phi, wires=0)
+        qml.RX(phi, wires=1)
         qml.CNOT(wires=[0, 1])
         return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
 
@@ -164,6 +164,37 @@ def test_simple_circuit(token, tol, shots):
     res = circuit(theta, phi)
     expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
     assert np.allclose(res, expected, **tol)
+
+
+@pytest.mark.parametrize("shots", [1000])
+def test_simple_batched_circuit(token, tol, shots, mocker):
+    IBMQ.enable_account(token)
+    dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
+
+    @qml.batch_params
+    @qml.qnode(dev)
+    def circuit(theta, phi):
+        qml.RX(theta, wires=0)
+        qml.RX(phi, wires=1)
+        qml.CNOT(wires=[0, 1])
+        return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
+
+    # Check that we run only once
+    spy1 = mocker.spy(dev, "batch_execute")
+    spy2 = mocker.spy(dev.backend, "run")
+
+    # Batch the input parameters
+    batch_dim = 3
+    theta = np.linspace(0, 0.543, batch_dim)
+    phi = np.linspace(0, 0.123, batch_dim)
+
+    res = circuit(theta, phi)
+    assert np.allclose(res[:, 0], np.cos(theta), **tol)
+    assert np.allclose(res[:, 1], np.cos(theta) * np.cos(phi), **tol)
+
+    # Check that IBMQBackend.run was called once
+    assert spy1.call_count == 1
+    assert spy2.call_count == 1
 
 
 @pytest.mark.parametrize("shots", [1000])

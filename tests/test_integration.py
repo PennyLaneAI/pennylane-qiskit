@@ -508,13 +508,13 @@ class TestBatchExecution:
         b = np.linspace(0, 0.123, batch_dim)
         c = np.linspace(0, 0.987, batch_dim)
 
-        spy = mocker.spy(QiskitDevice, "batch_execute")
+        spy1 = mocker.spy(QiskitDevice, "batch_execute")
+        spy2 = mocker.spy(dev.backend, "run")
 
         @qml.batch_params
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
-            qml.BasisState(np.array([1]), wires=0)
             qml.Hadamard(wires=0)
             qml.Rot(x, y, z, wires=0)
             return qml.expval(qml.PauliZ(0))
@@ -522,4 +522,5 @@ class TestBatchExecution:
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
         # Check that QiskitDevice.batch_execute was called
-        assert spy.call_count == 1
+        assert spy1.call_count == 1
+        assert spy2.call_count == 1
