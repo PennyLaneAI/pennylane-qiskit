@@ -347,7 +347,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
         :math:`q_0` is the most significant bit.
 
-        Keyword Args:
+        Args:
             circuit (str): the name of the circuit to get the state for
 
         Returns:
