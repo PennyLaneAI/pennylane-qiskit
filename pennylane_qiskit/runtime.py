@@ -80,3 +80,58 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
             for i in range(0, value):
                 samples.append(key)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+
+class IBMQSamplerDevice(IBMQDevice):
+
+    short_name = "qiskit.ibmq.sampler"
+
+    def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
+        self.kwargs = kwargs
+        super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
+
+    def run(self, qcirc):
+
+        program_inputs = {'circuits': qcirc}
+
+        # Return mitigation overhead factor. Default
+        # is False.
+        if self.kwargs.get('return_mitigation_overhead'):
+            program_inputs["return_mitigation_overhead"] = self.kwargs.get('return_mitigation_overhead') # boolean
+
+        # A collection of kwargs passed
+        # to backend.run.
+        if self.kwargs.get('run_config'):
+            program_inputs['run_config'] = self.kwargs.get('return_mitigation_overhead') # object
+
+        # Skip circuit transpilation. Default is
+        # False.
+        if self.kwargs.get('skip_transpilation'):
+            program_inputs['skip_transpilation'] = self.kwargs.get('skip_transpilation') # boolean
+
+        # A collection of kwargs passed
+        # to transpile.
+        if self.kwargs.get('transpiler_config'):
+            program_inputs['transpiler_config'] = self.kwargs.get('transpiler_config')  # object
+
+        # Use measurement mitigation to improve
+        # results. Default is False.
+        if self.kwargs.get('use_measurement_mitigation'):
+            program_inputs['use_measurement_mitigation'] = self.kwargs.get('use_measurement_mitigation') # boolean
+
+        # Specify the backend.
+        options = {'backend_name': self.backend.name()}
+
+        # Send circuits to the cloud for execution by the circuit-runner program.
+        job = self.provider.runtime.run(program_id="sampler",
+                                                      options=options,
+                                                      inputs=program_inputs)
+        self._current_job = job.result(decoder=RunnerResult)
+
+    def generate_samples(self):
+        counts = self._current_job.raw_counts()
+        print(counts)
+        samples = []
+        for key, value in counts.items():
+            for i in range(0, value):
+                samples.append(key)
+        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
