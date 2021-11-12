@@ -158,7 +158,6 @@ class TestBatchExecution:
             res[0], tape1_expected, atol=0
         )
 
-        dev.reset() # We're calling device methods directly, need to reset
         assert np.allclose(
             res[1], tape2_expected, atol=0
         )
