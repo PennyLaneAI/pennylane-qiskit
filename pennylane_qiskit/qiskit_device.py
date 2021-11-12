@@ -323,8 +323,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Args:
             result (qiskit.Result): result object
-
-        Keyword Args:
             experiment (str): the name of the experiment to get the state for
 
         Returns:
