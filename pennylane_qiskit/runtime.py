@@ -1,3 +1,4 @@
+import qiskit.result.postprocess
 from qiskit.ignis.mitigation.expval import expectation_value
 from .ibmq import IBMQDevice
 from qiskit.providers.ibmq import RunnerResult
@@ -90,28 +91,29 @@ class IBMQSamplerDevice(IBMQDevice):
         super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
 
     def run(self, qcirc):
-
+        print(self.kwargs)
         program_inputs = {'circuits': qcirc}
-
         # Return mitigation overhead factor. Default
         # is False.
         if self.kwargs.get('return_mitigation_overhead'):
-            program_inputs["return_mitigation_overhead"] = self.kwargs.get('return_mitigation_overhead') # boolean
+            program_inputs['return_mitigation_overhead'] = self.kwargs.get('return_mitigation_overhead') # boolean
 
         # A collection of kwargs passed
         # to backend.run.
         if self.kwargs.get('run_config'):
-            program_inputs['run_config'] = self.kwargs.get('return_mitigation_overhead') # object
+            program_inputs['run_config'] = self.kwargs.get('run_config') # object
 
         # Skip circuit transpilation. Default is
         # False.
         if self.kwargs.get('skip_transpilation'):
-            program_inputs['skip_transpilation'] = self.kwargs.get('skip_transpilation') # boolean
+            program_inputs['skip_transpilation'] = False # boolean
 
         # A collection of kwargs passed
         # to transpile.
         if self.kwargs.get('transpiler_config'):
-            program_inputs['transpiler_config'] = self.kwargs.get('transpiler_config')  # object
+            program_inputs['transpiler_config'] = self.kwargs.get('transpiler_config') # object
+        else:
+            program_inputs['transpiler_config'] = {'optimization_level': 1}
 
         # Use measurement mitigation to improve
         # results. Default is False.
@@ -120,16 +122,15 @@ class IBMQSamplerDevice(IBMQDevice):
 
         # Specify the backend.
         options = {'backend_name': self.backend.name()}
-
         # Send circuits to the cloud for execution by the circuit-runner program.
+        print(program_inputs)
         job = self.provider.runtime.run(program_id="sampler",
-                                                      options=options,
-                                                      inputs=program_inputs)
-        self._current_job = job.result(decoder=RunnerResult)
+                                        options=options,
+                                        inputs=program_inputs)
+        self._current_job = job.result()
 
     def generate_samples(self):
-        counts = self._current_job.raw_counts()
-        print(counts)
+        counts = qiskit.result.postprocess.format_counts(self._current_job[0][0], {'memory_slots': self._circuit.num_qubits})
         samples = []
         for key, value in counts.items():
             for i in range(0, value):
