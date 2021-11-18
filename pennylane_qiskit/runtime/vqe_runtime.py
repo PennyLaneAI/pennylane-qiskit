@@ -1,0 +1,151 @@
+import numpy as np
+import scipy.optimize as opt
+from qiskit.algorithms.optimizers import SPSA, QNSPSA
+from scipy.optimize import OptimizeResult
+import mthree
+
+from qiskit import QuantumCircuit, transpile
+import qiskit.circuit.library.n_local as lib_local
+
+
+def opstr_to_meas_circ(op_str):
+    """Takes a list of operator strings and makes circuit with the correct post-rotations for measurements.
+
+    Parameters:
+        op_str (list): List of strings representing the operators needed for measurements.
+
+    Returns:
+        list: List of circuits for measurement post-rotations
+    """
+    num_qubits = len(op_str[0])
+    circs = []
+    for op in op_str:
+        qc = QuantumCircuit(num_qubits)
+        for idx, item in enumerate(op):
+            if item == 'X':
+                qc.h(idx)
+            elif item == 'Y':
+                qc.sdg(idx)
+                qc.h(idx)
+            elif item == 'H':
+                qc.ry(-np.pi / 4, idx)
+        circs.append(qc)
+    return circs
+
+
+def main(backend, user_messenger,
+         hamiltonian,
+         x0,
+         ansatz='EfficientSU2',
+         ansatz_config={},
+         optimizer='SPSA',
+         optimizer_config={'maxiter': 10},
+         shots=8192,
+         use_measurement_mitigation=False
+         ):
+    """
+    The main sample VQE program.
+
+    Parameters:
+        backend (ProgramBackend): Qiskit backend instance.
+        user_messenger (UserMessenger): Used to communicate with the
+                                        program user.
+        hamiltonian (list): Hamiltonian whose ground state we want to find.
+        ansatz (str): Optional, name of ansatz quantum circuit to use,
+                      default='EfficientSU2'
+        ansatz_config (dict): Optional, configuration parameters for the
+                              ansatz circuit.
+        x0 (array_like): Optional, initial vector of parameters.
+        optimizer (str): Optional, string specifying classical optimizer,
+                         default='SPSA'.
+        optimizer_config (dict): Optional, configuration parameters for the
+                                 optimizer.
+        shots (int): Optional, number of shots to take per circuit.
+        use_measurement_mitigation (bool): Optional, use measurement mitigation,
+                                           default=False.
+
+    Returns:
+        OptimizeResult: The result in SciPy optimization format.
+    """
+
+    coeffs = np.array([item[0] for item in hamiltonian], dtype=complex)
+    op_strings = [item[1] for item in hamiltonian]
+
+    num_qubits = len(op_strings[0])
+
+    if isinstance(ansatz, str):
+        ansatz_instance = getattr(lib_local, ansatz)
+        ansatz_circuit = ansatz_instance(num_qubits, **ansatz_config)
+    else:
+        ansatz_circuit = ansatz
+
+    meas_circs = opstr_to_meas_circ(op_strings)
+
+    meas_strings = [string.replace('X', 'Z').replace('Y', 'Z').replace('H', 'Z') for string in op_strings]
+
+    # Take the ansatz circuits, add the single-qubit measurement basis rotations from
+    # meas_circs, and finally append the measurements themselves.
+    full_circs = [ansatz_circuit.compose(mcirc).measure_all(inplace=False) for mcirc in meas_circs]
+
+    # Get the number of parameters in the ansatz circuit.
+    num_params = ansatz_circuit.num_parameters
+
+    # Use a given initial state, if any, or do random initial state.
+    if x0 is not None:
+        x0 = np.asarray(x0, dtype=float)
+        if x0.shape[0] != num_params:
+            raise ValueError('Number of params in x0 ({}) does not match number \
+                              of ansatz parameters ({})'.format(x0.shape[0],
+                                                                num_params))
+    else:
+        x0 = 2 * np.pi * np.random.rand(num_params)
+
+    trans_dict = {}
+    if not backend.configuration().simulator:
+        trans_dict = {'layout_method': 'sabre', 'routing_method': 'sabre'}
+    trans_circs = transpile(full_circs, backend, optimization_level=3, **trans_dict)
+
+    if use_measurement_mitigation:
+        maps = mthree.utils.final_measurement_mapping(trans_circs)
+        mit = mthree.M3Mitigation(backend)
+        mit.cals_from_system(maps)
+
+    def callback(xk):
+        user_messenger.publish(list(xk))
+
+    def vqe_func(params):
+        # Attach (bind) parameters in params vector to the transpiled circuits.
+        bound_circs = [circ.bind_parameters(params) for circ in trans_circs]
+
+        # Submit the job and get the resultant counts back
+        counts = backend.run(bound_circs, shots=shots).result().get_counts()
+
+        if use_measurement_mitigation:
+            quasi_collection = mit.apply_correction(counts, maps)
+            expvals = quasi_collection.expval(meas_strings)
+        else:
+            expvals = mthree.utils.expval(counts, meas_strings)
+
+        energy = np.sum(coeffs * expvals).real
+        return energy
+
+    # Since SPSA is not in SciPy need if statement
+    if optimizer == 'SPSA':
+        spsa = SPSA(**optimizer_config)
+        x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
+        res = OptimizeResult(fun=loss, x=x, nit=optimizer_config['maxiter'], nfev=nfev,
+                             message='Optimization terminated successfully.',
+                             success=True)
+    elif optimizer == 'QNSPSA':
+        fidelity = QNSPSA.get_fidelity(ansatz_circuit)
+        spsa = QNSPSA(fidelity, **optimizer_config)
+        x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
+        res = OptimizeResult(fun=loss, x=x, nit=optimizer_config['maxiter'], nfev=nfev,
+                             message='Optimization terminated successfully.',
+                             success=True)
+    # All other SciPy optimizers here
+    else:
+        res = opt.minimize(vqe_func, x0, method=optimizer,
+                           options=optimizer_config, callback=callback)
+    # Return result. OptimizeResult is a subclass of dict.
+    return res

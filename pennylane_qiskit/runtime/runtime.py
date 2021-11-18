@@ -1,10 +1,52 @@
-import qiskit.result.postprocess
-from qiskit.ignis.mitigation.expval import expectation_value
-from .ibmq import IBMQDevice
-from qiskit.providers.ibmq import RunnerResult
+# Copyright 2021 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains classes for constructing Qiskit runtime devices for PennyLane.
+"""
+
 import numpy as np
 
+import qiskit.result.postprocess
+from qiskit.providers.ibmq import RunnerResult
+from pennylane_qiskit.ibmq import IBMQDevice
+
+
 class IBMQCircuitRunnerDevice(IBMQDevice):
+    r"""Class for a Qiskit runtine circuit-runner program device in PennyLane.
+
+        Args:
+            wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+                or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+                or strings (``['ancilla', 'q1', 'q2']``).
+            provider (Provider): The Qiskit simulation provider
+            backend (str): the desired backend
+            shots (int or None): number of circuit evaluations/random samples used
+                to estimate expectation values and variances of observables. For statevector backends,
+                setting to ``None`` results in computing statistics like expectation values and variances analytically.
+
+        Keyword Args:
+            initial_layout:
+            layout_method:
+            routing_method:
+            translation_method:
+            seed_transpiler:
+            optimization_level:
+            init_qubits:
+            rep_delay:
+            transpiler_options:
+            measurement_error_mitigation:
+        """
 
     short_name = "qiskit.ibmq.circuitrunner"
 
@@ -59,7 +101,7 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
         # Additional compilation options.
         if self.kwargs.get('transpiler_options'):
-            program_inputs["transpiler_options"] = self.kwargs.get('transpiler_options')  # dict
+            program_inputs['transpiler_options'] = self.kwargs.get('transpiler_options')  # dict
 
         # Whether to apply measurement error
         # mitigation. Default is False.
@@ -83,6 +125,30 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
 class IBMQSamplerDevice(IBMQDevice):
+    r"""Class for a Qiskit runtine circuit-runner program device in PennyLane.
+
+        Args:
+            wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+                or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+                or strings (``['ancilla', 'q1', 'q2']``).
+            provider (Provider): The Qiskit simulation provider
+            backend (str): the desired backend
+            shots (int or None): number of circuit evaluations/random samples used
+                to estimate expectation values and variances of observables. For statevector backends,
+                setting to ``None`` results in computing statistics like expectation values and variances analytically.
+
+        Keyword Args:
+            initial_layout:
+            layout_method:
+            routing_method:
+            translation_method:
+            seed_transpiler:
+            optimization_level:
+            init_qubits:
+            rep_delay:
+            transpiler_options:
+            measurement_error_mitigation:
+        """
 
     short_name = "qiskit.ibmq.sampler"
 

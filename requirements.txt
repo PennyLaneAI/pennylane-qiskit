@@ -1,4 +1,5 @@
-qiskit>=0.25
+qiskit>=0.32
+mthree>=0.17.2
 pennylane>=0.17
 numpy
 sympy
