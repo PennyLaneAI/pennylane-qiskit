@@ -4,3 +4,4 @@ numpy
 sympy
 networkx>=2.2;python_version>'3.5'
 networkx>=2.2,<2.4;python_version=='3.5'
+flaky
