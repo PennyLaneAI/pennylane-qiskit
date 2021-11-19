@@ -95,3 +95,15 @@ class IBMQDevice(QiskitDevice):
         p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
+
+    def _track(self):
+        """Provide runtime information."""
+
+        time_per_step = self._current_job.time_per_step()
+        job_time = {
+            "creating": (time_per_step["CREATED"] - time_per_step["CREATING"]).total_seconds(),
+            "validating": (time_per_step["VALIDATED"] - time_per_step["VALIDATING"]).total_seconds(),
+            "queued": (time_per_step["RUNNING"] - time_per_step["QUEUED"]).total_seconds(),
+            "running": (time_per_step["COMPLETED"] - time_per_step["RUNNING"]).total_seconds()
+        }
+        self.tracker.update(job_time=job_time)

@@ -316,6 +316,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
+        self._track()
+
         if self.backend_name in self._state_backends:
             self._state = self._get_state(result)
 
@@ -412,3 +414,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
             results.append(res)
 
         return results
+
+    def _track(self):
+        """Update the tracker."""
