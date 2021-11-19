@@ -563,8 +563,8 @@ class TestBatchExecution:
         expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
         assert np.allclose(res, expected, **tol)
 
-        # Check that QiskitDevice.batch_execute was called once
-        assert spy1.call_count == 1
+        # Check that QiskitDevice.batch_execute was called twice
+        assert spy1.call_count == 2
 
         # Check that run was called twice: for the partial derivatives and for
         # running the circuit
