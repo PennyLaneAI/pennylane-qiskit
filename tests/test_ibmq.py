@@ -224,7 +224,7 @@ def test_batch_execute_parameter_shift(token, tol, shots, mocker):
     x = qml.numpy.array(0.543, requires_grad=True)
     y = qml.numpy.array(0.123, requires_grad=True)
 
-    res = qml.grad(circuit)(x,y)
+    res = qml.grad(circuit)(x, y)
     expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
     assert np.allclose(res, expected, **tol)
 
@@ -234,6 +234,7 @@ def test_batch_execute_parameter_shift(token, tol, shots, mocker):
     # Check that run was called twice: for the partial derivatives and for
     # running the circuit
     assert spy2.call_count == 2
+
 
 @pytest.mark.parametrize("shots", [1000])
 def test_probability(token, tol, shots):
