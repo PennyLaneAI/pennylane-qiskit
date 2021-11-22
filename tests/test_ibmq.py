@@ -16,7 +16,7 @@ from pennylane_qiskit import qiskit_device as qiskit_device
 def token():
     """A fixture loading the IBMQ token from the IBMQX_TOKEN_TEST environment
     variable."""
-    t = os.getenv("IBMQX_TOKEN", None)
+    t = os.getenv("IBMQX_TOKEN_TEST", None)
 
     if t is None:
         pytest.skip("Skipping test, no IBMQ token available")

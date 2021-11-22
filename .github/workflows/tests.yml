@@ -78,6 +78,8 @@ jobs:
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=20000 --device-kwargs backend=qasm_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=statevector_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=unitary_simulator
+        env:
+          IBMQX_TOKEN_TEST: ${{ secrets.IBMQX_TOKEN_TEST }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
