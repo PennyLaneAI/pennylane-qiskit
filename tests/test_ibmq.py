@@ -264,6 +264,7 @@ def test_probability(token, tol, shots):
 
 def test_track(token):
     """Test that the tracker works."""
+
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
     dev.tracker.active = True
@@ -275,3 +276,4 @@ def test_track(token):
 
     circuit()
     assert "job_time" in dev.tracker.history
+    assert 1 == 2 #check if we enter here
