@@ -276,4 +276,3 @@ def test_track(token):
 
     circuit()
     assert "job_time" in dev.tracker.history
-    assert 1 == 2 #check if we enter here
