@@ -416,4 +416,4 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return results
 
     def _track_run(self):
-        """Update the tracker."""
+        """Update the runtime information of the tracker."""
