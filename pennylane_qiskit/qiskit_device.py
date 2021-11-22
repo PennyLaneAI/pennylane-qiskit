@@ -1,4 +1,4 @@
-# Copyright 2019 Xanadu Quantum Technologies Inc.
+# Copyright 2019-2021 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ QISKIT_OPERATION_MAP = {
     "RZ": ex.RZGate,
     "S": ex.SGate,
     "T": ex.TGate,
+    "SX": ex.SXGate,
     # Adding the following for conversion compatibility
     "CSWAP": ex.CSwapGate,
     "CRX": ex.CRXGate,
@@ -202,7 +203,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = None
         self._state = None  # statevector of a simulator backend
 
-    def apply(self, operations, **kwargs):
+    def create_circuit_object(self, operations, **kwargs):
+        """Builds the circuit objects based on the operations and measurements
+        specified to apply.
+
+        Args:
+            operations (list[~.Operation]): operations to apply to the device
+
+        Keyword args:
+            rotations (list[~.Operation]): Operations that rotate the circuit
+                pre-measurement into the eigenbasis of the observables.
+        """
         rotations = kwargs.get("rotations", [])
 
         applied_operations = self.apply_operations(operations)
@@ -220,6 +231,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 measure(self._circuit, qr, cr)
         elif "aer" in self.backend_name:
             self._circuit.save_state()
+
+    def apply(self, operations, **kwargs):
+
+        self.create_circuit_object(operations, **kwargs)
 
         # These operations need to run for all devices
         compiled_circuit = self.compile()
@@ -304,20 +319,21 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if self.backend_name in self._state_backends:
             self._state = self._get_state(result)
 
-    def _get_state(self, result):
+    def _get_state(self, result, experiment=None):
         """Returns the statevector for state simulator backends.
 
         Args:
             result (qiskit.Result): result object
+            experiment (str): the name of the experiment to get the state for
 
         Returns:
             array[float]: size ``(2**num_wires,)`` statevector
         """
         if "statevector" in self.backend_name:
-            state = np.asarray(result.get_statevector())
+            state = np.asarray(result.get_statevector(experiment))
 
         elif "unitary" in self.backend_name:
-            unitary = np.asarray(result.get_unitary())
+            unitary = np.asarray(result.get_unitary(experiment))
             initial_state = np.zeros([2 ** self.num_wires])
             initial_state[0] = 1
 
@@ -326,7 +342,18 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
 
-    def generate_samples(self):
+    def generate_samples(self, circuit=None):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        Args:
+            circuit (str): the name of the circuit to get the state for
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
 
         # branch out depending on the type of backend
         if self.backend_name in self._state_backends:
@@ -334,7 +361,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             return super().generate_samples()
 
         # hardware or hardware simulator
-        samples = self._current_job.result().get_memory()
+        samples = self._current_job.result().get_memory(circuit)
 
         # reverse qubit order to match PennyLane convention
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
@@ -349,3 +376,39 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
+
+    def batch_execute(self, circuits):
+
+        compiled_circuits = []
+
+        # Compile each circuit object
+        for circuit in circuits:
+
+            # We need to reset the device here, else it will
+            # not start the next computation in the zero state
+            self.reset()
+            self.create_circuit_object(circuit.operations, rotations=circuit.diagonalizing_gates)
+
+            compiled_circ = self.compile()
+            compiled_circ.name = f"circ{len(compiled_circuits)}"
+            compiled_circuits.append(compiled_circ)
+
+        # Send the batch of circuit objects using backend.run
+        self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
+        result = self._current_job.result()
+
+        # Compute statistics using the state and/or samples
+        results = []
+        for circuit, circuit_obj in zip(circuits, compiled_circuits):
+
+            if self.backend_name in self._state_backends:
+                self._state = self._get_state(result, experiment=circuit_obj)
+
+            # generate computational basis samples
+            if self.shots is not None or circuit.is_sampled:
+                self._samples = self.generate_samples(circuit_obj)
+
+            res = self.statistics(circuit.observables)
+            results.append(res)
+
+        return results
