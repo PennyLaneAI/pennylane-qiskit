@@ -261,6 +261,17 @@ def test_probability(token, tol, shots):
     assert np.allclose(prob_analytic(x), hw_prob, **tol)
     assert not np.array_equal(prob_analytic(x), hw_prob)
 
+    dev = IBMQDevice(wires=1, backend="ibmq_armonk", shots=1)
+    dev.tracker.active = True
+
+    @qml.qnode(dev)
+    def circuit():
+        qml.PauliX(wires=0)
+        return qml.probs(wires=0)
+
+    circuit()
+    assert "job_time" in dev.tracker.history
+
 
 def test_track(token):
     """Test that the tracker works."""
