@@ -96,7 +96,7 @@ class IBMQDevice(QiskitDevice):
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
 
-    def _track(self):
+    def _track_run(self):
         """Provide runtime information."""
 
         time_per_step = self._current_job.time_per_step()
