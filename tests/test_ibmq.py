@@ -265,7 +265,7 @@ def test_probability(token, tol, shots):
 def test_track(token):
     """Test that the tracker works."""
     IBMQ.enable_account(token)
-    dev = IBMQDevice(wires=1, backend="ibmq_armonk", shots=1)
+    dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
     dev.tracker.active = True
 
     @qml.qnode(dev)
