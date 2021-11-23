@@ -109,3 +109,4 @@ class IBMQDevice(QiskitDevice):
             "running": (time_per_step["COMPLETED"] - time_per_step["RUNNING"]).total_seconds(),
         }
         self.tracker.update(job_time=job_time)
+        self.tracker.record()
