@@ -315,8 +315,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """Run the compiled circuit, and query the result."""
         self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
         result = self._current_job.result()
-        if self.tracker.active:
-            self._track_run()
 
         if self.backend_name in self._state_backends:
             self._state = self._get_state(result)
@@ -364,7 +362,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # hardware or hardware simulator
         samples = self._current_job.result().get_memory(circuit)
-
         # reverse qubit order to match PennyLane convention
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
@@ -399,6 +396,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
+        if self.tracker.active:
+            self._track_run()
+
         # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
@@ -412,6 +412,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             res = self.statistics(circuit.observables)
             results.append(res)
+
+        if self.tracker.active:
+            self.tracker.update(batches=1, batch_len=len(circuits))
+            self.tracker.record()
 
         return results
 
