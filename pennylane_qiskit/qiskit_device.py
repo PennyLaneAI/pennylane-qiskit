@@ -396,9 +396,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
-        if self.tracker.active:
-            self._track_run()
-
         # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
@@ -418,6 +415,3 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self.tracker.record()
 
         return results
-
-    def _track_run(self):
-        """Update the runtime information of the tracker."""

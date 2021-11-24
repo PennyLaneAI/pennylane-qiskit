@@ -275,4 +275,11 @@ def test_track(token):
         return qml.probs(wires=0)
 
     circuit()
+
     assert "job_time" in dev.tracker.history
+    if "job_time" in dev.tracker.history:
+        assert "creating" in dev.tracker.history["job_time"]
+        assert "validating" in dev.tracker.history["job_time"]
+        assert "queued" in dev.tracker.history["job_time"]
+        assert "running" in dev.tracker.history["job_time"]
+        assert len(dev.tracker.history["job_time"]) == 4
