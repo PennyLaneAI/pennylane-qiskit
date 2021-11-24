@@ -31,21 +31,21 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
             or strings (``['ancilla', 'q1', 'q2']``).
         provider (Provider): The Qiskit simulation provider
         backend (str): the desired backend
-        shots (int or None): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables. For statevector backends,
-            setting to ``None`` results in computing statistics like expectation values and variances analytically.
+        shots (int): number of circuit evaluations/random samples used to estimate expectation values and variances of
+         observables.
 
     Keyword Args:
-        initial_layout:
-        layout_method:
-        routing_method:
-        translation_method:
-        seed_transpiler:
-        optimization_level:
-        init_qubits:
-        rep_delay:
-        transpiler_options:
-        measurement_error_mitigation:
+        initial_layout (array[int]): Initial position of virtual qubits on physical qubits.
+        layout_method (string): Name of layout selection pass ('trivial', 'dense', 'noise_adaptive', 'sabre')
+        routing_method (string): Name of routing pass ('basic', 'lookahead', 'stochastic', 'sabre').
+        translation_method (string): Name of translation pass ('unroller', 'translator', 'synthesis').
+        seed_transpiler (int): Sets random seed for the stochastic parts of the transpiler.
+        optimization_level (int): How much optimization to perform on the circuits (0-3). Higher levels generate more
+         optimized circuits. Default is 1.
+        init_qubits (bool): Whether to reset the qubits to the ground state for each shot.
+        rep_delay (float): Delay between programs in seconds.
+        transpiler_options (dict): Additional compilation options.
+        measurement_error_mitigation (bool): Whether to apply measurement error mitigation. Default is False.
     """
 
     short_name = "qiskit.ibmq.circuitrunner"
@@ -53,14 +53,6 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
         self.kwargs = kwargs
         super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
-
-    def generate_samples(self, circuit=None):
-        counts = self._current_job.get_counts()[circuit]
-        samples = []
-        for key, value in counts.items():
-            for i in range(0, value):
-                samples.append(key)
-        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
     def batch_execute(self, circuits):
         compiled_circuits = []
@@ -78,56 +70,35 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
         program_inputs = {"circuits": compiled_circuits, "shots": self.shots}
 
-        # Initial position of virtual qubits
-        # on physical qubits.
         if self.kwargs.get("initial_layout"):
             program_inputs["initial_layout"] = self.kwargs.get("initial_layout")
 
-        # Name of layout selection pass
-        # ('trivial', 'dense', 'noise_adaptive', 'sabre')
         if self.kwargs.get("layout_method"):
             program_inputs["layout_method"] = self.kwargs.get("layout_method")
 
-        # Name of routing pass ('basic',
-        # 'lookahead', 'stochastic', 'sabre').
         if self.kwargs.get("routing_method"):
-            program_inputs["routing_method"] = self.kwargs.get("routing_method")  # string
+            program_inputs["routing_method"] = self.kwargs.get("routing_method")
 
-        # Name of translation pass ('unroller',
-        # 'translator', 'synthesis').
         if self.kwargs.get("translation_method"):
-            program_inputs["translation_method"] = self.kwargs.get("translation_method")  # string
+            program_inputs["translation_method"] = self.kwargs.get("translation_method")
 
-        # Sets random seed for the
-        # stochastic parts of the transpiler.
         if self.kwargs.get("seed_transpiler"):
-            program_inputs["seed_transpiler"] = self.kwargs.get("seed_transpiler")  # int
+            program_inputs["seed_transpiler"] = self.kwargs.get("seed_transpiler")
 
-        # How much optimization to perform
-        # on the circuits (0-3). Higher
-        # levels generate more optimized circuits.
-        # Default is 1.
-        program_inputs["optimization_level"] = self.kwargs.get("optimization_level", 1)  # int
+        program_inputs["optimization_level"] = self.kwargs.get("optimization_level", 1)
 
-        # Whether to reset the qubits
-        # to the ground state for
-        # each shot.
         if self.kwargs.get("init_qubits"):
-            program_inputs["init_qubits"] = self.kwargs.get("init_qubits")  # bool
+            program_inputs["init_qubits"] = self.kwargs.get("init_qubits")
 
-        # Delay between programs in seconds.
         if self.kwargs.get("rep_delay"):
-            program_inputs["rep_delay"] = self.kwargs.get("rep_delay")  # float
+            program_inputs["rep_delay"] = self.kwargs.get("rep_delay")
 
-        # Additional compilation options.
         if self.kwargs.get("transpiler_options"):
-            program_inputs["transpiler_options"] = self.kwargs.get("transpiler_options")  # dict
+            program_inputs["transpiler_options"] = self.kwargs.get("transpiler_options")
 
-        # Whether to apply measurement error
-        # mitigation. Default is False.
         program_inputs["measurement_error_mitigation"] = self.kwargs.get(
             "measurement_error_mitigation", False
-        )  # bool
+        )
 
         # Specify the backend.
         options = {"backend_name": self.backend.name()}
@@ -142,7 +113,6 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
         index = 0
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
-
             self._samples = self.generate_samples(index)
             index += 1
             res = self.statistics(circuit.observables)
@@ -150,9 +120,28 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
         return results
 
+    def generate_samples(self, circuit=None):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        Args:
+            circuit (int): position of the circuit in the batch.
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
+        counts = self._current_job.get_counts()[circuit]
+        samples = []
+        for key, value in counts.items():
+            for i in range(0, value):
+                samples.append(key)
+        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+
 
 class IBMQSamplerDevice(IBMQDevice):
-    r"""Class for a Qiskit runtine circuit-runner program device in PennyLane.
+    r"""Class for a Qiskit runtime sampler program device in PennyLane.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
@@ -165,16 +154,11 @@ class IBMQSamplerDevice(IBMQDevice):
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
 
     Keyword Args:
-        initial_layout:
-        layout_method:
-        routing_method:
-        translation_method:
-        seed_transpiler:
-        optimization_level:
-        init_qubits:
-        rep_delay:
-        transpiler_options:
-        measurement_error_mitigation:
+        return_mitigation_overhead (bool): Return mitigation overhead factor. Default is False.
+        run_config (dict): A collection of kwargs passed to backend.run.
+        skip_transpilation (bool): Skip circuit transpilation. Default is False.
+        transpile_config (dict): A collection of kwargs passed to transpile.
+        use_measurement_mitigation (bool): Use measurement mitigation to improve results. Default is False.
     """
 
     short_name = "qiskit.ibmq.sampler"
@@ -198,38 +182,29 @@ class IBMQSamplerDevice(IBMQDevice):
             compiled_circuits.append(compiled_circ)
 
         program_inputs = {"circuits": compiled_circuits}
-        # Return mitigation overhead factor. Default
-        # is False.
+
         if self.kwargs.get("return_mitigation_overhead"):
             program_inputs["return_mitigation_overhead"] = self.kwargs.get(
                 "return_mitigation_overhead"
-            )  # boolean
+            )
 
-        # A collection of kwargs passed
-        # to backend.run.
         if self.kwargs.get("run_config"):
-            program_inputs["run_config"] = self.kwargs.get("run_config")  # object
+            program_inputs["run_config"] = self.kwargs.get("run_config")
 
-        # Skip circuit transpilation. Default is
-        # False.
         if self.kwargs.get("skip_transpilation"):
-            program_inputs["skip_transpilation"] = False  # boolean
+            program_inputs["skip_transpilation"] = False
 
-        # A collection of kwargs passed
-        # to transpile.
         if self.kwargs.get("transpile_config"):
-            program_inputs["transpile_config"] = self.kwargs.get("transpile_config")  # object
+            program_inputs["transpile_config"] = self.kwargs.get("transpile_config")
 
-        # Use measurement mitigation to improve
-        # results. Default is False.
         if self.kwargs.get("use_measurement_mitigation"):
             program_inputs["use_measurement_mitigation"] = self.kwargs.get(
                 "use_measurement_mitigation"
-            )  # boolean
+            )
 
         # Specify the backend.
         options = {"backend_name": self.backend.name()}
-        # Send circuits to the cloud for execution by the circuit-runner program.
+        # Send circuits to the cloud for execution by the sampler program.
         job = self.provider.runtime.run(
             program_id="sampler", options=options, inputs=program_inputs
         )
@@ -246,6 +221,17 @@ class IBMQSamplerDevice(IBMQDevice):
         return results
 
     def generate_samples(self, circuit=None):
+        r"""Returns the computational basis samples generated for all wires.
+
+        Note that PennyLane uses the convention :math:`|q_0,q_1,\dots,q_{N-1}\rangle` where
+        :math:`q_0` is the most significant bit.
+
+        Args:
+            circuit (int): position of the circuit in the batch.
+
+        Returns:
+             array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
+        """
         counts = qiskit.result.postprocess.format_counts(
             self._current_job.get("counts")[circuit], {"memory_slots": self._circuit.num_qubits}
         )
