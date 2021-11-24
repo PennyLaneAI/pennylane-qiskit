@@ -1,7 +1,8 @@
 qiskit>=0.32
 mthree>=0.17.2
-pennylane>=0.17
+git+https://github.com/PennyLaneAI/pennylane.git
 numpy
 sympy
 networkx>=2.2;python_version>'3.5'
 networkx>=2.2,<2.4;python_version=='3.5'
+flaky

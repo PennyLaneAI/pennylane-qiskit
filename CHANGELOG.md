@@ -6,6 +6,9 @@
 
 ### Improvements
 
+* Added support for the `qml.SX` operation to the Qiskit devices.
+  [(#158)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/158)
+
 ### Documentation
 
 ### Bug fixes
@@ -13,6 +16,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Antal Száva
 
 ---
 
