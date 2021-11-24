@@ -362,7 +362,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # hardware or hardware simulator
         samples = self._current_job.result().get_memory(circuit)
-
         # reverse qubit order to match PennyLane convention
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
@@ -409,5 +408,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             res = self.statistics(circuit.observables)
             results.append(res)
+
+        if self.tracker.active:
+            self.tracker.update(batches=1, batch_len=len(circuits))
+            self.tracker.record()
 
         return results
