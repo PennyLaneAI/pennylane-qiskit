@@ -14,6 +14,7 @@
 r"""
 This module contains classes for constructing Qiskit runtime devices for PennyLane.
 """
+# pylint: disable=attribute-defined-outside-init
 
 import numpy as np
 
@@ -111,12 +112,14 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
         results = []
 
-        index = 0
-        for circuit, circuit_obj in zip(circuits, compiled_circuits):
+        for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
-            index += 1
             res = self.statistics(circuit.observables)
             results.append(res)
+
+        if self.tracker.active:
+            self.tracker.update(batches=1, batch_len=len(circuits))
+            self.tracker.record()
 
         return results
 
@@ -135,7 +138,7 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
         counts = self._current_job.get_counts()[circuit]
         samples = []
         for key, value in counts.items():
-            for i in range(0, value):
+            for _ in range(0, value):
                 samples.append(key)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
@@ -211,12 +214,14 @@ class IBMQSamplerDevice(IBMQDevice):
         self._current_job = job.result()
         results = []
 
-        index = 0
-        for circuit, circuit_obj in zip(circuits, compiled_circuits):
+        for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
-            index += 1
             res = self.statistics(circuit.observables)
             results.append(res)
+
+        if self.tracker.active:
+            self.tracker.update(batches=1, batch_len=len(circuits))
+            self.tracker.record()
 
         return results
 
@@ -237,6 +242,6 @@ class IBMQSamplerDevice(IBMQDevice):
         )
         samples = []
         for key, value in counts.items():
-            for i in range(0, value):
+            for _ in range(0, value):
                 samples.append(key)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])

@@ -377,6 +377,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return prob
 
     def batch_execute(self, circuits):
+
         compiled_circuits = []
 
         # Compile each circuit object
