@@ -9,6 +9,8 @@
 * Added support for the `qml.SX` operation to the Qiskit devices.
   [(#158)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/158)
 
+* Added support for returning job execution times. [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
+
 ### Documentation
 
 ### Bug fixes
@@ -17,7 +19,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Antal Száva
+Guillermo Alonso-Linaje, Antal Száva
 
 ---
 
