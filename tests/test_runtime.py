@@ -32,24 +32,24 @@ class TestCircuitRunner:
         dev = IBMQCircuitRunnerDevice(wires=1)
         assert dev.provider.credentials.is_ibmq()
 
-    def test_simple_circuit(self, token):
+    def test_simple_circuit(self):
 
         return True
 
 class TestSampler:
 
     def test_load_from_env(self, token, monkeypatch):
-        """Test loading an IBMQ Circuit Runner Qiskit runtime device from an env variable."""
+        """Test loading an IBMQ Sampler Qiskit runtime device from an env variable."""
         monkeypatch.setenv("IBMQX_TOKEN", token)
-        dev = IBMQCircuitRunnerDevice(wires=1)
+        dev = IBMQSamplerDevice(wires=1)
         assert dev.provider.credentials.is_ibmq()
 
-    def test_simple_circuit(self, token):
+    def test_simple_circuit(self):
 
         return True
 
 class TestCustomVQE:
 
-    def test_simple_circuit(self, token):
+    def test_simple_circuit(self):
 
         return True
