@@ -97,9 +97,10 @@ class IBMQDevice(QiskitDevice):
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
 
     def batch_execute(self, circuits):
-        super().batch_execute(circuits)
+        res = super().batch_execute(circuits)
         if self.tracker.active:
             self._track_run()
+        return res
 
     def _track_run(self):
         """Provide runtime information."""
