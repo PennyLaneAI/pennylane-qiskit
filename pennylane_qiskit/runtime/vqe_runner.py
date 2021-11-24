@@ -32,17 +32,17 @@ from qiskit.providers.ibmq.exceptions import IBMQAccountError
 
 from scipy.optimize import OptimizeResult
 
-class VQEResultDecoder(ResultDecoder):
-    """
 
-    """
+class VQEResultDecoder(ResultDecoder):
+    """ """
+
     @classmethod
     def decode(cls, data):
         data = super().decode(data)
         return OptimizeResult(data)
 
 
-class RuntimeJobWrapper():
+class RuntimeJobWrapper:
     """A simple Job wrapper that attaches interm results directly to the job object itself
     in the `interm_results attribute` via the `_callback` function.
     """
@@ -62,7 +62,7 @@ class RuntimeJobWrapper():
         self.interm_results.append(xk)
 
     def __getattr__(self, attr):
-        if attr == 'result':
+        if attr == "result":
             return self.result
         else:
             if attr in dir(self._job):
@@ -80,17 +80,19 @@ class RuntimeJobWrapper():
         return self._job.result(decoder=self._decoder)
 
 
-def vqe_runner(backend,
-               hamiltonian,
-               x0,
-               program_id=None,
-               ansatz='EfficientSU2',
-               ansatz_config={},
-               optimizer='SPSA',
-               optimizer_config={'maxiter': 100},
-               shots=8192,
-               use_measurement_mitigation=False,
-               **kwargs):
+def vqe_runner(
+    backend,
+    hamiltonian,
+    x0,
+    program_id=None,
+    ansatz="EfficientSU2",
+    ansatz_config={},
+    optimizer="SPSA",
+    optimizer_config={"maxiter": 100},
+    shots=8192,
+    use_measurement_mitigation=False,
+    **kwargs
+):
     """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
 
     Parameters:
@@ -135,7 +137,7 @@ def vqe_runner(backend,
                     "No active IBM Q account, and no IBM Q token provided."
                 ) from None
 
-    provider = IBMQ.get_provider(hub='ibm-q', group='open', project='main')
+    provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
 
     if program_id is None:
 
@@ -143,7 +145,7 @@ def vqe_runner(backend,
             "name": "vqe-runtime",
             "description": "A sample VQE program.",
             "max_execution_time": 100000,
-            "spec": {}
+            "spec": {},
         }
 
         meta["spec"]["parameters"] = {
@@ -151,60 +153,60 @@ def vqe_runner(backend,
             "properties": {
                 "hamiltonian": {
                     "description": "Hamiltonian whose ground state we want to find.",
-                    "type": "array"
+                    "type": "array",
                 },
                 "ansatz": {
                     "description": "Name of ansatz quantum circuit to use, default='EfficientSU2'",
                     "type": "string",
-                    "default": "EfficientSU2"
+                    "default": "EfficientSU2",
                 },
                 "ansatz_config": {
                     "description": "Configuration parameters for the ansatz circuit.",
-                    "type": "object"
+                    "type": "object",
                 },
                 "optimizer": {
                     "description": "Classical optimizer to use, default='SPSA'.",
                     "type": "string",
-                    "default": "SPSA"
+                    "default": "SPSA",
                 },
                 "x0": {
                     "description": "Initial vector of parameters. This is a numpy array.",
-                    "type": "array"
+                    "type": "array",
                 },
                 "optimizer_config": {
                     "description": "Configuration parameters for the optimizer.",
-                    "type": "object"
+                    "type": "object",
                 },
                 "shots": {
                     "description": "The number of shots used for each circuit evaluation.",
-                    "type": "integer"
+                    "type": "integer",
                 },
                 "use_measurement_mitigation": {
                     "description": "Use measurement mitigation, default=False.",
                     "type": "boolean",
-                    "default": False
-                }
+                    "default": False,
+                },
             },
-            "required": [
-                "hamiltonian"
-            ]
+            "required": ["hamiltonian"],
         }
 
         meta["spec"]["return_values"] = {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "description": "Final result in SciPy optimizer format",
-            "type": "object"
+            "type": "object",
         }
 
         meta["spec"]["interim_results"] = {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "description": "Parameter vector at current optimization step. This is a numpy array.",
-            "type": "array"
+            "type": "array",
         }
 
-        program_id = provider.runtime.upload_program(data='pennylane_qiskit/runtime/vqe_runtime.py', metadata=meta)
+        program_id = provider.runtime.upload_program(
+            data="pennylane_qiskit/runtime/vqe_runtime.py", metadata=meta
+        )
 
-    options = {'backend_name': backend}
+    options = {"backend_name": backend}
 
     inputs = {}
 
@@ -234,11 +236,13 @@ def vqe_runner(backend,
             # user passed something that is callable but not a tape or qnode.
             try:
                 if len(x0) == 1:
-                    tape = qml.transforms.make_tape(ansatz)(x0[0]).expand(depth=5, stop_at=lambda
-                        obj: obj.name in QiskitDevice._operation_map)
+                    tape = qml.transforms.make_tape(ansatz)(x0[0]).expand(
+                        depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
+                    )
                 else:
-                    tape = qml.transforms.make_tape(ansatz)(x0).expand(depth=5, stop_at=lambda
-                        obj: obj.name in QiskitDevice._operation_map)
+                    tape = qml.transforms.make_tape(ansatz)(x0).expand(
+                        depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
+                    )
             except IndexError:
                 raise qml.QuantumFunctionError("X0 has not enough parameters")
 
@@ -247,7 +251,7 @@ def vqe_runner(backend,
             if len(x0) != num_params:
                 x0 = 2 * np.pi * np.random.rand(num_params)
 
-            inputs['x0'] = x0
+            inputs["x0"] = x0
 
             # raise exception if it is not a quantum function
             if len(tape.operations) == 0:
@@ -267,7 +271,7 @@ def vqe_runner(backend,
             wires_map = OrderedDict(zip(wires, consecutive_wires))
 
             # Create the qisit ansatz circuit
-            params_vector = ParameterVector('p', num_params)
+            params_vector = ParameterVector("p", num_params)
 
             reg = QuantumRegister(num_qubits, "q")
             circuit_ansatz = QuantumCircuit(reg, name="vqe")
@@ -305,7 +309,7 @@ def vqe_runner(backend,
             for circuit in circuits:
                 circuit_ansatz &= circuit
 
-            inputs['ansatz'] = circuit_ansatz
+            inputs["ansatz"] = circuit_ansatz
 
         else:
             raise ValueError("Input ansatz is not a tape, quantum function or a str")
@@ -318,9 +322,9 @@ def vqe_runner(backend,
         print(num_qubits)
         ansatz_circ = getattr(lib_local, ansatz, None)
         if not ansatz_circ:
-            raise ValueError('Ansatz {} not in n_local circuit library.'.format(ansatz))
-        inputs['ansatz'] = ansatz
-        inputs['ansatz_config'] = ansatz_config
+            raise ValueError("Ansatz {} not in n_local circuit library.".format(ansatz))
+        inputs["ansatz"] = ansatz
+        inputs["ansatz_config"] = ansatz_config
 
         # If given x0, validate its length against num_params in ansatz:
         x0 = np.asarray(x0)
@@ -330,7 +334,7 @@ def vqe_runner(backend,
         if x0.shape[0] != num_params:
             x0 = 2 * np.pi * np.random.rand(num_params)
 
-        inputs['x0'] = x0
+        inputs["x0"] = x0
 
     # Validate Hamiltonian
 
@@ -339,19 +343,19 @@ def vqe_runner(backend,
     if not isinstance(hamiltonian, qml.Hamiltonian):
         raise qml.QuantumFunctionError("Hamiltonian required.")
 
-    authorized_obs = {'PauliX', 'PauliY', 'PauliZ', 'Hadamard', 'Identity'}
+    authorized_obs = {"PauliX", "PauliY", "PauliZ", "Hadamard", "Identity"}
 
     for obs in observables:
         if isinstance(obs.name, list):
             for ob in obs.name:
                 if ob not in authorized_obs:
-                    raise qml.QuantumFunctionError('Obs not accepted')
+                    raise qml.QuantumFunctionError("Obs not accepted")
         else:
             if obs.name not in authorized_obs:
-                raise qml.QuantumFunctionError('Obs not accepted')
+                raise qml.QuantumFunctionError("Obs not accepted")
 
     # Create string Hamiltonian
-    obs_str = {'PauliX': 'X', 'PauliY': 'Y', 'PauliZ': 'Z', 'Hadamard': 'H', 'Identity': 'I'}
+    obs_str = {"PauliX": "X", "PauliY": "Y", "PauliZ": "Z", "Hadamard": "H", "Identity": "I"}
 
     obs_org = []
     for obs in observables:
@@ -366,28 +370,30 @@ def vqe_runner(backend,
 
     obs_list = []
     for elem in obs_org:
-        empty_obs = ['I'] * num_qubits
+        empty_obs = ["I"] * num_qubits
         for el in elem:
             empty_obs[el[0]] = el[1]
         obs_list.append(empty_obs)
 
     hamiltonian = []
     for i, elem in enumerate(obs_list):
-        o_str = ''
+        o_str = ""
         for el in elem:
             o_str += el
         hamiltonian.append((coeff[i], o_str))
 
-    inputs['hamiltonian'] = hamiltonian
+    inputs["hamiltonian"] = hamiltonian
 
     # Set the rest of the inputs
-    inputs['optimizer'] = optimizer
-    inputs['optimizer_config'] = optimizer_config
-    inputs['shots'] = shots
-    inputs['use_measurement_mitigation'] = use_measurement_mitigation
+    inputs["optimizer"] = optimizer
+    inputs["optimizer_config"] = optimizer_config
+    inputs["shots"] = shots
+    inputs["use_measurement_mitigation"] = use_measurement_mitigation
 
     rt_job = RuntimeJobWrapper()
-    job = provider.runtime.run(program_id, options=options, inputs=inputs, callback=rt_job._callback)
+    job = provider.runtime.run(
+        program_id, options=options, inputs=inputs, callback=rt_job._callback
+    )
     rt_job._job = job
 
     return rt_job

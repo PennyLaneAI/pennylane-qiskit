@@ -39,27 +39,29 @@ def opstr_to_meas_circ(op_str):
     for op in op_str:
         qc = QuantumCircuit(num_qubits)
         for idx, item in enumerate(op):
-            if item == 'X':
+            if item == "X":
                 qc.h(idx)
-            elif item == 'Y':
+            elif item == "Y":
                 qc.sdg(idx)
                 qc.h(idx)
-            elif item == 'H':
+            elif item == "H":
                 qc.ry(-np.pi / 4, idx)
         circs.append(qc)
     return circs
 
 
-def main(backend, user_messenger,
-         hamiltonian,
-         x0,
-         ansatz='EfficientSU2',
-         ansatz_config={},
-         optimizer='SPSA',
-         optimizer_config={'maxiter': 10},
-         shots=8192,
-         use_measurement_mitigation=False
-         ):
+def main(
+    backend,
+    user_messenger,
+    hamiltonian,
+    x0,
+    ansatz="EfficientSU2",
+    ansatz_config={},
+    optimizer="SPSA",
+    optimizer_config={"maxiter": 10},
+    shots=8192,
+    use_measurement_mitigation=False,
+):
     """
     The main sample VQE program.
 
@@ -98,7 +100,9 @@ def main(backend, user_messenger,
 
     meas_circs = opstr_to_meas_circ(op_strings)
 
-    meas_strings = [string.replace('X', 'Z').replace('Y', 'Z').replace('H', 'Z') for string in op_strings]
+    meas_strings = [
+        string.replace("X", "Z").replace("Y", "Z").replace("H", "Z") for string in op_strings
+    ]
 
     # Take the ansatz circuits, add the single-qubit measurement basis rotations from
     # meas_circs, and finally append the measurements themselves.
@@ -111,15 +115,18 @@ def main(backend, user_messenger,
     if x0 is not None:
         x0 = np.asarray(x0, dtype=float)
         if x0.shape[0] != num_params:
-            raise ValueError('Number of params in x0 ({}) does not match number \
-                              of ansatz parameters ({})'.format(x0.shape[0],
-                                                                num_params))
+            raise ValueError(
+                "Number of params in x0 ({}) does not match number \
+                              of ansatz parameters ({})".format(
+                    x0.shape[0], num_params
+                )
+            )
     else:
         x0 = 2 * np.pi * np.random.rand(num_params)
 
     trans_dict = {}
     if not backend.configuration().simulator:
-        trans_dict = {'layout_method': 'sabre', 'routing_method': 'sabre'}
+        trans_dict = {"layout_method": "sabre", "routing_method": "sabre"}
     trans_circs = transpile(full_circs, backend, optimization_level=3, **trans_dict)
 
     if use_measurement_mitigation:
@@ -147,22 +154,33 @@ def main(backend, user_messenger,
         return energy
 
     # Since SPSA is not in SciPy need if statement
-    if optimizer == 'SPSA':
+    if optimizer == "SPSA":
         spsa = SPSA(**optimizer_config)
         x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
-        res = OptimizeResult(fun=loss, x=x, nit=optimizer_config['maxiter'], nfev=nfev,
-                             message='Optimization terminated successfully.',
-                             success=True)
-    elif optimizer == 'QNSPSA':
+        res = OptimizeResult(
+            fun=loss,
+            x=x,
+            nit=optimizer_config["maxiter"],
+            nfev=nfev,
+            message="Optimization terminated successfully.",
+            success=True,
+        )
+    elif optimizer == "QNSPSA":
         fidelity = QNSPSA.get_fidelity(ansatz_circuit)
         spsa = QNSPSA(fidelity, **optimizer_config)
         x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
-        res = OptimizeResult(fun=loss, x=x, nit=optimizer_config['maxiter'], nfev=nfev,
-                             message='Optimization terminated successfully.',
-                             success=True)
+        res = OptimizeResult(
+            fun=loss,
+            x=x,
+            nit=optimizer_config["maxiter"],
+            nfev=nfev,
+            message="Optimization terminated successfully.",
+            success=True,
+        )
     # All other SciPy optimizers here
     else:
-        res = opt.minimize(vqe_func, x0, method=optimizer,
-                           options=optimizer_config, callback=callback)
+        res = opt.minimize(
+            vqe_func, x0, method=optimizer, options=optimizer_config, callback=callback
+        )
     # Return result. OptimizeResult is a subclass of dict.
     return res
