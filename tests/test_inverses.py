@@ -22,7 +22,7 @@ class TestInverses:
             ("Hadamard", 0),
             ("S", 1),
             ("T", 1),
-            ("SX", 0)
+            ("SX", 0),
         ],
     )
     def test_supported_gate_inverse_single_wire_no_parameters(self, name, expected_output):

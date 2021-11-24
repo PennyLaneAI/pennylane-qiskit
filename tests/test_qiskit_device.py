@@ -100,6 +100,7 @@ class TestAerBackendOptions:
         dev2 = qml.device("qiskit.aer", wires=2)
         assert dev2.backend.options.get("noise_model") is None
 
+
 @pytest.mark.parametrize("shots", [None])
 class TestBatchExecution:
     """Tests for the batch_execute method."""
@@ -154,13 +155,9 @@ class TestBatchExecution:
         tape2_expected = dev.execute(self.tape2)
 
         assert len(res) == 2
-        assert np.allclose(
-            res[0], tape1_expected, atol=0
-        )
+        assert np.allclose(res[0], tape1_expected, atol=0)
 
-        assert np.allclose(
-            res[1], tape2_expected, atol=0
-        )
+        assert np.allclose(res[1], tape2_expected, atol=0)
 
     def test_result_empty_tape(self, device, tol):
         """Tests that the result has the correct shape and entry types for empty tapes."""
@@ -174,6 +171,4 @@ class TestBatchExecution:
         # execution
         dev.reset()
         assert len(res) == 3
-        assert np.allclose(
-            res[0], dev.execute(empty_tape), atol=0
-        )
+        assert np.allclose(res[0], dev.execute(empty_tape), atol=0)
