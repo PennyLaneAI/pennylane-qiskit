@@ -39,6 +39,8 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
+        env:
+          IBMQX_TOKEN_TEST: ${{ secrets.IBMQX_TOKEN_TEST }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
