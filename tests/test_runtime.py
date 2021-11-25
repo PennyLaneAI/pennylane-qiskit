@@ -55,6 +55,7 @@ class TestCircuitRunner:
         expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
         assert np.allclose(res, expected, **tol)
 
+    @pytest.mark.parametrize("shots", [8000])
     @pytest.mark.parametrize(
         "kwargs",
         [
@@ -72,10 +73,10 @@ class TestCircuitRunner:
             }
         ],
     )
-    def test_kwargs_circuit(self, token, tol, kwargs):
+    def test_kwargs_circuit(self, token, tol, shots, kwargs):
         """Test executing a simple circuit submitted to IBMQ."""
         IBMQ.enable_account(token)
-        dev = IBMQCircuitRunnerDevice(wires=2, backend="ibmq_qasm_simulator", shots=8000, **kwargs)
+        dev = IBMQCircuitRunnerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots, **kwargs)
 
         @qml.qnode(dev)
         def circuit(theta, phi):
