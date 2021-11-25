@@ -32,10 +32,11 @@ class TestCircuitRunner:
         assert dev.provider.credentials.is_ibmq()
 
     def test_short_name(self):
+        IBMQ.enable_account(token)
         dev = qml.device("qiskit.ibmq.circuitrunner", wires=1)
         return dev.provider.credentials.is_ibmq()
 
-    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("shots", [8000])
     def test_simple_circuit(self, token, tol, shots):
         """Test executing a simple circuit submitted to IBMQ."""
         IBMQ.enable_account(token)
@@ -55,7 +56,7 @@ class TestCircuitRunner:
         expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
         assert np.allclose(res, expected, **tol)
 
-    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("shots", [8000])
     def test_batch_circuits(self, token, tol, shots):
 
         IBMQ.enable_account(token)
@@ -88,10 +89,11 @@ class TestSampler:
         assert dev.provider.credentials.is_ibmq()
 
     def test_short_name(self):
+        IBMQ.enable_account(token)
         dev = qml.device("qiskit.ibmq.sampler", wires=1)
         return dev.provider.credentials.is_ibmq()
 
-    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("shots", [8000])
     def test_simple_circuit(self, token, tol, shots):
         """Test executing a simple circuit submitted to IBMQ."""
         IBMQ.enable_account(token)
@@ -111,7 +113,7 @@ class TestSampler:
         expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
         assert np.allclose(res, expected, **tol)
 
-    @pytest.mark.parametrize("shots", [1000])
+    @pytest.mark.parametrize("shots", [8000])
     def test_batch_circuits(self, token, tol, shots):
 
         IBMQ.enable_account(token)

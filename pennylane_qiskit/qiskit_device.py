@@ -233,7 +233,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self._circuit.save_state()
 
     def apply(self, operations, **kwargs):
-        print("hi")
         self.create_circuit_object(operations, **kwargs)
 
         # These operations need to run for all devices
