@@ -242,20 +242,13 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.get("counts")
 
-        # Batch of circuits
-        if not isinstance(counts, dict):
-            counts_post = qiskit.result.postprocess.format_counts(
-                counts[circuit], {"memory_slots": self._circuit.num_qubits}
-            )
-        else:
-            counts_post = qiskit.result.postprocess.format_counts(
-                counts, {"memory_slots": self._circuit.num_qubits}
-            )
+        counts = qiskit.result.postprocess.format_counts(
+            self._current_job.get("counts")[circuit], {"memory_slots": self._circuit.num_qubits}
+        )
 
         samples = []
-        for key, value in counts_post.items():
+        for key, value in counts.items():
             for _ in range(0, value):
                 samples.append(key)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
