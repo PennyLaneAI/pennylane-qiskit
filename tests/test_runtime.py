@@ -24,7 +24,6 @@ def token():
 
 
 class TestCircuitRunner:
-
     def test_load_from_env(self, token, monkeypatch):
         """Test loading an IBMQ Circuit Runner Qiskit runtime device from an env variable."""
         monkeypatch.setenv("IBMQX_TOKEN", token)
@@ -41,6 +40,42 @@ class TestCircuitRunner:
         """Test executing a simple circuit submitted to IBMQ."""
         IBMQ.enable_account(token)
         dev = IBMQCircuitRunnerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
+
+        @qml.qnode(dev)
+        def circuit(theta, phi):
+            qml.RX(theta, wires=0)
+            qml.RX(phi, wires=1)
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
+
+        theta = 0.432
+        phi = 0.123
+
+        res = circuit(theta, phi)
+        expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
+        assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {
+                "initial_layout": [0, 1],
+                "layout_method": "trivial",
+                "routing_method": "basic",
+                "translation_method": "unroller",
+                "seed_transpiler": 42,
+                "optimization_level": 2,
+                "init_qubits": True,
+                "rep_delay": 0.01,
+                "transpiler_options": {},
+                "measurement_error_mmitigation": True,
+            }
+        ],
+    )
+    def test_kwargs_circuit(self, token, tol, kwargs):
+        """Test executing a simple circuit submitted to IBMQ."""
+        IBMQ.enable_account(token)
+        dev = IBMQCircuitRunnerDevice(wires=2, backend="ibmq_qasm_simulator", shots=8000, **kwargs)
 
         @qml.qnode(dev)
         def circuit(theta, phi):
@@ -81,7 +116,6 @@ class TestCircuitRunner:
 
 
 class TestSampler:
-
     def test_load_from_env(self, token, monkeypatch):
         """Test loading an IBMQ Sampler Qiskit runtime device from an env variable."""
         monkeypatch.setenv("IBMQX_TOKEN", token)
@@ -136,8 +170,8 @@ class TestSampler:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
-class TestCustomVQE:
 
+class TestCustomVQE:
     def test_simple_circuit(self):
 
         return True
