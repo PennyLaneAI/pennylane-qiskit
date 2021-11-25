@@ -31,7 +31,7 @@ class TestCircuitRunner:
         dev = IBMQCircuitRunnerDevice(wires=1)
         assert dev.provider.credentials.is_ibmq()
 
-    def test_short_name(self):
+    def test_short_name(self, token):
         IBMQ.enable_account(token)
         dev = qml.device("qiskit.ibmq.circuitrunner", wires=1)
         return dev.provider.credentials.is_ibmq()
@@ -88,7 +88,7 @@ class TestSampler:
         dev = IBMQSamplerDevice(wires=1)
         assert dev.provider.credentials.is_ibmq()
 
-    def test_short_name(self):
+    def test_short_name(self, token):
         IBMQ.enable_account(token)
         dev = qml.device("qiskit.ibmq.sampler", wires=1)
         return dev.provider.credentials.is_ibmq()
