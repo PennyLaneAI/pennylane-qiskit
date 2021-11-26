@@ -129,11 +129,8 @@ class TestCircuitRunner:
 
         assert "job_time" in dev.tracker.history
         if "job_time" in dev.tracker.history:
-            assert "creating" in dev.tracker.history["job_time"][0]
-            assert "validating" in dev.tracker.history["job_time"][0]
-            assert "queued" in dev.tracker.history["job_time"][0]
-            assert "running" in dev.tracker.history["job_time"][0]
-            assert len(dev.tracker.history["job_time"][0]) == 4
+            assert "total_time" in dev.tracker.history["job_time"][0]
+            assert len(dev.tracker.history["job_time"][0]) == 1
 
 
 class TestSampler:
@@ -239,11 +236,8 @@ class TestSampler:
 
         assert "job_time" in dev.tracker.history
         if "job_time" in dev.tracker.history:
-            assert "creating" in dev.tracker.history["job_time"][0]
-            assert "validating" in dev.tracker.history["job_time"][0]
-            assert "queued" in dev.tracker.history["job_time"][0]
-            assert "running" in dev.tracker.history["job_time"][0]
-            assert len(dev.tracker.history["job_time"][0]) == 4
+            assert "total_time" in dev.tracker.history["job_time"][0]
+            assert len(dev.tracker.history["job_time"][0]) == 1
 
 
 class TestCustomVQE:
