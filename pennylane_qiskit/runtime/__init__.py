@@ -13,6 +13,6 @@
 # limitations under the License.
 """Top level runtime module import"""
 
-from pennylane_qiskit.runtime.runtime import IBMQCircuitRunnerDevice
-from pennylane_qiskit.runtime.runtime import IBMQSamplerDevice
-from pennylane_qiskit.runtime.vqe_runner import vqe_runner
+from .runtime import IBMQCircuitRunnerDevice
+from .runtime import IBMQSamplerDevice
+from .vqe_runner import vqe_runner
