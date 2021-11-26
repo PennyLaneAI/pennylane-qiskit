@@ -13,6 +13,4 @@
 # limitations under the License.
 """Top level runtime module import"""
 
-from .runtime import IBMQCircuitRunnerDevice
-from .runtime import IBMQSamplerDevice
 from .vqe_runner import vqe_runner

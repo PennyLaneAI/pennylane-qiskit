@@ -18,5 +18,5 @@ from .aer import AerDevice
 from .basic_aer import BasicAerDevice
 from .converter import load, load_qasm, load_qasm_from_file
 from .ibmq import IBMQDevice
-from pennylane_qiskit.runtime import IBMQCircuitRunnerDevice
-from pennylane_qiskit.runtime import IBMQSamplerDevice
+from .runtime import IBMQCircuitRunnerDevice
+from .runtime import IBMQSamplerDevice
