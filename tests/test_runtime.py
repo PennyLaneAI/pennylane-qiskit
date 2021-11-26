@@ -66,7 +66,7 @@ class TestCircuitRunner:
                 "optimization_level": 2,
                 "init_qubits": True,
                 "rep_delay": 0.01,
-                "transpiler_options": {},
+                "transpiler_options": {"approximation_degree": 1.0},
                 "measurement_error_mmitigation": True,
             }
         ],
@@ -113,6 +113,28 @@ class TestCircuitRunner:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
+    def test_track(token):
+        """Test that the tracker works."""
+
+        IBMQ.enable_account(token)
+        dev = IBMQCircuitRunnerDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
+        dev.tracker.active = True
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(wires=0)
+            return qml.probs(wires=0)
+
+        circuit()
+
+        assert "job_time" in dev.tracker.history
+        if "job_time" in dev.tracker.history:
+            assert "creating" in dev.tracker.history["job_time"][0]
+            assert "validating" in dev.tracker.history["job_time"][0]
+            assert "queued" in dev.tracker.history["job_time"][0]
+            assert "running" in dev.tracker.history["job_time"][0]
+            assert len(dev.tracker.history["job_time"][0]) == 4
+
 
 class TestSampler:
     def test_load_from_env(self, token, monkeypatch):
@@ -152,9 +174,9 @@ class TestSampler:
         [
             {
                 "return_mitigation_overhead": True,
-                "run_config": {},
+                "run_config": {"seed_simulator": 42},
                 "skip_transpilation": False,
-                "transpile_config": {},
+                "transpile_config": {"approximation_degree": 1.0},
                 "use_measurement_mitigation": True,
             }
         ],
@@ -200,6 +222,28 @@ class TestSampler:
             return qml.expval(qml.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
+
+    def test_track(token):
+        """Test that the tracker works."""
+
+        IBMQ.enable_account(token)
+        dev = IBMQSamplerDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
+        dev.tracker.active = True
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(wires=0)
+            return qml.probs(wires=0)
+
+        circuit()
+
+        assert "job_time" in dev.tracker.history
+        if "job_time" in dev.tracker.history:
+            assert "creating" in dev.tracker.history["job_time"][0]
+            assert "validating" in dev.tracker.history["job_time"][0]
+            assert "queued" in dev.tracker.history["job_time"][0]
+            assert "running" in dev.tracker.history["job_time"][0]
+            assert len(dev.tracker.history["job_time"][0]) == 4
 
 
 class TestCustomVQE:
