@@ -5,11 +5,9 @@ import pennylane as qml
 import pytest
 
 from qiskit import IBMQ
-from qiskit.providers.ibmq.exceptions import IBMQAccountError
 
 from pennylane_qiskit import IBMQCircuitRunnerDevice
 from pennylane_qiskit import IBMQSamplerDevice
-from pennylane_qiskit import qiskit_device as qiskit_device
 
 
 @pytest.fixture
@@ -133,6 +131,38 @@ class TestSampler:
         """Test executing a simple circuit submitted to IBMQ."""
         IBMQ.enable_account(token)
         dev = IBMQSamplerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
+
+        @qml.qnode(dev)
+        def circuit(theta, phi):
+            qml.RX(theta, wires=0)
+            qml.RX(phi, wires=1)
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
+
+        theta = 0.432
+        phi = 0.123
+
+        res = circuit(theta, phi)
+        expected = np.array([np.cos(theta), np.cos(theta) * np.cos(phi)])
+        assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("shots", [8000])
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {
+                "return_mitigation_overhead": True,
+                "run_config": {},
+                "skip_transpilation": False,
+                "transpile_config": {},
+                "use_measurement_mitigation": True,
+            }
+        ],
+    )
+    def test_kwargs_circuit(self, token, tol, shots, kwargs):
+        """Test executing a simple circuit submitted to IBMQ."""
+        IBMQ.enable_account(token)
+        dev = IBMQSamplerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots, **kwargs)
 
         @qml.qnode(dev)
         def circuit(theta, phi):
