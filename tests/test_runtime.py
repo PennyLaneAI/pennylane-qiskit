@@ -113,7 +113,7 @@ class TestCircuitRunner:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
-    def test_track(token):
+    def test_track_circuit_runner(self, token):
         """Test that the tracker works."""
 
         IBMQ.enable_account(token)
@@ -223,7 +223,7 @@ class TestSampler:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
-    def test_track(token):
+    def test_track_sampler(self, token):
         """Test that the tracker works."""
 
         IBMQ.enable_account(token)

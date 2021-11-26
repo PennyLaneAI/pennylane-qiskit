@@ -199,8 +199,7 @@ class IBMQSamplerDevice(IBMQDevice):
         if self.kwargs.get("run_config"):
             program_inputs["run_config"] = self.kwargs.get("run_config")
 
-        if self.kwargs.get("skip_transpilation"):
-            program_inputs["skip_transpilation"] = False
+        program_inputs["skip_transpilation"] = self.kwargs.get("skip_transpilation", False)
 
         if self.kwargs.get("transpile_config"):
             program_inputs["transpile_config"] = self.kwargs.get("transpile_config")
