@@ -226,6 +226,7 @@ class IBMQSamplerDevice(IBMQDevice):
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
             self.tracker.record()
+            self._track_run()
 
         return results
 
