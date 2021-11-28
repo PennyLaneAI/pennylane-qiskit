@@ -132,16 +132,18 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # check that the backend exists
         if backend not in self._capabilities["backend"]:
+            capabilities = self._capabilities["backend"]
             raise ValueError(
-                "Backend '{}' does not exist. Available backends "
-                "are:\n {}".format(backend, self._capabilities["backend"])
+                f"Backend '{backend}' does not exist. Available backends "
+                f"are:\n {capabilities}"
             )
 
         # perform validation against backend
         b = self.backend
         if len(self.wires) > b.configuration().n_qubits:
+            n_qubits = b.configuration().n_qubits
             raise ValueError(
-                "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
+                f"Backend '{backend}' supports maximum {n_qubits} wires"
             )
 
         # Initialize inner state
@@ -376,7 +378,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return prob
 
     def batch_execute(self, circuits):
-
         compiled_circuits = []
 
         # Compile each circuit object

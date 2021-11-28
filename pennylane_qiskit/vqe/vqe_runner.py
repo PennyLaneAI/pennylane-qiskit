@@ -14,6 +14,7 @@
 r"""
 This module contains a function to run aa custom PennyLane VQE problem on qiskit runtime.
 """
+# pylint: too-few-public-methods
 
 import os
 import inspect
@@ -34,10 +35,13 @@ from scipy.optimize import OptimizeResult
 
 
 class VQEResultDecoder(ResultDecoder):
-    """ """
+    """The class is usedd to decode the result from the runtime problem and return it as a
+    Scipy Optimizer result.
+    """
 
     @classmethod
     def decode(cls, data):
+        """ Decode the data from the VQE program."""
         data = super().decode(data)
         return OptimizeResult(data)
 
@@ -55,7 +59,7 @@ class RuntimeJobWrapper:
     def _callback(self, xk):
         """The callback function that attaches interm results:
 
-        Parameters:
+        Args:
             xk (array_like): A list or NumPy array to attach.
         """
         self.interm_results.append(xk)
@@ -63,10 +67,10 @@ class RuntimeJobWrapper:
     def __getattr__(self, attr):
         if attr == "result":
             return self.result
-        else:
-            if attr in dir(self._job):
-                return getattr(self._job, attr)
-            raise AttributeError("Class does not have {}.".format(attr))
+
+        if attr in dir(self._job):
+            return getattr(self._job, attr)
+        raise AttributeError(f"Class does not have {attr}.")
 
     def result(self):
         """Get the result of the job as a SciPy OptimizerResult object.
@@ -80,18 +84,18 @@ class RuntimeJobWrapper:
 
 
 def vqe_runner(
-    backend,
-    hamiltonian,
-    x0,
-    program_id=None,
-    ansatz="EfficientSU2",
-    ansatz_config={},
-    optimizer="SPSA",
-    optimizer_config={"maxiter": 100},
-    shots=8192,
-    use_measurement_mitigation=False,
-    **kwargs
-):
+        backend,
+        hamiltonian,
+        x0,
+        program_id=None,
+        ansatz="EfficientSU2",
+        ansatz_config = None,
+        optimizer="SPSA",
+        optimizer_config=None,
+        shots=8192,
+        use_measurement_mitigation=False,
+        **kwargs):
+
     """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
 
     Parameters:
@@ -109,6 +113,11 @@ def vqe_runner(
     Returns:
         OptimizeResult: The result in SciPy optimization format.
     """
+    if ansatz_config is None:
+        ansatz_config = {}
+
+    if optimizer_config is None:
+        optimizer_config = {"maxiter": 100}
 
     token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
@@ -139,7 +148,6 @@ def vqe_runner(
     provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
 
     if program_id is None:
-
         meta = {
             "name": "vqe-runtime",
             "description": "A sample VQE program.",
@@ -223,13 +231,10 @@ def vqe_runner(
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
 
-        if isinstance(ansatz, qml.QNode):
+        if isinstance(ansatz, qml.QNode) or isinstance(ansatz, qml.tape.QuantumTape):
             raise qml.QuantumFunctionError("Must be a callable quantum function.")
 
-        elif isinstance(ansatz, qml.tape.QuantumTape):
-            raise qml.QuantumFunctionError("Must be a callable quantum function.")
-
-        elif callable(ansatz):
+        if callable(ansatz):
             if len(inspect.getfullargspec(ansatz).args) != 1:
                 raise qml.QuantumFunctionError("Param should be a single vector")
             # user passed something that is callable but not a tape or qnode.
@@ -310,15 +315,13 @@ def vqe_runner(
 
             inputs["ansatz"] = circuit_ansatz
 
-        else:
-            raise ValueError("Input ansatz is not a tape, quantum function or a str")
+        raise ValueError("Input ansatz is not a tape, quantum function or a str")
 
     # Validate ansatz is in the module
     elif isinstance(ansatz, str):
 
         num_qubits = num_qubits_h
 
-        print(num_qubits)
         ansatz_circ = getattr(lib_local, ansatz, None)
         if not ansatz_circ:
             raise ValueError("Ansatz {} not in n_local circuit library.".format(ansatz))
@@ -335,7 +338,35 @@ def vqe_runner(
 
         inputs["x0"] = x0
 
-    # Validate Hamiltonian
+    hamiltonian = hamiltonian_to_list_string(hamiltonian, num_qubits)
+
+    inputs["hamiltonian"] = hamiltonian
+
+    # Set the rest of the inputs
+    inputs["optimizer"] = optimizer
+    inputs["optimizer_config"] = optimizer_config
+    inputs["shots"] = shots
+    inputs["use_measurement_mitigation"] = use_measurement_mitigation
+
+    rt_job = RuntimeJobWrapper()
+    job = provider.runtime.run(
+        program_id, options=options, inputs=inputs, callback=rt_job._callback
+    )
+    rt_job._job = job
+
+    return rt_job
+
+
+def hamiltonian_to_list_string(hamiltonian, num_qubits):
+    """Convert a hamiltonian from PennyLane to a list of coefficient and strings.
+
+    Args:
+        hamiltonian (qml.Hamiltonian): An Hamiltonian from PennyLane.
+        num_qubits (int): Number of qubits.
+
+    Returns:
+        list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
+    """
 
     coeff, observables = hamiltonian.terms
 
@@ -381,18 +412,4 @@ def vqe_runner(
             o_str += el
         hamiltonian.append((coeff[i], o_str))
 
-    inputs["hamiltonian"] = hamiltonian
-
-    # Set the rest of the inputs
-    inputs["optimizer"] = optimizer
-    inputs["optimizer_config"] = optimizer_config
-    inputs["shots"] = shots
-    inputs["use_measurement_mitigation"] = use_measurement_mitigation
-
-    rt_job = RuntimeJobWrapper()
-    job = provider.runtime.run(
-        program_id, options=options, inputs=inputs, callback=rt_job._callback
-    )
-    rt_job._job = job
-
-    return rt_job
+    return hamiltonian
