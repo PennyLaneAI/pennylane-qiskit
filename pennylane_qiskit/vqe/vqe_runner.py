@@ -52,11 +52,10 @@ class RuntimeJobWrapper:
         self._decoder = VQEResultDecoder
         self.interm_results = []
 
-    def _callback(self, job_id, xk):
+    def _callback(self, xk):
         """The callback function that attaches interm results:
 
         Parameters:
-            job_id (str): The job ID.
             xk (array_like): A list or NumPy array to attach.
         """
         self.interm_results.append(xk)

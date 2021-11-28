@@ -227,10 +227,7 @@ class IBMQSamplerDevice(IBMQDevice):
             results.append(res)
 
         if self.tracker.active:
-            job_time = {
-                "total_time": self._current_job._metadata.get("time_taken"),
-            }
-            self.tracker.update(batches=1, batch_len=len(circuits), job_time=job_time)
+            self.tracker.update(batches=1, batch_len=len(circuits))
             self.tracker.record()
 
         return results

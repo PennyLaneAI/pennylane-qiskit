@@ -234,10 +234,7 @@ class TestSampler:
 
         circuit()
 
-        assert "job_time" in dev.tracker.history
-        if "job_time" in dev.tracker.history:
-            assert "total_time" in dev.tracker.history["job_time"][0]
-            assert len(dev.tracker.history["job_time"][0]) == 1
+        assert len(dev.tracker.history) == 2
 
 
 class TestCustomVQE:

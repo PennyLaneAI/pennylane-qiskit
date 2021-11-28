@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-This module contains a custom VQE runtime program.
+This module contains a custom VQE runtime program that can be uploaded to IBMQ.
 """
 
 import numpy as np
