@@ -42,7 +42,7 @@ crz = lambda theta: np.array(
 )
 
 
-single_qubit_operations = [qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T, qml.SX]
+single_qubit_operations = [qml.Identity, qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T, qml.SX]
 
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ]

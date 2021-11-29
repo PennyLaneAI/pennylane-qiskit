@@ -48,6 +48,7 @@ QISKIT_OPERATION_MAP = {
     "S": ex.SGate,
     "T": ex.TGate,
     "SX": ex.SXGate,
+    "Identity": ex.IGate,
     # Adding the following for conversion compatibility
     "CSWAP": ex.CSwapGate,
     "CRX": ex.CRXGate,
