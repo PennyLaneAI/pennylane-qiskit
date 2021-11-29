@@ -25,6 +25,7 @@ import qiskit.circuit.library.n_local as lib_local
 from qiskit.algorithms.optimizers import SPSA, QNSPSA
 from qiskit import QuantumCircuit, transpile
 
+
 def opstr_to_meas_circ(op_str):
     """Takes a list of operator strings and makes circuit with the correct post-rotations for measurements.
 
@@ -70,11 +71,11 @@ def main(
         user_messenger (UserMessenger): Used to communicate with the
                                         program user.
         hamiltonian (list): Hamiltonian whose ground state we want to find.
-        ansatz (str): Optional, name of ansatz quantum circuit to use,
+        x0 (array_like): Initial vector of parameters.
+        ansatz (str): Optional, QuantumCircuit or the name of ansatz quantum circuit to use,
                       default='EfficientSU2'
         ansatz_config (dict): Optional, configuration parameters for the
                               ansatz circuit.
-        x0 (array_like): Optional, initial vector of parameters.
         optimizer (str): Optional, string specifying classical optimizer,
                          default='SPSA'.
         optimizer_config (dict): Optional, configuration parameters for the
@@ -139,8 +140,8 @@ def main(
         mit = mthree.M3Mitigation(backend)
         mit.cals_from_system(maps)
 
-    def callback(xk):
-        user_messenger.publish(list(xk))
+    def callback(*args):
+        user_messenger.publish(args)
 
     def vqe_func(params):
         # Attach (bind) parameters in params vector to the transpiled circuits.
@@ -160,7 +161,7 @@ def main(
 
     # Since SPSA is not in SciPy need if statement
     if optimizer == "SPSA":
-        spsa = SPSA(**optimizer_config)
+        spsa = SPSA(**optimizer_config, callback=callback)
         x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
         res = OptimizeResult(
             fun=loss,
@@ -172,7 +173,7 @@ def main(
         )
     elif optimizer == "QNSPSA":
         fidelity = QNSPSA.get_fidelity(ansatz_circuit)
-        spsa = QNSPSA(fidelity, **optimizer_config)
+        spsa = QNSPSA(fidelity, **optimizer_config, callback=callback)
         x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
         res = OptimizeResult(
             fun=loss,

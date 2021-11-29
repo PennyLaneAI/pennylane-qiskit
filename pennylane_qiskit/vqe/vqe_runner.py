@@ -41,7 +41,7 @@ class VQEResultDecoder(ResultDecoder):
 
     @classmethod
     def decode(cls, data):
-        """ Decode the data from the VQE program."""
+        """Decode the data from the VQE program."""
         data = super().decode(data)
         return OptimizeResult(data)
 
@@ -54,15 +54,38 @@ class RuntimeJobWrapper:
     def __init__(self):
         self._job = None
         self._decoder = VQEResultDecoder
-        self.interm_results = []
+        self.intermediate_results = {
+            "nfev": [],
+            "parameters": [],
+            "function": [],
+            "step": [],
+            "accepted": [],
+        }
 
-    def _callback(self, xk):
+    def _callback(self, *args):
+        """The callback function that attaches interm results:
+
+        Args:
+            nfev (int): Number of evaluation.
+            xk (array_like): A list or NumPy array to attach.
+            fk (float): Value of the function.
+            step (float): Value of the step.
+            accepted (bool): Accepted if loss improved.
+        """
+        job_id, (nfev, xk, fk, step, accepted) = args
+        self.intermediate_results["nfev"].append(nfev)
+        self.intermediate_results["parameters"].append(xk)
+        self.intermediate_results["function"].append(fk)
+        self.intermediate_results["step"].append(step)
+        self.intermediate_results["accepted"].append(accepted)
+
+    def _scipycallback(self, job_id, xk):
         """The callback function that attaches interm results:
 
         Args:
             xk (array_like): A list or NumPy array to attach.
         """
-        self.interm_results.append(xk)
+        self.intermediate_results["parameters"].append(xk)
 
     def __getattr__(self, attr):
         if attr == "result":
@@ -84,30 +107,33 @@ class RuntimeJobWrapper:
 
 
 def vqe_runner(
-        backend,
-        hamiltonian,
-        x0,
-        program_id=None,
-        ansatz="EfficientSU2",
-        ansatz_config = None,
-        optimizer="SPSA",
-        optimizer_config=None,
-        shots=8192,
-        use_measurement_mitigation=False,
-        **kwargs):
+    backend,
+    hamiltonian,
+    x0,
+    program_id=None,
+    ansatz="EfficientSU2",
+    ansatz_config=None,
+    optimizer="SPSA",
+    optimizer_config=None,
+    shots=8192,
+    use_measurement_mitigation=False,
+    **kwargs,
+):
 
     """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
 
     Parameters:
         backend (ProgramBackend): Qiskit backend instance.
-        hamiltonian (list): Hamiltonian whose ground state we want to find.
-        program_id(str): Optional, if the program is already uploaded.
-        ansatz (Quantum function or str): Optional, name of ansatz quantum circuit to use, default='EfficientSU2'
-        ansatz_config (dict): Optional, configuration parameters for the ansatz circuit.
+        hamiltonian (qml.Hamiltonian): Hamiltonian whose ground state we want to find.
+        program_id(str): Optional, if the program is already uploaded on your account, you should provide
+            the corresponding id, otherwise a new program will be uploaded.
+        ansatz (Quantum function or str): Optional, a PennyLane quantum function or the name of the Qiskit
+            ansatz quantum circuit to use, default='EfficientSU2'
+        ansatz_config (dict): Optional, configuration parameters for the ansatz circuit if from Qiskit library.
         x0 (array_like): Optional, initial vector of parameters.
         optimizer (str): Optional, string specifying classical optimizer, default='SPSA'.
         optimizer_config (dict): Optional, configuration parameters for the optimizer.
-        shots (int): Optional, number of shots to take per circuit.
+        shots (int): Optional, number of shots to take per circuit, default=1024.
         use_measurement_mitigation (bool): Optional, use measurement mitigation, default=False.
 
     Returns:
@@ -162,27 +188,27 @@ def vqe_runner(
                     "description": "Hamiltonian whose ground state we want to find.",
                     "type": "array",
                 },
+                "x0": {
+                    "description": "Initial vector of parameters for the quantum circuit.",
+                    "type": "array",
+                },
                 "ansatz": {
-                    "description": "Name of ansatz quantum circuit to use, default='EfficientSU2'",
-                    "type": "string",
+                    "description": "Qiskit circuit or name of ansatz quantum circuit to use, default='EfficientSU2'",
+                    "type": "[QuantumCircuit,string]",
                     "default": "EfficientSU2",
                 },
                 "ansatz_config": {
                     "description": "Configuration parameters for the ansatz circuit.",
-                    "type": "object",
+                    "type": "dict",
                 },
                 "optimizer": {
                     "description": "Classical optimizer to use, default='SPSA'.",
                     "type": "string",
                     "default": "SPSA",
                 },
-                "x0": {
-                    "description": "Initial vector of parameters. This is a numpy array.",
-                    "type": "array",
-                },
                 "optimizer_config": {
                     "description": "Configuration parameters for the optimizer.",
-                    "type": "object",
+                    "type": "dict",
                 },
                 "shots": {
                     "description": "The number of shots used for each circuit evaluation.",
@@ -210,7 +236,7 @@ def vqe_runner(
         }
 
         program_id = provider.runtime.upload_program(
-            data="pennylane_qiskit/runtime/vqe_runtime.py", metadata=meta
+            data="pennylane_qiskit/vqe/vqe_runtime.py", metadata=meta
         )
 
     options = {"backend_name": backend}
@@ -349,9 +375,16 @@ def vqe_runner(
     inputs["use_measurement_mitigation"] = use_measurement_mitigation
 
     rt_job = RuntimeJobWrapper()
-    job = provider.runtime.run(
-        program_id, options=options, inputs=inputs, callback=rt_job._callback
-    )
+
+    if optimizer in ["SPSA", "QNSPSA"]:
+        job = provider.runtime.run(
+            program_id, options=options, inputs=inputs, callback=rt_job._callback
+        )
+    else:
+        print("hi")
+        job = provider.runtime.run(
+            program_id, options=options, inputs=inputs, callback=rt_job._scipycallback
+        )
     rt_job._job = job
 
     return rt_job
@@ -407,9 +440,10 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
 
     hamiltonian = []
     for i, elem in enumerate(obs_list):
-        o_str = ""
+        chunks = []
         for el in elem:
-            o_str.join(el)
-        hamiltonian.append((coeff[i], o_str))
+            chunks.append(el)
+        result = "".join(chunks)
+        hamiltonian.append((coeff[i], result))
 
     return hamiltonian
