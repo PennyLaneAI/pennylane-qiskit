@@ -17,18 +17,17 @@ This module contains a custom VQE runtime program that can be uploaded to IBMQ.
 
 import numpy as np
 import scipy.optimize as opt
-from qiskit.algorithms.optimizers import SPSA, QNSPSA
 from scipy.optimize import OptimizeResult
 import mthree
 
-from qiskit import QuantumCircuit, transpile
 import qiskit.circuit.library.n_local as lib_local
-
+from qiskit.algorithms.optimizers import SPSA, QNSPSA
+from qiskit import QuantumCircuit, transpile
 
 def opstr_to_meas_circ(op_str):
     """Takes a list of operator strings and makes circuit with the correct post-rotations for measurements.
 
-    Parameters:
+    Args:
         op_str (list): List of strings representing the operators needed for measurements.
 
     Returns:
@@ -56,9 +55,9 @@ def main(
     hamiltonian,
     x0,
     ansatz="EfficientSU2",
-    ansatz_config={},
+    ansatz_config=None,
     optimizer="SPSA",
-    optimizer_config={"maxiter": 10},
+    optimizer_config=None,
     shots=8192,
     use_measurement_mitigation=False,
 ):
@@ -86,6 +85,12 @@ def main(
     Returns:
         OptimizeResult: The result in SciPy optimization format.
     """
+
+    if ansatz_config is None:
+        ansatz_config = {}
+
+    if optimizer_config is None:
+        optimizer_config = {"maxiter": 100}
 
     coeffs = np.array([item[0] for item in hamiltonian], dtype=complex)
     op_strings = [item[1] for item in hamiltonian]
@@ -115,11 +120,10 @@ def main(
     if x0 is not None:
         x0 = np.asarray(x0, dtype=float)
         if x0.shape[0] != num_params:
+            shape = x0.shape[0]
             raise ValueError(
-                "Number of params in x0 ({}) does not match number \
-                              of ansatz parameters ({})".format(
-                    x0.shape[0], num_params
-                )
+                f"Number of params in x0 ({shape}) does not match number \
+                              of ansatz parameters ({num_params})"
             )
     else:
         x0 = 2 * np.pi * np.random.rand(num_params)

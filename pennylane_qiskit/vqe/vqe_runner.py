@@ -14,7 +14,8 @@
 r"""
 This module contains a function to run aa custom PennyLane VQE problem on qiskit runtime.
 """
-# pylint: too-few-public-methods
+# pylint: disable=too-few-public-methods
+# pylint: disable=protected-access
 
 import os
 import inspect
@@ -231,7 +232,7 @@ def vqe_runner(
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
 
-        if isinstance(ansatz, qml.QNode) or isinstance(ansatz, qml.tape.QuantumTape):
+        if isinstance(ansatz, (qml.QNode, qml.tape.QuantumTape)):
             raise qml.QuantumFunctionError("Must be a callable quantum function.")
 
         if callable(ansatz):
@@ -248,7 +249,7 @@ def vqe_runner(
                         depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
                     )
             except IndexError:
-                raise qml.QuantumFunctionError("X0 has not enough parameters")
+                raise IndexError("X0 has not enough parameters")
 
             num_params = tape.num_params
 
@@ -283,8 +284,7 @@ def vqe_runner(
             circuits = []
 
             j = 0
-
-            for i, operation in enumerate(tape.operations):
+            for operation in tape.operations:
                 wires = qml.wires.Wires([wires_map[wire] for wire in operation.wires.tolist()])
                 par = operation.parameters
                 operation = operation.name
@@ -315,7 +315,8 @@ def vqe_runner(
 
             inputs["ansatz"] = circuit_ansatz
 
-        raise ValueError("Input ansatz is not a tape, quantum function or a str")
+        else:
+            raise ValueError("Input ansatz is not a tape, quantum function or a str")
 
     # Validate ansatz is in the module
     elif isinstance(ansatz, str):
@@ -324,7 +325,7 @@ def vqe_runner(
 
         ansatz_circ = getattr(lib_local, ansatz, None)
         if not ansatz_circ:
-            raise ValueError("Ansatz {} not in n_local circuit library.".format(ansatz))
+            raise ValueError(f"Ansatz {ansatz} not in n_local circuit library.")
         inputs["ansatz"] = ansatz
         inputs["ansatz_config"] = ansatz_config
 
