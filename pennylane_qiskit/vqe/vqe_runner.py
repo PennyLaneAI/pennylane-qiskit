@@ -14,8 +14,7 @@
 r"""
 This module contains a function to run aa custom PennyLane VQE problem on qiskit runtime.
 """
-# pylint: disable=too-few-public-methods
-# pylint: disable=protected-access
+# pylint: disable=too-few-public-methods,protected-access,too-many-arguments,too-many-branches,too-many-statements
 
 import os
 import inspect
@@ -248,8 +247,8 @@ def vqe_runner(
                     tape = qml.transforms.make_tape(ansatz)(x0).expand(
                         depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
                     )
-            except IndexError:
-                raise IndexError("X0 has not enough parameters")
+            except IndexError as e:
+                raise qml.QuantumFunctionError("X0 has not enough parameters") from e
 
             num_params = tape.num_params
 
@@ -410,7 +409,7 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
     for i, elem in enumerate(obs_list):
         o_str = ""
         for el in elem:
-            o_str += el
+            o_str.join(el)
         hamiltonian.append((coeff[i], o_str))
 
     return hamiltonian

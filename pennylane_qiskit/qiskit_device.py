@@ -378,6 +378,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return prob
 
     def batch_execute(self, circuits):
+        # pylint: disable=missing-function-docstrings
         compiled_circuits = []
 
         # Compile each circuit object
