@@ -72,19 +72,20 @@ class RuntimeJobWrapper:
             step (float): Value of the step.
             accepted (bool): Accepted if loss improved.
         """
-        job_id, (nfev, xk, fk, step, accepted) = args
+        _, (nfev, xk, fk, step, accepted) = args
         self.intermediate_results["nfev"].append(nfev)
         self.intermediate_results["parameters"].append(xk)
         self.intermediate_results["function"].append(fk)
         self.intermediate_results["step"].append(step)
         self.intermediate_results["accepted"].append(accepted)
 
-    def _scipycallback(self, job_id, xk):
+    def _scipycallback(self, *args):
         """The callback function that attaches interm results:
 
         Args:
             xk (array_like): A list or NumPy array to attach.
         """
+        _, xk = args
         self.intermediate_results["parameters"].append(xk)
 
     def __getattr__(self, attr):
@@ -107,19 +108,18 @@ class RuntimeJobWrapper:
 
 
 def vqe_runner(
-    backend,
-    hamiltonian,
-    x0,
-    program_id=None,
-    ansatz="EfficientSU2",
-    ansatz_config=None,
-    optimizer="SPSA",
-    optimizer_config=None,
-    shots=8192,
-    use_measurement_mitigation=False,
-    **kwargs,
+        backend,
+        hamiltonian,
+        x0,
+        program_id=None,
+        ansatz="EfficientSU2",
+        ansatz_config=None,
+        optimizer="SPSA",
+        optimizer_config=None,
+        shots=8192,
+        use_measurement_mitigation=False,
+        **kwargs,
 ):
-
     """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
 
     Parameters:
@@ -376,12 +376,12 @@ def vqe_runner(
 
     rt_job = RuntimeJobWrapper()
 
+    # Switch callback functions
     if optimizer in ["SPSA", "QNSPSA"]:
         job = provider.runtime.run(
             program_id, options=options, inputs=inputs, callback=rt_job._callback
         )
     else:
-        print("hi")
         job = provider.runtime.run(
             program_id, options=options, inputs=inputs, callback=rt_job._scipycallback
         )
@@ -431,6 +431,7 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
         else:
             obs_org.append([[obs.wires.tolist()[0], obs_str[obs.name]]])
 
+    # Create the hamiltonian terms as lists of strings
     obs_list = []
     for elem in obs_org:
         empty_obs = ["I"] * num_qubits
@@ -438,12 +439,10 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
             empty_obs[el[0]] = el[1]
         obs_list.append(empty_obs)
 
+    # Create the list of tuple with coeff and hammiltonians as strings
     hamiltonian = []
     for i, elem in enumerate(obs_list):
-        chunks = []
-        for el in elem:
-            chunks.append(el)
-        result = "".join(chunks)
+        result = "".join(elem)
         hamiltonian.append((coeff[i], result))
 
     return hamiltonian
