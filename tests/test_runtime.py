@@ -93,7 +93,6 @@ class TestCircuitRunner:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_batch_circuits(self, token, tol, shots):
-
         IBMQ.enable_account(token)
         dev = IBMQCircuitRunnerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
@@ -200,7 +199,6 @@ class TestSampler:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_batch_circuits(self, token, tol, shots):
-
         IBMQ.enable_account(token)
         dev = IBMQSamplerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
@@ -260,7 +258,8 @@ class TestCustomVQE:
 
         job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
                          hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[0.0],
-                         optimizer="SPSA", optimizer_config={"maxiter": 20})
+                         optimizer="SPSA", optimizer_config={"maxiter": 20},
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
 
         delete_vqe_runner(program_id=program_id)
 

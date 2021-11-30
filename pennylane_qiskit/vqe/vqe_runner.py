@@ -108,7 +108,7 @@ class RuntimeJobWrapper:
         return self._job.result(decoder=self._decoder)
 
 
-def upload_vqe_runner(self, hub="ibm-q", group="open", project="main"):
+def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     r"""Upload the custom VQE runner to the IBMQ cloud.
 
     Args:
@@ -119,6 +119,33 @@ def upload_vqe_runner(self, hub="ibm-q", group="open", project="main"):
     Returns:
         str: Program id that can be used to run the program.
     """
+
+    # Get IBMQ token from env.
+    token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
+    url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
+
+    if token is not None:
+        # token was provided by the user, so attempt to enable an
+        # IBM Q account manually
+        ibmq_kwargs = {"url": url} if url is not None else {}
+        IBMQ.enable_account(token, **ibmq_kwargs)
+    else:
+        # check if an IBM Q account is already active.
+        #
+        # * IBMQ v2 credentials stored in active_account().
+        #   If no accounts are active, it returns None.
+
+        if IBMQ.active_account() is None:
+            # no active account
+            try:
+                # attempt to load a v2 account stored on disk
+                IBMQ.load_account()
+            except IBMQAccountError:
+                # attempt to enable an account manually using
+                # a provided token
+                raise IBMQAccountError(
+                    "No active IBM Q account, and no IBM Q token provided."
+                ) from None
 
     meta = {
         "name": "vqe-runtime",
@@ -193,7 +220,7 @@ def upload_vqe_runner(self, hub="ibm-q", group="open", project="main"):
     return program_id
 
 
-def delete_vqe_runner(self, program_id):
+def delete_vqe_runner(program_id):
     r"""Delete the desired program on IBMQ platform.
     Args:
         program_id (str): Id of the qiskit runtime to be deleted.
@@ -403,6 +430,13 @@ def vqe_runner(
     inputs["optimizer_config"] = optimizer_config
     inputs["shots"] = shots
     inputs["use_measurement_mitigation"] = use_measurement_mitigation
+
+    # Specify a single hub, group and project
+    hub = kwargs.get("hub", "ibm-q")
+    group = kwargs.get("group", "open")
+    project = kwargs.get("project", "main")
+
+    provider = IBMQ.get_provider(hub=hub, group=group, project=project)
 
     rt_job = RuntimeJobWrapper()
 
