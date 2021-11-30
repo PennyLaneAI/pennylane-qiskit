@@ -243,7 +243,7 @@ class TestCustomVQE:
     def test_simple_hamiltonian(self, token, tol, shots):
         """Test a simple VQE problem with Hamiltonian and a circuit from PennyLane"""
         IBMQ.enable_account(token)
-        tol = 1e-3
+        tol = 1e-2
 
         def vqe_circuit(params):
             qml.RX(params[0], wires=0)
@@ -263,7 +263,7 @@ class TestCustomVQE:
         provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
         delete_vqe_runner(provider=provider, program_id=program_id)
 
-        assert np.allclose(job.result()['fun'], -1.413, tol)
+        assert np.allclose(job.result()['fun'], -1.43, tol)
         assert isinstance(job.intermediate_results, dict)
         assert "nfev" in job.intermediate_results
         assert "parameters" in job.intermediate_results
