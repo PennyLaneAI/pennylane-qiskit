@@ -220,7 +220,7 @@ def vqe_runner(
                     "default": False,
                 },
             },
-            "required": ["hamiltonian"],
+            "required": ["hamiltonian", "x0"],
         }
 
         meta["spec"]["return_values"] = {
@@ -236,7 +236,7 @@ def vqe_runner(
         }
 
         program_id = provider.runtime.upload_program(
-            data="pennylane_qiskit/vqe/vqe_runtime.py", metadata=meta
+            data="pennylane_runtime/vqe_runtime.py", metadata=meta
         )
 
     options = {"backend_name": backend}
