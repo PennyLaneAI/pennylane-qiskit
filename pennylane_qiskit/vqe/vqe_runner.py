@@ -220,12 +220,13 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     return program_id
 
 
-def delete_vqe_runner(program_id):
+def delete_vqe_runner(provider, program_id):
     r"""Delete the desired program on IBMQ platform.
     Args:
+        provider (object): IBMQ provider.
         program_id (str): Id of the qiskit runtime to be deleted.
     """
-    IBMRuntimeService.delete_program(program_id)
+    provider.runtime.delete_program(program_id)
 
 
 def vqe_runner(

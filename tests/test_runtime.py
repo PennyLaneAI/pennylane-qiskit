@@ -253,7 +253,6 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-
         program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
 
         job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
@@ -261,7 +260,8 @@ class TestCustomVQE:
                          shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 20},
                          kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
 
-        delete_vqe_runner(program_id=program_id)
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert np.allclose(job.result()['fun'], -1.413, tol)
         assert isinstance(job.intermediate_results, dict)
