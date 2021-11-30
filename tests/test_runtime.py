@@ -239,7 +239,8 @@ class TestSampler:
 class TestCustomVQE:
     """Class to test the custom VQE program."""
 
-    def test_simple_hamiltonian(self, token, tol):
+    @pytest.mark.parametrize("shots", [8000])
+    def test_simple_hamiltonian(self, token, tol, shots):
         """Test a simple VQE problem with Hamiltonian and a circuit from PennyLane"""
         IBMQ.enable_account(token)
         tol = 1e-3
@@ -257,7 +258,7 @@ class TestCustomVQE:
 
         job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
                          hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                         optimizer="SPSA", optimizer_config={"maxiter": 20},
+                         shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 20},
                          kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
 
         delete_vqe_runner(program_id=program_id)
