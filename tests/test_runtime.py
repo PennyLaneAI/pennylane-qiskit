@@ -245,9 +245,9 @@ class TestCustomVQE:
         IBMQ.enable_account(token)
         tol = 1e-3
 
-        def vqe_circuit(params, wires=0):
-            qml.RX(params[0], wires=wires)
-            qml.RY(params[1], wires=wires)
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RY(params[1], wires=0)
 
         coeffs = [1, 1]
         obs = [qml.PauliX(0), qml.PauliZ(0)]
