@@ -243,7 +243,7 @@ class TestCustomVQE:
     def test_simple_hamiltonian(self, token, tol, shots):
         """Test a simple VQE problem with Hamiltonian and a circuit from PennyLane"""
         IBMQ.enable_account(token)
-        tol = 1e-2
+        tol = 1e-1
 
         def vqe_circuit(params):
             qml.RX(params[0], wires=0)
