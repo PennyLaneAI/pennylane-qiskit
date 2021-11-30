@@ -139,12 +139,14 @@ def vqe_runner(
     Returns:
         OptimizeResult: The result in SciPy optimization format.
     """
+    # Init the dictionnaries
     if ansatz_config is None:
         ansatz_config = {}
 
     if optimizer_config is None:
         optimizer_config = {"maxiter": 100}
 
+    # Get IBMQ token from env.
     token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 
@@ -171,7 +173,12 @@ def vqe_runner(
                     "No active IBM Q account, and no IBM Q token provided."
                 ) from None
 
-    provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
+    # Specify a single hub, group and project
+    hub = kwargs.get("hub", "ibm-q")
+    group = kwargs.get("group", "open")
+    project = kwargs.get("project", "main")
+
+    provider = IBMQ.get_provider(hub=hub, group=group, project=project)
 
     if program_id is None:
         meta = {
@@ -229,10 +236,14 @@ def vqe_runner(
             "type": "object",
         }
 
-        meta["spec"]["interim_results"] = {
+        meta["spec"]["intermadiate_results"] = {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "description": "Parameter vector at current optimization step. This is a numpy array.",
-            "type": "array",
+            "description": "Dictionnary containing: "
+                           "The number of evaluation at current optimization step."
+                           "Parameter vector at current optimization step."
+                           "Function value at the current optimization step."
+                           "The size of the step.",
+            "type": "dict",
         }
 
         program_id = provider.runtime.upload_program(
@@ -243,8 +254,7 @@ def vqe_runner(
 
     inputs = {}
 
-    # Num qubits from hamiltonian
-
+    # Extract the number of qubit from the hamiltonian
     _, observables = hamiltonian.terms
 
     qubit_set = set()
@@ -263,7 +273,6 @@ def vqe_runner(
         if callable(ansatz):
             if len(inspect.getfullargspec(ansatz).args) != 1:
                 raise qml.QuantumFunctionError("Param should be a single vector")
-            # user passed something that is callable but not a tape or qnode.
             try:
                 if len(x0) == 1:
                     tape = qml.transforms.make_tape(ansatz)(x0[0]).expand(
@@ -290,6 +299,7 @@ def vqe_runner(
             # if no wire ordering is specified, take wire list from tape
             wires = tape.wires
 
+            # Compare the number of qubits from the circuit and from the hamiltonian
             num_qubits_t = len(wires)
 
             if num_qubits_t > num_qubits_h:
@@ -300,7 +310,7 @@ def vqe_runner(
             consecutive_wires = qml.wires.Wires(range(num_qubits))
             wires_map = OrderedDict(zip(wires, consecutive_wires))
 
-            # Create the qisit ansatz circuit
+            # From here: Create the Qiskit ansatz circuit
             params_vector = ParameterVector("p", num_params)
 
             reg = QuantumRegister(num_qubits, "q")
@@ -343,7 +353,7 @@ def vqe_runner(
         else:
             raise ValueError("Input ansatz is not a tape, quantum function or a str")
 
-    # Validate ansatz is in the module
+    # The circuit will be taken from the Qiskit library as a str was passed.
     elif isinstance(ansatz, str):
 
         num_qubits = num_qubits_h
@@ -351,6 +361,7 @@ def vqe_runner(
         ansatz_circ = getattr(lib_local, ansatz, None)
         if not ansatz_circ:
             raise ValueError(f"Ansatz {ansatz} not in n_local circuit library.")
+
         inputs["ansatz"] = ansatz
         inputs["ansatz_config"] = ansatz_config
 
@@ -364,6 +375,7 @@ def vqe_runner(
 
         inputs["x0"] = x0
 
+    # Transform the PennyLane hamilonian to a suitable form
     hamiltonian = hamiltonian_to_list_string(hamiltonian, num_qubits)
 
     inputs["hamiltonian"] = hamiltonian
@@ -376,7 +388,7 @@ def vqe_runner(
 
     rt_job = RuntimeJobWrapper()
 
-    # Switch callback functions
+    # Callbacks functions are different between optimizers.
     if optimizer in ["SPSA", "QNSPSA"]:
         job = provider.runtime.run(
             program_id, options=options, inputs=inputs, callback=rt_job._callback
@@ -391,7 +403,7 @@ def vqe_runner(
 
 
 def hamiltonian_to_list_string(hamiltonian, num_qubits):
-    """Convert a hamiltonian from PennyLane to a list of coefficient and strings.
+    r"""Convert a hamiltonian from PennyLane to a list of coefficient and strings.
 
     Args:
         hamiltonian (qml.Hamiltonian): An Hamiltonian from PennyLane.

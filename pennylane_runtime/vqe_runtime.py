@@ -33,7 +33,7 @@ def opstr_to_meas_circ(op_str):
         op_str (list): List of strings representing the operators needed for measurements.
 
     Returns:
-        list: List of circuits for measurement post-rotations
+        list: List of circuits for rotations before measurement.
     """
     num_qubits = len(op_str[0])
     circs = []
@@ -99,6 +99,7 @@ def main(
 
     num_qubits = len(op_strings[0])
 
+    # Get the Qiskit circuit from the library if a str was given
     if isinstance(ansatz, str):
         ansatz_instance = getattr(lib_local, ansatz)
         ansatz_circuit = ansatz_instance(num_qubits, **ansatz_config)
@@ -111,14 +112,12 @@ def main(
         string.replace("X", "Z").replace("Y", "Z").replace("H", "Z") for string in op_strings
     ]
 
-    # Take the ansatz circuits, add the single-qubit measurement basis rotations from
-    # meas_circs, and finally append the measurements themselves.
+    # Take the ansatz circuits and add measurements.
     full_circs = [ansatz_circuit.compose(mcirc).measure_all(inplace=False) for mcirc in meas_circs]
 
-    # Get the number of parameters in the ansatz circuit.
     num_params = ansatz_circuit.num_parameters
 
-    # Use a given initial state, if any, or do random initial state.
+    # Check initial state
     if x0 is not None:
         x0 = np.asarray(x0, dtype=float)
         if x0.shape[0] != num_params:
@@ -130,11 +129,13 @@ def main(
     else:
         x0 = 2 * np.pi * np.random.rand(num_params)
 
+    # Transpile the circuits
     trans_dict = {}
     if not backend.configuration().simulator:
         trans_dict = {"layout_method": "sabre", "routing_method": "sabre"}
     trans_circs = transpile(full_circs, backend, optimization_level=3, **trans_dict)
 
+    # Measurement mitigation
     if use_measurement_mitigation:
         maps = mthree.utils.final_measurement_mapping(trans_circs)
         mit = mthree.M3Mitigation(backend)
@@ -144,10 +145,10 @@ def main(
         user_messenger.publish(args)
 
     def vqe_func(params):
-        # Attach (bind) parameters in params vector to the transpiled circuits.
+        # Binds parameters to the transpiled circuits.
         bound_circs = [circ.bind_parameters(params) for circ in trans_circs]
 
-        # Submit the job and get the resultant counts back
+        # Submit the job and get the counts
         counts = backend.run(bound_circs, shots=shots).result().get_counts()
 
         if use_measurement_mitigation:
@@ -159,7 +160,7 @@ def main(
         energy = np.sum(coeffs * expvals).real
         return energy
 
-    # Since SPSA is not in SciPy need if statement
+    # SPSA and QNSPSA are taken from Qiskit and not SciPy
     if optimizer == "SPSA":
         spsa = SPSA(**optimizer_config, callback=callback)
         x, loss, nfev = spsa.optimize(num_params, vqe_func, initial_point=x0)
@@ -183,10 +184,10 @@ def main(
             message="Optimization terminated successfully.",
             success=True,
         )
-    # All other SciPy optimizers here
+    # SciPy optimizers
     else:
         res = opt.minimize(
             vqe_func, x0, method=optimizer, options=optimizer_config, callback=callback
         )
-    # Return result. OptimizeResult is a subclass of dict.
+
     return res
