@@ -30,7 +30,6 @@ from qiskit.circuit import ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit import IBMQ
 from qiskit.providers.ibmq.exceptions import IBMQAccountError
-from qiskit.providers.ibmq.runtime import IBMRuntimeService
 
 from scipy.optimize import OptimizeResult
 
