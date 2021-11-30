@@ -30,6 +30,7 @@ from qiskit.circuit import ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit import IBMQ
 from qiskit.providers.ibmq.exceptions import IBMQAccountError
+from qiskit.providers.ibmq.runtime import IBMRuntimeService
 
 from scipy.optimize import OptimizeResult
 
@@ -107,18 +108,111 @@ class RuntimeJobWrapper:
         return self._job.result(decoder=self._decoder)
 
 
+def upload_vqe_runner(self, hub="ibm-q", group="open", project="main"):
+    r"""Upload the custom VQE runner to the IBMQ cloud.
+
+    Args:
+        hub (str): Ibmq provider hub.
+        group (str): Ibmq provider group.
+        project (str): Ibmq provider project.
+
+    Returns:
+        str: Program id that can be used to run the program.
+    """
+
+    meta = {
+        "name": "vqe-runtime",
+        "description": "A sample VQE program.",
+        "max_execution_time": 100000,
+        "spec": {},
+    }
+
+    meta["spec"]["parameters"] = {
+        "$schema": "https://json-schema.org/draft/2019-09/schema",
+        "properties": {
+            "hamiltonian": {
+                "description": "Hamiltonian whose ground state we want to find.",
+                "type": "array",
+            },
+            "x0": {
+                "description": "Initial vector of parameters for the quantum circuit.",
+                "type": "array",
+            },
+            "ansatz": {
+                "description": "Qiskit circuit or name of ansatz quantum circuit to use, default='EfficientSU2'",
+                "type": "[QuantumCircuit,string]",
+                "default": "EfficientSU2",
+            },
+            "ansatz_config": {
+                "description": "Configuration parameters for the ansatz circuit.",
+                "type": "dict",
+            },
+            "optimizer": {
+                "description": "Classical optimizer to use, default='SPSA'.",
+                "type": "string",
+                "default": "SPSA",
+            },
+            "optimizer_config": {
+                "description": "Configuration parameters for the optimizer.",
+                "type": "dict",
+            },
+            "shots": {
+                "description": "The number of shots used for each circuit evaluation.",
+                "type": "integer",
+            },
+            "use_measurement_mitigation": {
+                "description": "Use measurement mitigation, default=False.",
+                "type": "boolean",
+                "default": False,
+            },
+        },
+        "required": ["hamiltonian", "x0"],
+    }
+
+    meta["spec"]["return_values"] = {
+        "$schema": "https://json-schema.org/draft/2019-09/schema",
+        "description": "Final result in SciPy optimizer format",
+        "type": "object",
+    }
+
+    meta["spec"]["intermadiate_results"] = {
+        "$schema": "https://json-schema.org/draft/2019-09/schema",
+        "description": "Dictionnary containing: "
+        "The number of evaluation at current optimization step."
+        "Parameter vector at current optimization step."
+        "Function value at the current optimization step."
+        "The size of the step.",
+        "type": "dict",
+    }
+
+    provider = IBMQ.get_provider(hub=hub, group=group, project=project)
+
+    program_id = provider.runtime.upload_program(
+        data="pennylane_runtime/vqe_runtime.py", metadata=meta
+    )
+    return program_id
+
+
+def delete_vqe_runner(self, program_id):
+    r"""Delete the desired program on IBMQ platform.
+    Args:
+        program_id (str): Id of the qiskit runtime to be deleted.
+    """
+    IBMRuntimeService.delete_program(program_id)
+
+
 def vqe_runner(
-        backend,
-        hamiltonian,
-        x0,
-        program_id=None,
-        ansatz="EfficientSU2",
-        ansatz_config=None,
-        optimizer="SPSA",
-        optimizer_config=None,
-        shots=8192,
-        use_measurement_mitigation=False,
-        **kwargs,
+    backend,
+    hamiltonian,
+    x0,
+    program_id,
+    ansatz="EfficientSU2",
+    ansatz_config=None,
+    optimizer="SPSA",
+    optimizer_config=None,
+    shots=8192,
+    use_measurement_mitigation=False,
+    **kwargs,
 ):
     """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
 
@@ -135,6 +229,7 @@ def vqe_runner(
         optimizer_config (dict): Optional, configuration parameters for the optimizer.
         shots (int): Optional, number of shots to take per circuit, default=1024.
         use_measurement_mitigation (bool): Optional, use measurement mitigation, default=False.
+        delete(bool): delete the program after using it, default=False.
 
     Returns:
         OptimizeResult: The result in SciPy optimization format.
@@ -172,83 +267,6 @@ def vqe_runner(
                 raise IBMQAccountError(
                     "No active IBM Q account, and no IBM Q token provided."
                 ) from None
-
-    # Specify a single hub, group and project
-    hub = kwargs.get("hub", "ibm-q")
-    group = kwargs.get("group", "open")
-    project = kwargs.get("project", "main")
-
-    provider = IBMQ.get_provider(hub=hub, group=group, project=project)
-
-    if program_id is None:
-        meta = {
-            "name": "vqe-runtime",
-            "description": "A sample VQE program.",
-            "max_execution_time": 100000,
-            "spec": {},
-        }
-
-        meta["spec"]["parameters"] = {
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "properties": {
-                "hamiltonian": {
-                    "description": "Hamiltonian whose ground state we want to find.",
-                    "type": "array",
-                },
-                "x0": {
-                    "description": "Initial vector of parameters for the quantum circuit.",
-                    "type": "array",
-                },
-                "ansatz": {
-                    "description": "Qiskit circuit or name of ansatz quantum circuit to use, default='EfficientSU2'",
-                    "type": "[QuantumCircuit,string]",
-                    "default": "EfficientSU2",
-                },
-                "ansatz_config": {
-                    "description": "Configuration parameters for the ansatz circuit.",
-                    "type": "dict",
-                },
-                "optimizer": {
-                    "description": "Classical optimizer to use, default='SPSA'.",
-                    "type": "string",
-                    "default": "SPSA",
-                },
-                "optimizer_config": {
-                    "description": "Configuration parameters for the optimizer.",
-                    "type": "dict",
-                },
-                "shots": {
-                    "description": "The number of shots used for each circuit evaluation.",
-                    "type": "integer",
-                },
-                "use_measurement_mitigation": {
-                    "description": "Use measurement mitigation, default=False.",
-                    "type": "boolean",
-                    "default": False,
-                },
-            },
-            "required": ["hamiltonian", "x0"],
-        }
-
-        meta["spec"]["return_values"] = {
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "description": "Final result in SciPy optimizer format",
-            "type": "object",
-        }
-
-        meta["spec"]["intermadiate_results"] = {
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "description": "Dictionnary containing: "
-                           "The number of evaluation at current optimization step."
-                           "Parameter vector at current optimization step."
-                           "Function value at the current optimization step."
-                           "The size of the step.",
-            "type": "dict",
-        }
-
-        program_id = provider.runtime.upload_program(
-            data="pennylane_runtime/vqe_runtime.py", metadata=meta
-        )
 
     options = {"backend_name": backend}
 

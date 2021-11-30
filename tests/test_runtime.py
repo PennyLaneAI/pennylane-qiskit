@@ -8,6 +8,7 @@ from qiskit import IBMQ
 
 from pennylane_qiskit import IBMQCircuitRunnerDevice
 from pennylane_qiskit import IBMQSamplerDevice
+from pennylane_qiskit.vqe.vqe_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner
 
 
 @pytest.fixture
@@ -238,6 +239,35 @@ class TestSampler:
 
 
 class TestCustomVQE:
-    def test_simple_circuit(self):
+    """Class to test the custom VQE program."""
 
-        return True
+    def test_simple_hamiltonian(self, token):
+        """Test a simple VQE problem with Hamiltonian and a circuit from PennyLane"""
+        tol = 1e-3
+        symbols = ["H", "H"]
+        coordinates = np.array([0.0, 0.0, -0.6614, 0.0, 0.0, 0.6614])
+
+        hamiltonian, qubits = qml.qchem.molecular_hamiltonian(symbols, coordinates)
+
+        electrons = 2
+        hf = qml.qchem.hf_state(electrons, qubits)
+
+        def vqe_circuit(param):
+            qml.BasisState(hf, wires=range(qubits))
+            qml.DoubleExcitation(param, wires=[0, 1, 2, 3])
+
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[0.0],
+                         optimizer="SPSA", optimizer_config={"maxiter": 20})
+
+        delete_vqe_runner(program_id=program_id)
+
+        assert np.allclose(job.result()['fun'], -1.136, tol)
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
