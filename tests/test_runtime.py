@@ -257,7 +257,7 @@ class TestCustomVQE:
 
         job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
                          hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                         shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 20},
+                         shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
                          kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
 
         provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
