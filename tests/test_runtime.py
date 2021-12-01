@@ -316,7 +316,7 @@ class TestCustomVQE:
 
         dev = qml.device("default.qubit", wires=1)
 
-        @qml.QNode(dev)
+        @qml.qnode(dev)
         def vqe_circuit(params):
             qml.RX(params[0], wires=0)
             qml.RY(params[1], wires=0)
