@@ -263,10 +263,357 @@ class TestCustomVQE:
         provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
         delete_vqe_runner(provider=provider, program_id=program_id)
 
-        assert np.allclose(job.result()['fun'], -1.43, tol)
+        assert np.allclose(job.result['fun'], -1.43, tol)
         assert isinstance(job.intermediate_results, dict)
         assert "nfev" in job.intermediate_results
         assert "parameters" in job.intermediate_results
         assert "function" in job.intermediate_results
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
+
+    @pytest.mark.parametrize("shots", [8000])
+    def test_simple_hamiltonian_scipy(self, token, tol, shots):
+        """Test a simple VQE problem with Hamiltonian and a circuit from PennyLane."""
+        IBMQ.enable_account(token)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz="EfficientSU2", x0=[3.97507603, 3.00854038],
+                         shots=shots,
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+    @pytest.mark.parametrize("shots", [8000])
+    def test_qnode(self, token, tol, shots):
+        """Test that we cannot pass a Qnode as ansatz circuit"""
+        IBMQ.enable_account(token)
+
+        dev = qml.device("default.qubit", wires=1)
+
+        @qml.QNode(dev)
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RY(params[1], wires=0)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        with pytest.raises(qml.QuantumFunctionError, match="Must be a callable quantum function."):
+            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                       hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                       shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
+                       kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+    @pytest.mark.parametrize("shots", [8000])
+    def test_wrong_input(self, token, tol, shots):
+        """Test that we can only give a single vector parameter to the ansatz circuit."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params, wire):
+            qml.RX(params[0], wires=wire)
+            qml.RY(params[1], wires=wire)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        with pytest.raises(qml.QuantumFunctionError, match="Param should be a single vector"):
+            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                       hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                       shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
+                       kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+    @pytest.mark.parametrize("shots", [8000])
+    def test_wrong_number_input_param(self, token, tol, shots):
+        """Test that we need a certain number of parameters."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RY(params[1], wires=0)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        with pytest.raises(qml.QuantumFunctionError, match="X0 has not enough parameters"):
+            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                       hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[0],
+                       shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
+                       kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+    @pytest.mark.parametrize("shots", [8000])
+    def test_one_param(self, token, tol, shots):
+        """Test that we can only give a single vector parameter to the ansatz circuit."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[0.0],
+                         shots=shots, optimizer_config={"maxiter": 10},
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+    @pytest.mark.parametrize("shots", [8000])
+    def test_too_many_param(self, token, tol, shots):
+        """Test that we handle the case where too many parameters were given."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=0)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038, 3.55637849],
+                         shots=shots, optimizer_config={"maxiter": 10},
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+    def test_more_qubits_in_circuit_than_hamiltonian(self, token, tol, shots):
+        """Test that we handle the case where there are more qubits in the circuit than the hamiltonian."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=1)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                         shots=shots, optimizer_config={"maxiter": 10},
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+    def test_qubitunitary(self, token, tol, shots):
+        """Test that we can handle a QubitUnitary operation."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.QubitUnitary(np.array([[1, 0], [0, 1]]), wires=0)
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=1)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                         shots=shots, optimizer_config={"maxiter": 10},
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+    def test_inverse(self, token, tol, shots):
+        """Test that we can handle inverse operations."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0).inv()
+            qml.RX(params[1], wires=1)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                         shots=shots, optimizer_config={"maxiter": 10},
+                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+    def test_hamiltonian_format(self, token, tol, shots):
+        """Test that we can handle inverse operations."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=1)
+
+        hamiltonian = qml.PauliZ(wires=0)
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        with pytest.raises(qml.QuantumFunctionError, match="Hamiltonian required."):
+            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                             shots=shots, optimizer_config={"maxiter": 10},
+                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+    def test_hamiltonian_tensor(self, token, tol, shots):
+        """Test that we can handle tensor hamiltonians."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=1)
+
+        coeffs = [0.2, -0.543]
+        obs = [qml.PauliX(0) @ qml.PauliZ(1), qml.PauliZ(0) @ qml.Hadamard(1)]
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+
+        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                             shots=shots, optimizer_config={"maxiter": 10},
+                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+        assert isinstance(job.intermediate_results, dict)
+        assert "nfev" in job.intermediate_results
+        assert "parameters" in job.intermediate_results
+        assert "function" in job.intermediate_results
+        assert "step" in job.intermediate_results
+        assert "accepted" in job.intermediate_results
+
+
+    def test_not_auth_operation_hamiltonian(self, token, tol, shots):
+        """Test that we can handle inverse operations."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=0)
+
+        H = 1 / np.sqrt(2) * np.array([[1, 1], [1, -1]])
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.Hermitian(H, wires=0)]
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        with pytest.raises(qml.QuantumFunctionError, match="Obs not accepted"):
+            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                             shots=shots, optimizer_config={"maxiter": 10},
+                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)
+
+    def test_not_auth_operation_hamiltonian_tensor(self, token, tol, shots):
+        """Test that we can handle inverse operations."""
+        IBMQ.enable_account(token)
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RX(params[1], wires=1)
+
+        H = 1 / np.sqrt(2) * np.array([[1, 1], [1, -1]])
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0) @ qml.Hermitian(H, wires=1)]
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+
+        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+
+        with pytest.raises(qml.QuantumFunctionError, match="Obs not accepted"):
+            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
+                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
+                             shots=shots, optimizer_config={"maxiter": 10},
+                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+
+        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        delete_vqe_runner(provider=provider, program_id=program_id)

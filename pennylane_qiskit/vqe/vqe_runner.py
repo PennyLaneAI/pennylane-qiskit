@@ -345,12 +345,12 @@ def vqe_runner(
             wires = tape.wires
 
             # Compare the number of qubits from the circuit and from the hamiltonian
-            num_qubits_t = len(wires)
+            num_qubits_c = len(wires)
 
-            if num_qubits_t > num_qubits_h:
-                num_qubits = num_qubits_t
-            elif num_qubits_t <= num_qubits_h:
-                num_qubits = num_qubits_t
+            if num_qubits_c > num_qubits_h:
+                num_qubits = num_qubits_c
+            elif num_qubits_c <= num_qubits_h:
+                num_qubits = num_qubits_h
 
             consecutive_wires = qml.wires.Wires(range(num_qubits))
             wires_map = OrderedDict(zip(wires, consecutive_wires))
