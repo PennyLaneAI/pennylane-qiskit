@@ -390,6 +390,7 @@ class TestCustomVQE:
         def vqe_circuit(params):
             qml.RX(params[0], wires=0)
             qml.RY(params[1], wires=0)
+            qml.RY(params[2], wires=0)
 
         coeffs = [1, 1]
         obs = [qml.PauliX(0), qml.PauliZ(0)]
@@ -403,7 +404,7 @@ class TestCustomVQE:
                 backend="ibmq_qasm_simulator",
                 hamiltonian=hamiltonian,
                 ansatz=vqe_circuit,
-                x0=[0],
+                x0=[0, 0],
                 shots=shots,
                 optimizer="SPSA",
                 optimizer_config={"maxiter": 40},
@@ -423,7 +424,7 @@ class TestCustomVQE:
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
-            qml.RX(params[0], wires=0)
+            qml.RX(params, wires=0)
 
         coeffs = [1, 1]
         obs = [qml.PauliX(0), qml.PauliZ(0)]
