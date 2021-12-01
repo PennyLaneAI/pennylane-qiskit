@@ -270,7 +270,7 @@ class TestCustomVQE:
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
-        assert np.allclose(job.result["fun"], -1.43, tol)
+        assert np.allclose(job.result()["fun"], -1.43, tol)
         assert isinstance(job.intermediate_results, dict)
         assert "nfev" in job.intermediate_results
         assert "parameters" in job.intermediate_results
@@ -488,6 +488,7 @@ class TestCustomVQE:
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_more_qubits_in_circuit_than_hamiltonian(self, token, tol, shots):
         """Test that we handle the case where there are more qubits in the circuit than the hamiltonian."""
         IBMQ.enable_account(token)
@@ -523,6 +524,7 @@ class TestCustomVQE:
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_qubitunitary(self, token, tol, shots):
         """Test that we can handle a QubitUnitary operation."""
         IBMQ.enable_account(token)
@@ -559,6 +561,7 @@ class TestCustomVQE:
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_inverse(self, token, tol, shots):
         """Test that we can handle inverse operations."""
         IBMQ.enable_account(token)
@@ -594,6 +597,7 @@ class TestCustomVQE:
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_hamiltonian_format(self, token, tol, shots):
         """Test that we can handle inverse operations."""
         IBMQ.enable_account(token)
@@ -624,6 +628,7 @@ class TestCustomVQE:
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_hamiltonian_tensor(self, token, tol, shots):
         """Test that we can handle tensor hamiltonians."""
         IBMQ.enable_account(token)
@@ -659,6 +664,7 @@ class TestCustomVQE:
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_not_auth_operation_hamiltonian(self, token, tol, shots):
         """Test that we can handle inverse operations."""
         IBMQ.enable_account(token)
@@ -693,6 +699,7 @@ class TestCustomVQE:
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
+    @pytest.mark.parametrize("shots", [8000])
     def test_not_auth_operation_hamiltonian_tensor(self, token, tol, shots):
         """Test that we can handle inverse operations."""
         IBMQ.enable_account(token)
