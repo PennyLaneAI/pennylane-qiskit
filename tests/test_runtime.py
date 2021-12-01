@@ -253,17 +253,24 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                         shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer="SPSA",
+            optimizer_config={"maxiter": 40},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
-        assert np.allclose(job.result['fun'], -1.43, tol)
+        assert np.allclose(job.result["fun"], -1.43, tol)
         assert isinstance(job.intermediate_results, dict)
         assert "nfev" in job.intermediate_results
         assert "parameters" in job.intermediate_results
@@ -280,14 +287,19 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz="EfficientSU2", x0=[3.97507603, 3.00854038],
-                         shots=shots,
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz="EfficientSU2",
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -313,15 +325,26 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
         with pytest.raises(qml.QuantumFunctionError, match="Must be a callable quantum function."):
-            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                       hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                       shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
-                       kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+            vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[3.97507603, 3.00854038],
+                shots=shots,
+                optimizer="SPSA",
+                optimizer_config={"maxiter": 40},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
+            )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
     @pytest.mark.parametrize("shots", [8000])
@@ -337,15 +360,26 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
         with pytest.raises(qml.QuantumFunctionError, match="Param should be a single vector"):
-            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                       hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                       shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
-                       kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+            vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[3.97507603, 3.00854038],
+                shots=shots,
+                optimizer="SPSA",
+                optimizer_config={"maxiter": 40},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
+            )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
     @pytest.mark.parametrize("shots", [8000])
@@ -361,15 +395,26 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
         with pytest.raises(qml.QuantumFunctionError, match="X0 has not enough parameters"):
-            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                       hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[0],
-                       shots=shots, optimizer="SPSA", optimizer_config={"maxiter": 40},
-                       kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+            vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[0],
+                shots=shots,
+                optimizer="SPSA",
+                optimizer_config={"maxiter": 40},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
+            )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
     @pytest.mark.parametrize("shots", [8000])
@@ -384,14 +429,20 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[0.0],
-                         shots=shots, optimizer_config={"maxiter": 10},
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[0.0],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -414,14 +465,20 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038, 3.55637849],
-                         shots=shots, optimizer_config={"maxiter": 10},
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038, 3.55637849],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -443,14 +500,20 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                         shots=shots, optimizer_config={"maxiter": 10},
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -473,14 +536,20 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                         shots=shots, optimizer_config={"maxiter": 10},
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -502,14 +571,20 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.PauliZ(0)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                         hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                         shots=shots, optimizer_config={"maxiter": 10},
-                         kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -528,15 +603,25 @@ class TestCustomVQE:
             qml.RX(params[1], wires=1)
 
         hamiltonian = qml.PauliZ(wires=0)
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
         with pytest.raises(qml.QuantumFunctionError, match="Hamiltonian required."):
-            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                             shots=shots, optimizer_config={"maxiter": 10},
-                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+            vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[3.97507603, 3.00854038],
+                shots=shots,
+                optimizer_config={"maxiter": 10},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
+            )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
     def test_hamiltonian_tensor(self, token, tol, shots):
@@ -551,15 +636,20 @@ class TestCustomVQE:
         obs = [qml.PauliX(0) @ qml.PauliZ(1), qml.PauliZ(0) @ qml.Hadamard(1)]
         hamiltonian = qml.Hamiltonian(coeffs, obs)
 
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
 
-        job = vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                             shots=shots, optimizer_config={"maxiter": 10},
-                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
-
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
         assert isinstance(job.intermediate_results, dict)
@@ -568,7 +658,6 @@ class TestCustomVQE:
         assert "function" in job.intermediate_results
         assert "step" in job.intermediate_results
         assert "accepted" in job.intermediate_results
-
 
     def test_not_auth_operation_hamiltonian(self, token, tol, shots):
         """Test that we can handle inverse operations."""
@@ -583,15 +672,25 @@ class TestCustomVQE:
         obs = [qml.PauliX(0), qml.Hermitian(H, wires=0)]
         hamiltonian = qml.Hamiltonian(coeffs, obs)
 
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
         with pytest.raises(qml.QuantumFunctionError, match="Obs not accepted"):
-            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                             shots=shots, optimizer_config={"maxiter": 10},
-                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+            vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[3.97507603, 3.00854038],
+                shots=shots,
+                optimizer_config={"maxiter": 10},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
+            )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
 
     def test_not_auth_operation_hamiltonian_tensor(self, token, tol, shots):
@@ -607,13 +706,23 @@ class TestCustomVQE:
         obs = [qml.PauliX(0) @ qml.Hermitian(H, wires=1)]
         hamiltonian = qml.Hamiltonian(coeffs, obs)
 
-        program_id = upload_vqe_runner(hub='ibm-q-startup', group='xanadu', project='reservations')
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
         with pytest.raises(qml.QuantumFunctionError, match="Obs not accepted"):
-            vqe_runner(program_id=program_id, backend="ibmq_qasm_simulator",
-                             hamiltonian=hamiltonian, ansatz=vqe_circuit, x0=[3.97507603, 3.00854038],
-                             shots=shots, optimizer_config={"maxiter": 10},
-                             kwargs={'hub': 'ibm-q-startup', 'group': 'ibm-q-startup', 'project': 'reservations'})
+            vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[3.97507603, 3.00854038],
+                shots=shots,
+                optimizer_config={"maxiter": 10},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
+            )
 
-        provider = IBMQ.get_provider(hub='ibm-q-startup', group='xanadu', project='reservations')
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
