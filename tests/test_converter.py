@@ -477,12 +477,13 @@ class TestConverterGates:
         qc.s(single_wire)
         qc.t(single_wire)
         qc.sx(single_wire)
+        qc.id(single_wire)
 
         quantum_circuit = load(qc)
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 7
+        assert len(recorder.queue) == 8
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -511,6 +512,10 @@ class TestConverterGates:
         assert recorder.queue[6].name == "SX"
         assert recorder.queue[6].parameters == []
         assert recorder.queue[6].wires == Wires(single_wire)
+
+        assert recorder.queue[7].name == "Identity"
+        assert recorder.queue[7].parameters == []
+        assert recorder.queue[7].wires == Wires(single_wire)
 
     def test_one_qubit_parametrized_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the one-qubit parametrized operations supported by PennyLane."""

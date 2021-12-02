@@ -16,6 +16,7 @@ class TestInverses:
     @pytest.mark.parametrize(
         "name,expected_output",
         [
+            ("Identity", 1),
             ("PauliX", -1),
             ("PauliY", -1),
             ("PauliZ", 1),
