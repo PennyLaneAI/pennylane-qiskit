@@ -134,15 +134,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # check that the backend exists
         if backend not in self._capabilities["backend"]:
             raise ValueError(
-                "Backend '{}' does not exist. Available backends "
-                "are:\n {}".format(backend, self._capabilities["backend"])
+                f"Backend '{backend}' does not exist. Available backends "
+                f"are:\n {self._capabilities['backend']}"
             )
 
         # perform validation against backend
         b = self.backend
         if len(self.wires) > b.configuration().n_qubits:
             raise ValueError(
-                "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
+                f"Backend '{backend}' supports maximum {b.configuration().n_qubits} wires"
             )
 
         # Initialize inner state
