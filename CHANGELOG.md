@@ -22,7 +22,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, Antal Száva
+Guillermo Alonso-Linaje, David Ittah, Antal Száva
 
 ---
 
