@@ -6,6 +6,9 @@
 
 ### Improvements
 
+* Added native support for the `qml.Identity` operation to the Qiskit devices and converters.
+  [(#162)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/162)
+
 * Added support for the `qml.SX` operation to the Qiskit devices.
   [(#158)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/158)
 
