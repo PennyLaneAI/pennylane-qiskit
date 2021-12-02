@@ -409,6 +409,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit.observables)
+            res = np.asarray(res)
             results.append(res)
 
         if self.tracker.active:
