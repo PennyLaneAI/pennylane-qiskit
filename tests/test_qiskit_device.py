@@ -3,6 +3,7 @@ import pytest
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
+from pennylane_qiskit.qiskit_device import QiskitDevice
 import qiskit.providers.aer.noise as noise
 
 test_transpile_options = [
@@ -98,3 +99,78 @@ class TestAerBackendOptions:
 
         dev2 = qml.device("qiskit.aer", wires=2)
         assert dev2.backend.options.get("noise_model") is None
+
+
+@pytest.mark.parametrize("shots", [None])
+class TestBatchExecution:
+    """Tests for the batch_execute method."""
+
+    with qml.tape.QuantumTape() as tape1:
+        qml.PauliX(wires=0)
+        qml.expval(qml.PauliZ(wires=0)), qml.expval(qml.PauliZ(wires=1))
+
+    with qml.tape.JacobianTape() as tape2:
+        qml.PauliX(wires=0)
+        qml.expval(qml.PauliZ(wires=0))
+
+    @pytest.mark.parametrize("n_tapes", [1, 2, 3])
+    def test_calls_to_execute(self, device, n_tapes, mocker):
+        """Tests that only the device's dedicated batch execute method is
+        called and not the general execute method."""
+
+        dev = device(2)
+        spy = mocker.spy(QiskitDevice, "execute")
+
+        tapes = [self.tape1] * n_tapes
+        dev.batch_execute(tapes)
+
+        # Check that QiskitDevice.execute was not called
+        assert spy.call_count == 0
+
+    @pytest.mark.parametrize("n_tapes", [1, 2, 3])
+    def test_calls_to_reset(self, n_tapes, mocker, device):
+        """Tests that the device's reset method is called the correct number of
+        times."""
+
+        dev = device(2)
+        spy = mocker.spy(QiskitDevice, "reset")
+
+        tapes = [self.tape1] * n_tapes
+        dev.batch_execute(tapes)
+
+        assert spy.call_count == n_tapes
+
+    def test_result(self, device, tol):
+        """Tests that the result has the correct shape and entry types."""
+        dev = device(2)
+        tapes = [self.tape1, self.tape2]
+        res = dev.batch_execute(tapes)
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        tape1_expected = dev.execute(self.tape1)
+
+        dev.reset()
+        tape2_expected = dev.execute(self.tape2)
+
+        assert len(res) == 2
+        assert isinstance(res[0], np.ndarray)
+        assert np.allclose(res[0], tape1_expected, atol=0)
+
+        assert isinstance(res[1], np.ndarray)
+        assert np.allclose(res[1], tape2_expected, atol=0)
+
+    def test_result_empty_tape(self, device, tol):
+        """Tests that the result has the correct shape and entry types for empty tapes."""
+        dev = device(2)
+
+        empty_tape = qml.tape.QuantumTape()
+        tapes = [empty_tape] * 3
+        res = dev.batch_execute(tapes)
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        assert len(res) == 3
+        assert np.allclose(res[0], dev.execute(empty_tape), atol=0)

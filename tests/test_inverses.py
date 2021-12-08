@@ -16,12 +16,14 @@ class TestInverses:
     @pytest.mark.parametrize(
         "name,expected_output",
         [
+            ("Identity", 1),
             ("PauliX", -1),
             ("PauliY", -1),
             ("PauliZ", 1),
             ("Hadamard", 0),
             ("S", 1),
             ("T", 1),
+            ("SX", 0),
         ],
     )
     def test_supported_gate_inverse_single_wire_no_parameters(self, name, expected_output):
@@ -250,6 +252,22 @@ class TestInverses:
         def circuit():
             qml.RX(par, wires=[0])
             qml.T(wires=[0]).inv()
+            return qml.expval(qml.PauliX(0))
+
+        assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
+
+    @pytest.mark.parametrize("par", [np.pi / i for i in range(1, 5)])
+    def test_sx_gate_inverses(self, par):
+        """Tests the inverse of the SX gate"""
+
+        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+
+        expected_output = math.sin(par)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.RY(par, wires=[0])
+            qml.SX(wires=[0]).inv()
             return qml.expval(qml.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
