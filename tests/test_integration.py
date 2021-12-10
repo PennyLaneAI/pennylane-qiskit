@@ -569,3 +569,25 @@ class TestBatchExecution:
         # Check that run was called twice: for the partial derivatives and for
         # running the circuit
         assert spy2.call_count == 2
+
+    def test_tracker(self):
+        """Tests the device tracker with batch execution."""
+        dev = qml.device('qiskit.aer', shots=100, wires=3)
+        x = np.array([0.1, 0.2])
+
+        @qml.qnode(dev, diff_method="parameter-shift")
+        def circuit(x):
+            qml.RX(x, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        x = tensor(0.1, requires_grad=True)
+
+        with qml.Tracker(dev) as tracker:
+            qml.grad(circuit)(x)
+
+        expected = {'executions': [1, 1, 1],
+                     'shots': [100, 100, 100],
+                     'batches': [1, 1],
+                     'batch_len': [1, 2]}
+
+        assert tracker.history == expected
