@@ -8,6 +8,7 @@
   gradients internally.
   [(#156)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/156)
   [(#163)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/163)
+  [(#167)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/167)
 
 ### Breaking changes
 
