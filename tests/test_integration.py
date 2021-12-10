@@ -573,7 +573,6 @@ class TestBatchExecution:
     def test_tracker(self):
         """Tests the device tracker with batch execution."""
         dev = qml.device('qiskit.aer', shots=100, wires=3)
-        x = np.array([0.1, 0.2])
 
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
