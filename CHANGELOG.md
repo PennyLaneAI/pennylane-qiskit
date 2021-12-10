@@ -1,4 +1,4 @@
-# Release 0.19.0-dev
+# Release 0.20.0
 
 ### New features since last release
 
@@ -8,8 +8,6 @@
   gradients internally.
   [(#156)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/156)
   [(#163)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/163)
-
-### Breaking changes
 
 ### Improvements
 
@@ -21,10 +19,6 @@
 
 * Added support for returning job execution times.
   [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
-
-### Documentation
-
-### Bug fixes
 
 ### Contributors
 
