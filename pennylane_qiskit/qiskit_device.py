@@ -401,6 +401,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
 
+            # Update the tracker
+            if self.tracker.active:
+                self.tracker.update(executions=1, shots=self.shots)
+                self.tracker.record()
+
             if self.backend_name in self._state_backends:
                 self._state = self._get_state(result, experiment=circuit_obj)
 

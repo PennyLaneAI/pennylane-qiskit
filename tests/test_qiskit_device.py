@@ -162,7 +162,8 @@ class TestBatchExecution:
         assert np.allclose(res[1], tape2_expected, atol=0)
 
     def test_result_empty_tape(self, device, tol):
-        """Tests that the result has the correct shape and entry types for empty tapes."""
+        """Tests that the result has the correct shape and entry types for
+        empty tapes."""
         dev = device(2)
 
         empty_tape = qml.tape.QuantumTape()
