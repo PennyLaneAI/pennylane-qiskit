@@ -69,8 +69,20 @@ class IBMQDevice(QiskitDevice):
         if token is not None:
             # token was provided by the user, so attempt to enable an
             # IBM Q account manually
-            ibmq_kwargs = {"url": url} if url is not None else {}
-            IBMQ.enable_account(token, **ibmq_kwargs)
+            def login():
+                ibmq_kwargs = {"url": url} if url is not None else {}
+                IBMQ.enable_account(token, **ibmq_kwargs)
+
+            active_account = IBMQ.active_account()
+            if active_account is None:
+                login()
+            else:
+                # There is already an active account:
+                # If the token is the same, do nothing.
+                # If the token is different, authenticate with the new account.
+                if active_account['token'] != token:
+                    IBMQ.disable_account()
+                    login()
         else:
             # check if an IBM Q account is already active.
             #
