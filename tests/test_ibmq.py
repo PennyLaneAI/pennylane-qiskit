@@ -32,6 +32,13 @@ def test_load_from_env(token, monkeypatch):
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
 
+def test_load_from_env_multiple_device(token, monkeypatch):
+    monkeypatch.setenv("IBMQX_TOKEN", token)
+    dev1 = IBMQDevice(wires=1)
+    dev2 = IBMQDevice(wires=1)
+
+    assert dev1.provider.credentials.is_ibmq()
+    assert dev2.provider.credentials.is_ibmq()
 
 def test_load_kwargs_takes_precedence(token, monkeypatch):
     """Test that with a potentially valid token stored as an environment
