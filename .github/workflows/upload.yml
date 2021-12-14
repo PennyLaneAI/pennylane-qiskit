@@ -22,7 +22,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          pip install wheel pytest pytest-cov pytest-mock --upgrade
+          pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
 
       - name: Run tests
         run: |
