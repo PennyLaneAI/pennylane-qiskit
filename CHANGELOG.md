@@ -1,4 +1,4 @@
-# Release 0.19.0-dev
+# Release 0.20.0
 
 ### New features since last release
 
@@ -9,8 +9,6 @@
   [(#156)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/156)
   [(#163)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/163)
   [(#167)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/167)
-
-### Breaking changes
 
 ### Improvements
 
@@ -25,10 +23,6 @@
 
 * Added support for Python 3.10.
   [(#170)](https://github.com/PennyLaneAI/pennylane-forest/pull/170)
-
-### Documentation
-
-### Bug fixes
 
 ### Contributors
 

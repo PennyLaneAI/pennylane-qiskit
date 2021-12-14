@@ -87,7 +87,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.17.0"
+    pennylane_requires = ">=0.20.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
