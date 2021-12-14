@@ -23,6 +23,9 @@
 * Added support for returning job execution times.
   [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
 
+* Added support for Python 3.10.
+  [(#170)](https://github.com/PennyLaneAI/pennylane-forest/pull/170)
+
 ### Documentation
 
 ### Bug fixes
@@ -31,7 +34,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, David Ittah, Antal Száva
+Guillermo Alonso-Linaje, David Ittah, Romain Moyard, Antal Száva
 
 ---
 
