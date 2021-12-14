@@ -1,5 +1,5 @@
 qiskit>=0.25
-git+https://github.com/PennyLaneAI/pennylane.git
+pennylane>=0.20
 numpy
 sympy
 networkx>=2.2;python_version>'3.5'
