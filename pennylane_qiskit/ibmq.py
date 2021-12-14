@@ -80,7 +80,7 @@ class IBMQDevice(QiskitDevice):
                 # There is already an active account:
                 # If the token is the same, do nothing.
                 # If the token is different, authenticate with the new account.
-                if active_account['token'] != token:
+                if active_account["token"] != token:
                     IBMQ.disable_account()
                     login()
         else:
