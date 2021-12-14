@@ -23,6 +23,9 @@
 * Added support for returning job execution times.
   [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
 
+* Added support for Python 3.10.
+  [(#96)](https://github.com/PennyLaneAI/pennylane-forest/pull/96)
+
 ### Documentation
 
 ### Bug fixes
