@@ -109,13 +109,13 @@ class IBMQDevice(QiskitDevice):
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
 
-    def batch_execute(self, circuits):
+    def batch_execute(self, circuits):  # pragma: no cover
         res = super().batch_execute(circuits)
         if self.tracker.active:
             self._track_run()
         return res
 
-    def _track_run(self):
+    def _track_run(self):  # pragma: no cover
         """Provide runtime information."""
 
         time_per_step = self._current_job.time_per_step()
