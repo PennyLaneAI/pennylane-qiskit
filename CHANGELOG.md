@@ -7,6 +7,9 @@
 
 ### Improvements
 
+* Improved the login flow when IBMQ tokens are specified as environement variables.
+  [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
+
 ### Documentation
 
 ### Bug fixes
@@ -14,6 +17,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Tanner Rogalsky
 
 ---
 
