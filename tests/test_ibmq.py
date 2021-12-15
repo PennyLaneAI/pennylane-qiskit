@@ -43,6 +43,8 @@ def test_load_from_env_multiple_device(token, monkeypatch):
     assert dev2.provider.credentials.is_ibmq()
 
 def test_load_from_env_multiple_device_and_token(monkeypatch):
+    """Test creating multiple devices when the different tokens are defined
+    using an environment variable.""""
     mock_provider = "MockProvider"
     mock_qiskit_device = MockQiskitDeviceInit()
 
