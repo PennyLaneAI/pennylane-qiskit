@@ -18,7 +18,7 @@ def token():
     variable."""
     t = os.getenv("IBMQX_TOKEN_TEST", None)
 
-    if t is None:
+    if t is None or t == '':
         pytest.skip("Skipping test, no IBMQ token available")
 
     yield t
