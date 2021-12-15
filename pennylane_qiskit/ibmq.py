@@ -66,7 +66,8 @@ class IBMQDevice(QiskitDevice):
         group = kwargs.get("group", "open")
         project = kwargs.get("project", "main")
 
-        if token is not None:
+        # TODO: remove "no cover" when #173 is resolved
+        if token is not None: # pragma: no cover
             # token was provided by the user, so attempt to enable an
             # IBM Q account manually
             def login():
