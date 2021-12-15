@@ -33,6 +33,8 @@ def test_load_from_env(token, monkeypatch):
     assert dev.provider.credentials.is_ibmq()
 
 def test_load_from_env_multiple_device(token, monkeypatch):
+    """Test creating multiple IBMQ devices when the environment variable
+    for the IBMQ token was set.""""
     monkeypatch.setenv("IBMQX_TOKEN", token)
     dev1 = IBMQDevice(wires=1)
     dev2 = IBMQDevice(wires=1)
