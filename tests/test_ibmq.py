@@ -34,7 +34,7 @@ def test_load_from_env(token, monkeypatch):
 
 def test_load_from_env_multiple_device(token, monkeypatch):
     """Test creating multiple IBMQ devices when the environment variable
-    for the IBMQ token was set.""""
+    for the IBMQ token was set."""
     monkeypatch.setenv("IBMQX_TOKEN", token)
     dev1 = IBMQDevice(wires=1)
     dev2 = IBMQDevice(wires=1)
@@ -44,7 +44,7 @@ def test_load_from_env_multiple_device(token, monkeypatch):
 
 def test_load_from_env_multiple_device_and_token(monkeypatch):
     """Test creating multiple devices when the different tokens are defined
-    using an environment variable.""""
+    using an environment variable."""
     mock_provider = "MockProvider"
     mock_qiskit_device = MockQiskitDeviceInit()
 
