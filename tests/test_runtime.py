@@ -600,7 +600,7 @@ class TestCustomVQE:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_hamiltonian_format(self, token, tol, shots):
-        """Test that we can handle inverse operations."""
+        """Test that a PennyLane Hamiltonian is given."""
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
@@ -631,7 +631,7 @@ class TestCustomVQE:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_hamiltonian_tensor(self, token, tol, shots):
-        """Test that we can handle tensor hamiltonians."""
+        """Test that we can handle tensor Hamiltonians."""
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
@@ -667,7 +667,7 @@ class TestCustomVQE:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_not_auth_operation_hamiltonian(self, token, tol, shots):
-        """Test that we can handle inverse operations."""
+        """Test the observables in the Hamiltonian are I, X, Y, Z or H."""
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
@@ -702,7 +702,7 @@ class TestCustomVQE:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_not_auth_operation_hamiltonian_tensor(self, token, tol, shots):
-        """Test that we can handle inverse operations."""
+        """Test the observables in the tensor Hamiltonian are I, X, Y, Z or H."""
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
@@ -711,7 +711,7 @@ class TestCustomVQE:
 
         H = 1 / np.sqrt(2) * np.array([[1, 1], [1, -1]])
         coeffs = [1, 1]
-        obs = [qml.PauliX(0) @ qml.Hermitian(H, wires=1)]
+        obs = [qml.PauliX(0) @ qml.Hermitian(H, wires=1), qml.PauliZ(wires=1)]
         hamiltonian = qml.Hamiltonian(coeffs, obs)
 
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")

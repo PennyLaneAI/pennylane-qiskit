@@ -405,10 +405,16 @@ def vqe_runner(
                     qregs = list(reversed(qregs))
 
                 dag = circuit_to_dag(QuantumCircuit(reg, name=""))
+
                 if par:
-                    par = [params_vector[j]]
-                    j += 1
-                gate = mapped_operation(*par)
+                    op_num_params = len(par)
+                    par = []
+                    for num in range(0, num_params):
+                        par.append(params_vector[j + num])
+                    j += op_num_params
+                    gate = mapped_operation(*par)
+                else:
+                    gate = mapped_operation
 
                 if operation.endswith(".inv"):
                     gate = gate.inverse()
@@ -492,10 +498,10 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
     """
 
-    coeff, observables = hamiltonian.terms
-
     if not isinstance(hamiltonian, qml.Hamiltonian):
         raise qml.QuantumFunctionError("Hamiltonian required.")
+
+    coeff, observables = hamiltonian.terms
 
     authorized_obs = {"PauliX", "PauliY", "PauliZ", "Hadamard", "Identity"}
 
