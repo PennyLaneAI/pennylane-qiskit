@@ -409,7 +409,7 @@ def vqe_runner(
                 if par:
                     op_num_params = len(par)
                     par = []
-                    for num in range(0, num_params):
+                    for num in range(0, op_num_params):
                         par.append(params_vector[j + num])
                     j += op_num_params
                     gate = mapped_operation(*par)
