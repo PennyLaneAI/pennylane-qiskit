@@ -1,4 +1,5 @@
-# Release 0.19.0-dev
+# Release 0.21.0-dev
+
 
 ### New features since last release
 
@@ -6,10 +7,8 @@
 
 ### Improvements
 
-* Added support for the `qml.SX` operation to the Qiskit devices.
-  [(#158)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/158)
-
-* Added support for returning job execution times. [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
+* Improved the login flow when IBMQ tokens are specified as environement variables.
+  [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
 
 ### Documentation
 
@@ -19,7 +18,41 @@
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, Antal Száva
+Tanner Rogalsky
+
+---
+
+# Release 0.20.0
+
+### New features since last release
+
+* Defined the `QiskitDevice.batch_execute` method, to allow
+  Qiskit backends to run multiple quantum circuits at the same time. This
+  addition allows submitting batches of circuits to IBMQ e.g., when computing
+  gradients internally.
+  [(#156)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/156)
+  [(#163)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/163)
+  [(#167)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/167)
+
+### Improvements
+
+* Added native support for the `qml.Identity` operation to the Qiskit devices and converters.
+  [(#162)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/162)
+
+* Added support for the `qml.SX` operation to the Qiskit devices.
+  [(#158)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/158)
+
+* Added support for returning job execution times.
+  [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
+
+* Added support for Python 3.10.
+  [(#170)](https://github.com/PennyLaneAI/pennylane-forest/pull/170)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Guillermo Alonso-Linaje, David Ittah, Romain Moyard, Antal Száva
 
 ---
 

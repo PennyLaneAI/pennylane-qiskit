@@ -23,7 +23,7 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.25",
-    "pennylane>=0.17",
+    "pennylane>=0.20",
     "numpy",
     "networkx>=2.2",
 ]
@@ -78,6 +78,7 @@ classifiers = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3 :: Only',
     "Topic :: Scientific/Engineering :: Physics"
 ]

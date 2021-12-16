@@ -66,11 +66,24 @@ class IBMQDevice(QiskitDevice):
         group = kwargs.get("group", "open")
         project = kwargs.get("project", "main")
 
-        if token is not None:
+        # TODO: remove "no cover" when #173 is resolved
+        if token is not None:  # pragma: no cover
             # token was provided by the user, so attempt to enable an
             # IBM Q account manually
-            ibmq_kwargs = {"url": url} if url is not None else {}
-            IBMQ.enable_account(token, **ibmq_kwargs)
+            def login():
+                ibmq_kwargs = {"url": url} if url is not None else {}
+                IBMQ.enable_account(token, **ibmq_kwargs)
+
+            active_account = IBMQ.active_account()
+            if active_account is None:
+                login()
+            else:
+                # There is already an active account:
+                # If the token is the same, do nothing.
+                # If the token is different, authenticate with the new account.
+                if active_account["token"] != token:
+                    IBMQ.disable_account()
+                    login()
         else:
             # check if an IBM Q account is already active.
             #
@@ -96,13 +109,13 @@ class IBMQDevice(QiskitDevice):
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
 
-    def batch_execute(self, circuits):
+    def batch_execute(self, circuits):  # pragma: no cover
         res = super().batch_execute(circuits)
         if self.tracker.active:
             self._track_run()
         return res
 
-    def _track_run(self):
+    def _track_run(self):  # pragma: no cover
         """Provide runtime information."""
 
         time_per_step = self._current_job.time_per_step()
