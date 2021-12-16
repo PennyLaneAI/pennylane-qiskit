@@ -133,7 +133,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # check that the backend exists
         if backend not in self._capabilities["backend"]:
-            capabilities = self._capabilities["backend"]
             raise ValueError(
                 f"Backend '{backend}' does not exist. Available backends "
                 f"are:\n {self._capabilities['backend']}"

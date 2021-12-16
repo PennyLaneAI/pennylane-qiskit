@@ -31,7 +31,7 @@ class TestCircuitRunner:
 
     def test_short_name(self, token):
         IBMQ.enable_account(token)
-        dev = qml.device("qiskit.ibmq.circuitrunner", wires=1)
+        dev = qml.device("qiskit.ibmq.circuit_runner", wires=1)
         return dev.provider.credentials.is_ibmq()
 
     @pytest.mark.parametrize("shots", [8000])
