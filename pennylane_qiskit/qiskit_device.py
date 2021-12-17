@@ -179,7 +179,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Consider the remaining kwargs as keyword arguments to run
         self.run_args.update(kwargs)
 
-    def set_transpile_args(self, kwargs):
+    def set_transpile_args(self, **kwargs):
         """The transpile argument setter.
 
         Args:
