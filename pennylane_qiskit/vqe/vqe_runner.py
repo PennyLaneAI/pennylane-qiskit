@@ -284,6 +284,9 @@ def vqe_runner(
     if optimizer_config is None:
         optimizer_config = {"maxiter": 100}
 
+    if not isinstance(hamiltonian, qml.Hamiltonian):
+        raise qml.QuantumFunctionError("Hamiltonian required.")
+
     token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 
@@ -406,15 +409,18 @@ def vqe_runner(
 
                 dag = circuit_to_dag(QuantumCircuit(reg, name=""))
 
-                if par:
-                    op_num_params = len(par)
-                    par = []
-                    for num in range(0, op_num_params):
-                        par.append(params_vector[j + num])
-                    j += op_num_params
-                    gate = mapped_operation(*par)
+                if operation in ("QubitUnitary", "QubitStateVector"):
+                    gate = mapped_operation(par[0])
                 else:
-                    gate = mapped_operation
+                    if par:
+                        op_num_params = len(par)
+                        par = []
+                        for num in range(0, op_num_params):
+                            par.append(params_vector[j + num])
+                        j += op_num_params
+                        gate = mapped_operation(*par)
+                    else:
+                        gate = mapped_operation
 
                 if operation.endswith(".inv"):
                     gate = gate.inverse()
@@ -497,9 +503,6 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
     Returns:
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
     """
-
-    if not isinstance(hamiltonian, qml.Hamiltonian):
-        raise qml.QuantumFunctionError("Hamiltonian required.")
 
     coeff, observables = hamiltonian.terms
 
