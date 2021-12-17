@@ -164,7 +164,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self.backend.set_options(noise_model=noise_model)
 
         # set transpile_args
-        self.set_transpile_args(kwargs)
+        self.set_transpile_args(**kwargs)
 
         # Get further arguments for run
         self.run_args = {}
@@ -182,8 +182,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def set_transpile_args(self, **kwargs):
         """The transpile argument setter.
 
-        Args:
-            kwargs (dict): keyword arguments to be set for the device
+        Keyword Args:
+            kwargs (dict): keyword arguments to be set for the Qiskit transpiler.
+            For more details, see the `Qiskit documentation
+            <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
         """
         transpile_sig = inspect.signature(transpile).parameters
         self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
