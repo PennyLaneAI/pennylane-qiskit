@@ -48,6 +48,7 @@ QISKIT_OPERATION_MAP = {
     "S": ex.SGate,
     "T": ex.TGate,
     "SX": ex.SXGate,
+    "Identity": ex.IGate,
     # Adding the following for conversion compatibility
     "CSWAP": ex.CSwapGate,
     "CRX": ex.CRXGate,
@@ -86,7 +87,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.17.0"
+    pennylane_requires = ">=0.20.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
@@ -133,15 +134,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # check that the backend exists
         if backend not in self._capabilities["backend"]:
             raise ValueError(
-                "Backend '{}' does not exist. Available backends "
-                "are:\n {}".format(backend, self._capabilities["backend"])
+                f"Backend '{backend}' does not exist. Available backends "
+                f"are:\n {self._capabilities['backend']}"
             )
 
         # perform validation against backend
         b = self.backend
         if len(self.wires) > b.configuration().n_qubits:
             raise ValueError(
-                "Backend '{}' supports maximum {} wires".format(backend, b.configuration().n_qubits)
+                f"Backend '{backend}' supports maximum {b.configuration().n_qubits} wires"
             )
 
         # Initialize inner state
@@ -362,7 +363,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # hardware or hardware simulator
         samples = self._current_job.result().get_memory(circuit)
-
         # reverse qubit order to match PennyLane convention
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
 
@@ -401,6 +401,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
 
+            # Update the tracker
+            if self.tracker.active:
+                self.tracker.update(executions=1, shots=self.shots)
+                self.tracker.record()
+
             if self.backend_name in self._state_backends:
                 self._state = self._get_state(result, experiment=circuit_obj)
 
@@ -409,6 +414,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit.observables)
+            res = np.asarray(res)
             results.append(res)
+
+        if self.tracker.active:
+            self.tracker.update(batches=1, batch_len=len(circuits))
+            self.tracker.record()
 
         return results

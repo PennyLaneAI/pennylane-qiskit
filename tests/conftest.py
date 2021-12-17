@@ -21,7 +21,12 @@ U2 = np.array([[0, 1, 1, 1], [1, 0, 1, -1], [1, -1, 0, 1], [1, 1, -1, 0]]) / np.
 A = np.array([[1.02789352, 1.61296440 - 0.3498192j], [1.61296440 + 0.3498192j, 1.23920938 + 0j]])
 
 
-state_backends = ["statevector_simulator", "unitary_simulator", "aer_simulator_statevector", "aer_simulator_unitary"]
+state_backends = [
+    "statevector_simulator",
+    "unitary_simulator",
+    "aer_simulator_statevector",
+    "aer_simulator_unitary",
+]
 hw_backends = ["qasm_simulator", "aer_simulator"]
 
 
@@ -75,8 +80,9 @@ def device(request, backend, shots):
     if backend not in state_backends and shots is None:
         pytest.skip("Hardware simulators do not support analytic mode")
 
-    if (issubclass(request.param, AerDevice) and "aer" not in backend) \
-      or (issubclass(request.param, BasicAerDevice) and "aer" in backend):
+    if (issubclass(request.param, AerDevice) and "aer" not in backend) or (
+        issubclass(request.param, BasicAerDevice) and "aer" in backend
+    ):
         pytest.skip("Only the AerSimulator is supported on AerDevice")
 
     def _device(n, device_options=None):
@@ -90,8 +96,9 @@ def device(request, backend, shots):
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
 def state_vector_device(request, statevector_backend, shots):
 
-    if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) \
-      or (issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend):
+    if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) or (
+        issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend
+    ):
         pytest.skip("Only the AerSimulator is supported on AerDevice")
 
     def _device(n):

@@ -18,7 +18,7 @@ def token():
     variable."""
     t = os.getenv("IBMQX_TOKEN_TEST", None)
 
-    if t is None:
+    if t is None or t == '':
         pytest.skip("Skipping test, no IBMQ token available")
 
     yield t
@@ -32,6 +32,47 @@ def test_load_from_env(token, monkeypatch):
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
 
+def test_load_from_env_multiple_device(token, monkeypatch):
+    """Test creating multiple IBMQ devices when the environment variable
+    for the IBMQ token was set."""
+    monkeypatch.setenv("IBMQX_TOKEN", token)
+    dev1 = IBMQDevice(wires=1)
+    dev2 = IBMQDevice(wires=1)
+
+    assert dev1.provider.credentials.is_ibmq()
+    assert dev2.provider.credentials.is_ibmq()
+
+def test_load_from_env_multiple_device_and_token(monkeypatch):
+    """Test creating multiple devices when the different tokens are defined
+    using an environment variable."""
+    mock_provider = "MockProvider"
+    mock_qiskit_device = MockQiskitDeviceInit()
+
+    with monkeypatch.context() as m:
+        m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
+
+        creds = []
+        def enable_account(new_creds):
+            creds.append(new_creds)
+        def active_account():
+            if len(creds) != 0:
+                return { "token": creds[-1] }
+        m.setattr(ibmq.IBMQ, "enable_account", enable_account)
+        m.setattr(ibmq.IBMQ, "disable_account", lambda: None)
+        m.setattr(ibmq.IBMQ, "active_account", active_account)
+
+        m.setenv("IBMQX_TOKEN", "TOKEN1")
+        dev1 = IBMQDevice(wires=1, provider=mock_provider)
+        # first login
+        assert creds == ["TOKEN1"]
+        dev1 = IBMQDevice(wires=1, provider=mock_provider)
+        # same token, login is elided
+        assert creds == ["TOKEN1"]
+
+        m.setenv("IBMQX_TOKEN", "TOKEN2")
+        dev2 = IBMQDevice(wires=1, provider=mock_provider)
+        # second login
+        assert creds == ["TOKEN1", "TOKEN2"]
 
 def test_load_kwargs_takes_precedence(token, monkeypatch):
     """Test that with a potentially valid token stored as an environment
@@ -224,7 +265,7 @@ def test_batch_execute_parameter_shift(token, tol, shots, mocker):
     x = qml.numpy.array(0.543, requires_grad=True)
     y = qml.numpy.array(0.123, requires_grad=True)
 
-    res = qml.grad(circuit)(x,y)
+    res = qml.grad(circuit)(x, y)
     expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
     assert np.allclose(res, expected, **tol)
 
@@ -234,6 +275,7 @@ def test_batch_execute_parameter_shift(token, tol, shots, mocker):
     # Check that run was called twice: for the partial derivatives and for
     # running the circuit
     assert spy2.call_count == 2
+
 
 @pytest.mark.parametrize("shots", [1000])
 def test_probability(token, tol, shots):
@@ -259,3 +301,26 @@ def test_probability(token, tol, shots):
     assert np.isclose(hw_prob.sum(), 1, **tol)
     assert np.allclose(prob_analytic(x), hw_prob, **tol)
     assert not np.array_equal(prob_analytic(x), hw_prob)
+
+
+def test_track(token):
+    """Test that the tracker works."""
+
+    IBMQ.enable_account(token)
+    dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
+    dev.tracker.active = True
+
+    @qml.qnode(dev)
+    def circuit():
+        qml.PauliX(wires=0)
+        return qml.probs(wires=0)
+
+    circuit()
+
+    assert "job_time" in dev.tracker.history
+    if "job_time" in dev.tracker.history:
+        assert "creating" in dev.tracker.history["job_time"][0]
+        assert "validating" in dev.tracker.history["job_time"][0]
+        assert "queued" in dev.tracker.history["job_time"][0]
+        assert "running" in dev.tracker.history["job_time"][0]
+        assert len(dev.tracker.history["job_time"][0]) == 4

@@ -66,11 +66,24 @@ class IBMQDevice(QiskitDevice):
         group = kwargs.get("group", "open")
         project = kwargs.get("project", "main")
 
-        if token is not None:
+        # TODO: remove "no cover" when #173 is resolved
+        if token is not None:  # pragma: no cover
             # token was provided by the user, so attempt to enable an
             # IBM Q account manually
-            ibmq_kwargs = {"url": url} if url is not None else {}
-            IBMQ.enable_account(token, **ibmq_kwargs)
+            def login():
+                ibmq_kwargs = {"url": url} if url is not None else {}
+                IBMQ.enable_account(token, **ibmq_kwargs)
+
+            active_account = IBMQ.active_account()
+            if active_account is None:
+                login()
+            else:
+                # There is already an active account:
+                # If the token is the same, do nothing.
+                # If the token is different, authenticate with the new account.
+                if active_account["token"] != token:
+                    IBMQ.disable_account()
+                    login()
         else:
             # check if an IBM Q account is already active.
             #
@@ -95,3 +108,24 @@ class IBMQDevice(QiskitDevice):
         p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
+
+    def batch_execute(self, circuits):  # pragma: no cover
+        res = super().batch_execute(circuits)
+        if self.tracker.active:
+            self._track_run()
+        return res
+
+    def _track_run(self):  # pragma: no cover
+        """Provide runtime information."""
+
+        time_per_step = self._current_job.time_per_step()
+        job_time = {
+            "creating": (time_per_step["CREATED"] - time_per_step["CREATING"]).total_seconds(),
+            "validating": (
+                time_per_step["VALIDATED"] - time_per_step["VALIDATING"]
+            ).total_seconds(),
+            "queued": (time_per_step["RUNNING"] - time_per_step["QUEUED"]).total_seconds(),
+            "running": (time_per_step["COMPLETED"] - time_per_step["RUNNING"]).total_seconds(),
+        }
+        self.tracker.update(job_time=job_time)
+        self.tracker.record()

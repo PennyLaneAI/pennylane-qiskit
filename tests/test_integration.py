@@ -21,8 +21,9 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("d", pldevices)
     def test_load_device(self, d, backend):
         """Test that the qiskit device loads correctly"""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) \
-          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
         dev = qml.device(d[0], wires=2, backend=backend, shots=1024)
@@ -38,7 +39,9 @@ class TestDeviceIntegration:
 
     def test_incorrect_backend_wires(self):
         """Test that exception is raised if number of wires is too large"""
-        with pytest.raises(ValueError, match=r"Backend 'aer_simulator\_statevector' supports maximum"):
+        with pytest.raises(
+            ValueError, match=r"Backend 'aer_simulator\_statevector' supports maximum"
+        ):
             qml.device("qiskit.aer", wires=100, method="statevector")
 
     def test_args(self):
@@ -55,8 +58,9 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("shots", [None, 8192])
     def test_one_qubit_circuit(self, shots, d, backend, tol):
         """Test that devices provide correct result for a simple circuit"""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) \
-          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
         if backend not in state_backends and shots is None:
@@ -83,8 +87,9 @@ class TestDeviceIntegration:
     def test_basis_state_and_rot(self, shots, d, backend, tol):
         """Integration test for the BasisState and Rot operations for non-analytic mode."""
 
-        if (d[0] == "qiskit.aer" and "aer" not in backend) \
-          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
         dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
@@ -149,9 +154,7 @@ class TestKeywordArguments:
 
         cache = []
         with monkeypatch.context() as m:
-            m.setattr(
-                aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
-            )
+            m.setattr(aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs))
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
         assert cache[-1] == {"noise_model": "test value"}
 
@@ -485,6 +488,7 @@ class TestNoise:
 
         assert circuit() == -1
 
+
 class TestBatchExecution:
     """Test the devices work correctly with the batch execution pipeline."""
 
@@ -493,8 +497,9 @@ class TestBatchExecution:
     def test_one_qubit_circuit_batch_params(self, shots, d, backend, tol, mocker):
         """Test that devices provide correct result for a simple circuit using
         the batch_params transform."""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) \
-          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
         if backend not in state_backends and shots is None:
@@ -531,8 +536,9 @@ class TestBatchExecution:
     def test_batch_execute_parameter_shift(self, shots, d, backend, tol, mocker):
         """Test that devices provide correct result computing the gradient of a
         circuit using the parameter-shift rule and the batch execution pipeline."""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) \
-          or (d[0] == "qiskit.basicaer" and "aer" in backend):
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
         if backend not in state_backends and shots is None:
@@ -553,7 +559,7 @@ class TestBatchExecution:
         x = qml.numpy.array(0.543, requires_grad=True)
         y = qml.numpy.array(0.123, requires_grad=True)
 
-        res = qml.grad(circuit)(x,y)
+        res = qml.grad(circuit)(x, y)
         expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
         assert np.allclose(res, expected, **tol)
 
@@ -563,3 +569,24 @@ class TestBatchExecution:
         # Check that run was called twice: for the partial derivatives and for
         # running the circuit
         assert spy2.call_count == 2
+
+    def test_tracker(self):
+        """Tests the device tracker with batch execution."""
+        dev = qml.device('qiskit.aer', shots=100, wires=3)
+
+        @qml.qnode(dev, diff_method="parameter-shift")
+        def circuit(x):
+            qml.RX(x, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        x = tensor(0.1, requires_grad=True)
+
+        with qml.Tracker(dev) as tracker:
+            qml.grad(circuit)(x)
+
+        expected = {'executions': [1, 1, 1],
+                     'shots': [100, 100, 100],
+                     'batches': [1, 1],
+                     'batch_len': [1, 2]}
+
+        assert tracker.history == expected
