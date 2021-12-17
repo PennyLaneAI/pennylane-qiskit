@@ -53,6 +53,9 @@ class IBMQDevice(QiskitDevice):
             variable ``IBMQX_URL`` is used, followed by the default URL.
         noise_model (NoiseModel): NoiseModel Object from ``qiskit.providers.aer.noise``.
             Only applicable for simulator backends.
+        hub (str): Name of the provider hub.
+        group (str): Name of the provider group.
+        project (str): Name of the provider project.
     """
 
     short_name = "qiskit.ibmq"
