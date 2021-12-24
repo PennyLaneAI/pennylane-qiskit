@@ -75,7 +75,7 @@ class IBMQDevice(QiskitDevice):
                 IBMQ.enable_account(token, **ibmq_kwargs)
 
             active_account = IBMQ.active_account()
-            if active_account is None:
+            if not isinstance(active_account, dict):
                 login()
             else:
                 # There is already an active account:
