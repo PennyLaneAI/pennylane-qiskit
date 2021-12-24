@@ -109,9 +109,8 @@ def test_custom_provider(monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: None)
 
-        # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", provider=mock_provider)
 
     assert mock_qiskit_device.provider == mock_provider
@@ -132,9 +131,8 @@ def test_default_provider(monkeypatch):
         m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
         m.setattr(ibmq.IBMQ, "get_provider", mock_get_provider)
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: None)
 
-        # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator")
 
     assert mock_qiskit_device.provider[0] == ()
@@ -154,9 +152,8 @@ def test_custom_provider_hub_group_project(monkeypatch):
         m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
         m.setattr(ibmq.IBMQ, "get_provider", mock_get_provider)
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: None)
 
-        # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
         dev = IBMQDevice(
             wires=2,
             backend="ibmq_qasm_simulator",
