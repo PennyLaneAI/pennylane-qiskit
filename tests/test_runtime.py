@@ -8,7 +8,7 @@ from qiskit import IBMQ
 
 from pennylane_qiskit import IBMQCircuitRunnerDevice
 from pennylane_qiskit import IBMQSamplerDevice
-from pennylane_qiskit.vqe.vqe_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner
+from pennylane_qiskit.vqe_runtime.vqe_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner
 
 
 @pytest.fixture

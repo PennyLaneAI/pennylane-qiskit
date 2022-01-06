@@ -376,13 +376,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
 
-    def batch_execute(self, circuits):
-        # pylint: disable=missing-function-docstring
+    def compile_circuits(self, circuits):
+        r"""Returns the compiled circuits.
+
+        Args:
+            circuits (list[.tapes.QuantumTape]): the circuits to be compiled.
+
+        Returns:
+             list[QuantumCircuit]: the list of compiled circuits.
+        """
+        # Compile each circuit object
         compiled_circuits = []
 
-        # Compile each circuit object
         for circuit in circuits:
-
             # We need to reset the device here, else it will
             # not start the next computation in the zero state
             self.reset()
@@ -391,6 +397,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
             compiled_circ = self.compile()
             compiled_circ.name = f"circ{len(compiled_circuits)}"
             compiled_circuits.append(compiled_circ)
+
+        return compiled_circuits
+
+    def batch_execute(self, circuits):
+        # pylint: disable=missing-function-docstring
+
+        compiled_circuits = self.compile_circuits(circuits)
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
