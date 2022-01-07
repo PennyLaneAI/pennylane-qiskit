@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-r"""
+"""
 This module contains a function to run aa custom PennyLane VQE problem on qiskit runtime.
 """
 # pylint: disable=too-few-public-methods,protected-access,too-many-arguments,too-many-branches,too-many-statements
@@ -35,7 +35,7 @@ from scipy.optimize import OptimizeResult
 
 
 class VQEResultDecoder(ResultDecoder):
-    """The class is usedd to decode the result from the runtime problem and return it as a
+    """The class is used to decode the result from the runtime problem and return it as a
     Scipy Optimizer result.
     """
 
@@ -47,8 +47,8 @@ class VQEResultDecoder(ResultDecoder):
 
 
 class RuntimeJobWrapper:
-    """A simple Job wrapper that attaches interm results directly to the job object itself
-    in the `interm_results attribute` via the `_callback` function.
+    """A simple Job wrapper that attaches intermediate results directly to the job object itself
+    in the `intermediate_results attribute` via the `_callback` function.
     """
 
     def __init__(self):
@@ -63,14 +63,14 @@ class RuntimeJobWrapper:
         }
 
     def _callback(self, *args):
-        """The callback function that attaches interm results:
+        """The callback function that attaches intermediate results to the wrapper:
 
         Args:
             nfev (int): Number of evaluation.
             xk (array_like): A list or NumPy array to attach.
             fk (float): Value of the function.
             step (float): Value of the step.
-            accepted (bool): Accepted if loss improved.
+            accepted (bool): True if the loss function value has improved, False otherwise.
         """
         _, (nfev, xk, fk, step, accepted) = args
         self.intermediate_results["nfev"].append(nfev)
@@ -79,8 +79,8 @@ class RuntimeJobWrapper:
         self.intermediate_results["step"].append(step)
         self.intermediate_results["accepted"].append(accepted)
 
-    def _scipycallback(self, *args):
-        """The callback function that attaches interm results:
+    def _scipy_callback(self, *args):
+        """The callback function that attaches intermediate results to the wrapper:
 
         Args:
             xk (array_like): A list or NumPy array to attach.
@@ -99,16 +99,16 @@ class RuntimeJobWrapper:
     def result(self):
         """Get the result of the job as a SciPy OptimizerResult object.
 
-        This blocks until job is done, cancelled, or errors.
+        This method blocks until the job is done, cancelled, or raises an error.
 
         Returns:
-            OptimizerResult: A SciPy optimizer result object.
+            OptimizerResult: A optimizer result object.
         """
         return self._job.result(decoder=self._decoder)
 
 
 def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
-    r"""Upload the custom VQE runner to the IBMQ cloud.
+    """Upload the custom VQE runner to the IBMQ cloud.
 
     Args:
         hub (str): Ibmq provider hub.
@@ -486,7 +486,7 @@ def vqe_runner(
         )
     else:
         job = provider.runtime.run(
-            program_id, options=options, inputs=inputs, callback=rt_job._scipycallback
+            program_id, options=options, inputs=inputs, callback=rt_job._scipy_callback
         )
     rt_job._job = job
 
