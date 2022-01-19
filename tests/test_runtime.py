@@ -327,7 +327,7 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Must be a callable quantum function."):
+        with pytest.raises(qml.QuantumFunctionError, match="The ansatz must be a callable quantum function."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -362,7 +362,7 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Param should be a single vector"):
+        with pytest.raises(qml.QuantumFunctionError, match="Param should be a single vector."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -398,7 +398,7 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="X0 has not enough parameters"):
+        with pytest.raises(qml.QuantumFunctionError, match="Not enough parameters in X0."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -610,7 +610,7 @@ class TestCustomVQE:
         hamiltonian = qml.PauliZ(wires=0)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Hamiltonian required."):
+        with pytest.raises(qml.QuantumFunctionError, match="A PennyLane Hamiltonian object is required."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -681,7 +681,7 @@ class TestCustomVQE:
 
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Obs not accepted"):
+        with pytest.raises(qml.QuantumFunctionError, match="Observable is not accepted."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -716,7 +716,7 @@ class TestCustomVQE:
 
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Obs not accepted"):
+        with pytest.raises(qml.QuantumFunctionError, match="Observable is not accepted."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
