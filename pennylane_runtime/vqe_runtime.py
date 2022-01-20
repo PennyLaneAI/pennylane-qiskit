@@ -14,7 +14,7 @@
 r"""
 This module contains a custom VQE runtime program that can be uploaded to IBMQ.
 """
-# pylint: # pylint: disable=too-many-arguments,too-many-branches,too-many-statements
+# pylint: disable=too-many-arguments,too-many-branches,too-many-statements
 
 import numpy as np
 import scipy.optimize as opt
@@ -27,7 +27,7 @@ from qiskit import QuantumCircuit, transpile
 
 
 def opstr_to_meas_circ(op_str):
-    """Takes a list of operator strings and makes circuit with the correct post-rotations for measurements.
+    """Takes a list of operator strings and creates a Qiskit circuit with the correct pre-measurements rotations.
 
     Args:
         op_str (list): List of strings representing the operators needed for measurements.
@@ -66,23 +66,17 @@ def main(
     """
     The main sample VQE program.
 
-    Parameters:
-        backend (ProgramBackend): Qiskit backend instance.
-        user_messenger (UserMessenger): Used to communicate with the
-                                        program user.
-        hamiltonian (list): Hamiltonian whose ground state we want to find.
+    Args:
+        backend (qiskit.providers.ibmq.runtime.ProgramBackend): Qiskit backend instance.
+        user_messenger (qiskit.providers.ibmq.runtime.UserMessenger): Used to communicate with the program user.
+        hamiltonian (list): Hamiltonian whose ground state we want to find. e.g. [(1, XY),(1, IH)]
         x0 (array_like): Initial vector of parameters.
-        ansatz (str): Optional, QuantumCircuit or the name of ansatz quantum circuit to use,
-                      default='EfficientSU2'
-        ansatz_config (dict): Optional, configuration parameters for the
-                              ansatz circuit.
-        optimizer (str): Optional, string specifying classical optimizer,
-                         default='SPSA'.
-        optimizer_config (dict): Optional, configuration parameters for the
-                                 optimizer.
+        ansatz (str): Optional, QuantumCircuit or the name of ansatz quantum circuit to use, default='EfficientSU2'.
+        ansatz_config (dict): Optional, configuration parameters for the ansatz circuit.
+        optimizer (str): Optional, string specifying classical optimizer, default='SPSA'.
+        optimizer_config (dict): Optional, configuration parameters for the optimizer.
         shots (int): Optional, number of shots to take per circuit.
-        use_measurement_mitigation (bool): Optional, use measurement mitigation,
-                                           default=False.
+        use_measurement_mitigation (bool): Optional, use measurement mitigation, default=False.
 
     Returns:
         OptimizeResult: The result in SciPy optimization format.
@@ -112,7 +106,7 @@ def main(
         string.replace("X", "Z").replace("Y", "Z").replace("H", "Z") for string in op_strings
     ]
 
-    # Take the ansatz circuits and add measurements.
+    # Take the ansatz circuits and add measurements
     full_circs = [ansatz_circuit.compose(mcirc).measure_all(inplace=False) for mcirc in meas_circs]
 
     num_params = ansatz_circuit.num_parameters
@@ -124,7 +118,7 @@ def main(
             shape = x0.shape[0]
             raise ValueError(
                 f"Number of params in x0 ({shape}) does not match number \
-                              of ansatz parameters ({num_params})"
+                              of ansatz parameters ({num_params})."
             )
     else:
         x0 = 2 * np.pi * np.random.rand(num_params)

@@ -432,7 +432,8 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
 
 
 def hamiltonian_to_list_string(hamiltonian, num_qubits):
-    r"""Convert a hamiltonian from PennyLane to a list of coefficient and strings.
+    r"""Convert a Hamiltonian object from PennyLane to a list of pairs representing each coefficient and
+    term in the Hamiltonian.
 
     Args:
         hamiltonian (qml.Hamiltonian): A Hamiltonian from PennyLane.
@@ -482,7 +483,7 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
             empty_obs[wire] = observable
         obs_list.append(empty_obs)
 
-    # Create the list of tuple with coeff and hammiltonians as strings [['YI'], ['IY']] -> [(1, 'YI'), (1, 'IY')]
+    # Create the list of tuples with coeffs and Hamiltonian terms as strings [['YI'], ['IY']] -> [(1, 'YI'), (1, 'IY')]
     hamiltonian = []
     for i, elem in enumerate(obs_list):
         result = "".join(elem)
