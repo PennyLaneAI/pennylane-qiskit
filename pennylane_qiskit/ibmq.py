@@ -59,7 +59,7 @@ class IBMQDevice(QiskitDevice):
 
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
 
-        #Connection to IBMQ
+        # Connection to IBMQ
         connect(kwargs)
 
         hub = kwargs.get("hub", "ibm-q")

@@ -185,10 +185,10 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     meta["spec"]["intermadiate_results"] = {
         "$schema": "https://json-schema.org/draft/2019-09/schema",
         "description": "Dictionnary containing: "
-                       "The number of evaluation at current optimization step."
-                       "Parameter vector at current optimization step."
-                       "Function value at the current optimization step."
-                       "The size of the step.",
+        "The number of evaluation at current optimization step."
+        "Parameter vector at current optimization step."
+        "Function value at the current optimization step."
+        "The size of the step.",
         "type": "dict",
     }
 
@@ -210,17 +210,17 @@ def delete_vqe_runner(provider, program_id):
 
 
 def vqe_runner(
-        backend,
-        hamiltonian,
-        x0,
-        program_id,
-        ansatz="EfficientSU2",
-        ansatz_config=None,
-        optimizer="SPSA",
-        optimizer_config=None,
-        shots=8192,
-        use_measurement_mitigation=False,
-        **kwargs,
+    backend,
+    hamiltonian,
+    x0,
+    program_id,
+    ansatz="EfficientSU2",
+    ansatz_config=None,
+    optimizer="SPSA",
+    optimizer_config=None,
+    shots=8192,
+    use_measurement_mitigation=False,
+    **kwargs,
 ):
     """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
 
@@ -269,7 +269,9 @@ def vqe_runner(
 
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
-        inputs["x0"], inputs["ansatz"], num_qubits = _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h)
+        inputs["x0"], inputs["ansatz"], num_qubits = _pennylane_to_qiskit_ansatz(
+            ansatz, x0, num_qubits_h
+        )
 
     # The circuit will be taken from the Qiskit library as a str was passed.
     else:
@@ -289,7 +291,9 @@ def vqe_runner(
         num_params = ansatz_circ.num_parameters
 
         if x0.shape[0] != num_params:
-            warnings.warn("The shape of parameters array is not correct, a random initialization has been applied.")
+            warnings.warn(
+                "The shape of parameters array is not correct, a random initialization has been applied."
+            )
             x0 = 2 * np.pi * np.random.rand(num_params)
 
         inputs["x0"] = x0
@@ -331,14 +335,14 @@ def vqe_runner(
 def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
     r"""Convert a ansatz from PennyLane to a circuit in Qiskit.
 
-        Args:
-            ansatz (Quantum Function): A PennyLane quantum function that represents the circuit.
-            x0 (
-            num_qubits_h (int): Number of qubits evaluated from the hamiltonian.
+    Args:
+        ansatz (Quantum Function): A PennyLane quantum function that represents the circuit.
+        x0 (
+        num_qubits_h (int): Number of qubits evaluated from the hamiltonian.
 
-        Returns:
-            list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
-        """
+    Returns:
+        list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
+    """
     if isinstance(ansatz, (qml.QNode, qml.tape.QuantumTape)):
         raise qml.QuantumFunctionError("The ansatz must be a callable quantum function.")
 
