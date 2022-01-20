@@ -269,7 +269,7 @@ def vqe_runner(
 
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
-        inputs["x0"], inputs["ansatz"] = _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h)
+        inputs["x0"], inputs["ansatz"], num_qubits = _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h)
 
     # The circuit will be taken from the Qiskit library as a str was passed.
     else:
@@ -425,7 +425,7 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
         for circuit in circuits:
             circuit_ansatz &= circuit
 
-        return x0, circuit_ansatz
+        return x0, circuit_ansatz, num_qubits
 
     else:
         raise ValueError("Input ansatz is not a quantum function or a string.")

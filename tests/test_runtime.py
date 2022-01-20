@@ -322,9 +322,7 @@ class TestCustomVQE:
         """Test that we cannot pass a Qnode as ansatz circuit."""
         IBMQ.enable_account(token)
 
-        dev = qml.device("default.qubit", wires=1)
-
-        with qml.tape.QuantumTape as vqe_tape:
+        with qml.tape.QuantumTape() as vqe_tape:
             qml.RX(3.97507603, wires=0)
             qml.RY(3.00854038, wires=0)
 
