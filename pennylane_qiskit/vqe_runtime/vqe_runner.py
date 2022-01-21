@@ -336,12 +336,14 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
 
     Args:
         ansatz (Quantum Function): A PennyLane quantum function that represents the circuit.
-        x0 (
+        x0 (array_like): array of parameters.
         num_qubits_h (int): Number of qubits evaluated from the hamiltonian.
 
     Returns:
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
     """
+    x0 = np.array(x0)
+
     if isinstance(ansatz, (qml.QNode, qml.tape.QuantumTape)):
         raise qml.QuantumFunctionError("The ansatz must be a callable quantum function.")
 
@@ -356,7 +358,14 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
         except IndexError as e:
             raise qml.QuantumFunctionError("Not enough parameters in X0.") from e
 
-        num_params = tape.num_params
+        params = tape.get_parameters()
+        trainable_params = []
+
+        for p in params:
+            if qml.math.requires_grad(p):
+                trainable_params.add(p)
+
+        num_params = trainable_params
 
         if len(x0) != num_params:
             warnings.warn("Due to the tape expansion, the number of parameters has increased.")
