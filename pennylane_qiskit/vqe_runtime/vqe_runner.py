@@ -365,7 +365,7 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
             if qml.math.requires_grad(p):
                 trainable_params.add(p)
 
-        num_params = trainable_params
+        num_params = len(trainable_params)
 
         if len(x0) != num_params:
             warnings.warn("Due to the tape expansion, the number of parameters has increased.")
