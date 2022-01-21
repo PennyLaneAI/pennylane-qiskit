@@ -20,7 +20,7 @@ import warnings
 import inspect
 from collections import OrderedDict
 
-import numpy as np
+import pennylane.numpy as np
 import pennylane as qml
 
 from pennylane_qiskit.qiskit_device import QiskitDevice
@@ -342,7 +342,6 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
     Returns:
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
     """
-    x0 = np.array(x0)
 
     if isinstance(ansatz, (qml.QNode, qml.tape.QuantumTape)):
         raise qml.QuantumFunctionError("The ansatz must be a callable quantum function.")
@@ -352,14 +351,14 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
             raise qml.QuantumFunctionError("Param should be a single vector.")
         try:
             tape_param = x0[0] if len(x0) == 1 else x0
-            tape = qml.transforms.make_tape(ansatz)(tape_param).expand(
+            tape = qml.transforms.make_tape(ansatz)(np.array(tape_param)).expand(
                 depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
             )
         except IndexError as e:
             raise qml.QuantumFunctionError("Not enough parameters in X0.") from e
 
         params = tape.get_parameters()
-        trainable_params = []
+        trainable_params = set()
 
         for p in params:
             if qml.math.requires_grad(p):
@@ -418,7 +417,7 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
                 # Parameters for the operation
                 if par:
                     # Trainable parameter
-                    if qml.math.requires_grad(operation):
+                    if qml.math.requires_grad(par[0]):
                         op_num_params = len(par)
                         par = []
                         for num in range(op_num_params):
