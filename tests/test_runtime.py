@@ -23,7 +23,8 @@ from qiskit import IBMQ
 
 
 from pennylane_qiskit import IBMQCircuitRunnerDevice, IBMQSamplerDevice
-from pennylane_qiskit.vqe_runtime.vqe_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner
+from pennylane_runtime.vqe_runtime import opstr_to_meas_circ
+from pennylane_qiskit.vqe_runtime.vqe_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner, hamiltonian_to_list_string
 
 class TestCircuitRunner:
     """Test class for the circuit runner IBMQ runtime device."""
@@ -246,6 +247,28 @@ class TestSampler:
 
 class TestCustomVQE:
     """Class to test the custom VQE program."""
+
+    def test_hamiltonian_to_list_string(self):
+        """Test the function that transforms a PennyLane Hamiltonian to a list string Hamiltonian."""
+        num_qubits=3
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0) @ qml.PauliX(2), qml.Hadamard(0) @ qml.PauliZ(1)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        result = hamiltonian_to_list_string(hamiltonian, num_qubits)
+
+        assert [(1, 'XIX'), (1, 'HZI')] == result
+
+    def test_op_str_measurement_circ(self):
+        """Test that finds the necessary rotations before measurements in the circuit."""
+        circ = opstr_to_meas_circ('HIHXZ')
+        results = []
+        for c in circ:
+            if c:
+                results.append((c.data[0][0].name, c.data[0][0].params))
+            else:
+                results.append(())
+        assert [('ry', [-0.7853981633974483]), (), ('ry', [-0.7853981633974483]), ('h', []), ()] == results
 
     @pytest.mark.parametrize("shots", [8000])
     def test_simple_hamiltonian(self, token, tol, shots):
