@@ -409,12 +409,18 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
             else:
                 # Parameters for the operation
                 if par:
-                    op_num_params = len(par)
-                    par = []
-                    for num in range(op_num_params):
-                        par.append(params_vector[j + num])
-                    j += op_num_params
-                    gate = mapped_operation(*par)
+                    # Trainable parameter
+                    if qml.math.requires_grad(operation):
+                        op_num_params = len(par)
+                        par = []
+                        for num in range(op_num_params):
+                            par.append(params_vector[j + num])
+                        j += op_num_params
+                        gate = mapped_operation(*par)
+                    # Untrainable parameter
+                    else:
+                        gate = mapped_operation(*par)
+
                 # No parameters are needed
                 else:
                     gate = mapped_operation
