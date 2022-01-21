@@ -30,7 +30,6 @@ from qiskit.providers.ibmq.runtime import ResultDecoder
 from qiskit.circuit import ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit import IBMQ
-from qiskit.providers.ibmq.exceptions import IBMQAccountError
 
 from scipy.optimize import OptimizeResult
 
@@ -435,10 +434,10 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
         for circuit in circuits:
             circuit_ansatz &= circuit
 
-        return x0, circuit_ansatz, num_qubits
-
     else:
         raise ValueError("Input ansatz is not a quantum function or a string.")
+
+    return x0, circuit_ansatz, num_qubits
 
 
 def hamiltonian_to_list_string(hamiltonian, num_qubits):

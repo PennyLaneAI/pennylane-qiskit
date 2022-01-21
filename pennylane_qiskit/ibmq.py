@@ -94,6 +94,11 @@ class IBMQDevice(QiskitDevice):
 
 
 def connect(kwargs):
+    """Function that allows connection to IBMQ.
+
+    Args:
+        kwargs(dict): dictionary that contains token, url."""
+
     token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 

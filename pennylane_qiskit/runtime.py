@@ -14,7 +14,7 @@
 """
 This module contains classes for constructing Qiskit runtime devices for PennyLane.
 """
-# pylint: disable=attribute-defined-outside-init, protected-access
+# pylint: disable=attribute-defined-outside-init, protected-access, arguments-renamed
 
 import numpy as np
 
