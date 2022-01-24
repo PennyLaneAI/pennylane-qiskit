@@ -351,7 +351,7 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Ansatz InEfficientSU2 not in n_local circuit library."):
+        with pytest.raises(ValueError, match="Ansatz InEfficientSU2 not in n_local circuit library."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -945,7 +945,7 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Input ansatz is not a quantum function or a string."):
+        with pytest.raises(ValueError, match="Input ansatz is not a quantum function or a string."):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
