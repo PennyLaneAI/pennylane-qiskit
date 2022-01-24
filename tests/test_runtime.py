@@ -855,8 +855,9 @@ class TestCustomVQE:
 
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
-        print(job.result()["fun"])
-        assert np.allclose(job.result()["fun"], -1.43, tol)
+        result = job.result()["fun"]
+
+        assert np.allclose(result, -1.43, tol)
         assert "parameters" in job.intermediate_results
 
     @pytest.mark.parametrize("shots", [8000])
