@@ -88,14 +88,6 @@ class RuntimeJobWrapper:
         _, xk = args
         self.intermediate_results["parameters"].append(xk)
 
-    def __getattr__(self, attr):
-        if attr == "result":
-            return self.result
-
-        if attr in dir(self._job):
-            return getattr(self._job, attr)
-        raise AttributeError(f"Class does not have {attr}.")
-
     def result(self):
         """Get the result of the job as a SciPy OptimizerResult object.
 
@@ -357,6 +349,10 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
         except IndexError as e:
             raise qml.QuantumFunctionError("Not enough parameters in X0.") from e
 
+        # Raise exception if there are no operations
+        if len(tape.operations) == 0:
+            raise qml.QuantumFunctionError("Function contains no quantum operations.")
+
         params = tape.get_parameters()
         trainable_params = set()
 
@@ -369,10 +365,6 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
         if len(x0) != num_params:
             warnings.warn("Due to the tape expansion, the number of parameters has increased.")
             x0 = 2 * np.pi * np.random.rand(num_params)
-
-        # Raise exception if there are no operations
-        if len(tape.operations) == 0:
-            raise qml.QuantumFunctionError("Function contains no quantum operations.")
 
         # if no wire ordering is specified, take wire list from tape
         wires = tape.wires
@@ -423,14 +415,8 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
                         for num in range(op_num_params):
                             par.append(params_vector[j + num])
                         j += op_num_params
-                        gate = mapped_operation(*par)
-                    # Untrainable parameter
-                    else:
-                        gate = mapped_operation(*par)
 
-                # No parameters are needed
-                else:
-                    gate = mapped_operation
+                gate = mapped_operation(*par)
 
             if operation.endswith(".inv"):
                 gate = gate.inverse()
