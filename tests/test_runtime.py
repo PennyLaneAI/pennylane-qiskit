@@ -830,6 +830,7 @@ class TestCustomVQE:
     def test_scipy_optimizer(self, token, tol, shots):
         """Test we can run a VQE problem with a SciPy optimizer."""
         IBMQ.enable_account(token)
+        tol = 1e-1
 
         def vqe_circuit(params):
             qml.RX(params[0], wires=0)
