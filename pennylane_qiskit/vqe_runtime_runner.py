@@ -248,9 +248,6 @@ def vqe_runner(
 
     inputs = {}
 
-    # Extract the number of qubit from the hamiltonian
-    _, observables = hamiltonian.terms
-
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
         inputs["x0"], inputs["ansatz"], num_qubits, wires = _pennylane_to_qiskit_ansatz(
