@@ -97,7 +97,7 @@ def connect(kwargs):
     """Function that allows connection to IBMQ.
 
     Args:
-        kwargs(dict): dictionary that contains token, url."""
+        kwargs(dict): dictionary that contains the token and the url"""
 
     token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")

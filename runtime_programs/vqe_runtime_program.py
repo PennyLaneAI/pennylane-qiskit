@@ -27,7 +27,7 @@ from qiskit import QuantumCircuit, transpile
 
 
 def opstr_to_meas_circ(op_str):
-    """Takes a list of operator strings and creates a Qiskit circuit with the correct pre-measurements rotations.
+    """Takes a list of operator strings and creates a Qiskit circuit with the correct pre-measurement rotations.
 
     Args:
         op_str (list): List of strings representing the operators needed for measurements.
@@ -69,7 +69,7 @@ def main(
     Args:
         backend (qiskit.providers.ibmq.runtime.ProgramBackend): Qiskit backend instance.
         user_messenger (qiskit.providers.ibmq.runtime.UserMessenger): Used to communicate with the program user.
-        hamiltonian (list): Hamiltonian whose ground state we want to find. e.g. [(1, XY),(1, IH)]
+        hamiltonian (list): Hamiltonian whose ground state we want to find. e.g. [(1, XY),(1, IH)].
         x0 (array_like): Initial vector of parameters.
         ansatz (str): Optional, QuantumCircuit or the name of ansatz quantum circuit to use, default='EfficientSU2'.
         ansatz_config (dict): Optional, configuration parameters for the ansatz circuit.

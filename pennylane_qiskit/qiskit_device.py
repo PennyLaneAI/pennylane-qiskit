@@ -377,13 +377,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return prob
 
     def compile_circuits(self, circuits):
-        r"""Returns the compiled circuits.
+        r"""Compiles multiple circuits one after the other.
 
         Args:
-            circuits (list[.tapes.QuantumTape]): the circuits to be compiled.
+            circuits (list[.tapes.QuantumTape]): the circuits to be compiled
 
         Returns:
-             list[QuantumCircuit]: the list of compiled circuits.
+             list[QuantumCircuit]: the list of compiled circuits
         """
         # Compile each circuit object
         compiled_circuits = []

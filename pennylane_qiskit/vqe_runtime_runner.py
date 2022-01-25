@@ -1,4 +1,4 @@
-# Copyright 2021 Xanadu Quantum Technologies Inc.
+# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ class RuntimeJobWrapper:
         This method blocks until the job is done, cancelled, or raises an error.
 
         Returns:
-            OptimizerResult: A optimizer result object.
+            OptimizerResult: An optimizer result object.
         """
         return self._job.result(decoder=self._decoder)
 
@@ -186,16 +186,16 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     provider = IBMQ.get_provider(hub=hub, group=group, project=project)
 
     program_id = provider.runtime.upload_program(
-        data="pennylane_runtime/vqe_runtime.py", metadata=meta
+        data="runtime_programs/vqe_runtime_program.py", metadata=meta
     )
     return program_id
 
 
 def delete_vqe_runner(provider, program_id):
-    """Delete the desired program on IBMQ platform.
+    """Delete the desired program on the IBMQ platform.
     Args:
         provider (object): IBMQ provider.
-        program_id (str): Id of the qiskit runtime to be deleted.
+        program_id (str): Id of the Qiskit runtime to be deleted.
     """
     provider.runtime.delete_program(program_id)
 
@@ -251,23 +251,16 @@ def vqe_runner(
     # Extract the number of qubit from the hamiltonian
     _, observables = hamiltonian.terms
 
-    qubit_set = set()
-    for obs in observables:
-        for qubit in obs.wires.tolist():
-            qubit_set.add(qubit)
-
-    num_qubits_h = list(qubit_set)[-1] + 1
-
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
-        inputs["x0"], inputs["ansatz"], num_qubits = _pennylane_to_qiskit_ansatz(
-            ansatz, x0, num_qubits_h
+        inputs["x0"], inputs["ansatz"], num_qubits, wires = _pennylane_to_qiskit_ansatz(
+            ansatz, x0, hamiltonian
         )
 
     # The circuit will be taken from the Qiskit library as a str was passed.
     else:
-
-        num_qubits = num_qubits_h
+        wires = hamiltonian.wires
+        num_qubits = len(wires)
 
         ansatz_circ = getattr(lib_local, ansatz, None)
         if ansatz_circ is None:
@@ -290,7 +283,7 @@ def vqe_runner(
         inputs["x0"] = x0
 
     # Transform the PennyLane hamilonian to a suitable form
-    hamiltonian = hamiltonian_to_list_string(hamiltonian, num_qubits)
+    hamiltonian = hamiltonian_to_list_string(hamiltonian, wires)
 
     inputs["hamiltonian"] = hamiltonian
 
@@ -323,13 +316,13 @@ def vqe_runner(
     return rt_job
 
 
-def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
-    r"""Convert a ansatz from PennyLane to a circuit in Qiskit.
+def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
+    r"""Convert an ansatz from PennyLane to a circuit in Qiskit.
 
     Args:
         ansatz (Quantum Function): A PennyLane quantum function that represents the circuit.
-        x0 (array_like): array of parameters.
-        num_qubits_h (int): Number of qubits evaluated from the hamiltonian.
+        x0 (array_like): The array of parameters.
+        num_qubits_h (int): Number of qubits evaluated from the Hamiltonian.
 
     Returns:
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
@@ -366,17 +359,15 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
             warnings.warn("Due to the tape expansion, the number of parameters has increased.")
             x0 = 2 * np.pi * np.random.rand(num_params)
 
-        # if no wire ordering is specified, take wire list from tape
-        wires = tape.wires
-
-        # Compare the number of qubits from the circuit and from the hamiltonian
-        num_qubits_c = len(wires)
+        wires_circuit = tape.wires
+        wires_hamiltonian = hamiltonian.wires
+        all_wires = wires_circuit + wires_hamiltonian
 
         # Set the number of qubits
-        num_qubits = num_qubits_c if num_qubits_c > num_qubits_h else num_qubits_h
+        num_qubits = len(all_wires)
 
         consecutive_wires = qml.wires.Wires(range(num_qubits))
-        wires_map = OrderedDict(zip(wires, consecutive_wires))
+        wires_map = OrderedDict(zip(all_wires, consecutive_wires))
 
         # From here: Create the Qiskit ansatz circuit
         params_vector = ParameterVector("p", num_params)
@@ -431,20 +422,25 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, num_qubits_h):
     else:
         raise ValueError("Input ansatz is not a quantum function or a string.")
 
-    return x0, circuit_ansatz, num_qubits
+    return x0, circuit_ansatz, num_qubits, all_wires
 
 
-def hamiltonian_to_list_string(hamiltonian, num_qubits):
+def hamiltonian_to_list_string(hamiltonian, wires):
     r"""Convert a Hamiltonian object from PennyLane to a list of pairs representing each coefficient and
     term in the Hamiltonian.
 
     Args:
         hamiltonian (qml.Hamiltonian): A Hamiltonian from PennyLane.
-        num_qubits (int): Number of qubits.
+        wires (qml.wires.Wires): A list of qubits from PennyLane.
 
     Returns:
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
     """
+
+    num_qubits = len(wires)
+
+    consecutive_wires = qml.wires.Wires(range(num_qubits))
+    wires_map = OrderedDict(zip(wires, consecutive_wires))
 
     coeff, observables = hamiltonian.terms
 
@@ -469,12 +465,12 @@ def hamiltonian_to_list_string(hamiltonian, num_qubits):
         # Tensors
         if isinstance(obs.name, list):
             internal = []
-            for i, j in zip(obs.wires.tolist(), obs.name):
+            for i, j in zip(obs.wires.map(wires_map).tolist(), obs.name):
                 internal.append([i, obs_str[j]])
             internal.sort()
             obs_org.append(internal)
         else:
-            obs_org.append([[obs.wires.tolist()[0], obs_str[obs.name]]])
+            obs_org.append([[obs.wires.map(wires_map).tolist()[0], obs_str[obs.name]]])
 
     # Create the hamiltonian terms as lists of strings [[[0,'Y'], [1,'Y']]] -> [['YI'], ['IY']]
     obs_list = []

@@ -1,4 +1,4 @@
-# Copyright 2021 Xanadu Quantum Technologies Inc.
+# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ from qiskit import IBMQ
 
 
 from pennylane_qiskit import IBMQCircuitRunnerDevice, IBMQSamplerDevice
-from pennylane_runtime.vqe_runtime import opstr_to_meas_circ
-from pennylane_qiskit.vqe_runtime.vqe_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner, hamiltonian_to_list_string
+from runtime_programs.vqe_runtime_program import opstr_to_meas_circ
+from pennylane_qiskit.vqe_runtime_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner, hamiltonian_to_list_string
 
 class TestCircuitRunner:
     """Test class for the circuit runner IBMQ runtime device."""
@@ -250,17 +250,17 @@ class TestCustomVQE:
 
     def test_hamiltonian_to_list_string(self):
         """Test the function that transforms a PennyLane Hamiltonian to a list string Hamiltonian."""
-        num_qubits=3
         coeffs = [1, 1]
         obs = [qml.PauliX(0) @ qml.PauliX(2), qml.Hadamard(0) @ qml.PauliZ(1)]
 
         hamiltonian = qml.Hamiltonian(coeffs, obs)
-        result = hamiltonian_to_list_string(hamiltonian, num_qubits)
+        result = hamiltonian_to_list_string(hamiltonian, hamiltonian.wires)
 
         assert [(1, 'XIX'), (1, 'HZI')] == result
 
     def test_op_str_measurement_circ(self):
-        """Test that finds the necessary rotations before measurements in the circuit."""
+        """Test that the opstr_to_meas_circ function finds the necessary rotations before measurements in the
+        circuit. """
         circ = opstr_to_meas_circ('HIHXZ')
         results = []
         for c in circ:
@@ -341,8 +341,8 @@ class TestCustomVQE:
         assert "accepted" in job.intermediate_results
 
     @pytest.mark.parametrize("shots", [8000])
-    def test_ansatz_qiskit_unvalid(self, token, tol, shots):
-        """Test a simple VQE problem with an unvalid ansatz from Qiskit library."""
+    def test_ansatz_qiskit_invalid(self, token, tol, shots):
+        """Test a simple VQE problem with an invalid ansatz from Qiskit library."""
         IBMQ.enable_account(token)
 
         coeffs = [1, 1]
@@ -367,7 +367,7 @@ class TestCustomVQE:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_qnode(self, token, tol, shots):
-        """Test that we cannot pass a Qnode as ansatz circuit."""
+        """Test that we cannot pass a QNode as ansatz circuit."""
         IBMQ.enable_account(token)
 
         with qml.tape.QuantumTape() as vqe_tape:
@@ -904,7 +904,7 @@ class TestCustomVQE:
 
     @pytest.mark.parametrize("shots", [8000])
     def test_invalid_function(self, token, tol, shots):
-        """Test that an invalid function cannot be pass."""
+        """Test that an invalid function cannot be passed."""
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
