@@ -31,6 +31,16 @@ Currently, there are three different devices available:
     :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
     :link: devices/ibmq.html
 
+.. devicegalleryitem::
+    :name: 'qiskit.ibmq.circuit_runner'
+    :description: Allows integration with qiskit's circuit runner runtime program.
+    :link: devices/runtime.html
+
+.. devicegalleryitem::
+    :name: 'qiskit.ibmq.sampler'
+    :description: Allows integration with qiskit's sampler runtime program.
+    :link: devices/runtime.html
+
 .. raw:: html
 
         <div style='clear:both'></div>
@@ -112,6 +122,7 @@ hardware access.
    devices/aer
    devices/basicaer
    devices/ibmq
+   devices/runtime
 
 .. toctree::
    :maxdepth: 1
