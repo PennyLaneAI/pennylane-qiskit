@@ -1115,8 +1115,8 @@ class TestConverterIntegration:
         jac = qml.jacobian(circuit)(x, y)
 
         jac_expected = [
-            [-np.sin(x + np.cos(y)), np.sin(x + np.cos(y)) * np.sin(y)],
-            [np.cos(x * y) * y, np.cos(x * y) * x],
+            [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
+            [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],
         ]
 
         assert np.allclose(jac, jac_expected)
