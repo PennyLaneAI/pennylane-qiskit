@@ -1,4 +1,5 @@
 qiskit>=0.32
+mthree>=0.17.2
 git+https://github.com/PennyLaneAI/pennylane.git
 qiskit>=0.25
 numpy
