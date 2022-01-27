@@ -344,11 +344,11 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
             raise qml.QuantumFunctionError("Function contains no quantum operations.")
 
         params = tape.get_parameters()
-        trainable_params = set()
+        trainable_params = []
 
         for p in params:
             if qml.math.requires_grad(p):
-                trainable_params.add(p)
+                trainable_params.append(p)
 
         num_params = len(trainable_params)
 
