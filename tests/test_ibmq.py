@@ -111,7 +111,7 @@ def test_custom_provider(monkeypatch):
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {})
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", provider=mock_provider)
 
     assert mock_qiskit_device.provider == mock_provider
@@ -134,7 +134,7 @@ def test_default_provider(monkeypatch):
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {})
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator")
 
     assert mock_qiskit_device.provider[0] == ()
@@ -156,7 +156,7 @@ def test_custom_provider_hub_group_project(monkeypatch):
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {})
         dev = IBMQDevice(
             wires=2,
             backend="ibmq_qasm_simulator",
