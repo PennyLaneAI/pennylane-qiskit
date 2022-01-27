@@ -363,63 +363,78 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
         # Set the number of qubits
         num_qubits = len(all_wires)
 
-        consecutive_wires = qml.wires.Wires(range(num_qubits))
-        wires_map = OrderedDict(zip(all_wires, consecutive_wires))
-
-        # From here: Create the Qiskit ansatz circuit
-        params_vector = ParameterVector("p", num_params)
-
-        reg = QuantumRegister(num_qubits, "q")
-        circuit_ansatz = QuantumCircuit(reg, name="vqe")
-
-        circuits = []
-
-        j = 0
-        for operation in tape.operations:
-            wires = operation.wires.map(wires_map)
-            par = operation.parameters
-            operation = operation.name
-            mapped_operation = QiskitDevice._operation_map[operation]
-
-            qregs = [reg[i] for i in wires.labels]
-
-            if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
-                # Need to revert the order of the quantum registers used in
-                # Qiskit such that it matches the PennyLane ordering
-                qregs = list(reversed(qregs))
-
-            dag = circuit_to_dag(QuantumCircuit(reg, name=""))
-
-            if operation in ("QubitUnitary", "QubitStateVector"):
-                # Parameters are matrices
-                gate = mapped_operation(par[0])
-            else:
-                # Parameters for the operation
-                if par:
-                    # Trainable parameter
-                    if qml.math.requires_grad(par[0]):
-                        op_num_params = len(par)
-                        par = []
-                        for num in range(op_num_params):
-                            par.append(params_vector[j + num])
-                        j += op_num_params
-
-                gate = mapped_operation(*par)
-
-            if operation.endswith(".inv"):
-                gate = gate.inverse()
-
-            dag.apply_operation_back(gate, qargs=qregs)
-            circuit = dag_to_circuit(dag)
-            circuits.append(circuit)
-
-        for circuit in circuits:
-            circuit_ansatz &= circuit
+        circuit_ansatz = _qiskit_ansatz(num_params, num_qubits, all_wires, tape)
 
     else:
         raise ValueError("Input ansatz is not a quantum function or a string.")
 
     return x0, circuit_ansatz, num_qubits, all_wires
+
+
+def _qiskit_ansatz(num_params, num_qubits, wires, tape):
+    """Transform a quantum tape from PennyLane to a Qiskit circuit.
+
+    Args:
+        num_params (int): Number of parameters.
+        num_qubits (int): Number of qubits.
+        wires (qml.wire.Wires): Wires used in the tape and Hamiltonian.
+        tape (qml.tape.QuantumTape): The quantum tape of the circuit ansatz in PennyLane.
+
+    Returns:
+        QuantumCircuit: Qiskit quantum circuit.
+
+    """
+    consecutive_wires = qml.wires.Wires(range(num_qubits))
+    wires_map = OrderedDict(zip(wires, consecutive_wires))
+    # From here: Create the Qiskit ansatz circuit
+    params_vector = ParameterVector("p", num_params)
+
+    reg = QuantumRegister(num_qubits, "q")
+    circuit_ansatz = QuantumCircuit(reg, name="vqe")
+
+    circuits = []
+
+    j = 0
+    for operation in tape.operations:
+        wires = operation.wires.map(wires_map)
+        par = operation.parameters
+        operation = operation.name
+        mapped_operation = QiskitDevice._operation_map[operation]
+
+        qregs = [reg[i] for i in wires.labels]
+
+        if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
+            # Need to revert the order of the quantum registers used in
+            # Qiskit such that it matches the PennyLane ordering
+            qregs = list(reversed(qregs))
+
+        dag = circuit_to_dag(QuantumCircuit(reg, name=""))
+
+        if operation in ("QubitUnitary", "QubitStateVector"):
+            # Parameters are matrices
+            gate = mapped_operation(par[0])
+        else:
+            # Parameters for the operation
+            if par and qml.math.requires_grad(par[0]):
+                op_num_params = len(par)
+                par = []
+                for num in range(op_num_params):
+                    par.append(params_vector[j + num])
+                j += op_num_params
+
+            gate = mapped_operation(*par)
+
+        if operation.endswith(".inv"):
+            gate = gate.inverse()
+
+        dag.apply_operation_back(gate, qargs=qregs)
+        circuit = dag_to_circuit(dag)
+        circuits.append(circuit)
+
+    for circuit in circuits:
+        circuit_ansatz &= circuit
+
+    return circuit_ansatz
 
 
 def hamiltonian_to_list_string(hamiltonian, wires):
@@ -444,14 +459,9 @@ def hamiltonian_to_list_string(hamiltonian, wires):
     authorized_obs = {"PauliX", "PauliY", "PauliZ", "Hadamard", "Identity"}
 
     for obs in observables:
-        # Tensors
-        if isinstance(obs.name, list):
-            for ob in obs.name:
-                if ob not in authorized_obs:
-                    raise qml.QuantumFunctionError("Observable is not accepted.")
-        else:
-            if obs.name not in authorized_obs:
-                raise qml.QuantumFunctionError("Observable is not accepted.")
+        obs_names = obs.name if isinstance(obs.name, list) else [obs.name]
+        if any(ob not in authorized_obs for ob in obs_names):
+            raise qml.QuantumFunctionError("Observable is not accepted.")
 
     # Create string Hamiltonian
     obs_str = {"PauliX": "X", "PauliY": "Y", "PauliZ": "Z", "Hadamard": "H", "Identity": "I"}
