@@ -32,6 +32,7 @@ def test_load_from_env(token, monkeypatch):
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
 
+
 def test_load_from_env_multiple_device(token, monkeypatch):
     """Test creating multiple IBMQ devices when the environment variable
     for the IBMQ token was set."""
@@ -41,6 +42,7 @@ def test_load_from_env_multiple_device(token, monkeypatch):
 
     assert dev1.provider.credentials.is_ibmq()
     assert dev2.provider.credentials.is_ibmq()
+
 
 def test_load_from_env_multiple_device_and_token(monkeypatch):
     """Test creating multiple devices when the different tokens are defined
@@ -52,11 +54,14 @@ def test_load_from_env_multiple_device_and_token(monkeypatch):
         m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
 
         creds = []
+
         def enable_account(new_creds):
             creds.append(new_creds)
+
         def active_account():
             if len(creds) != 0:
-                return { "token": creds[-1] }
+                return {"token": creds[-1]}
+
         m.setattr(ibmq.IBMQ, "enable_account", enable_account)
         m.setattr(ibmq.IBMQ, "disable_account", lambda: None)
         m.setattr(ibmq.IBMQ, "active_account", active_account)
@@ -73,6 +78,7 @@ def test_load_from_env_multiple_device_and_token(monkeypatch):
         dev2 = IBMQDevice(wires=1, provider=mock_provider)
         # second login
         assert creds == ["TOKEN1", "TOKEN2"]
+
 
 def test_load_kwargs_takes_precedence(token, monkeypatch):
     """Test that with a potentially valid token stored as an environment
@@ -219,7 +225,7 @@ def test_simple_circuit_with_batch_params(token, tol, shots, mocker):
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
-    @qml.batch_params
+    @qml.batch_params(all_operations=True)
     @qml.qnode(dev)
     def circuit(theta, phi):
         qml.RX(theta, wires=0)
