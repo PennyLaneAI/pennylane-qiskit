@@ -19,9 +19,7 @@ This module contains a custom VQE runtime program that can be uploaded to IBMQ.
 import numpy as np
 import scipy.optimize as opt
 from scipy.optimize import OptimizeResult
-# pylint: disable=import-error
 import mthree
-# pylint: enable=import-error
 
 import qiskit.circuit.library.n_local as lib_local
 from qiskit.algorithms.optimizers import SPSA, QNSPSA
