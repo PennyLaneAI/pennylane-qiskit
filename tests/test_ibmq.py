@@ -225,7 +225,7 @@ def test_simple_circuit_with_batch_params(token, tol, shots, mocker):
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
-    @qml.batch_params
+    @qml.batch_params(all_operations=True)
     @qml.qnode(dev)
     def circuit(theta, phi):
         qml.RX(theta, wires=0)
