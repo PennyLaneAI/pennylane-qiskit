@@ -15,7 +15,6 @@ r"""
 This module contains a custom VQE runtime program that can be uploaded to IBMQ.
 """
 # pylint: disable=too-many-arguments,too-many-branches,too-many-statements
-import os
 import numpy as np
 import scipy.optimize as opt
 from scipy.optimize import OptimizeResult
