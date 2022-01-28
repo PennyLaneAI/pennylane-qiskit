@@ -1,7 +1,11 @@
 # .coveragerc to control coverage.py
 [run]
 source = pennylane_qiskit
-omit = pennylane_qiskit/*runtime*
+omit =
+    # omit IBMQ files
+    pennylane_qiskit/ibmq.py
+    # omit Runtime files
+    pennylane_qiskit/*runtime*
 
 [report]
 # Regexes for lines to exclude from consideration
