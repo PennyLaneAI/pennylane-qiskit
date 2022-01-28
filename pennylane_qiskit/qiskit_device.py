@@ -184,7 +184,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Keyword Args:
             kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details,
-            see the `Qiskit documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+            see the `transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
         """
         transpile_sig = inspect.signature(transpile).parameters
         self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
@@ -302,7 +302,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """Input check for the the QubitStateVector operation.
 
         Args:
-            operation (pennylane.Operation): operations to be checked
+            operation (pennylane.Operation): operation to be checked
 
         Raises:
             DeviceError: If the operation is QubitStateVector
@@ -329,7 +329,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return compiled_circuits
 
     def run(self, qcirc):
-        """Run the compiled circuit, and query the result.
+        """Run the compiled circuit and query the result.
 
         Args:
             qcirc (qiskit.QuantumCircuit): the quantum circuit to be run on the backend
@@ -345,7 +345,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Args:
             result (qiskit.Result): result object
-            experiment (str): Optional, the name of the experiment to get the state for. Default=None.
+            experiment (str or None): the name of the experiment to get the state for.
 
         Returns:
             array[float]: size ``(2**num_wires,)`` statevector
@@ -370,7 +370,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         :math:`q_0` is the most significant bit.
 
         Args:
-            circuit (str): Optional, the name of the circuit to get the state for
+            circuit (str or None): the name of the circuit to get the state for
 
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
