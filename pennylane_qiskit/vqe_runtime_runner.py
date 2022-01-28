@@ -33,7 +33,6 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit import IBMQ
 
 from scipy.optimize import OptimizeResult
-from runtime_programs.vqe_runtime_program import VQE_DIR
 
 
 class VQEResultDecoder(ResultDecoder):
@@ -186,7 +185,8 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     }
 
     provider = IBMQ.get_provider(hub=hub, group=group, project=project)
-    program_path = os.path.join(VQE_DIR, "vqe_runtime_program.py")
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    program_path = os.path.join(ROOT_DIR, "runtime_programs/vqe_runtime_program.py")
 
     program_id = provider.runtime.upload_program(data=program_path, metadata=meta)
     return program_id

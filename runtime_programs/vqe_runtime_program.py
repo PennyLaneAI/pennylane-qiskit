@@ -25,7 +25,6 @@ import qiskit.circuit.library.n_local as lib_local
 from qiskit.algorithms.optimizers import SPSA, QNSPSA
 from qiskit import QuantumCircuit, transpile
 
-VQE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def opstr_to_meas_circ(op_str):
     """Takes a list of operator strings and creates a Qiskit circuit with the correct pre-measurement rotations.
