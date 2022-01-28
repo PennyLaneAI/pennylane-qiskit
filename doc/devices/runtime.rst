@@ -21,7 +21,7 @@ You can use the ``circuit_runner`` and ``sampler`` devices by using their short 
 Custom Runtime Programs
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Not all Qiskit runtime programs correspond to complete devices but rather solve specific problems (VQE, QAOA, etc...).
+Not all Qiskit runtime programs correspond to complete devices, some solve specific problems (VQE, QAOA, etc...).
 We created a custom Qiskit runtime program for solving VQE problems in PennyLane ``runtime_programs\vqe_runtime_program.py``.
 In order to use this program you need to upload on IBMQ (only once), get the program ID and use the VQE runner.
 
