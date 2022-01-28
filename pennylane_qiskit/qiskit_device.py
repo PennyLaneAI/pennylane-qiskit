@@ -183,8 +183,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """The transpile argument setter.
 
         Keyword Args:
-            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details,
-            see the `transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+            `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
         """
         transpile_sig = inspect.signature(transpile).parameters
         self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
