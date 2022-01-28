@@ -35,7 +35,7 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
         provider (Provider): The Qiskit simulation provider
         backend (str): the desired backend
         shots (int): Number of circuit evaluations/random samples used to estimate expectation values and variances of
-         observables, Default=1024.
+         observables. Default=1024.
 
     Keyword Args:
         initial_layout (array[int]): Initial position of virtual qubits on physical qubits.
@@ -127,7 +127,7 @@ class IBMQSamplerDevice(IBMQDevice):
         provider (Provider): the Qiskit simulation provider
         backend (str): the desired backend
         shots (int or None): Number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables, Default=1024.
+            to estimate expectation values and variances of observables. Default=1024.
 
     Keyword Args:
         return_mitigation_overhead (bool): Return mitigation overhead factor. Default is False.
