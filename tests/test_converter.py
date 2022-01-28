@@ -1104,8 +1104,8 @@ class TestConverterIntegration:
             load(qc)({a: a_val, b: b_val}, wires=(0, 1))
             return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(1))
 
-        x = 0.1
-        y = 0.2
+        x = np.array(0.1, requires_grad=True)
+        y = np.array(0.2, requires_grad=True)
 
         res = circuit(x, y)
         res_expected = [np.cos(x + np.cos(y)), np.sin(x * y)]
@@ -1115,8 +1115,8 @@ class TestConverterIntegration:
         jac = qml.jacobian(circuit)(x, y)
 
         jac_expected = [
-            [-np.sin(x + np.cos(y)), np.sin(x + np.cos(y)) * np.sin(y)],
-            [np.cos(x * y) * y, np.cos(x * y) * x],
+            [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
+            [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],
         ]
 
         assert np.allclose(jac, jac_expected)
