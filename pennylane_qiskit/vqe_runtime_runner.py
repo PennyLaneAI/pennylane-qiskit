@@ -186,11 +186,9 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     }
 
     provider = IBMQ.get_provider(hub=hub, group=group, project=project)
-    program_path = os.path.join(VQE_DIR, 'vqe_runtime_program.py')
+    program_path = os.path.join(VQE_DIR, "vqe_runtime_program.py")
 
-    program_id = provider.runtime.upload_program(
-        data=program_path, metadata=meta
-    )
+    program_id = provider.runtime.upload_program(data=program_path, metadata=meta)
     return program_id
 
 
