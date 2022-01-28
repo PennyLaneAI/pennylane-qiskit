@@ -15,7 +15,7 @@ r"""
 This module contains a custom VQE runtime program that can be uploaded to IBMQ.
 """
 # pylint: disable=too-many-arguments,too-many-branches,too-many-statements
-
+import os
 import numpy as np
 import scipy.optimize as opt
 from scipy.optimize import OptimizeResult
@@ -25,6 +25,7 @@ import qiskit.circuit.library.n_local as lib_local
 from qiskit.algorithms.optimizers import SPSA, QNSPSA
 from qiskit import QuantumCircuit, transpile
 
+VQE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def opstr_to_meas_circ(op_str):
     """Takes a list of operator strings and creates a Qiskit circuit with the correct pre-measurement rotations.

@@ -16,6 +16,7 @@ This module contains a function to run aa custom PennyLane VQE problem on qiskit
 """
 # pylint: disable=too-few-public-methods,protected-access,too-many-arguments,too-many-branches,too-many-statements
 
+import os
 import warnings
 import inspect
 from collections import OrderedDict
@@ -32,6 +33,7 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit import IBMQ
 
 from scipy.optimize import OptimizeResult
+from runtime_programs.vqe_runtime_program import VQE_DIR
 
 
 class VQEResultDecoder(ResultDecoder):
@@ -184,9 +186,10 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     }
 
     provider = IBMQ.get_provider(hub=hub, group=group, project=project)
+    program_path = os.path.join(VQE_DIR, 'vqe_runtime_program.py')
 
     program_id = provider.runtime.upload_program(
-        data="runtime_programs/vqe_runtime_program.py", metadata=meta
+        data=program_path, metadata=meta
     )
     return program_id
 
