@@ -3,6 +3,9 @@
 
 ### New features since last release
 
+* Add two devices for runtime programs and one VQE runtime program solver.
+  [(#157)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/157)
+  
 ### Breaking changes
 
 ### Improvements
@@ -18,7 +21,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Tanner Rogalsky
+Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Antal Száva
 
 ---
 
