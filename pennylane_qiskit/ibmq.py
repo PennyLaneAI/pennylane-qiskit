@@ -61,51 +61,13 @@ class IBMQDevice(QiskitDevice):
     short_name = "qiskit.ibmq"
 
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
-        token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
-        url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 
-        # Specify a single hub, group and project
+        # Connection to IBMQ
+        connect(kwargs)
+
         hub = kwargs.get("hub", "ibm-q")
         group = kwargs.get("group", "open")
         project = kwargs.get("project", "main")
-
-        # TODO: remove "no cover" when #173 is resolved
-        if token is not None:  # pragma: no cover
-            # token was provided by the user, so attempt to enable an
-            # IBM Q account manually
-            def login():
-                ibmq_kwargs = {"url": url} if url is not None else {}
-                IBMQ.enable_account(token, **ibmq_kwargs)
-
-            active_account = IBMQ.active_account()
-            if active_account is None:
-                login()
-            else:
-                # There is already an active account:
-                # If the token is the same, do nothing.
-                # If the token is different, authenticate with the new account.
-                if active_account["token"] != token:
-                    IBMQ.disable_account()
-                    login()
-        else:
-            # check if an IBM Q account is already active.
-            #
-            # * IBMQ v2 credentials stored in active_account().
-            #   If no accounts are active, it returns None.
-
-            if IBMQ.active_account() is None:
-                # no active account
-                try:
-                    # attempt to load a v2 account stored on disk
-                    IBMQ.load_account()
-                except IBMQAccountError:
-                    # attempt to enable an account manually using
-                    # a provided token
-                    raise IBMQAccountError(
-                        "No active IBM Q account, and no IBM Q token provided."
-                    ) from None
-
-        # IBM Q account is now enabled
 
         # get a provider
         p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
@@ -132,3 +94,49 @@ class IBMQDevice(QiskitDevice):
         }
         self.tracker.update(job_time=job_time)
         self.tracker.record()
+
+
+def connect(kwargs):
+    """Function that allows connection to IBMQ.
+
+    Args:
+        kwargs(dict): dictionary that contains the token and the url"""
+
+    token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
+    url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
+
+    # TODO: remove "no cover" when #173 is resolved
+    if token is not None:  # pragma: no cover
+        # token was provided by the user, so attempt to enable an
+        # IBM Q account manually
+        def login():
+            ibmq_kwargs = {"url": url} if url is not None else {}
+            IBMQ.enable_account(token, **ibmq_kwargs)
+
+        active_account = IBMQ.active_account()
+        if active_account is None:
+            login()
+        else:
+            # There is already an active account:
+            # If the token is the same, do nothing.
+            # If the token is different, authenticate with the new account.
+            if active_account["token"] != token:
+                IBMQ.disable_account()
+                login()
+    else:
+        # check if an IBM Q account is already active.
+        #
+        # * IBMQ v2 credentials stored in active_account().
+        #   If no accounts are active, it returns None.
+
+        if IBMQ.active_account() is None:
+            # no active account
+            try:
+                # attempt to load a v2 account stored on disk
+                IBMQ.load_account()
+            except IBMQAccountError:
+                # attempt to enable an account manually using
+                # a provided token
+                raise IBMQAccountError(
+                    "No active IBM Q account, and no IBM Q token provided."
+                ) from None
