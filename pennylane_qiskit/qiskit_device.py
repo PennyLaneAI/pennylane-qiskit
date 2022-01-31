@@ -354,7 +354,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         elif "unitary" in self.backend_name:
             unitary = np.asarray(result.get_unitary(experiment))
-            initial_state = np.zeros([2 ** self.num_wires])
+            initial_state = np.zeros([2**self.num_wires])
             initial_state[0] = 1
 
             state = unitary @ initial_state
