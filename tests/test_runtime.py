@@ -21,9 +21,8 @@ import pytest
 
 from qiskit import IBMQ
 
-
+from pennylane_qiskit.runtime_programs import opstr_to_meas_circ
 from pennylane_qiskit import IBMQCircuitRunnerDevice, IBMQSamplerDevice
-from runtime_programs.vqe_runtime_program import opstr_to_meas_circ
 from pennylane_qiskit.vqe_runtime_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner, hamiltonian_to_list_string
 
 class TestCircuitRunner:
