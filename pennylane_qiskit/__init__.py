@@ -21,4 +21,4 @@ from .converter import load, load_qasm, load_qasm_from_file
 from .runtime_devices import IBMQCircuitRunnerDevice
 from .runtime_devices import IBMQSamplerDevice
 from .vqe_runtime_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner
-from .runtime_programs.vqe_runtime_program import opstr_to_meas_circ
+from .vqe_runtime_program import opstr_to_meas_circ
