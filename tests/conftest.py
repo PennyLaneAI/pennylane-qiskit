@@ -1,12 +1,27 @@
+# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains tests for PennyLane runtime programs.
+"""
+
+import os
 import pytest
 import numpy as np
 
 import pennylane as qml
+from qiskit import IBMQ
 from pennylane_qiskit import AerDevice, BasicAerDevice
-
-import contextlib
-import io
-
 
 np.random.seed(42)
 
@@ -29,6 +44,15 @@ state_backends = [
 ]
 hw_backends = ["qasm_simulator", "aer_simulator"]
 
+@pytest.fixture
+def token():
+    t = os.getenv("IBMQX_TOKEN_TEST", None)
+
+    if t is None:
+        pytest.skip("Skipping test, no IBMQ token available")
+
+    yield t
+    IBMQ.disable_account()
 
 @pytest.fixture
 def tol(shots):

@@ -16,5 +16,8 @@
 from ._version import __version__
 from .aer import AerDevice
 from .basic_aer import BasicAerDevice
-from .converter import load, load_qasm, load_qasm_from_file
 from .ibmq import IBMQDevice
+from .converter import load, load_qasm, load_qasm_from_file
+from .runtime_devices import IBMQCircuitRunnerDevice
+from .runtime_devices import IBMQSamplerDevice
+from .vqe_runtime_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner
