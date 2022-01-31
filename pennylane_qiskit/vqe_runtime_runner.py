@@ -185,7 +185,7 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     }
 
     provider = IBMQ.get_provider(hub=hub, group=group, project=project)
-    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     PROG_DIR = "runtime_programs"
     PROG_FILE = "vqe_runtime_program.py"
     prog_path = os.path.join(PROG_DIR, PROG_FILE)
@@ -357,7 +357,9 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
         num_params = len(trainable_params)
 
         if len(x0) != num_params:
-            warnings.warn("Due to the tape expansion, the number of parameters has increased.")
+            warnings.warn(
+                "In order to match the tape expansion, the number of parameters has been changed."
+            )
             x0 = 2 * np.pi * np.random.rand(num_params)
 
         wires_circuit = tape.wires

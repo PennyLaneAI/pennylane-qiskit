@@ -21,9 +21,8 @@ import pytest
 
 from qiskit import IBMQ
 
-
+from pennylane_qiskit.runtime_programs import opstr_to_meas_circ
 from pennylane_qiskit import IBMQCircuitRunnerDevice, IBMQSamplerDevice
-from runtime_programs.vqe_runtime_program import opstr_to_meas_circ
 from pennylane_qiskit.vqe_runtime_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner, hamiltonian_to_list_string
 
 class TestCircuitRunner:
@@ -325,7 +324,7 @@ class TestCustomVQE:
             backend="ibmq_qasm_simulator",
             hamiltonian=hamiltonian,
             ansatz="EfficientSU2",
-            x0=[3.97507603, 3.00854038],
+            x0=[0.0, 0.0, 0.0, 0.0],
             shots=shots,
             kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
         )
@@ -551,7 +550,7 @@ class TestCustomVQE:
 
         def vqe_circuit(params):
             qml.RX(params[0], wires=0)
-            qml.RX(params[1], wires=0)
+            qml.RY(params[1], wires=0)
 
         coeffs = [1, 1]
         obs = [qml.PauliX(0), qml.PauliZ(0)]
@@ -559,15 +558,21 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        job = vqe_runner(
-            program_id=program_id,
-            backend="ibmq_qasm_simulator",
-            hamiltonian=hamiltonian,
-            ansatz=vqe_circuit,
-            x0=[3.97507603, 3.00854038, 3.55637849],
-            shots=shots,
-            optimizer_config={"maxiter": 10},
-            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        with pytest.warns(UserWarning) as record:
+            job = vqe_runner(
+                program_id=program_id,
+                backend="ibmq_qasm_simulator",
+                hamiltonian=hamiltonian,
+                ansatz=vqe_circuit,
+                x0=[3.97507603, 3.00854038, 3.55637849],
+                shots=shots,
+                optimizer_config={"maxiter": 10},
+                kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+            )
+
+        assert (
+                record[-1].message.args[0]
+                == "In order to match the tape expansion, the number of parameters has been changed."
         )
 
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
