@@ -357,7 +357,7 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
         num_params = len(trainable_params)
 
         if len(x0) != num_params:
-            warnings.warn("Due to the tape expansion, the number of parameters has increased.")
+            warnings.warn("In order to match the tape expansion, the number of parameters has been changed.")
             x0 = 2 * np.pi * np.random.rand(num_params)
 
         wires_circuit = tape.wires
