@@ -8,6 +8,11 @@
 * Improved the login flow when IBMQ tokens are specified as environement variables.
   [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
 
+### Documentation
+
+* Improved quality of docstrings in the library.
+  [(#174)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/174)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
