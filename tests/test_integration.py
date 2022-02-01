@@ -516,7 +516,7 @@ class TestBatchExecution:
         spy1 = mocker.spy(QiskitDevice, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
-        @qml.batch_params
+        @qml.batch_params(all_operations=True)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""

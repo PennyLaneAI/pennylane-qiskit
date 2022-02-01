@@ -49,7 +49,6 @@ QISKIT_OPERATION_MAP = {
     "T": ex.TGate,
     "SX": ex.SXGate,
     "Identity": ex.IGate,
-    # Adding the following for conversion compatibility
     "CSWAP": ex.CSwapGate,
     "CRX": ex.CRXGate,
     "CRY": ex.CRYGate,
@@ -64,7 +63,7 @@ QISKIT_OPERATION_MAP = {
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
-# to be invertable for the conversion functionality to work
+# to be invertible for the conversion functionality to work
 QISKIT_OPERATION_INVERSES_MAP = {k + ".inv": v for k, v in QISKIT_OPERATION_MAP.items()}
 
 
@@ -78,7 +77,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         provider (Provider): The Qiskit simulation provider
         backend (str): the desired backend
         shots (int or None): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables. For statevector backends,
+            to estimate expectation values and variances of observables. For state vector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
 
     Keyword Args:
@@ -87,7 +86,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.17.0"
+    pennylane_requires = ">=0.20.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
@@ -131,14 +130,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self.backend_name = backend
         self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
 
-        # check that the backend exists
+        # Check that the backend exists
         if backend not in self._capabilities["backend"]:
             raise ValueError(
                 f"Backend '{backend}' does not exist. Available backends "
                 f"are:\n {self._capabilities['backend']}"
             )
 
-        # perform validation against backend
+        # Perform validation against backend
         b = self.backend
         if len(self.wires) > b.configuration().n_qubits:
             raise ValueError(
@@ -151,7 +150,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self.process_kwargs(kwargs)
 
     def process_kwargs(self, kwargs):
-        """Processing the keyword arguments that were provided upon device creation.
+        """Processing the keyword arguments that were provided upon device initialization.
 
         Args:
             kwargs (dict): keyword arguments to be set for the device
@@ -181,7 +180,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self.run_args.update(kwargs)
 
     def set_transpile_args(self, **kwargs):
-        """The transpile argument setter."""
+        """The transpile argument setter.
+
+        Keyword Args:
+            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+                `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+        """
         transpile_sig = inspect.signature(transpile).parameters
         self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
         self.transpile_args.pop("circuits", None)
@@ -189,7 +193,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def backend(self):
-        """The Qiskit simulation backend object."""
+        """The Qiskit simulation backend object.
+
+        Returns:
+            qiskit.providers.backend: Qiskit backend object.
+        """
         if self._backend is None:
             self._backend = self.provider.get_backend(self.backend_name)
         return self._backend
@@ -234,7 +242,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self._circuit.save_state()
 
     def apply(self, operations, **kwargs):
-
         self.create_circuit_object(operations, **kwargs)
 
         # These operations need to run for all devices
@@ -291,7 +298,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return circuits
 
     def qubit_state_vector_check(self, operation, par, wires):
-        """Input check for the the QubitStateVector operation."""
+        """Input check for the the QubitStateVector operation.
+
+        Args:
+            operation (pennylane.Operation): operation to be checked
+
+        Raises:
+            DeviceError: If the operation is QubitStateVector
+            ValueError: If the state has not the right length
+        """
         if operation == "QubitStateVector":
             if "unitary" in self.backend_name:
                 raise DeviceError(
@@ -313,7 +328,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return compiled_circuits
 
     def run(self, qcirc):
-        """Run the compiled circuit, and query the result."""
+        """Run the compiled circuit and query the result.
+
+        Args:
+            qcirc (qiskit.QuantumCircuit): the quantum circuit to be run on the backend
+        """
         self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
@@ -325,7 +344,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Args:
             result (qiskit.Result): result object
-            experiment (str): the name of the experiment to get the state for
+            experiment (str or None): the name of the experiment to get the state for.
 
         Returns:
             array[float]: size ``(2**num_wires,)`` statevector
@@ -335,7 +354,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         elif "unitary" in self.backend_name:
             unitary = np.asarray(result.get_unitary(experiment))
-            initial_state = np.zeros([2 ** self.num_wires])
+            initial_state = np.zeros([2**self.num_wires])
             initial_state[0] = 1
 
             state = unitary @ initial_state
@@ -350,7 +369,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         :math:`q_0` is the most significant bit.
 
         Args:
-            circuit (str): the name of the circuit to get the state for
+            circuit (str or None): the name of the circuit to get the state for
 
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
@@ -377,13 +396,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
         prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
         return prob
 
-    def batch_execute(self, circuits):
+    def compile_circuits(self, circuits):
+        r"""Compiles multiple circuits one after the other.
 
+        Args:
+            circuits (list[.tapes.QuantumTape]): the circuits to be compiled
+
+        Returns:
+             list[QuantumCircuit]: the list of compiled circuits
+        """
+        # Compile each circuit object
         compiled_circuits = []
 
-        # Compile each circuit object
         for circuit in circuits:
-
             # We need to reset the device here, else it will
             # not start the next computation in the zero state
             self.reset()
@@ -392,6 +417,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
             compiled_circ = self.compile()
             compiled_circ.name = f"circ{len(compiled_circuits)}"
             compiled_circuits.append(compiled_circ)
+
+        return compiled_circuits
+
+    def batch_execute(self, circuits):
+        # pylint: disable=missing-function-docstring
+
+        compiled_circuits = self.compile_circuits(circuits)
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)

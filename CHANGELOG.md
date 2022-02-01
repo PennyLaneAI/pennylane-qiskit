@@ -1,4 +1,31 @@
-# Release 0.19.0-dev
+# Release 0.21.0-dev
+
+
+### New features since last release
+
+* Add two devices for runtime programs and one VQE runtime program solver.
+  [(#157)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/157)
+  
+### Breaking changes
+
+### Improvements
+
+* Improved the login flow when IBMQ tokens are specified as environement variables.
+  [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
+
+### Documentation
+
+### Bug fixes
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Antal Száva
+
+---
+
+# Release 0.20.0
 
 ### New features since last release
 
@@ -9,8 +36,6 @@
   [(#156)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/156)
   [(#163)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/163)
   [(#167)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/167)
-
-### Breaking changes
 
 ### Improvements
 
@@ -23,15 +48,14 @@
 * Added support for returning job execution times.
   [(#160)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/160)
 
-### Documentation
-
-### Bug fixes
+* Added support for Python 3.10.
+  [(#170)](https://github.com/PennyLaneAI/pennylane-forest/pull/170)
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, David Ittah, Antal Száva
+Guillermo Alonso-Linaje, David Ittah, Romain Moyard, Antal Száva
 
 ---
 

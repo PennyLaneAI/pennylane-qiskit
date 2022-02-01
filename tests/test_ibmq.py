@@ -1,5 +1,19 @@
-import os
+# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains tests for PennyLane IBMQ devices.
+"""
 import numpy as np
 import pennylane as qml
 import pytest
@@ -9,20 +23,6 @@ from qiskit.providers.ibmq.exceptions import IBMQAccountError
 
 from pennylane_qiskit import IBMQDevice
 from pennylane_qiskit import ibmq as ibmq
-from pennylane_qiskit import qiskit_device as qiskit_device
-
-
-@pytest.fixture
-def token():
-    """A fixture loading the IBMQ token from the IBMQX_TOKEN_TEST environment
-    variable."""
-    t = os.getenv("IBMQX_TOKEN_TEST", None)
-
-    if t is None:
-        pytest.skip("Skipping test, no IBMQ token available")
-
-    yield t
-    IBMQ.disable_account()
 
 
 def test_load_from_env(token, monkeypatch):
@@ -31,6 +31,53 @@ def test_load_from_env(token, monkeypatch):
     monkeypatch.setenv("IBMQX_TOKEN", token)
     dev = IBMQDevice(wires=1)
     assert dev.provider.credentials.is_ibmq()
+
+
+def test_load_from_env_multiple_device(token, monkeypatch):
+    """Test creating multiple IBMQ devices when the environment variable
+    for the IBMQ token was set."""
+    monkeypatch.setenv("IBMQX_TOKEN", token)
+    dev1 = IBMQDevice(wires=1)
+    dev2 = IBMQDevice(wires=1)
+
+    assert dev1.provider.credentials.is_ibmq()
+    assert dev2.provider.credentials.is_ibmq()
+
+
+def test_load_from_env_multiple_device_and_token(monkeypatch):
+    """Test creating multiple devices when the different tokens are defined
+    using an environment variable."""
+    mock_provider = "MockProvider"
+    mock_qiskit_device = MockQiskitDeviceInit()
+
+    with monkeypatch.context() as m:
+        m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
+
+        creds = []
+
+        def enable_account(new_creds):
+            creds.append(new_creds)
+
+        def active_account():
+            if len(creds) != 0:
+                return {"token": creds[-1]}
+
+        m.setattr(ibmq.IBMQ, "enable_account", enable_account)
+        m.setattr(ibmq.IBMQ, "disable_account", lambda: None)
+        m.setattr(ibmq.IBMQ, "active_account", active_account)
+
+        m.setenv("IBMQX_TOKEN", "TOKEN1")
+        dev1 = IBMQDevice(wires=1, provider=mock_provider)
+        # first login
+        assert creds == ["TOKEN1"]
+        dev1 = IBMQDevice(wires=1, provider=mock_provider)
+        # same token, login is elided
+        assert creds == ["TOKEN1"]
+
+        m.setenv("IBMQX_TOKEN", "TOKEN2")
+        dev2 = IBMQDevice(wires=1, provider=mock_provider)
+        # second login
+        assert creds == ["TOKEN1", "TOKEN2"]
 
 
 def test_load_kwargs_takes_precedence(token, monkeypatch):
@@ -70,7 +117,7 @@ def test_custom_provider(monkeypatch):
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {})
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", provider=mock_provider)
 
     assert mock_qiskit_device.provider == mock_provider
@@ -93,7 +140,7 @@ def test_default_provider(monkeypatch):
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {})
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator")
 
     assert mock_qiskit_device.provider[0] == ()
@@ -115,7 +162,7 @@ def test_custom_provider_hub_group_project(monkeypatch):
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
 
         # Here mocking to a value such that it is not None
-        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: True)
+        m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {})
         dev = IBMQDevice(
             wires=2,
             backend="ibmq_qasm_simulator",
@@ -178,7 +225,7 @@ def test_simple_circuit_with_batch_params(token, tol, shots, mocker):
     IBMQ.enable_account(token)
     dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
-    @qml.batch_params
+    @qml.batch_params(all_operations=True)
     @qml.qnode(dev)
     def circuit(theta, phi):
         qml.RX(theta, wires=0)

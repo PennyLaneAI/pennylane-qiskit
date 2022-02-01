@@ -23,7 +23,8 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.25",
-    "pennylane>=0.17",
+    "mthree>=0.17",
+    "pennylane @ git+https://github.com/PennyLaneAI/pennylane.git",
     "numpy",
     "networkx>=2.2",
 ]
@@ -43,6 +44,8 @@ info = {
             'qiskit.aer = pennylane_qiskit:AerDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
             'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
+            'qiskit.ibmq.circuit_runner = pennylane_qiskit:IBMQCircuitRunnerDevice',
+            'qiskit.ibmq.sampler = pennylane_qiskit:IBMQSamplerDevice'
             ],
         'pennylane.io': [
             'qiskit = pennylane_qiskit:load',
@@ -76,6 +79,7 @@ classifiers = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3 :: Only',
     "Topic :: Scientific/Engineering :: Physics"
 ]

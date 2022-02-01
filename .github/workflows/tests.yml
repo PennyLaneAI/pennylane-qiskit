@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, '3.10']
 
     steps:
       - name: Cancel Previous Runs
@@ -30,7 +30,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install wheel pytest pytest-cov pytest-mock --upgrade
+          pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
 
       - name: Install Plugin
         run: |
@@ -38,7 +38,9 @@ jobs:
           pip install dist/PennyLane*.whl
 
       - name: Run tests
-        run: python -m pytest tests --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
+        # Skip IBMQ and Runtime tests as they depend on IBMQ's availability and
+        # easily result in timeouts
+        run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
         env:
           IBMQX_TOKEN_TEST: ${{ secrets.IBMQX_TOKEN_TEST }}
 
