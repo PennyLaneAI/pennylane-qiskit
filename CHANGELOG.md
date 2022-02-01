@@ -10,7 +10,7 @@
 
 ### Documentation
 
-* Improved quality of docstrings in the library.
+* Improved the quality of docstrings in the library.
   [(#174)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/174)
 
 ### Contributors
