@@ -17,7 +17,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, Romain Moyard, Jay Soni, Antal Száva, Tanner Rogalsky
+Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Jay Soni, Antal Száva
 
 ---
 
