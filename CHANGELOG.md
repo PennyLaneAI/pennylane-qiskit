@@ -5,7 +5,7 @@
 * Add two devices for runtime programs and one VQE runtime program solver.
   [(#157)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/157)
 
-## Improvements
+### Improvements
 
 * Improved the login flow when IBMQ tokens are specified as environement variables.
   [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
