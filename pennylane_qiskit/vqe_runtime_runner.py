@@ -73,6 +73,7 @@ class RuntimeJobWrapper:
             step (float): Value of the step.
             accepted (bool): True if the loss function value has improved, False otherwise.
         """
+        # If it is a dictionary it is the final result and does not belong to intermediate results
         if not isinstance(args[1], dict):
             _, (nfev, xk, fk, step, accepted) = args
             self.intermediate_results["nfev"].append(nfev)
