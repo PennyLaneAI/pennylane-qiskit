@@ -73,12 +73,13 @@ class RuntimeJobWrapper:
             step (float): Value of the step.
             accepted (bool): True if the loss function value has improved, False otherwise.
         """
-        _, (nfev, xk, fk, step, accepted) = args
-        self.intermediate_results["nfev"].append(nfev)
-        self.intermediate_results["parameters"].append(xk)
-        self.intermediate_results["function"].append(fk)
-        self.intermediate_results["step"].append(step)
-        self.intermediate_results["accepted"].append(accepted)
+        if not isinstance(args[1], dict):
+            _, (nfev, xk, fk, step, accepted) = args
+            self.intermediate_results["nfev"].append(nfev)
+            self.intermediate_results["parameters"].append(xk)
+            self.intermediate_results["function"].append(fk)
+            self.intermediate_results["step"].append(step)
+            self.intermediate_results["accepted"].append(accepted)
 
     def _scipy_callback(self, *args):
         """The callback function that attaches intermediate results to the wrapper:
