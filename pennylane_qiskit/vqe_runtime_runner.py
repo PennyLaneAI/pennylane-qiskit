@@ -73,12 +73,14 @@ class RuntimeJobWrapper:
             step (float): Value of the step.
             accepted (bool): True if the loss function value has improved, False otherwise.
         """
-        _, (nfev, xk, fk, step, accepted) = args
-        self.intermediate_results["nfev"].append(nfev)
-        self.intermediate_results["parameters"].append(xk)
-        self.intermediate_results["function"].append(fk)
-        self.intermediate_results["step"].append(step)
-        self.intermediate_results["accepted"].append(accepted)
+        # If it is a dictionary it is the final result and does not belong to intermediate results
+        if not isinstance(args[1], dict):
+            _, (nfev, xk, fk, step, accepted) = args
+            self.intermediate_results["nfev"].append(nfev)
+            self.intermediate_results["parameters"].append(xk)
+            self.intermediate_results["function"].append(fk)
+            self.intermediate_results["step"].append(step)
+            self.intermediate_results["accepted"].append(accepted)
 
     def _scipy_callback(self, *args):
         """The callback function that attaches intermediate results to the wrapper:
@@ -185,11 +187,9 @@ def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
     }
 
     provider = IBMQ.get_provider(hub=hub, group=group, project=project)
-    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    PROG_DIR = "runtime_programs"
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     PROG_FILE = "vqe_runtime_program.py"
-    prog_path = os.path.join(PROG_DIR, PROG_FILE)
-    program_path = os.path.join(ROOT_DIR, prog_path)
+    program_path = os.path.join(ROOT_DIR, PROG_FILE)
 
     program_id = provider.runtime.upload_program(data=program_path, metadata=meta)
     return program_id
@@ -357,7 +357,9 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
         num_params = len(trainable_params)
 
         if len(x0) != num_params:
-            warnings.warn("Due to the tape expansion, the number of parameters has increased.")
+            warnings.warn(
+                "In order to match the tape expansion, the number of parameters has been changed."
+            )
             x0 = 2 * np.pi * np.random.rand(num_params)
 
         wires_circuit = tape.wires
