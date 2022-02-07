@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+from flaky import flaky
 import pennylane as qml
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
@@ -201,6 +202,7 @@ class TestTensorSample:
         ) / 4
         assert np.allclose(var, expected, **tol)
 
+    @flaky(max_runs=5, min_passes=3)
     def test_hermitian(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving qml.Hermitian works correctly"""
         dev = device(3)
