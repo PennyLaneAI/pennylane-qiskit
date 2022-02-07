@@ -1,12 +1,9 @@
-# Release 0.21.0-dev
-
+# Release 0.21.0
 
 ### New features since last release
 
 * Add two devices for runtime programs and one VQE runtime program solver.
   [(#157)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/157)
-  
-### Breaking changes
 
 ### Improvements
 
@@ -15,13 +12,14 @@
 
 ### Documentation
 
-### Bug fixes
+* Improved the quality of docstrings in the library.
+  [(#174)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/174)
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Antal Száva
+Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Jay Soni, Antal Száva
 
 ---
 
