@@ -1,6 +1,6 @@
 qiskit>=0.32
 mthree>=0.17.2
-git+https://github.com/PennyLaneAI/pennylane.git
+pennylane>=0.20
 qiskit>=0.25
 numpy
 sympy
