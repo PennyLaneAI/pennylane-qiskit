@@ -1,8 +1,5 @@
 name: IBMQ integration tests
 on:
-  push:
-    branches:
-      - ibmq_test_workflow
   schedule:
     - cron: '0 0 * * 0,4' # At 00:00 on Sunday and Thursday.
   workflow_dispatch:
