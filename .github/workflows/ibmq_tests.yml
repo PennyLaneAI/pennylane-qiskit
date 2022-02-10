@@ -44,34 +44,3 @@ jobs:
         run: python -m pytest tests -k 'test_ibmq.py or test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
         env:
           IBMQX_TOKEN_TEST: ${{ secrets.IBMQX_TOKEN_TEST }}
-
-  integration-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.4.1
-        with:
-          access_token: ${{ github.token }}
-
-      - uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
-
-      - name: Install Plugin
-        run: |
-          python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
-
-      - name: Run tests
-        run: |
-          pl-device-test --device=qiskit.ibmq --tb=short --skip-ops --shots=1000 --device-kwargs backend=ibmq_qasm_simulator
