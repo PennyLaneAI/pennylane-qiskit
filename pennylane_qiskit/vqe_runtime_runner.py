@@ -89,7 +89,9 @@ class RuntimeJobWrapper:
             xk (array_like): A list or NumPy array to attach.
         """
         _, xk = args
-        self.intermediate_results["parameters"].append(xk)
+        # If it is a dictionary it is the final result and does not belong to intermediate results
+        if not isinstance(args[1], dict):
+            self.intermediate_results["parameters"].append(xk)
 
     def result(self):
         """Get the result of the job as a SciPy OptimizerResult object.
