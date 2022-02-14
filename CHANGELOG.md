@@ -1,3 +1,18 @@
+# Release 0.21.1
+
+### Improvements
+
+* Changed a validation check such that it handles qubit numbers represented as
+  strings.
+  [(#184)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/184)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Thomas Bromley, Romain Moyard, Antal Száva
+
+---
 # Release 0.21.0
 
 ### New features since last release
