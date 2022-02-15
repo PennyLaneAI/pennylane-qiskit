@@ -5,6 +5,9 @@
 * Changed a validation check such that it handles qubit numbers represented as
   strings.
   [(#184)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/184)
+  
+* Changed the VQE callback function for SciPy optimizers.
+  [(#185)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/185)
 
 ### Contributors
 
