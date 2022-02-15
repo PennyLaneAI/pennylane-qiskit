@@ -1,4 +1,8 @@
-# Release 0.21.1
+# Release 0.22.0-dev
+
+### New features since last release
+
+### Breaking changes
 
 ### Improvements
 
@@ -8,6 +12,10 @@
   
 * Changed the VQE callback function for SciPy optimizers.
   [(#187)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/187)
+
+### Documentation
+
+### Bug fixes
 
 ### Contributors
 
