@@ -16,6 +16,7 @@ This release contains contributions from (in alphabetical order):
 Thomas Bromley, Romain Moyard, Antal Száva
 
 ---
+
 # Release 0.21.0
 
 ### New features since last release
