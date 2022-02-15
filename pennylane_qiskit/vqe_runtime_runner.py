@@ -88,9 +88,9 @@ class RuntimeJobWrapper:
         Args:
             xk (array_like): A list or NumPy array to attach.
         """
-        _, xk = args
         # If it is a dictionary it is the final result and does not belong to intermediate results
         if not isinstance(args[1], dict):
+            _, xk = args
             self.intermediate_results["parameters"].append(xk)
 
     def result(self):
