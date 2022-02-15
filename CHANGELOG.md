@@ -7,7 +7,7 @@
   [(#184)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/184)
   
 * Changed the VQE callback function for SciPy optimizers.
-  [(#185)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/185)
+  [(#187)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/187)
 
 ### Contributors
 
