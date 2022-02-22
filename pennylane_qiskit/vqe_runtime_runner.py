@@ -462,7 +462,7 @@ def hamiltonian_to_list_string(hamiltonian, wires):
     consecutive_wires = qml.wires.Wires(range(num_qubits))
     wires_map = OrderedDict(zip(wires, consecutive_wires))
 
-    coeff, observables = hamiltonian.terms
+    coeff, observables = hamiltonian.terms()
 
     authorized_obs = {"PauliX", "PauliY", "PauliZ", "Hadamard", "Identity"}
 

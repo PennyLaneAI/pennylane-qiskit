@@ -17,6 +17,9 @@
 
 ### Bug fixes
 
+* Changed the access to Hamiltonian terms `hamiltonian.terms()` as a method.
+  [(#190)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/190)
+  
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
