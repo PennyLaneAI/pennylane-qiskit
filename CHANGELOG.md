@@ -13,6 +13,10 @@
 * Changed the VQE callback function for SciPy optimizers.
   [(#187)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/187)
 
+* Switched from using the deprecated `qiskit.circuit.measure.measure` function
+  to using a method.
+  [(#191)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/191)
+
 ### Documentation
 
 ### Bug fixes
@@ -24,7 +28,7 @@
 
 This release contains contributions from (in alphabetical order):
 
-Thomas Bromley, Romain Moyard, Antal Száva
+Thomas Bromley, Andrea Mari, Romain Moyard, Antal Száva
 
 ---
 
