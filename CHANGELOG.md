@@ -1,8 +1,4 @@
-# Release 0.22.0-dev
-
-### New features since last release
-
-### Breaking changes
+# Release 0.22.0
 
 ### Improvements
 
@@ -16,8 +12,6 @@
 * Switched from using the deprecated `qiskit.circuit.measure.measure` function
   to using a method.
   [(#191)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/191)
-
-### Documentation
 
 ### Bug fixes
 
