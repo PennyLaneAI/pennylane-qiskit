@@ -29,7 +29,7 @@ jobs:
         run: >
           python .github/workflows/vb_script.py
           --version_path "./pennylane_qiskit/_version.py"
-          --changelog_path "CHANGELOG.md" --pre_release
+          --changelog_path "CHANGELOG.md" --pre_release  #pylint: disable=trailing-spaces
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
