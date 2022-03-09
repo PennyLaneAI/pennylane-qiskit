@@ -73,12 +73,14 @@ class RuntimeJobWrapper:
             step (float): Value of the step.
             accepted (bool): True if the loss function value has improved, False otherwise.
         """
-        _, (nfev, xk, fk, step, accepted) = args
-        self.intermediate_results["nfev"].append(nfev)
-        self.intermediate_results["parameters"].append(xk)
-        self.intermediate_results["function"].append(fk)
-        self.intermediate_results["step"].append(step)
-        self.intermediate_results["accepted"].append(accepted)
+        # If it is a dictionary it is the final result and does not belong to intermediate results
+        if not isinstance(args[1], dict):
+            _, (nfev, xk, fk, step, accepted) = args
+            self.intermediate_results["nfev"].append(nfev)
+            self.intermediate_results["parameters"].append(xk)
+            self.intermediate_results["function"].append(fk)
+            self.intermediate_results["step"].append(step)
+            self.intermediate_results["accepted"].append(accepted)
 
     def _scipy_callback(self, *args):
         """The callback function that attaches intermediate results to the wrapper:
@@ -86,8 +88,10 @@ class RuntimeJobWrapper:
         Args:
             xk (array_like): A list or NumPy array to attach.
         """
-        _, xk = args
-        self.intermediate_results["parameters"].append(xk)
+        # If it is a dictionary it is the final result and does not belong to intermediate results
+        if not isinstance(args[1], dict):
+            _, xk = args
+            self.intermediate_results["parameters"].append(xk)
 
     def result(self):
         """Get the result of the job as a SciPy OptimizerResult object.
@@ -458,7 +462,7 @@ def hamiltonian_to_list_string(hamiltonian, wires):
     consecutive_wires = qml.wires.Wires(range(num_qubits))
     wires_map = OrderedDict(zip(wires, consecutive_wires))
 
-    coeff, observables = hamiltonian.terms
+    coeff, observables = hamiltonian.terms()
 
     authorized_obs = {"PauliX", "PauliY", "PauliZ", "Hadamard", "Identity"}
 

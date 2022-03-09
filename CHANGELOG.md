@@ -1,27 +1,59 @@
-# Release 0.21.0-dev
-
+# Release 0.22.0-dev
 
 ### New features since last release
 
-* Add two devices for runtime programs and one VQE runtime program solver.
-  [(#157)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/157)
-  
 ### Breaking changes
 
 ### Improvements
 
-* Improved the login flow when IBMQ tokens are specified as environement variables.
-  [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
+* Changed a validation check such that it handles qubit numbers represented as
+  strings.
+  [(#184)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/184)
+  
+* Changed the VQE callback function for SciPy optimizers.
+  [(#187)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/187)
+
+* Switched from using the deprecated `qiskit.circuit.measure.measure` function
+  to using a method.
+  [(#191)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/191)
 
 ### Documentation
 
 ### Bug fixes
 
+* Changed the access to Hamiltonian terms `hamiltonian.terms()` as a method.
+  [(#190)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/190)
+  
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
-Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Antal Száva
+Thomas Bromley, Andrea Mari, Romain Moyard, Antal Száva
+
+---
+
+# Release 0.21.0
+
+### New features since last release
+
+* Add two devices for runtime programs and one VQE runtime program solver.
+  [(#157)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/157)
+
+### Improvements
+
+* Improved the login flow when IBMQ tokens are specified as environment variables.
+  [(#169)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/169)
+
+### Documentation
+
+* Improved the quality of docstrings in the library.
+  [(#174)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/174)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Guillermo Alonso-Linaje, Romain Moyard, Tanner Rogalsky, Jay Soni, Antal Száva
 
 ---
 
