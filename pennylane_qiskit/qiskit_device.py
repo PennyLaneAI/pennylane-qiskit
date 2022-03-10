@@ -448,6 +448,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
             res = np.asarray(res)
             results.append(res)
 
+            # increment counter for number of executions of qubit device
+            self._num_executions += 1
+
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
             self.tracker.record()
