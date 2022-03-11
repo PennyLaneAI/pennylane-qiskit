@@ -24,7 +24,6 @@ import warnings
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
-from qiskit.circuit.measure import measure
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
@@ -237,7 +236,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if self.backend_name not in self._state_backends:
             # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
-                measure(self._circuit, qr, cr)
+                self._circuit.measure(qr, cr)
         elif "aer" in self.backend_name:
             self._circuit.save_state()
 
@@ -448,6 +447,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
             res = self.statistics(circuit.observables)
             res = np.asarray(res)
             results.append(res)
+
+            # increment counter for number of executions of qubit device
+            self._num_executions += 1
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
