@@ -40,4 +40,4 @@ jobs:
         # Only run IBMQ and Runtime tests (skipped otherwise)
         run: python -m pytest tests -k 'test_ibmq.py or test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
         env:
-          IBMQX_TOKEN_TEST: ${{ secrets.IBMQX_TOKEN_TEST }}
+          IBMQX_TOKEN: ${{ secrets.IBMQX_TOKEN_TEST }}
