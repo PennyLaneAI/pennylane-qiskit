@@ -175,3 +175,10 @@ class TestBatchExecution:
         dev.reset()
         assert len(res) == 3
         assert np.allclose(res[0], dev.execute(empty_tape), atol=0)
+
+    def test_num_executions_recorded(self, device):
+        """Tests that the number of exeuctions are recorded correctly.."""
+        dev = device(2)
+        tapes = [self.tape1, self.tape2]
+        res = dev.batch_execute(tapes)
+        assert dev.num_executions == 2
