@@ -149,7 +149,7 @@ class IBMQSamplerDevice(IBMQDevice):
         program_inputs = {"circuits": compiled_circuits}
 
         if "circuits_indices" not in self.kwargs:
-            circuit_indices = range(0, len(compiled_circuits))
+            circuit_indices = list(range(0, len(compiled_circuits)))
             program_inputs["circuits_indices"] = circuit_indices
         else:
             circuit_indices = self.kwargs.get("circuit_indices")
