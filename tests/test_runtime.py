@@ -177,11 +177,9 @@ class TestSampler:
         "kwargs",
         [
             {
-                "return_mitigation_overhead": True,
+                "circuit_indices": [0],
                 "run_config": {"seed_simulator": 42},
                 "skip_transpilation": False,
-                "transpile_config": {"approximation_degree": 1.0},
-                "use_measurement_mitigation": True,
             }
         ],
     )

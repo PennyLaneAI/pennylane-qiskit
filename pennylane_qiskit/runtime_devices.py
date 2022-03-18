@@ -130,13 +130,10 @@ class IBMQSamplerDevice(IBMQDevice):
             to estimate expectation values and variances of observables. Default=1024.
 
     Keyword Args:
-        return_mitigation_overhead (bool): Return mitigation overhead factor. Default is False.
-        run_config (dict): A collection of kwargs passed to backend.run, if shots are given here it will take
+        circuit_indices (bool): Indices of the circuits to evaluate. Default is ``range(0, len(circuits))``.
+        run_options (dict): A collection of kwargs passed to backend.run, if shots are given here it will take
             precedence over the shots arg.
         skip_transpilation (bool): Skip circuit transpilation. Default is False.
-        transpile_config (dict): A collection of kwargs passed to transpile.
-        use_measurement_mitigation (bool): Use measurement mitigation to improve results. Default is False.
-        use_dynamical_decoupling (bool): Use dynamical decoupling to improve fidelities.
     """
 
     short_name = "qiskit.ibmq.sampler"
@@ -151,11 +148,17 @@ class IBMQSamplerDevice(IBMQDevice):
 
         program_inputs = {"circuits": compiled_circuits}
 
-        if "run_config" in self.kwargs:
-            if not "shots" in self.kwargs["run_config"]:
-                self.kwargs["run_config"]["shots"] = self.shots
+        if "circuits_indices" not in self.kwargs:
+            circuit_indices = range(0, len(compiled_circuits))
+            program_inputs["circuits_indices"] = circuit_indices
         else:
-            self.kwargs["run_config"] = {"shots": self.shots}
+            circuit_indices = self.kwargs.get("circuit_indices")
+
+        if "run_options" in self.kwargs:
+            if not "shots" in self.kwargs["run_options"]:
+                self.kwargs["run_options"]["shots"] = self.shots
+        else:
+            self.kwargs["run_options"] = {"shots": self.shots}
 
         for kwarg in self.kwargs:
             program_inputs[kwarg] = self.kwargs.get(kwarg)
@@ -169,10 +172,14 @@ class IBMQSamplerDevice(IBMQDevice):
         self._current_job = job.result()
         results = []
 
+        counter = 0
         for index, circuit in enumerate(circuits):
-            self._samples = self.generate_samples(index)
-            res = self.statistics(circuit.observables)
-            results.append(res)
+
+            if index in circuit_indices:
+                self._samples = self.generate_samples(counter)
+                counter += 1
+                res = self.statistics(circuit.observables)
+                results.append(res)
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
