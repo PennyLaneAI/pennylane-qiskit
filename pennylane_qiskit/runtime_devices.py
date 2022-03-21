@@ -104,7 +104,6 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
         counts = self._current_job.get_counts()
-
         # Batch of circuits
         if not isinstance(counts, dict):
             counts = self._current_job.get_counts()[circuit]
@@ -170,6 +169,7 @@ class IBMQSamplerDevice(IBMQDevice):
             program_id="sampler", options=options, inputs=program_inputs
         )
         self._current_job = job.result()
+        print(self._current_job)
         results = []
 
         counter = 0
@@ -199,13 +199,26 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.get("counts")[circuit_id]
-        counts_formatted = qiskit.result.postprocess.format_counts(
-            counts, {"memory_slots": self._circuit.num_qubits}
-        )
+        counts = self._current_job.get("quasi_dists")[circuit_id]
+        number_of_states = 2 ** self.num_wires
 
-        samples = []
-        for key, value in counts_formatted.items():
-            for _ in range(0, value):
-                samples.append(key)
-        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+        keys = list(counts.keys())
+
+        # Convert state to int
+        for i, elem in enumerate(keys):
+            keys[i] = int(elem, 2)
+
+        values = list(counts.values())
+        states, probs = zip(*sorted(zip(keys, values)))
+
+        states = list(states)
+        probs = list(probs)
+
+        # If prob for a state is 0, it does not appear in counts.
+        if len(states) != number_of_states:
+            for i in range(0, number_of_states):
+                if states[i] != i:
+                    states.insert(i, i)
+                    probs.insert(i, 0.0)
+
+        return self.states_to_binary(self.sample_basis_states(number_of_states, probs), self.num_wires)

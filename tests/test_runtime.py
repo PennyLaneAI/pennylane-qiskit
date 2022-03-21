@@ -178,7 +178,7 @@ class TestSampler:
         [
             {
                 "circuit_indices": [0],
-                "run_config": {"seed_simulator": 42},
+                "run_options": {"seed_simulator": 42},
                 "skip_transpilation": False,
             }
         ],
