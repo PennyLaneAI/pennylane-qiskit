@@ -169,7 +169,7 @@ class IBMQSamplerDevice(IBMQDevice):
             program_id="sampler", options=options, inputs=program_inputs
         )
         self._current_job = job.result()
-        print(self._current_job)
+
         results = []
 
         counter = 0
@@ -200,9 +200,9 @@ class IBMQSamplerDevice(IBMQDevice):
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
         counts = self._current_job.get("quasi_dists")[circuit_id]
-        number_of_states = 2 ** self.num_wires
-
         keys = list(counts.keys())
+
+        number_of_states = 2 ** len(keys[0])
 
         # Convert state to int
         for i, elem in enumerate(keys):
@@ -221,4 +221,6 @@ class IBMQSamplerDevice(IBMQDevice):
                     states.insert(i, i)
                     probs.insert(i, 0.0)
 
-        return self.states_to_binary(self.sample_basis_states(number_of_states, probs), self.num_wires)
+        return self.states_to_binary(
+            self.sample_basis_states(number_of_states, probs), self.num_wires
+        )
