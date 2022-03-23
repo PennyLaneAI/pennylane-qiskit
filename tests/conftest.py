@@ -46,7 +46,7 @@ hw_backends = ["qasm_simulator", "aer_simulator"]
 
 @pytest.fixture
 def token():
-    t = os.getenv("IBMQX_TOKEN_TEST", None)
+    t = os.getenv("IBMQX_TOKEN", None)
 
     if t is None:
         pytest.skip("Skipping test, no IBMQ token available")

@@ -42,7 +42,7 @@ jobs:
         # easily result in timeouts
         run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
         env:
-          IBMQX_TOKEN_TEST: ${{ secrets.IBMQX_TOKEN_TEST }}
+          IBMQX_TOKEN: ${{ secrets.IBMQX_TOKEN_TEST }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
