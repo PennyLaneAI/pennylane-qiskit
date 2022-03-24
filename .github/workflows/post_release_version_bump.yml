@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run post-release version bump
-        uses: PennyLaneAI/automation/version_bump_action@v1.0
+        uses: PennyLaneAI/automation/version_bump_action@main
         with:
           version_path: "./pennylane_qiskit/_version.py"
           changelog_path: "./CHANGELOG.md"
