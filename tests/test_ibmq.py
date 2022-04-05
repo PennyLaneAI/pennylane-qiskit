@@ -111,10 +111,12 @@ def test_custom_provider(monkeypatch):
     device."""
     mock_provider = "MockProvider"
     mock_qiskit_device = MockQiskitDeviceInit()
+    monkeypatch.setenv("IBMQX_TOKEN", '1')
 
     with monkeypatch.context() as m:
         m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
         m.setattr(ibmq.IBMQ, "enable_account", lambda *args, **kwargs: None)
+
 
         # Here mocking to a value such that it is not None
         m.setattr(ibmq.IBMQ, "active_account", lambda *args, **kwargs: {"token": '1'})
@@ -133,6 +135,7 @@ def test_default_provider(monkeypatch):
     """Tests that the default provider is used when no custom provider was
     specified."""
     mock_qiskit_device = MockQiskitDeviceInit()
+    monkeypatch.setenv("IBMQX_TOKEN", '1')
 
     with monkeypatch.context() as m:
         m.setattr(ibmq.QiskitDevice, "__init__", mock_qiskit_device.mocked_init)
@@ -151,6 +154,7 @@ def test_custom_provider_hub_group_project(monkeypatch):
     """Tests that the custom arguments passed during device instantiation are
     used when calling get_provider."""
     mock_qiskit_device = MockQiskitDeviceInit()
+    monkeypatch.setenv("IBMQX_TOKEN", '1')
 
     custom_hub = "SomeHub"
     custom_group = "SomeGroup"
