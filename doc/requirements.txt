@@ -10,3 +10,4 @@ pygments==2.7.4
 git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
 dc-qiskit-algorithms
 sphinx-automodapi
+jinja2==3.0.3
