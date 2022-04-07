@@ -608,16 +608,31 @@ class TestConverterGates:
         qc = QuantumCircuit(2, 1)
 
         qc.crz(angle, *two_wires)
+        qc.rzz(angle, *two_wires)
+        qc.ryy(angle, *two_wires)
+        qc.rxx(angle, *two_wires)
 
         quantum_circuit = load(qc)
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 1
+        assert len(recorder.queue) == 4
 
         assert recorder.queue[0].name == "CRZ"
         assert recorder.queue[0].parameters == [angle]
         assert recorder.queue[0].wires == Wires(two_wires)
+
+        assert recorder.queue[1].name == "IsingZZ"
+        assert recorder.queue[1].parameters == [angle]
+        assert recorder.queue[1].wires == Wires(two_wires)
+
+        assert recorder.queue[2].name == "IsingYY"
+        assert recorder.queue[2].parameters == [angle]
+        assert recorder.queue[2].wires == Wires(two_wires)
+
+        assert recorder.queue[3].name == "IsingXX"
+        assert recorder.queue[3].parameters == [angle]
+        assert recorder.queue[3].wires == Wires(two_wires)
 
     def test_three_qubit_operations_supported_by_pennylane(self, recorder):
         """Tests loading a circuit with the three-qubit operations supported by PennyLane."""
