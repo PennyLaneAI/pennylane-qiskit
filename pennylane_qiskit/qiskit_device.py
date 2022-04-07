@@ -59,6 +59,9 @@ QISKIT_OPERATION_MAP = {
     "U1": ex.U1Gate,
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
+    "IsingZZ": ex.RZZGate,
+    "IsingYY": ex.RYYGate,
+    "IsingXX": ex.RXXGate,
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
