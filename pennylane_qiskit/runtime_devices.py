@@ -18,7 +18,6 @@ This module contains classes for constructing Qiskit runtime devices for PennyLa
 
 import numpy as np
 
-import qiskit.result.postprocess
 from qiskit.providers.ibmq import RunnerResult
 from pennylane_qiskit.ibmq import IBMQDevice
 
@@ -104,7 +103,6 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
         counts = self._current_job.get_counts()
-
         # Batch of circuits
         if not isinstance(counts, dict):
             counts = self._current_job.get_counts()[circuit]
@@ -130,13 +128,10 @@ class IBMQSamplerDevice(IBMQDevice):
             to estimate expectation values and variances of observables. Default=1024.
 
     Keyword Args:
-        return_mitigation_overhead (bool): Return mitigation overhead factor. Default is False.
-        run_config (dict): A collection of kwargs passed to backend.run, if shots are given here it will take
+        circuit_indices (bool): Indices of the circuits to evaluate. Default is ``range(0, len(circuits))``.
+        run_options (dict): A collection of kwargs passed to backend.run, if shots are given here it will take
             precedence over the shots arg.
         skip_transpilation (bool): Skip circuit transpilation. Default is False.
-        transpile_config (dict): A collection of kwargs passed to transpile.
-        use_measurement_mitigation (bool): Use measurement mitigation to improve results. Default is False.
-        use_dynamical_decoupling (bool): Use dynamical decoupling to improve fidelities.
     """
 
     short_name = "qiskit.ibmq.sampler"
@@ -151,11 +146,17 @@ class IBMQSamplerDevice(IBMQDevice):
 
         program_inputs = {"circuits": compiled_circuits}
 
-        if "run_config" in self.kwargs:
-            if not "shots" in self.kwargs["run_config"]:
-                self.kwargs["run_config"]["shots"] = self.shots
+        if "circuits_indices" not in self.kwargs:
+            circuit_indices = list(range(0, len(compiled_circuits)))
+            program_inputs["circuit_indices"] = circuit_indices
         else:
-            self.kwargs["run_config"] = {"shots": self.shots}
+            circuit_indices = self.kwargs.get("circuit_indices")
+
+        if "run_options" in self.kwargs:
+            if not "shots" in self.kwargs["run_options"]:
+                self.kwargs["run_options"]["shots"] = self.shots
+        else:
+            self.kwargs["run_options"] = {"shots": self.shots}
 
         for kwarg in self.kwargs:
             program_inputs[kwarg] = self.kwargs.get(kwarg)
@@ -167,12 +168,17 @@ class IBMQSamplerDevice(IBMQDevice):
             program_id="sampler", options=options, inputs=program_inputs
         )
         self._current_job = job.result()
+
         results = []
 
+        counter = 0
         for index, circuit in enumerate(circuits):
-            self._samples = self.generate_samples(index)
-            res = self.statistics(circuit.observables)
-            results.append(res)
+
+            if index in circuit_indices:
+                self._samples = self.generate_samples(counter)
+                counter += 1
+                res = self.statistics(circuit.observables)
+                results.append(res)
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
@@ -192,13 +198,28 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.get("counts")[circuit_id]
-        counts_formatted = qiskit.result.postprocess.format_counts(
-            counts, {"memory_slots": self._circuit.num_qubits}
-        )
+        counts = self._current_job.get("quasi_dists")[circuit_id]
+        keys = list(counts.keys())
 
-        samples = []
-        for key, value in counts_formatted.items():
-            for _ in range(0, value):
-                samples.append(key)
-        return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+        number_of_states = 2 ** len(keys[0])
+
+        # Convert state to int
+        for i, elem in enumerate(keys):
+            keys[i] = int(elem, 2)
+
+        values = list(counts.values())
+        states, probs = zip(*sorted(zip(keys, values)))
+
+        states = list(states)
+        probs = list(probs)
+
+        # If prob for a state is 0, it does not appear in counts.
+        if len(states) != number_of_states:
+            for i in range(0, number_of_states):
+                if states[i] != i:
+                    states.insert(i, i)
+                    probs.insert(i, 0.0)
+
+        return self.states_to_binary(
+            self.sample_basis_states(number_of_states, probs), self.num_wires
+        )
