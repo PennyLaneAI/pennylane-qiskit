@@ -2,6 +2,9 @@
 
 ### New features since last release
 
+* Add support for the operations`IsingXX`, `IsingYY`, `IsingZZ`
+  [(#209)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/209)
+
 ### Breaking changes
 
 ### Improvements
@@ -10,9 +13,17 @@
 
 ### Bug fixes
 
+* Fix runtime sampler due to changes on Qiskit side.
+  [(#201)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/201)
+  
+* Pin `jinja2` to 3.0.3 because of sphinx incompatibility.
+  [(#207)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/207)
+  
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Samuel Banning, Romain Moyard
 
 ---
  

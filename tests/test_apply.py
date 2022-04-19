@@ -41,12 +41,39 @@ crz = lambda theta: np.array(
     ]
 )
 
+isingxx = lambda phi: np.array(
+    [
+        [np.cos(phi / 2), 0, 0, -1j * np.sin(phi / 2)],
+        [0, np.cos(phi / 2), -1j * np.sin(phi / 2), 0],
+        [0, -1j * np.sin(phi / 2), np.cos(phi / 2), 0],
+        [-1j * np.sin(phi / 2), 0, 0, np.cos(phi / 2)],
+    ]
+)
+
+isingyy = lambda phi: np.array(
+    [
+        [np.cos(phi / 2), 0, 0, 1j * np.sin(phi / 2)],
+        [0, np.cos(phi / 2), -1j * np.sin(phi / 2), 0],
+        [0, -1j * np.sin(phi / 2), np.cos(phi / 2), 0],
+        [1j * np.sin(phi / 2), 0, 0, np.cos(phi / 2)],
+    ]
+)
+
+isingzz = lambda phi: np.array(
+    [
+        [np.exp(-1.0j * phi / 2), 0, 0, 0],
+        [0, np.exp(1.0j * phi / 2), 0, 0],
+        [0, 0, np.exp(1.0j * phi / 2), 0],
+        [0, 0, 0, np.exp(-1.0j * phi / 2)],
+    ]
+)
+
 
 single_qubit_operations = [qml.Identity, qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T, qml.SX]
 
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ]
-two_qubit_param = [qml.CRZ]
+two_qubit_param = [qml.CRZ, qml.IsingXX, qml.IsingYY, qml.IsingZZ]
 three_qubit = [qml.Toffoli, qml.CSWAP]
 
 

@@ -23,10 +23,17 @@ from qiskit import IBMQ
 
 from pennylane_qiskit import opstr_to_meas_circ
 from pennylane_qiskit import IBMQCircuitRunnerDevice, IBMQSamplerDevice
-from pennylane_qiskit.vqe_runtime_runner import vqe_runner, upload_vqe_runner, delete_vqe_runner, hamiltonian_to_list_string
+from pennylane_qiskit.vqe_runtime_runner import (
+    vqe_runner,
+    upload_vqe_runner,
+    delete_vqe_runner,
+    hamiltonian_to_list_string,
+)
+
 
 class TestCircuitRunner:
     """Test class for the circuit runner IBMQ runtime device."""
+
     def test_load_from_env(self, token, monkeypatch):
         """Test loading an IBMQ Circuit Runner Qiskit runtime device from an env variable."""
         monkeypatch.setenv("IBMQX_TOKEN", token)
@@ -141,6 +148,7 @@ class TestCircuitRunner:
 
 class TestSampler:
     """Test class for the sampler IBMQ runtime device."""
+
     def test_load_from_env(self, token, monkeypatch):
         """Test loading an IBMQ Sampler Qiskit runtime device from an env variable."""
         monkeypatch.setenv("IBMQX_TOKEN", token)
@@ -177,11 +185,9 @@ class TestSampler:
         "kwargs",
         [
             {
-                "return_mitigation_overhead": True,
-                "run_config": {"seed_simulator": 42},
+                "circuit_indices": [0],
+                "run_options": {"seed_simulator": 42},
                 "skip_transpilation": False,
-                "transpile_config": {"approximation_degree": 1.0},
-                "use_measurement_mitigation": True,
             }
         ],
     )
@@ -208,7 +214,7 @@ class TestSampler:
     def test_batch_circuits(self, token, tol, shots):
         """Test executing batched circuits submitted to IBMQ using the Sampler device."""
         IBMQ.enable_account(token)
-        dev = IBMQSamplerDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
+        dev = IBMQSamplerDevice(wires=1, backend="ibmq_qasm_simulator", shots=shots)
 
         # Batch the input parameters
         batch_dim = 3
@@ -255,19 +261,25 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         result = hamiltonian_to_list_string(hamiltonian, hamiltonian.wires)
 
-        assert [(1, 'XIX'), (1, 'HZI')] == result
+        assert [(1, "XIX"), (1, "HZI")] == result
 
     def test_op_str_measurement_circ(self):
         """Test that the opstr_to_meas_circ function finds the necessary rotations before measurements in the
-        circuit. """
-        circ = opstr_to_meas_circ('HIHXZ')
+        circuit."""
+        circ = opstr_to_meas_circ("HIHXZ")
         results = []
         for c in circ:
             if c:
                 results.append((c.data[0][0].name, c.data[0][0].params))
             else:
                 results.append(())
-        assert [('ry', [-0.7853981633974483]), (), ('ry', [-0.7853981633974483]), ('h', []), ()] == results
+        assert [
+            ("ry", [-0.7853981633974483]),
+            (),
+            ("ry", [-0.7853981633974483]),
+            ("h", []),
+            (),
+        ] == results
 
     @pytest.mark.parametrize("shots", [8000])
     def test_simple_hamiltonian(self, token, tol, shots):
@@ -350,7 +362,9 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(ValueError, match="Ansatz InEfficientSU2 not in n_local circuit library."):
+        with pytest.raises(
+            ValueError, match="Ansatz InEfficientSU2 not in n_local circuit library."
+        ):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -358,7 +372,11 @@ class TestCustomVQE:
                 ansatz="InEfficientSU2",
                 x0=[3.97507603, 3.00854038],
                 shots=shots,
-                kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
             )
 
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
@@ -379,7 +397,9 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="The ansatz must be a callable quantum function."):
+        with pytest.raises(
+            qml.QuantumFunctionError, match="The ansatz must be a callable quantum function."
+        ):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -417,7 +437,9 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="The ansatz must be a callable quantum function."):
+        with pytest.raises(
+            qml.QuantumFunctionError, match="The ansatz must be a callable quantum function."
+        ):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -567,12 +589,16 @@ class TestCustomVQE:
                 x0=[3.97507603, 3.00854038, 3.55637849],
                 shots=shots,
                 optimizer_config={"maxiter": 10},
-                kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+                kwargs={
+                    "hub": "ibm-q-startup",
+                    "group": "ibm-q-startup",
+                    "project": "reservations",
+                },
             )
 
         assert (
-                record[-1].message.args[0]
-                == "In order to match the tape expansion, the number of parameters has been changed."
+            record[-1].message.args[0]
+            == "In order to match the tape expansion, the number of parameters has been changed."
         )
 
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
@@ -706,7 +732,9 @@ class TestCustomVQE:
         hamiltonian = qml.PauliZ(wires=0)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="A PennyLane Hamiltonian object is required."):
+        with pytest.raises(
+            qml.QuantumFunctionError, match="A PennyLane Hamiltonian object is required."
+        ):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -921,7 +949,9 @@ class TestCustomVQE:
         hamiltonian = qml.Hamiltonian(coeffs, obs)
         program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
 
-        with pytest.raises(qml.QuantumFunctionError, match="Function contains no quantum operations."):
+        with pytest.raises(
+            qml.QuantumFunctionError, match="Function contains no quantum operations."
+        ):
             vqe_runner(
                 program_id=program_id,
                 backend="ibmq_qasm_simulator",
@@ -939,7 +969,6 @@ class TestCustomVQE:
 
         provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
         delete_vqe_runner(provider=provider, program_id=program_id)
-
 
     @pytest.mark.parametrize("shots", [8000])
     def test_invalid_ansatz(self, token, tol, shots):
