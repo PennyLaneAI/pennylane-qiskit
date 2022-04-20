@@ -67,7 +67,7 @@ nest-asyncio==1.5.5
 networkx==2.6.3
 ninja==1.10.2.3
 ntlm-auth==1.5.0
-numpy==1.22.3
+numpy==1.21.6
 nxpd==0.2.0
 orjson==3.6.8
 packaging==21.3
