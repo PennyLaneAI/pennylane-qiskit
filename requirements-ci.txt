@@ -9,7 +9,7 @@ flaky
 # Not direct dependencies
 appdirs
 autograd
-autoray=
+autoray
 cachetools
 certifi
 cffi
