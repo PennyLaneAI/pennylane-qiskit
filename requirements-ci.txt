@@ -1,0 +1,6 @@
+qiskit
+mthree
+pennylane
+numpy
+sympy
+flaky
