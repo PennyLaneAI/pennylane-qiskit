@@ -1,4 +1,4 @@
-# Release 0.23.2
+# Release 0.23.0
 
 ### New features since last release
 
