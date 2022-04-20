@@ -104,7 +104,7 @@ requests==2.27.1
 requests-ntlm==1.1.0
 retworkx==0.11.0
 scikit-learn==1.0.2
-scipy==1.8.0
+scipy==1.7.3
 semantic-version==2.6.0
 six==1.16.0
 snowballstemmer==2.2.0
