@@ -1,15 +1,9 @@
-# Release 0.23.0-dev
+# Release 0.23.0
 
 ### New features since last release
 
 * Add support for the operations`IsingXX`, `IsingYY`, `IsingZZ`
   [(#209)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/209)
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
 
 ### Bug fixes
 
