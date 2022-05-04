@@ -99,4 +99,5 @@ hardware access.
 
 .. raw:: html
 
-    <br/>
+    <div style='clear:both'></div>
+    </br>
