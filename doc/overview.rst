@@ -43,8 +43,8 @@ Currently, there are three different devices available:
 
 .. raw:: html
 
-        <div style='clear:both'></div>
-        </br>
+    <div style='clear:both'></div>
+    </br>
 
 For example, the ``'qiskit.aer'`` device with two wires is called like this:
 
