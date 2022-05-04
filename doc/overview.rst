@@ -1,6 +1,8 @@
 PennyLane-Qiskit Plugin
 #######################
 
+:Release: |release|
+
 .. include:: ../README.rst
   :start-after:	header-start-inclusion-marker-do-not-remove
   :end-before: header-end-inclusion-marker-do-not-remove
@@ -14,27 +16,27 @@ Devices
 
 Currently, there are three different devices available:
 
-.. devicegalleryitem::
+.. title-card::::
     :name: 'qiskit.aer'
     :description: Qiskit's staple simulator with great features such as noise models.
     :link: devices/aer.html
 
-.. devicegalleryitem::
+.. title-card::
     :name: 'qiskit.basicaer'
     :description: A simplified version of the Aer device, which requires fewer dependencies.
     :link: devices/basicaer.html
 
-.. devicegalleryitem::
+.. title-card::
     :name: 'qiskit.ibmq'
     :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
     :link: devices/ibmq.html
 
-.. devicegalleryitem::
+.. title-card::
     :name: 'qiskit.ibmq.circuit_runner'
     :description: Allows integration with qiskit's circuit runner runtime program.
     :link: devices/runtime.html
 
-.. devicegalleryitem::
+.. title-card::
     :name: 'qiskit.ibmq.sampler'
     :description: Allows integration with qiskit's sampler runtime program.
     :link: devices/runtime.html
