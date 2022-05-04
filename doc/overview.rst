@@ -90,6 +90,11 @@ Check out these demos to see the PennyLane-Qiskit plugin in action:
     :link:  https://pennylane.ai/qml/demos/quantum_volume.html
     :tooltip: Learn how to compute the quantum volume of a quantum processor
 
+.. raw:: html
+
+    </div></div><div style='clear:both'> <br/>
+
+
 You can also try it out using any of the qubit based `demos from the PennyLane documentation
 <https://pennylane.ai/qml/demonstrations.html>`_, for example the tutorial on
 `qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_.
@@ -99,4 +104,4 @@ hardware access.
 
 .. raw:: html
 
-    </div></div><div style='clear:both'> <br/>
+    <br/>
