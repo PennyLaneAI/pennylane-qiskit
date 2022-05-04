@@ -5,6 +5,7 @@
    :titlesonly:
    :hidden:
 
+   Overview <overview>
    installation
    support
 
