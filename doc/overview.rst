@@ -92,7 +92,8 @@ Check out these demos to see the PennyLane-Qiskit plugin in action:
 
 .. raw:: html
 
-    </div></div><div style='clear:both'> <br/>
+    <div style='clear:both'></div>
+    </br>
 
 
 You can also try it out using any of the qubit based `demos from the PennyLane documentation
