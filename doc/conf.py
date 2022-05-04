@@ -433,3 +433,8 @@ inheritance_node_attrs = dict(color="lightskyblue1", fillcolor="lightskyblue1", 
 
 #autodoc_default_flags = ['members']
 autosummary_generate = True
+
+from directives import CustomDemoGalleryItemDirective
+
+def setup(app):
+    app.add_directive('demogalleryitem', CustomDemoGalleryItemDirective)
