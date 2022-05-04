@@ -71,7 +71,6 @@ packaging==21.3
 pandocfilters==1.5.0
 parso==0.8.3
 pbr==5.8.1
-git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
 PennyLane-Lightning==0.22.1
 pexpect==4.8.0
 pickleshare==0.7.5
