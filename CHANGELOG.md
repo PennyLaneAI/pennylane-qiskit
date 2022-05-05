@@ -8,12 +8,17 @@
 
 ### Documentation
 
+* Use the centralized [Xanadu Sphinx Theme](https://github.com/XanaduAI/xanadu-sphinx-theme)
+  to style the Sphinx documentation.
+[(#215)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/215)
+
 ### Bug fixes
 
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
+Mikhail Andrenkov, Romain Moyard
 ---
 # Release 0.23.0
 
