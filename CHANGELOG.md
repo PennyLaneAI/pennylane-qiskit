@@ -6,6 +6,9 @@
 
 ### Improvements
 
+* Improvement of the different `requirements.txt` and `requirements-ci.txt` files.
+[(#212)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/212)
+
 ### Documentation
 
 * Use the centralized [Xanadu Sphinx Theme](https://github.com/XanaduAI/xanadu-sphinx-theme)
