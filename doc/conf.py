@@ -63,7 +63,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PennyLane-Qiskit'
-copyright = "Copyright 2022, Xanadu Quantum Technologies Inc."
+copyright = "Copyright 2022, Xanadu Quantum Technologies"
 author = 'Xanadu Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -235,7 +235,6 @@ html_sidebars = {
     '**' : [
         'searchbox.html',
         'globaltoc.html',
-        # 'sourcelink.html'
     ]
 }
 
@@ -288,7 +287,6 @@ htmlhelp_basename = 'PennyLaneQiskitdoc'
 
 # # -- Xanadu theme ---------------------------------------------------------
 html_theme = 'xanadu'
-html_theme_path = ['.']
 
 # Register the theme as an extension to generate a sitemap.xml
 # extensions.append("guzzle_sphinx_theme")
