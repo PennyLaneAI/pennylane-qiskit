@@ -11,3 +11,4 @@ git+https://github.com/XanaduAI/pennylane.git#egg=pennylane
 dc-qiskit-algorithms
 sphinx-automodapi
 jinja2==3.0.3
+xanadu-sphinx-theme==0.1.0
