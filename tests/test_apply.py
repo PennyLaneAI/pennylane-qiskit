@@ -105,7 +105,8 @@ class TestAnalyticApply:
         dev.apply([qml.QubitStateVector(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
@@ -120,7 +121,7 @@ class TestAnalyticApply:
         dev.apply([qml.QubitStateVector(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", two_qubit)
@@ -136,7 +137,7 @@ class TestAnalyticApply:
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
 
         res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
@@ -152,7 +153,7 @@ class TestAnalyticApply:
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
 
         res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", three_qubit)
@@ -166,7 +167,7 @@ class TestAnalyticApply:
         dev.apply([qml.QubitStateVector(state, wires=[0, 1, 2]), applied_operation])
 
         res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
 
@@ -255,7 +256,7 @@ class TestNonAnalyticApply:
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
@@ -272,7 +273,7 @@ class TestNonAnalyticApply:
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", two_qubit)
@@ -289,7 +290,7 @@ class TestNonAnalyticApply:
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
@@ -307,7 +308,7 @@ class TestNonAnalyticApply:
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", three_qubit)
@@ -323,5 +324,5 @@ class TestNonAnalyticApply:
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
-        expected = np.abs(applied_operation.matrix @ state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
