@@ -677,25 +677,30 @@ class TestConverterGates:
         assert len(recorder.queue[1].parameters) == 0
         assert recorder.queue[1].wires == Wires(three_wires)
 
-    def test_operations_sdg_and_tdg(self, recorder):
-        """Tests loading a circuit with the operations Sdg and Tdg gates."""
+    def test_operations_adjoint_ops(self, recorder):
+        """Tests loading a circuit with the operations Sdg, Tdg, and SXdg gates."""
 
         qc = QuantumCircuit(3, 1)
 
         qc.sdg([0])
         qc.tdg([0])
+        qc.sxdg([0])
 
         quantum_circuit = load(qc)
         with recorder:
             quantum_circuit()
 
-        assert recorder.queue[0].name == "S.inv"
+        assert recorder.queue[0].name == "Adjoint(S)"
         assert len(recorder.queue[0].parameters) == 0
         assert recorder.queue[0].wires == Wires([0])
 
-        assert recorder.queue[1].name == "T.inv"
+        assert recorder.queue[1].name == "Adjoint(T)"
         assert len(recorder.queue[1].parameters) == 0
         assert recorder.queue[1].wires == Wires([0])
+
+        assert recorder.queue[2].name == "Adjoint(SX)"
+        assert len(recorder.queue[2].parameters) == 0
+        assert recorder.queue[2].wires == Wires([0])
 
     def test_operation_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,

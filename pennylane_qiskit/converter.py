@@ -32,6 +32,7 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
+dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
 def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
@@ -216,15 +217,9 @@ def load(quantum_circuit: QuantumCircuit):
                     inv_map[instruction_name], pl_parameters, operation_wires
                 )
 
-            elif instruction_name == "SdgGate":
-
-                sgate = getattr(pennylane_ops, "S")
-                sgate(wires=operation_wires).inv()
-
-            elif instruction_name == "TdgGate":
-
-                tgate = getattr(pennylane_ops, "T")
-                tgate(wires=operation_wires).inv()
+            elif instruction_name in dagger_map:
+                gate = dagger_map[instruction_name]
+                qml.adjoint(gate)(wires=operation_wires)
 
             else:
                 try:
