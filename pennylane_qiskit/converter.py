@@ -34,6 +34,7 @@ inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
+
 def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
