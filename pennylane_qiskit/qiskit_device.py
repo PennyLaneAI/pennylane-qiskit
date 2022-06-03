@@ -96,7 +96,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
     plugin_version = __version__
     author = "Xanadu"
 
-    _capabilities = {"model": "qubit", "tensor_observables": True, "inverse_operations": True}
+    _capabilities = {
+        "model": "qubit",
+        "tensor_observables": True,
+        "inverse_operations": True,
+    }
     _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
     _state_backends = {
         "statevector_simulator",
@@ -108,7 +112,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
     that support returning the underlying quantum statevector"""
 
     operations = set(_operation_map.keys())
-    observables = {"PauliX", "PauliY", "PauliZ", "Identity", "Hadamard", "Hermitian", "Projector"}
+    observables = {
+        "PauliX",
+        "PauliY",
+        "PauliZ",
+        "Identity",
+        "Hadamard",
+        "Hermitian",
+        "Projector",
+    }
 
     hw_analytic_warning_message = (
         "The analytic calculation of expectations, variances and "
