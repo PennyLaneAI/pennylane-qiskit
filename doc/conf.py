@@ -341,7 +341,7 @@ html_theme_options = {
         },
         {
             "name": "GitHub",
-            "href": "https://github.com/PennyLaneAI/pennylane-lightning",
+            "href": "https://github.com/PennyLaneAI/pennylane-qiskit",
             "icon": "fab fa-github",
         }
     ],
