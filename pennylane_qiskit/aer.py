@@ -61,3 +61,12 @@ class AerDevice(QiskitDevice):
             backend += "_" + method
 
         super().__init__(wires, provider=qiskit.Aer, backend=backend, shots=shots, **kwargs)
+
+    @classmethod
+    def capabilities(cls):
+        capabilities = super().capabilities().copy()
+        capabilities.update(
+            returns_state=False,
+        )
+        return capabilities
+
