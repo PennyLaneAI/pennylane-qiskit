@@ -7,7 +7,7 @@
 ### Improvements
 
 * Improvement of the different `requirements.txt` and `requirements-ci.txt` files.
-[(#212)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/212)
+  [(#212)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/212)
 
 * The plugin now natively supports the adjoint of the `S`, `T`, and `SX` gates.
   [(#216)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/216)
@@ -16,9 +16,13 @@
 
 * Use the centralized [Xanadu Sphinx Theme](https://github.com/XanaduAI/xanadu-sphinx-theme)
   to style the Sphinx documentation.
-[(#215)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/215)
+  [(#215)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/215)
 
 ### Bug fixes
+
+* Defines the missing `returns_state` entry of the
+  `capabilities` dictionary for devices.
+  [(#220)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/220)
 
 ### Contributors
 
