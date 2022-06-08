@@ -31,6 +31,7 @@ class TestDeviceIntegration:
         assert dev.shots == 1024
         assert dev.short_name == d[0]
         assert dev.provider == d[1]
+        assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     def test_incorrect_backend(self):
         """Test that exception is raised if name is incorrect"""
