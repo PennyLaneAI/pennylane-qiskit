@@ -100,6 +100,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "model": "qubit",
         "tensor_observables": True,
         "inverse_operations": True,
+        "returns_state": True,
     }
     _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
     _state_backends = {
