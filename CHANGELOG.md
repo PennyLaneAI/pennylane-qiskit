@@ -28,7 +28,8 @@
 
 This release contains contributions from (in alphabetical order):
 
-Mikhail Andrenkov, Christina Lee, Romain Moyard
+Mikhail Andrenkov, Christina Lee, Romain Moyard, Antal Száva
+
 ---
 # Release 0.23.0
 
