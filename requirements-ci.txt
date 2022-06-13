@@ -1,5 +1,4 @@
 qiskit
 mthree
-pennylane
 numpy
 sympy
