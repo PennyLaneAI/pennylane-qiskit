@@ -34,7 +34,7 @@ requests==2.27.1
 requests-ntlm==1.1.0
 retworkx==0.11.0
 scipy==1.8.0
-semantic-version==2.6.0
+semantic-version==2.10.0
 six==1.16.0
 stevedore==3.5.0
 symengine==0.9.2
