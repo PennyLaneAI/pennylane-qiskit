@@ -1,4 +1,4 @@
-pennylane
+git+https://github.com/PennyLaneAI/pennylane.git
 qiskit
 mthree
 numpy
