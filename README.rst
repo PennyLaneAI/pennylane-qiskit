@@ -13,7 +13,7 @@ PennyLane-Qiskit Plugin
     :alt: CodeFactor Grade
     :target: https://www.codefactor.io/repository/github/pennylaneai/pennylane-qiskit
 
-.. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?logo=read-the-docs&style=flat-square
+.. image:: https://readthedocs.com/projects/xanaduai-pennylane-qiskit/badge/?version=latest&style=flat-square
     :alt: Read the Docs
     :target: https://docs.pennylane.ai/projects/qiskit
 
