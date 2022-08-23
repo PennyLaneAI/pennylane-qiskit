@@ -15,7 +15,7 @@ PennyLane-Qiskit Plugin
 
 .. image:: https://img.shields.io/readthedocs/pennylane-qiskit.svg?logo=read-the-docs&style=flat-square
     :alt: Read the Docs
-    :target: https://pennylaneqiskit.readthedocs.io
+    :target: https://docs.pennylane.ai/projects/qiskit
 
 .. image:: https://img.shields.io/pypi/v/PennyLane-qiskit.svg?style=flat-square
     :alt: PyPI

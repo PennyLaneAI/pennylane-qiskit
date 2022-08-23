@@ -83,7 +83,7 @@ version = re.match(r'^(\d+\.\d+)', release).expand(r'\1')
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # today_fmt is used as the format for a strftime call.
 today_fmt = '%Y-%m-%d'
@@ -293,7 +293,8 @@ html_theme = 'xanadu'
 
 # xanadu theme options (see theme.conf for more information)
 html_theme_options = {
-    "navbar_wordmark_path": "_static/pl_wordmark.png",
+    "navbar_logo_path": "_static/logo.png",
+    "navbar_wordmark_path": "_static/pennylane.svg",
     # Specifying #19b37b is more correct but does not match the other PL websites.
 
     "navbar_logo_colour": "#2d7c7f",
