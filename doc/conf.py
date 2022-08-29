@@ -321,7 +321,7 @@ html_theme_options = {
         },
         {
             "name": "Documentation",
-            "href": "https://pennylane.readthedocs.io/",
+            "href": "https://docs.pennylane.ai/",
         },
         {
             "name": "Blog",
@@ -358,6 +358,7 @@ html_theme_options = {
     "table_header_background_colour": "#edf7f4",
     "text_accent_colour": "#19b37b",
     "toc_marker_colour": "#19b37b",
+    "toc_overview": True
 }
 
 edit_on_github_project = 'PennyLaneAI/pennylane-qiskit'
