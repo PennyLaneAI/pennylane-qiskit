@@ -293,7 +293,7 @@ html_theme = 'xanadu'
 
 # xanadu theme options (see theme.conf for more information)
 html_theme_options = {
-    "navbar_name": "PennyLane-Qiskit"
+    "navbar_name": "PennyLane-Qiskit",
     "navbar_logo_path": "_static/logo.png",
     "navbar_wordmark_path": "_static/pennylane.svg",
     # Specifying #19b37b is more correct but does not match the other PL websites.
