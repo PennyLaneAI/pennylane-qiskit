@@ -353,12 +353,12 @@ html_theme_options = {
         "of Google Inc."
     ],
     "google_analytics_tracking_id": "UA-130507810-1",
-    "border_colour": "#19b37b",
-    "prev_next_button_colour": "#19b37b",
-    "prev_next_button_hover_colour": "#0e714d",
-    "table_header_background_colour": "#edf7f4",
-    "text_accent_colour": "#19b37b",
-    "toc_marker_colour": "#19b37b",
+    "border_colour": "#00B1FF",
+    "prev_next_button_colour": "#00B1FF",
+    "prev_next_button_hover_colour": "#019EE3",
+    "table_header_background_colour": "#019EE3",
+    "text_accent_colour": "#00B1FF",
+    "toc_marker_colour": "#00B1FF",
     "toc_overview": True
 }
 
