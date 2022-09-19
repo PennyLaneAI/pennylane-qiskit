@@ -590,13 +590,10 @@ class TestConverterGates:
 
         qc = QuantumCircuit(2, 1)
 
-        unitary_op = [[1, 0, 0, 0], [0, 0, 1j, 0], [0, 1j, 0, 0], [0, 0, 0, 1]]
-        iswap_op = Operator(unitary_op)
-
         qc.cx(*two_wires)
         qc.cz(*two_wires)
         qc.swap(*two_wires)
-        qc.unitary(iswap_op, [0, 1], label="iswap")
+        qc.iswap(*two_wires)
 
         quantum_circuit = load(qc)
         with recorder:
@@ -616,9 +613,8 @@ class TestConverterGates:
         assert recorder.queue[2].parameters == []
         assert recorder.queue[2].wires == Wires(two_wires)
 
-        assert recorder.queue[3].name == "QubitUnitary"
-        assert len(recorder.queue[3].parameters) == 1
-        assert np.array_equal(recorder.queue[3].parameters[0], np.array(unitary_op))
+        assert recorder.queue[3].name == "ISWAP"
+        assert recorder.queue[3].parameters == []
         assert recorder.queue[3].wires == Wires(two_wires)
 
     def test_two_qubit_parametrized_operations_supported_by_pennylane(self, recorder):

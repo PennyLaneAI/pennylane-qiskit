@@ -73,7 +73,7 @@ single_qubit_operations = [qml.Identity, qml.PauliX, qml.PauliY, qml.PauliZ, qml
     qml.adjoint(qml.T), qml.adjoint(qml.S), qml.adjoint(qml.SX)]
 
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
-two_qubit = [qml.CNOT, qml.SWAP, qml.CZ]
+two_qubit = [qml.CNOT, qml.SWAP, qml.CZ, qml.ISWAP]
 two_qubit_param = [qml.CRZ, qml.IsingXX, qml.IsingYY, qml.IsingZZ]
 three_qubit = [qml.Toffoli, qml.CSWAP]
 
