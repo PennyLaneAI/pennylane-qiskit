@@ -11,64 +11,6 @@ from conftest import U, U2, A
 np.random.seed(42)
 
 
-# global variables and rotations
-I = np.identity(2)
-X = np.array([[0, 1], [1, 0]])
-Y = np.array([[0, -1j], [1j, 0]])
-Z = np.array([[1, 0], [0, -1]])
-H = np.array([[1, 1], [1, -1]]) / np.sqrt(2)
-S = np.diag([1, 1j])
-T = np.diag([1, np.exp(1j * np.pi / 4)])
-SWAP = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
-CNOT = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
-CZ = np.diag([1, 1, 1, -1])
-toffoli = np.diag([1 for i in range(8)])
-toffoli[6:8, 6:8] = np.array([[0, 1], [1, 0]])
-CSWAP = block_diag(I, I, SWAP)
-
-
-phase_shift = lambda phi: np.array([[1, 0], [0, np.exp(1j * phi)]])
-rx = lambda theta: np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * X
-ry = lambda theta: np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Y
-rz = lambda theta: np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Z
-rot = lambda a, b, c: rz(c) @ (ry(b) @ rz(a))
-crz = lambda theta: np.array(
-    [
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, np.exp(-1j * theta / 2), 0],
-        [0, 0, 0, np.exp(1j * theta / 2)],
-    ]
-)
-
-isingxx = lambda phi: np.array(
-    [
-        [np.cos(phi / 2), 0, 0, -1j * np.sin(phi / 2)],
-        [0, np.cos(phi / 2), -1j * np.sin(phi / 2), 0],
-        [0, -1j * np.sin(phi / 2), np.cos(phi / 2), 0],
-        [-1j * np.sin(phi / 2), 0, 0, np.cos(phi / 2)],
-    ]
-)
-
-isingyy = lambda phi: np.array(
-    [
-        [np.cos(phi / 2), 0, 0, 1j * np.sin(phi / 2)],
-        [0, np.cos(phi / 2), -1j * np.sin(phi / 2), 0],
-        [0, -1j * np.sin(phi / 2), np.cos(phi / 2), 0],
-        [1j * np.sin(phi / 2), 0, 0, np.cos(phi / 2)],
-    ]
-)
-
-isingzz = lambda phi: np.array(
-    [
-        [np.exp(-1.0j * phi / 2), 0, 0, 0],
-        [0, np.exp(1.0j * phi / 2), 0, 0],
-        [0, 0, np.exp(1.0j * phi / 2), 0],
-        [0, 0, 0, np.exp(-1.0j * phi / 2)],
-    ]
-)
-
-
 single_qubit_operations = [qml.Identity, qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T, qml.SX,
     qml.adjoint(qml.T), qml.adjoint(qml.S), qml.adjoint(qml.SX)]
 

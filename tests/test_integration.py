@@ -469,6 +469,34 @@ class TestInverses:
             assert np.allclose(circuit_with_inverses(x), circuit_with_inverses_default_qubit(x))
 
 
+class TestAdjoints:
+    """Integration tests checking that the adjoint of the operations are applied."""
+
+    def test_adjoint_of_operation(self):
+        """Test that the adjoint of operations works as expected
+        by comparing a simple circuit with default.qubit."""
+        dev = qml.device("default.qubit", wires=2)
+
+        dev2 = qml.device("qiskit.aer", backend="statevector_simulator", shots=None, wires=2)
+
+        angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.0])
+
+        @qml.qnode(dev)
+        def circuit_with_adjoints(angle):
+            qml.adjoint(qml.Hadamard)(0)
+            qml.adjoint(qml.RX)(angle, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(dev2)
+        def circuit_with_adjoints_default_qubit(angle):
+            qml.adjoint(qml.Hadamard)(0)
+            qml.adjoint(qml.RX)(angle, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        for x in angles:
+            assert np.allclose(circuit_with_adjoints(x), circuit_with_adjoints_default_qubit(x))
+
+
 class TestNoise:
     """Integration test for the noise models."""
 
