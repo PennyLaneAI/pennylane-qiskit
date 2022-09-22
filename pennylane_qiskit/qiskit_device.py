@@ -22,22 +22,25 @@ import inspect
 import warnings
 
 import numpy as np
+from pennylane import DeviceError, QubitDevice
+from pennylane.ops import Controlled
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 
-from pennylane import QubitDevice, DeviceError
-
 from ._version import __version__
-
 
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
     "PauliY": ex.YGate,
     "PauliZ": ex.ZGate,
+    "C(PauliX)": ex.CXGate,
+    "C(PauliY)": ex.CYGate,
+    "C(PauliZ)": ex.CZGate,
     "Hadamard": ex.HGate,
+    "C(Hadamard)": ex.CHGate,
     "CNOT": ex.CXGate,
     "CZ": ex.CZGate,
     "SWAP": ex.SwapGate,
@@ -50,22 +53,32 @@ QISKIT_OPERATION_MAP = {
     "T": ex.TGate,
     "Adjoint(T)": ex.TdgGate,
     "SX": ex.SXGate,
+    "C(SX)": ex.CSXGate,
     "Adjoint(SX)": ex.SXdgGate,
     "Identity": ex.IGate,
     "CSWAP": ex.CSwapGate,
+    "C(SWAP)": ex.CSwapGate,
     "CRX": ex.CRXGate,
     "CRY": ex.CRYGate,
     "CRZ": ex.CRZGate,
+    "C(RX)": ex.CRXGate,
+    "C(RY)": ex.CRYGate,
+    "C(RZ)": ex.CRZGate,
     "PhaseShift": ex.PhaseGate,
+    "ControlledPhaseShift": ex.CPhaseGate,
+    "C(PhaseShift)": ex.CPhaseGate,
     "QubitStateVector": ex.Initialize,
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
     "U1": ex.U1Gate,
     "U2": ex.U2Gate,
     "U3": ex.U3Gate,
+    "C(U1)": ex.CU1Gate,
+    "C(U3)": ex.CU3Gate,
     "IsingZZ": ex.RZZGate,
     "IsingYY": ex.RYYGate,
     "IsingXX": ex.RXXGate,
+    "Barrier": ex.Barrier,
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs
@@ -283,7 +296,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         for operation in operations:
             # Apply the circuit operations
-            device_wires = self.map_wires(operation.wires)
+            if isinstance(operation, Controlled):
+                device_wires = self.map_wires(operation.base.wires + operation.control_wires)
+            else:
+                device_wires = self.map_wires(operation.wires)
             par = operation.parameters
 
             for idx, p in enumerate(par):

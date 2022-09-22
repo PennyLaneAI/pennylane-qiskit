@@ -1,12 +1,11 @@
-import pytest
-
 import numpy as np
 import pennylane as qml
+import pytest
+from conftest import U2, A, U
+from pennylane.operation import Operator
 from scipy.linalg import block_diag
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
-
-from conftest import U, U2, A
 
 np.random.seed(42)
 
@@ -69,13 +68,38 @@ isingzz = lambda phi: np.array(
 )
 
 
-single_qubit_operations = [qml.Identity, qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T, qml.SX,
-    qml.adjoint(qml.T), qml.adjoint(qml.S), qml.adjoint(qml.SX)]
+single_qubit_operations = [
+    qml.Identity,
+    qml.PauliX,
+    qml.PauliY,
+    qml.PauliZ,
+    qml.Hadamard,
+    qml.S,
+    qml.T,
+    qml.SX,
+    qml.adjoint(qml.T),
+    qml.adjoint(qml.S),
+    qml.adjoint(qml.SX),
+]
 
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ, qml.ISWAP]
-two_qubit_param = [qml.CRZ, qml.IsingXX, qml.IsingYY, qml.IsingZZ]
+two_qubit_param = [qml.CRZ, qml.IsingXX, qml.IsingYY, qml.IsingZZ, qml.ControlledPhaseShift]
 three_qubit = [qml.Toffoli, qml.CSWAP]
+controlled_operations = [
+    qml.PauliX(0),
+    qml.PauliY(0),
+    qml.PauliZ(0),
+    qml.Hadamard(0),
+    qml.SX(0),
+    qml.SWAP([0, 1]),
+    qml.RX(1, 0),
+    qml.RY(1, 0),
+    qml.RZ(1, 0),
+    qml.PhaseShift(1, 0),
+    qml.U1(1, 0),
+    qml.U3(1, 2, 3, 0),
+]
 
 
 @pytest.mark.parametrize("shots", [None])
@@ -166,6 +190,22 @@ class TestAnalyticApply:
         applied_operation = operation(wires=[0, 1, 2])
 
         dev.apply([qml.QubitStateVector(state, wires=[0, 1, 2]), applied_operation])
+
+        res = np.abs(dev.state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("operation", controlled_operations)
+    def test_controlled_operations(self, init_state, device, operation: Operator, tol):
+        """Test that controlled operations work fine with the apply method."""
+        num_wires = operation.num_wires
+        dev = device(num_wires + 1)
+        state = init_state(num_wires + 1)
+        applied_operation = qml.ctrl(operation, control=num_wires)
+
+        dev.apply(
+            [qml.QubitStateVector(state, wires=list(range(num_wires + 1))), applied_operation]
+        )
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -322,6 +362,23 @@ class TestNonAnalyticApply:
         wires = [0, 1, 2]
 
         dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev._samples = dev.generate_samples()
+
+        res = np.fromiter(dev.probability(), dtype=np.float64)
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("operation", controlled_operations)
+    def test_controlled_operations(self, init_state, device, operation: Operator, tol):
+        """Test that controlled operations work fine with the apply method."""
+        num_wires = operation.num_wires
+        dev = device(num_wires + 1)
+        state = init_state(num_wires + 1)
+        applied_operation = qml.ctrl(operation, control=num_wires)
+
+        dev.apply(
+            [qml.QubitStateVector(state, wires=list(range(num_wires + 1))), applied_operation]
+        )
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
