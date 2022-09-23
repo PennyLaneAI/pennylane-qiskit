@@ -23,7 +23,7 @@ import warnings
 
 import numpy as np
 from pennylane import DeviceError, QubitDevice
-from pennylane.ops import Controlled
+from pennylane.ops import Barrier, Controlled
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
@@ -304,7 +304,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 device_wires = self.map_wires(operation.base.wires + operation.control_wires)
             else:
                 device_wires = self.map_wires(operation.wires)
-            par = operation.parameters
+
+            if isinstance(operation, Barrier):
+                op_num_wires = operation.num_wires
+                par = [self.num_wires] if op_num_wires == -1 else [op_num_wires]
+            else:
+                par = operation.parameters
 
             for idx, p in enumerate(par):
                 if isinstance(p, np.ndarray):
