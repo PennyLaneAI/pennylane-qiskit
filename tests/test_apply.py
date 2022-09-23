@@ -211,6 +211,19 @@ class TestAnalyticApply:
         expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
+    def test_barrier_operation(self, init_state, device, tol):
+        """Test that the barrier operation works fine with the apply method."""
+        dev = device(2)
+        state = init_state(2)
+        applied_operation = qml.Barrier()
+
+        dev.apply([qml.QubitStateVector(state, wires=list(range(2))), applied_operation])
+
+        res = np.abs(dev.state) ** 2
+        expected = np.abs(state) ** 2
+        assert np.allclose(res, expected, **tol)
+        assert dev._circuit.data[1].operation.name == "barrier"  # pylint: disable=protected-access
+
 
 @pytest.mark.parametrize("shots", [None])
 @pytest.mark.usefixtures("run_only_for_unitary")
