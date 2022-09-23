@@ -15,17 +15,17 @@ r"""
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
-from typing import Dict, Any
 import warnings
+from typing import Any, Dict
 
 import numpy as np
+import pennylane as qml
+import pennylane.ops.qubit as pennylane_ops
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
-import pennylane as qml
-import pennylane.ops.qubit as pennylane_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes
@@ -228,8 +228,8 @@ def load(quantum_circuit: QuantumCircuit):
                     pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
                 except (AttributeError, QiskitError):
                     warnings.warn(
-                        __name__ + ": The {} instruction is not supported by PennyLane,"
-                        " and has not been added to the template.".format(instruction_name),
+                        f"{__name__}: The {instruction_name} instruction is not supported by PennyLane,"
+                        " and has not been added to the template.",
                         UserWarning,
                     )
 

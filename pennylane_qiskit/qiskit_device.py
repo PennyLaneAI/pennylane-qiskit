@@ -31,7 +31,23 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 
 from ._version import __version__
 
+CONTROLLED_OPERATION_MAP = {
+    "C(PauliX)": ex.CXGate,
+    "C(PauliY)": ex.CYGate,
+    "C(PauliZ)": ex.CZGate,
+    "C(Hadamard)": ex.CHGate,
+    "C(SX)": ex.CSXGate,
+    "C(SWAP)": ex.CSwapGate,
+    "C(RX)": ex.CRXGate,
+    "C(RY)": ex.CRYGate,
+    "C(RZ)": ex.CRZGate,
+    "C(U1)": ex.CU1Gate,
+    "C(U3)": ex.CU3Gate,
+    "C(PhaseShift)": ex.CPhaseGate,
+}
+
 QISKIT_OPERATION_MAP = {
+    **CONTROLLED_OPERATION_MAP,
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
     "PauliY": ex.YGate,
@@ -67,18 +83,6 @@ QISKIT_OPERATION_MAP = {
     "IsingYY": ex.RYYGate,
     "IsingXX": ex.RXXGate,
     "Barrier": ex.Barrier,
-    "C(PauliX)": ex.CXGate,
-    "C(PauliY)": ex.CYGate,
-    "C(PauliZ)": ex.CZGate,
-    "C(Hadamard)": ex.CHGate,
-    "C(SX)": ex.CSXGate,
-    "C(SWAP)": ex.CSwapGate,
-    "C(RX)": ex.CRXGate,
-    "C(RY)": ex.CRYGate,
-    "C(RZ)": ex.CRZGate,
-    "C(U1)": ex.CU1Gate,
-    "C(U3)": ex.CU3Gate,
-    "C(PhaseShift)": ex.CPhaseGate,
 }
 
 # Separate dictionary for the inverses as the operations dictionary needs

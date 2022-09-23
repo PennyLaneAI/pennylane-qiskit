@@ -1,18 +1,17 @@
 import math
 import sys
 
+import pennylane as qml
 import pytest
+from pennylane import numpy as np
+from pennylane.wires import Wires
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.circuit import Parameter
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
 
-import pennylane as qml
-from pennylane import numpy as np
 from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires
-from pennylane.wires import Wires
-
 
 THETA = np.linspace(0.11, 3, 5)
 PHI = np.linspace(0.32, 3, 5)
@@ -466,7 +465,11 @@ class TestConverterGates:
 
     @pytest.mark.parametrize(
         "qiskit_operation, pennylane_name",
-        [(QuantumCircuit.rxx, "IsingXX"), (QuantumCircuit.ryy, "IsingYY"), (QuantumCircuit.rzz, "IsingZZ")],
+        [
+            (QuantumCircuit.rxx, "IsingXX"),
+            (QuantumCircuit.ryy, "IsingYY"),
+            (QuantumCircuit.rzz, "IsingZZ"),
+        ],
     )
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit Ising operations."""
@@ -822,10 +825,10 @@ class TestConverterUtils:
 class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
-    def test_barrier_not_supported(self, recorder):
+    def test_reset_not_supported(self, recorder):
         """Tests that a warning is raised if an unsupported instruction was reached."""
-        qc = QuantumCircuit(3, 1)
-        qc.barrier()
+        qc = QuantumCircuit(2, 1)
+        qc.reset(qubit=0)
 
         quantum_circuit = load(qc)
 
@@ -836,7 +839,7 @@ class TestConverterWarnings:
         # check that the message matches
         assert (
             record[-1].message.args[0]
-            == "pennylane_qiskit.converter: The Barrier instruction is not supported by"
+            == "pennylane_qiskit.converter: The Reset instruction is not supported by"
             " PennyLane, and has not been added to the template."
         )
 
@@ -873,7 +876,7 @@ class TestConverterQasm:
             with recorder:
                 quantum_circuit()
 
-        assert len(recorder.queue) == 6
+        assert len(recorder.queue) == 7
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -883,21 +886,25 @@ class TestConverterQasm:
         assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == Wires([2])
 
-        assert recorder.queue[2].name == "Hadamard"
+        assert recorder.queue[2].name == "Barrier"
         assert recorder.queue[2].parameters == []
-        assert recorder.queue[2].wires == Wires([0])
+        assert recorder.queue[2].wires == Wires([0, 1, 2, 3])
 
         assert recorder.queue[3].name == "Hadamard"
         assert recorder.queue[3].parameters == []
-        assert recorder.queue[3].wires == Wires([1])
+        assert recorder.queue[3].wires == Wires([0])
 
         assert recorder.queue[4].name == "Hadamard"
         assert recorder.queue[4].parameters == []
-        assert recorder.queue[4].wires == Wires([2])
+        assert recorder.queue[4].wires == Wires([1])
 
         assert recorder.queue[5].name == "Hadamard"
         assert recorder.queue[5].parameters == []
-        assert recorder.queue[5].wires == Wires([3])
+        assert recorder.queue[5].wires == Wires([2])
+
+        assert recorder.queue[6].name == "Hadamard"
+        assert recorder.queue[6].parameters == []
+        assert recorder.queue[6].wires == Wires([3])
 
     def test_qasm_file_not_found_error(self):
         """Tests that an error is propagated, when a non-existing file is specified for parsing."""
