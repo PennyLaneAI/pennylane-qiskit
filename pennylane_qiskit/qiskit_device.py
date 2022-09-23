@@ -41,6 +41,7 @@ QISKIT_OPERATION_MAP = {
     "CNOT": ex.CXGate,
     "CZ": ex.CZGate,
     "SWAP": ex.SwapGate,
+    "ISWAP": ex.iSwapGate,
     "RX": ex.RXGate,
     "RY": ex.RYGate,
     "RZ": ex.RZGate,
