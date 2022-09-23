@@ -231,13 +231,6 @@ htmlhelp_basename = 'PennyLaneQiskitdoc'
 # extensions.append("guzzle_sphinx_theme")
 
 
-html_sidebars = {
-    '**' : [
-        'searchbox.html',
-        'globaltoc.html',
-    ]
-}
-
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
 #html_additional_pages = {}
@@ -286,80 +279,20 @@ html_sidebars = {
 htmlhelp_basename = 'PennyLaneQiskitdoc'
 
 # # -- Xanadu theme ---------------------------------------------------------
-html_theme = 'xanadu'
+html_theme = 'pennylane'
 
 # Register the theme as an extension to generate a sitemap.xml
 # extensions.append("guzzle_sphinx_theme")
 
-# xanadu theme options (see theme.conf for more information)
+# pennylane theme options (see theme.conf for more information)
 html_theme_options = {
     "navbar_name": "PennyLane-Qiskit",
-    "navbar_logo_path": "_static/logo.png",
-    "navbar_wordmark_path": "_static/pennylane.svg",
-    # Specifying #19b37b is more correct but does not match the other PL websites.
-
-    "navbar_logo_colour": "#2d7c7f",
-
-    "navbar_home_link": "https://pennylane.ai",
-
-    "navbar_left_links": [
-        {
-            "name": "Quantum machine learning",
-            "href": "https://pennylane.ai/qml/",
-        },
-        {
-            "name": "Demos",
-            "href": "https://pennylane.ai/qml/demonstrations.html",
-        },
-        {
-            "name": "Install",
-            "href": "https://pennylane.ai/install.html",
-        },
-        {
-            "name": "Plugins",
-            "href": "https://pennylane.ai/plugins.html",
-            "active": True,
-        },
-        {
-            "name": "Documentation",
-            "href": "https://docs.pennylane.ai/",
-        },
-        {
-            "name": "Blog",
-            "href": "https://pennylane.ai/blog/",
-        }
-    ],
-
-    "navbar_right_links": [
-        {
-            "name": "FAQ",
-            "href": "https://pennylane.ai/faq.html",
-            "icon": "fas fa-question",
-        },
-        {
-            "name": "Support",
-            "href": "https://discuss.pennylane.ai/",
-            "icon": "fab fa-discourse",
-        },
-        {
-            "name": "GitHub",
-            "href": "https://github.com/PennyLaneAI/pennylane-qiskit",
-            "icon": "fab fa-github",
-        }
-    ],
-
     "extra_copyrights": [
         "TensorFlow, the TensorFlow logo, and any related marks are trademarks "
         "of Google Inc."
     ],
-    "google_analytics_tracking_id": "UA-130507810-1",
-    "border_colour": "#00B1FF",
-    "prev_next_button_colour": "#00B1FF",
-    "prev_next_button_hover_colour": "#019EE3",
-    "table_header_background_colour": "#019EE3",
-    "text_accent_colour": "#00B1FF",
-    "toc_marker_colour": "#00B1FF",
-    "toc_overview": True
+    "toc_overview": True,
+    "navbar_active_link": 4
 }
 
 edit_on_github_project = 'PennyLaneAI/pennylane-qiskit'
