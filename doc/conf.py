@@ -293,7 +293,8 @@ html_theme_options = {
         "of Google Inc."
     ],
     "toc_overview": True,
-    "navbar_active_link": 3
+    "navbar_active_link": 3,
+    "google_analytics_tracking_id": "UA-130507810-1"
 }
 
 edit_on_github_project = 'PennyLaneAI/pennylane-qiskit'
