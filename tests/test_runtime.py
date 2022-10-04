@@ -895,6 +895,40 @@ class TestCustomVQE:
         assert "parameters" in job.intermediate_results
 
     @pytest.mark.parametrize("shots", [8000])
+    def test_scipy_optimizer(self, token, tol, shots):
+        """Test we can run a VQE problem with a SciPy optimizer."""
+        IBMQ.enable_account(token)
+        tol = 1e-1
+
+        def vqe_circuit(params):
+            qml.RX(params[0], wires=0)
+            qml.RY(params[1], wires=0)
+
+        coeffs = [1, 1]
+        obs = [qml.PauliX(0), qml.PauliZ(0)]
+
+        hamiltonian = qml.Hamiltonian(coeffs, obs)
+        program_id = upload_vqe_runner(hub="ibm-q-startup", group="xanadu", project="reservations")
+
+        job = vqe_runner(
+            program_id=program_id,
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer="COBYLA",
+            optimizer_config={"maxiter": 10},
+            kwargs={"hub": "ibm-q-startup", "group": "ibm-q-startup", "project": "reservations"},
+        )
+
+        provider = IBMQ.get_provider(hub="ibm-q-startup", group="xanadu", project="reservations")
+        delete_vqe_runner(provider=provider, program_id=program_id)
+        result = job.result()["fun"]
+
+        assert "parameters" in job.intermediate_results
+
+    @pytest.mark.parametrize("shots", [8000])
     def test_simple_hamiltonian_with_untrainable_parameters(self, token, tol, shots):
         """Test a simple VQE problem with untrainable parameters."""
         IBMQ.enable_account(token)
