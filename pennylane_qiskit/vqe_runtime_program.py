@@ -182,5 +182,6 @@ def main(
         res = opt.minimize(
             vqe_func, x0, method=optimizer, options=optimizer_config, callback=callback
         )
+        res.success = bool(res)
 
     return res
