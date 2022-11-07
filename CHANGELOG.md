@@ -1,17 +1,9 @@
-# Release 0.25.0-dev
+# Release 0.27.0
 
 ### New features since last release
 
 * Add support for the `ISWAP` operation.
   [(#229)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/229)
-
-### Breaking changes
-
-### Improvements
-
-### Documentation
-
-### Bug fixes
 
 ### Contributors
 
