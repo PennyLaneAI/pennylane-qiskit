@@ -5,11 +5,16 @@
 * Add support for the `ISWAP` operation.
   [(#229)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/229)
 
+### Bug fixes
+
+* Fix Cobyla success bool for VQE runtime.
+  [(#231)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/231)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
-Matthew Silverman
+Romain Moyard, Matthew Silverman
 
 ---
 # Release 0.24.0
