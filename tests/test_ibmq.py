@@ -88,6 +88,13 @@ def test_load_kwargs_takes_precedence(token, monkeypatch):
     assert dev.provider.credentials.is_ibmq()
 
 
+def test_load_env_empty_string_has_short_error(monkeypatch):
+    """Test that the empty string is treated as a missing token."""
+    monkeypatch.setenv("IBMQX_TOKEN", "")
+    with pytest.raises(IBMQAccountError, match="No active IBM Q account"):
+        IBMQDevice(wires=1)
+
+
 def test_account_already_loaded(token):
     """Test loading an IBMQ device using
     an already loaded account"""
