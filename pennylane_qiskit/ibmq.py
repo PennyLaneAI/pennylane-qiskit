@@ -106,7 +106,7 @@ def connect(kwargs):
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 
     # TODO: remove "no cover" when #173 is resolved
-    if token is not None:  # pragma: no cover
+    if token:  # pragma: no cover
         # token was provided by the user, so attempt to enable an
         # IBM Q account manually
         def login():
