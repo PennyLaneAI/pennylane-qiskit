@@ -10,9 +10,14 @@
 
 ### Bug fixes
 
+* Do not try to connect with an IBMQX token if it is falsy.
+  [(#234)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/234)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Matthew Silverman
 
 ---
 # Release 0.27.0
