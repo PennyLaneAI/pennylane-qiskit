@@ -78,7 +78,7 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
         for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
-            res = self.statistics(circuit.observables)
+            res = self.statistics(circuit)
             results.append(res)
 
         if self.tracker.active:
@@ -177,7 +177,7 @@ class IBMQSamplerDevice(IBMQDevice):
             if index in circuit_indices:
                 self._samples = self.generate_samples(counter)
                 counter += 1
-                res = self.statistics(circuit.observables)
+                res = self.statistics(circuit)
                 results.append(res)
 
         if self.tracker.active:
