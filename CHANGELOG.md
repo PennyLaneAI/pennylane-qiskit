@@ -4,7 +4,11 @@
 
 ### Breaking changes
 
+* Removes testing for Python 3.7.
+
 ### Improvements
+
+* Adds testing for Python 3.11.
 
 ### Documentation
 
@@ -17,6 +21,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Christina Lee
 Matthew Silverman
 
 ---
