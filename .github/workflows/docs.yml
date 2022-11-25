@@ -10,7 +10,7 @@ jobs:
       with:
         python-version: "3.9"
     - uses: actions/checkout@v1
-    - uses: PennyLaneAI/sphinx-action@master
+    - uses: josh146/sphinx-action@master
       with:
         docs-folder: "doc/"
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
