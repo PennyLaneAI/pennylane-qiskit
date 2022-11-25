@@ -12,4 +12,4 @@ updates:
     allow:
       - dependency-type: "all"
     assignees:
-      - "josh146"
+      - "albi3ro"
