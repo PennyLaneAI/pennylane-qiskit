@@ -5,10 +5,12 @@
 ### Breaking changes
 
 * Removes testing for Python 3.7.
+  [(#237)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/237)
 
 ### Improvements
 
 * Adds testing for Python 3.11.
+  [(#237)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/237)
 
 ### Documentation
 
