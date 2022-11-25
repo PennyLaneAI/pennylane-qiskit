@@ -6,6 +6,9 @@ jobs:
   sphinx:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/setup-python@v4
+      with:
+        python_version: "3.9"
     - uses: actions/checkout@v1
     - uses: PennyLaneAI/sphinx-action@master
       with:
