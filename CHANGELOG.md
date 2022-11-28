@@ -35,6 +35,7 @@
 This release contains contributions from (in alphabetical order):
 
 Christina Lee
+Albert Mitjans-Coma
 Matthew Silverman
 
 ---
