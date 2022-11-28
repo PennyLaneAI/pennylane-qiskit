@@ -464,7 +464,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             if self.shots is not None or circuit.is_sampled:
                 self._samples = self.generate_samples(circuit_obj)
 
-            res = self.statistics(circuit.observables)
+            res = self.statistics(circuit)
             res = np.asarray(res)
             results.append(res)
 
