@@ -20,6 +20,9 @@
 
 ### Improvements
 
+* Adds testing for Python 3.11.
+  [(#237)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/237)
+
 ### Documentation
 
 ### Bug fixes
@@ -31,6 +34,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Christina Lee
 Matthew Silverman
 
 ---
