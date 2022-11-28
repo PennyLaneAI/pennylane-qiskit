@@ -4,8 +4,19 @@
 
 ### Breaking changes
 
-* Removes testing for Python 3.7.
-  [(#237)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/237)
+* Changed the signature of the `QubitDevice.statistics` method from
+
+  ```python
+  def statistics(self, observables, shot_range=None, bin_size=None, circuit=None):
+  ```
+
+  to
+
+  ```python
+  def statistics(self, circuit: QuantumScript, shot_range=None, bin_size=None):
+  ```
+
+  [#3421](https://github.com/PennyLaneAI/pennylane/pull/3421)
 
 ### Improvements
 
