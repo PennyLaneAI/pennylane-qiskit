@@ -1,6 +1,4 @@
-# Release 0.28.0-dev
-
-### New features since last release
+# Release 0.28.0
 
 ### Breaking changes
 
@@ -22,8 +20,6 @@
 
 * Adds testing for Python 3.11.
   [(#237)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/237)
-
-### Documentation
 
 ### Bug fixes
 
