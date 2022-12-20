@@ -1,6 +1,6 @@
 dc-qiskit-algorithms==0.0.13
 docutils==0.16
-ipykernel==6.13.0
+ipykernel==6.19.4
 jinja2==3.0.3
 mthree==0.22.0
 nbsphinx==0.8.8
