@@ -19,7 +19,7 @@ numpy==1.22.3
 orjson==3.6.8
 pbr==5.8.1
 PennyLane==0.27.0
-PennyLane-Lightning==0.22.1
+PennyLane-Lightning==0.28.1
 ply==3.11
 psutil==5.9.0
 pycparser==2.21
