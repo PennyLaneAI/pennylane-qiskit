@@ -448,6 +448,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
+        # increment counter for number of executions of qubit device
+        self._num_executions += 1
+
         # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
@@ -467,9 +470,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
             res = self.statistics(circuit)
             res = np.asarray(res)
             results.append(res)
-
-            # increment counter for number of executions of qubit device
-            self._num_executions += 1
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
