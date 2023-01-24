@@ -13,6 +13,9 @@
 
 ### Bug fixes
 
+* The number of executions of the device is now correct.
+  [(#259)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/259)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
