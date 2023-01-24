@@ -411,10 +411,19 @@ def _qiskit_ansatz(num_params, num_qubits, wires, tape):
 
         qregs = [reg[i] for i in wires.labels]
 
-        if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
-            # Need to revert the order of the quantum registers used in
-            # Qiskit such that it matches the PennyLane ordering
-            qregs = list(reversed(qregs))
+        adjoint = operation.startswith("Adjoint(")
+        split_op = operation.split("Adjoint(")
+
+        if adjoint:
+            if split_op[1] in ("QubitUnitary)", "QubitStateVector)"):
+                # Need to revert the order of the quantum registers used in
+                # Qiskit such that it matches the PennyLane ordering
+                qregs = list(reversed(qregs))
+        else:
+            if split_op[0] in ("QubitUnitary", "QubitStateVector"):
+                # Need to revert the order of the quantum registers used in
+                # Qiskit such that it matches the PennyLane ordering
+                qregs = list(reversed(qregs))
 
         dag = circuit_to_dag(QuantumCircuit(reg, name=""))
 
@@ -431,9 +440,6 @@ def _qiskit_ansatz(num_params, num_qubits, wires, tape):
                 j += op_num_params
 
             gate = mapped_operation(*par)
-
-        if operation.endswith(".inv"):
-            gate = gate.inverse()
 
         dag.apply_operation_back(gate, qargs=qregs)
         circuit = dag_to_circuit(dag)

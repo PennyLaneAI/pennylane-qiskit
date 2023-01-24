@@ -1,3 +1,25 @@
+# Release 0.29.0-dev
+
+### New features since last release
+
+### Breaking changes
+
+* `.inv` is replaced by `qml.adjoint` in PennyLane `0.30.0` and therefore the plugin is adapted as well.
+  [(#260)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/260)
+
+### Improvements
+
+### Documentation
+
+### Bug fixes
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Romain Moyard
+
+---
 # Release 0.28.0
 
 ### Breaking changes
