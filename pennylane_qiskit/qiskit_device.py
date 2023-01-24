@@ -62,15 +62,28 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "IsingXX": ex.RXXGate,
 }
 
-QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT = {"Adjoint(" + k + ")": v for k, v in QISKIT_OPERATION_MAP_SELF_ADJOINT.items()}
+QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT = {
+    "Adjoint(" + k + ")": v for k, v in QISKIT_OPERATION_MAP_SELF_ADJOINT.items()
+}
 
 # Separate dictionary for the inverses as the operations dictionary needs
 # to be invertible for the conversion functionality to work
 QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
-QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {"Adjoint(S)": ex.SdgGate, "Adjoint(T)": ex.TdgGate, "Adjoint(SX)": ex.SXdgGate}
+QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {
+    "Adjoint(S)": ex.SdgGate,
+    "Adjoint(T)": ex.TdgGate,
+    "Adjoint(SX)": ex.SXdgGate,
+}
 
-QISKIT_OPERATION_MAP = {**QISKIT_OPERATION_MAP_SELF_ADJOINT, **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT}
-QISKIT_OPERATION_INVERSES_MAP = {**QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT, **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT }
+QISKIT_OPERATION_MAP = {
+    **QISKIT_OPERATION_MAP_SELF_ADJOINT,
+    **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
+}
+QISKIT_OPERATION_INVERSES_MAP = {
+    **QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT,
+    **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
+}
+
 
 class QiskitDevice(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
@@ -311,8 +324,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
                     # Need to revert the order of the quantum registers used in
                     # Qiskit such that it matches the PennyLane ordering
                     qregs = list(reversed(qregs))
-
-
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
             gate = mapped_operation(*par)
