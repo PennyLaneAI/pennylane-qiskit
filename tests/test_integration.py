@@ -401,17 +401,15 @@ class TestPLTemplates:
             return qml.expval(qml.PauliZ(0))
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
-
-        with qml.tape.OperationRecorder() as rec:
-            circuit(phi=phi)
-
+        circuit(phi)
+        ops = circuit.tape.operations
         for i in range(phi.shape[1]):
             # Test each rotation applied
-            assert rec.queue[i].name == "RX"
-            assert len(rec.queue[i].parameters) == 1
+            assert ops[i].name == "RX"
+            assert len(ops[i].parameters) == 1
 
             # Test that the gate parameter is a PennyLane tensor
-            assert isinstance(rec.queue[i].parameters[0], tensor)
+            assert isinstance(ops[i].parameters[0], tensor)
 
     def test_multiple_gate_parameter(self):
         """Test that when supplied a PennyLane tensor, a QNode passes arguments
@@ -426,19 +424,18 @@ class TestPLTemplates:
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
-        with qml.tape.OperationRecorder() as rec:
-            circuit(phi=phi)
-
+        circuit(phi)
+        ops = circuit.tape.operations
         # Test the rotation applied
-        assert rec.queue[0].name == "Rot"
-        assert len(rec.queue[0].parameters) == 3
+        assert ops[0].name == "Rot"
+        assert len(ops[0].parameters) == 3
 
         # Test that the gate parameters are PennyLane tensors,
-        assert isinstance(rec.queue[0].parameters[0], tensor)
+        assert isinstance(ops[0].parameters[0], tensor)
 
-        assert isinstance(rec.queue[0].parameters[1], tensor)
+        assert isinstance(ops[0].parameters[1], tensor)
 
-        assert isinstance(rec.queue[0].parameters[2], tensor)
+        assert isinstance(ops[0].parameters[2], tensor)
 
 
 class TestInverses:
