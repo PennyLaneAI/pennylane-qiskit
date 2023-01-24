@@ -690,7 +690,7 @@ class TestCustomVQE:
         IBMQ.enable_account(token)
 
         def vqe_circuit(params):
-            qml.RX(params[0], wires=0).inv()
+            qml.adjoint(qml.RX(params[0], wires=0))
             qml.RX(params[1], wires=1)
 
         coeffs = [1, 1]

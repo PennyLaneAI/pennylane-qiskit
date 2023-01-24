@@ -36,7 +36,7 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit():
-            op(wires=0).inv()
+            qml.adjoint(op(wires=0))
             return qml.expval(qml.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -62,7 +62,7 @@ class TestInverses:
         @qml.qnode(dev)
         def circuit():
             qml.QubitStateVector(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
-            op(wires=[0, 1]).inv()
+            qml.adjoint(op(wires=[0, 1]))
             return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -85,7 +85,7 @@ class TestInverses:
         @qml.qnode(dev)
         def circuit():
             qml.BasisState(np.array([1, 0, 1]), wires=[0, 1, 2])
-            op(wires=[0, 1, 2]).inv()
+            qml.adjoint(op(wires=[0, 1, 2]))
             return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -139,7 +139,7 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit():
-            op(*np.negative(par), wires=0).inv()
+            qml.adjoint(op(*np.negative(par), wires=0))
             return qml.expval(qml.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -193,7 +193,7 @@ class TestInverses:
         @qml.qnode(dev)
         def circuit():
             qml.QubitStateVector(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
-            op(*np.negative(par), wires=[0, 1]).inv()
+            qml.adjoint(op(*np.negative(par), wires=[0, 1]))
             return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -218,7 +218,7 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit():
-            op(*np.negative(par), wires=0).inv()
+            qml.adjoint(op(*np.negative(par), wires=0))
             return qml.expval(qml.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -235,7 +235,7 @@ class TestInverses:
         def circuit():
             qml.Hadamard(0)
             qml.RZ(par, wires=[0])
-            qml.S(wires=[0]).inv()
+            qml.adjoint(qml.S(wires=[0]))
             return qml.expval(qml.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -251,7 +251,7 @@ class TestInverses:
         @qml.qnode(dev)
         def circuit():
             qml.RX(par, wires=[0])
-            qml.T(wires=[0]).inv()
+            qml.adjoint(qml.T(wires=[0]))
             return qml.expval(qml.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
@@ -267,7 +267,7 @@ class TestInverses:
         @qml.qnode(dev)
         def circuit():
             qml.RY(par, wires=[0])
-            qml.SX(wires=[0]).inv()
+            qml.adjoint(qml.SX(wires=[0]))
             return qml.expval(qml.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
