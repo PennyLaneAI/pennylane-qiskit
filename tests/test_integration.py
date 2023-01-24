@@ -455,14 +455,14 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit_with_inverses(angle):
-            qml.Hadamard(0).inv()
-            qml.RX(angle, wires=0).inv()
+            qml.adjoint(qml.Hadamard(0))
+            qml.adjoint(qml.RX(angle, wires=0))
             return qml.expval(qml.PauliZ(0))
 
         @qml.qnode(dev2)
         def circuit_with_inverses_default_qubit(angle):
-            qml.Hadamard(0).inv()
-            qml.RX(angle, wires=0).inv()
+            qml.adjoint(qml.Hadamard(0))
+            qml.adjoint(qml.RX(angle, wires=0))
             return qml.expval(qml.PauliZ(0))
 
         for x in angles:
