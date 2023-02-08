@@ -216,8 +216,7 @@ class IBMQSamplerDevice(IBMQDevice):
         # If prob for a state is 0, it does not appear in counts.
         if len(states) != number_of_states:
             for i in range(0, number_of_states):
-                if states[i] != i:
-                    states.insert(i, i)
+                if i not in states:
                     probs.insert(i, 0.0)
 
         return self.states_to_binary(
