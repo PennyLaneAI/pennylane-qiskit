@@ -57,7 +57,6 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
         super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
 
     def batch_execute(self, circuits):
-
         compiled_circuits = self.compile_circuits(circuits)
 
         program_inputs = {"circuits": compiled_circuits, "shots": self.shots}
@@ -141,7 +140,6 @@ class IBMQSamplerDevice(IBMQDevice):
         super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
 
     def batch_execute(self, circuits):
-
         compiled_circuits = self.compile_circuits(circuits)
 
         program_inputs = {"circuits": compiled_circuits}
@@ -173,7 +171,6 @@ class IBMQSamplerDevice(IBMQDevice):
 
         counter = 0
         for index, circuit in enumerate(circuits):
-
             if index in circuit_indices:
                 self._samples = self.generate_samples(counter)
                 counter += 1

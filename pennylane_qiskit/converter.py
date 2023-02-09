@@ -63,7 +63,6 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]
     # map qiskit parameters to PennyLane trainable parameter values
     if params is not None:
         for k, v in params.items():
-
             if getattr(v, "requires_grad", True):
                 # Values can be arrays of size 1, need to extract the Python scalar
                 # (this can happen e.g. when indexing into a PennyLane numpy array)
@@ -180,7 +179,6 @@ def load(quantum_circuit: QuantumCircuit):
 
         # Processing the dictionary of parameters passed
         for op, qargs, cargs in qc.data:
-
             instruction_name = op.__class__.__name__
 
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
@@ -197,7 +195,6 @@ def load(quantum_circuit: QuantumCircuit):
 
                 pl_parameters = []
                 for p in op.params:
-
                     _check_parameter_bound(p, var_ref_map)
 
                     if isinstance(p, ParameterExpression):
