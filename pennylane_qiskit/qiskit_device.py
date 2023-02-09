@@ -350,9 +350,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
                     "is not supported on the unitary simulator backend."
                 )
 
-            if len(par[0]) != 2 ** len(wires):
-                raise ValueError("State vector must be of length 2**wires.")
-
     def compile(self):
         """Compile the quantum circuit to target the provided compile_backend.
 
