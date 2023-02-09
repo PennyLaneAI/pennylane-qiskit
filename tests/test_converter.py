@@ -466,7 +466,11 @@ class TestConverterGates:
 
     @pytest.mark.parametrize(
         "qiskit_operation, pennylane_name",
-        [(QuantumCircuit.rxx, "IsingXX"), (QuantumCircuit.ryy, "IsingYY"), (QuantumCircuit.rzz, "IsingZZ")],
+        [
+            (QuantumCircuit.rxx, "IsingXX"),
+            (QuantumCircuit.ryy, "IsingYY"),
+            (QuantumCircuit.rzz, "IsingZZ"),
+        ],
     )
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit Ising operations."""
@@ -1117,14 +1121,12 @@ class TestConverterIntegration:
         # based on the version number to ensure that the test case passes even
         # with <v0.21.
         if qml.__version__ < "0.21.0":
-
             jac_expected = [
                 [-np.sin(x + np.cos(y)), np.sin(x + np.cos(y)) * np.sin(y)],
                 [np.cos(x * y) * y, np.cos(x * y) * x],
             ]
 
         else:
-
             jac_expected = [
                 [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
                 [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],

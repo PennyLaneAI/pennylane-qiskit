@@ -44,6 +44,7 @@ state_backends = [
 ]
 hw_backends = ["qasm_simulator", "aer_simulator"]
 
+
 @pytest.fixture
 def token():
     t = os.getenv("IBMQX_TOKEN", None)
@@ -53,6 +54,7 @@ def token():
 
     yield t
     IBMQ.disable_account()
+
 
 @pytest.fixture
 def tol(shots):
@@ -65,7 +67,7 @@ def tol(shots):
 @pytest.fixture
 def init_state(scope="session"):
     def _init_state(n):
-        state = np.random.random([2 ** n]) + np.random.random([2 ** n]) * 1j
+        state = np.random.random([2**n]) + np.random.random([2**n]) * 1j
         state /= np.linalg.norm(state)
         return state
 
@@ -119,7 +121,6 @@ def device(request, backend, shots):
 
 @pytest.fixture(params=[AerDevice, BasicAerDevice])
 def state_vector_device(request, statevector_backend, shots):
-
     if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) or (
         issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend
     ):

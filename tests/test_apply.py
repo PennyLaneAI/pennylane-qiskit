@@ -69,8 +69,19 @@ isingzz = lambda phi: np.array(
 )
 
 
-single_qubit_operations = [qml.Identity, qml.PauliX, qml.PauliY, qml.PauliZ, qml.Hadamard, qml.S, qml.T, qml.SX,
-    qml.adjoint(qml.T), qml.adjoint(qml.S), qml.adjoint(qml.SX)]
+single_qubit_operations = [
+    qml.Identity,
+    qml.PauliX,
+    qml.PauliY,
+    qml.PauliZ,
+    qml.Hadamard,
+    qml.S,
+    qml.T,
+    qml.SX,
+    qml.adjoint(qml.T),
+    qml.adjoint(qml.S),
+    qml.adjoint(qml.SX),
+]
 
 single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
 two_qubit = [qml.CNOT, qml.SWAP, qml.CZ, qml.ISWAP]
@@ -216,7 +227,7 @@ class TestNonAnalyticApply:
         state = np.array([0, 123.432])
         wires = [0, 1]
 
-        with pytest.raises(ValueError, match=r"State vector must have shape (2**wires,) or (batch_size, 2**wires)."):
+        with pytest.raises(ValueError, match=r"State vector must have shape"):
             dev.apply([qml.QubitStateVector(state, wires=wires)])
 
     @pytest.mark.parametrize("mat", [U, U2])

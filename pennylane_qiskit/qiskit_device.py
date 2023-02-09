@@ -54,6 +54,9 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "QubitStateVector": ex.Initialize,
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
+    "U1": ex.U1Gate,
+    "U2": ex.U2Gate,
+    "U3": ex.U3Gate,
     "IsingZZ": ex.RZZGate,
     "IsingYY": ex.RYYGate,
     "IsingXX": ex.RXXGate,
@@ -145,7 +148,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # Keep track if the user specified analytic to be True
         if shots is None and backend not in self._state_backends:
-
             # Raise a warning if no shots were specified for a hardware device
             warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
@@ -469,7 +471,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
-
             # Update the tracker
             if self.tracker.active:
                 self.tracker.update(executions=1, shots=self.shots)

@@ -302,7 +302,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2 ** dev.num_wires)
+        expected_state = np.zeros(2**dev.num_wires)
         expected_state[2] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
@@ -322,7 +322,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2 ** dev.num_wires)
+        expected_state = np.zeros(2**dev.num_wires)
         expected_state[0] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
@@ -347,7 +347,6 @@ class TestPLTemplates:
         mock_func = lambda par, wires: lst.append(par)
 
         with monkeypatch.context() as m:
-
             # Mock the gates used in RandomLayers
             m.setattr(qml, "RX", mock_func)
             m.setattr(qml, "RY", mock_func)
@@ -570,7 +569,7 @@ class TestBatchExecution:
 
     def test_tracker(self):
         """Tests the device tracker with batch execution."""
-        dev = qml.device('qiskit.aer', shots=100, wires=3)
+        dev = qml.device("qiskit.aer", shots=100, wires=3)
 
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
@@ -582,9 +581,11 @@ class TestBatchExecution:
         with qml.Tracker(dev) as tracker:
             qml.grad(circuit)(x)
 
-        expected = {'executions': [1, 1, 1],
-                     'shots': [100, 100, 100],
-                     'batches': [1, 1],
-                     'batch_len': [1, 2]}
+        expected = {
+            "executions": [1, 1, 1],
+            "shots": [100, 100, 100],
+            "batches": [1, 1],
+            "batch_len": [1, 2],
+        }
 
         assert tracker.history == expected
