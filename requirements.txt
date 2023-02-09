@@ -13,7 +13,7 @@ idna==3.3
 mpmath==1.2.1
 mthree==0.22.0
 networkx==2.8
-ninja==1.10.2.3
+ninja==1.11.1
 ntlm-auth==1.5.0
 numpy==1.22.3
 orjson==3.6.8
