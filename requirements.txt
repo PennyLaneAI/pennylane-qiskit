@@ -21,7 +21,7 @@ pbr==5.8.1
 PennyLane==0.27.0
 PennyLane-Lightning==0.28.2
 ply==3.11
-psutil==5.9.0
+psutil==5.9.4
 pycparser==2.21
 python-constraint==1.4.0
 python-dateutil==2.8.2
