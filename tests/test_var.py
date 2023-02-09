@@ -3,10 +3,6 @@ import pytest
 import numpy as np
 import pennylane as qml
 
-from pennylane_qiskit import AerDevice, BasicAerDevice
-
-from conftest import U, U2, A
-
 
 np.random.seed(42)
 

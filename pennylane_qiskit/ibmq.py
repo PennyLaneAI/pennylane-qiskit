@@ -61,7 +61,6 @@ class IBMQDevice(QiskitDevice):
     short_name = "qiskit.ibmq"
 
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
-
         # Connection to IBMQ
         connect(kwargs)
 

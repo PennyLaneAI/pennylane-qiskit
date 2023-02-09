@@ -4,10 +4,6 @@ import numpy as np
 from flaky import flaky
 import pennylane as qml
 
-from pennylane_qiskit import AerDevice, BasicAerDevice
-
-from conftest import U, U2, A
-
 
 np.random.seed(42)
 
@@ -41,7 +37,7 @@ class TestSample:
         s1 = dev.sample(observable)
 
         # s1 should only contain 1 and -1
-        assert np.allclose(s1 ** 2, 1, **tol)
+        assert np.allclose(s1**2, 1, **tol)
 
     @pytest.mark.parametrize("theta", THETA)
     def test_sample_values_hermitian(self, theta, device, shots, tol):
@@ -148,7 +144,7 @@ class TestTensorSample:
         s1 = dev.sample(observable)
 
         # s1 should only contain 1 and -1
-        assert np.allclose(s1 ** 2, 1, **tol)
+        assert np.allclose(s1**2, 1, **tol)
 
         mean = np.mean(s1)
         expected = np.sin(theta) * np.sin(phi) * np.sin(varphi)
@@ -187,7 +183,7 @@ class TestTensorSample:
         s1 = dev.sample(observable)
 
         # s1 should only contain 1 and -1
-        assert np.allclose(s1 ** 2, 1, **tol)
+        assert np.allclose(s1**2, 1, **tol)
 
         mean = np.mean(s1)
         expected = -(np.cos(varphi) * np.sin(phi) + np.sin(varphi) * np.cos(theta)) / np.sqrt(2)

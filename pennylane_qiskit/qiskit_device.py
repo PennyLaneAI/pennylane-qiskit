@@ -148,7 +148,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # Keep track if the user specified analytic to be True
         if shots is None and backend not in self._state_backends:
-
             # Raise a warning if no shots were specified for a hardware device
             warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
@@ -307,7 +306,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             mapped_operation = self._operation_map[operation]
 
-            self.qubit_state_vector_check(operation, par, device_wires)
+            self.qubit_state_vector_check(operation)
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
@@ -334,7 +333,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         return circuits
 
-    def qubit_state_vector_check(self, operation, par, wires):
+    def qubit_state_vector_check(self, operation):
         """Input check for the the QubitStateVector operation.
 
         Args:
@@ -342,7 +341,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Raises:
             DeviceError: If the operation is QubitStateVector
-            ValueError: If the state has not the right length
         """
         if operation == "QubitStateVector":
             if "unitary" in self.backend_name:
@@ -350,9 +348,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
                     "The QubitStateVector operation "
                     "is not supported on the unitary simulator backend."
                 )
-
-            if len(par[0]) != 2 ** len(wires):
-                raise ValueError("State vector must be of length 2**wires.")
 
     def compile(self):
         """Compile the quantum circuit to target the provided compile_backend.
@@ -472,7 +467,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
-
             # Update the tracker
             if self.tracker.active:
                 self.tracker.update(executions=1, shots=self.shots)
