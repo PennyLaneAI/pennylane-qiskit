@@ -6,7 +6,7 @@ from scipy.linalg import block_diag
 
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
-from conftest import U, U2, A
+from conftest import U, U2
 
 np.random.seed(42)
 
@@ -216,7 +216,7 @@ class TestNonAnalyticApply:
         state = np.array([0, 123.432])
         wires = [0, 1]
 
-        with pytest.raises(ValueError, match=r"State vector must be of length 2\*\*wires"):
+        with pytest.raises(ValueError, match=r"State vector must have shape (2**wires,) or (batch_size, 2**wires)."):
             dev.apply([qml.QubitStateVector(state, wires=wires)])
 
     @pytest.mark.parametrize("mat", [U, U2])

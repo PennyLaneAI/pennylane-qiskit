@@ -715,45 +715,6 @@ class TestConverterGates:
         assert np.array_equal(recorder.queue[0].parameters[0], ex.CHGate().to_matrix())
         assert recorder.queue[0].wires == Wires([0, 1])
 
-    def test_qiskit_gates_to_be_deprecated(self, recorder):
-        """Tests the Qiskit gates that will be deprecated in an upcoming Qiskit version.
-
-        This test case can be removed once the gates are finally deprecated.
-        """
-        qc = QuantumCircuit(1, 1)
-
-        single_wire = [0]
-
-        with pytest.warns(DeprecationWarning) as record:
-            with recorder:
-                qc.u1(0.1, single_wire)
-                qc.u2(0.1, 0.2, single_wire)
-                qc.u3(0.1, 0.2, 0.3, single_wire)
-
-        # check that warnings were raised
-        assert len(record) == 3
-        # check that the message matches
-        deprecation_substring = "method is deprecated"
-        assert deprecation_substring in record[0].message.args[0]
-        assert deprecation_substring in record[1].message.args[0]
-        assert deprecation_substring in record[2].message.args[0]
-
-        quantum_circuit = load(qc)
-        with recorder:
-            quantum_circuit()
-
-        assert recorder.queue[0].name == "U1"
-        assert recorder.queue[0].parameters == [0.1]
-        assert recorder.queue[0].wires == Wires(single_wire)
-
-        assert recorder.queue[1].name == "U2"
-        assert recorder.queue[1].parameters == [0.1, 0.2]
-        assert recorder.queue[1].wires == Wires(single_wire)
-
-        assert recorder.queue[2].name == "U3"
-        assert recorder.queue[2].parameters == [0.1, 0.2, 0.3]
-        assert recorder.queue[2].wires == Wires(single_wire)
-
 
 class TestConverterUtils:
     """Tests the utility functions used by the converter function."""

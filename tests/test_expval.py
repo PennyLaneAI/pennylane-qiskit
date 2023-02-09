@@ -4,7 +4,7 @@ from flaky import flaky
 import numpy as np
 import pennylane as qml
 
-from conftest import U, U2, A
+from conftest import A
 
 
 np.random.seed(42)
