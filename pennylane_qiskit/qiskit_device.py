@@ -306,7 +306,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             mapped_operation = self._operation_map[operation]
 
-            self.qubit_state_vector_check(operation, par, device_wires)
+            self.qubit_state_vector_check(operation)
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
@@ -333,7 +333,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         return circuits
 
-    def qubit_state_vector_check(self, operation, par, wires):
+    def qubit_state_vector_check(self, operation):
         """Input check for the the QubitStateVector operation.
 
         Args:
@@ -341,7 +341,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Raises:
             DeviceError: If the operation is QubitStateVector
-            ValueError: If the state has not the right length
         """
         if operation == "QubitStateVector":
             if "unitary" in self.backend_name:
