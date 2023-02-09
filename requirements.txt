@@ -8,7 +8,7 @@ charset-normalizer==2.0.12
 cryptography==36.0.2
 Cython==0.29.28
 dill==0.3.4
-future==0.18.2
+future==0.18.3
 idna==3.3
 mpmath==1.2.1
 mthree==0.22.0
