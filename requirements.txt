@@ -28,7 +28,7 @@ python-dateutil==2.8.2
 qiskit==0.34.0
 qiskit-aer==0.10.1
 qiskit-ibmq-provider==0.18.3
-qiskit-ignis==0.7.0
+qiskit-ignis==0.7.1
 qiskit-terra==0.19.1
 requests==2.27.1
 requests-ntlm==1.1.0
