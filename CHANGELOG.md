@@ -5,6 +5,9 @@
 * `.inv` is replaced by `qml.adjoint` in PennyLane `0.30.0` and therefore the plugin is adapted as well.
   [(#260)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/260)
 
+* The minimum required version of PennyLane is bumped to `0.28`. The current plugin
+  does not work with PennyLane v0.27.
+
 ### Bug fixes
 
 * The number of executions of the device is now correct.
@@ -14,6 +17,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Christina Lee
 Romain Moyard
 
 ---
