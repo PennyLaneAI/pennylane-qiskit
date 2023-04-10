@@ -1,4 +1,5 @@
 import numpy as np
+import pennylane
 import pytest
 
 import pennylane as qml
@@ -62,14 +63,14 @@ class TestAnalyticWarningHWSimulator:
         assert len(record) == 1
         # check that the message matches
         assert (
-            record[0].message.args[0] == "The analytic calculation of "
-            "expectations, variances and probabilities is only supported on "
-            "statevector backends, not on the {}. Such statistics obtained from this "
-            "device are estimates based on samples.".format(dev.backend)
+                record[0].message.args[0] == "The analytic calculation of "
+                                             "expectations, variances and probabilities is only supported on "
+                                             "statevector backends, not on the {}. Such statistics obtained from this "
+                                             "device are estimates based on samples.".format(dev.backend)
         )
 
     def test_no_warning_raised_for_software_backend_analytic_expval(
-        self, statevector_backend, recorder, recwarn
+            self, statevector_backend, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
@@ -139,6 +140,31 @@ class TestBatchExecution:
         dev.batch_execute(tapes)
 
         assert spy.call_count == n_tapes
+
+    def test_result_legacy(self, device, tol):
+        """Tests that the result has the correct shape and entry types."""
+        # TODO: remove once the legacy return system is activated.
+        pennylane.disable_return()
+        dev = device(2)
+        tapes = [self.tape1, self.tape2]
+        res = dev.batch_execute(tapes)
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        tape1_expected = dev.execute(self.tape1)
+
+        dev.reset()
+        tape2_expected = dev.execute(self.tape2)
+
+        assert len(res) == 2
+        assert isinstance(res[0], np.ndarray)
+        assert np.allclose(res[0], tape1_expected, atol=0)
+
+        assert isinstance(res[1], np.ndarray)
+        assert np.allclose(res[1], tape2_expected, atol=0)
+
+        pennylane.enable_return()
 
     def test_result(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
