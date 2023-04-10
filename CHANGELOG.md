@@ -4,6 +4,9 @@
 
 ### Breaking changes
 
+* The new return system from Pennylande is adopted in the plugin as well.
+  [(#281)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/281)
+
 ### Improvements
 
 ### Documentation
@@ -13,6 +16,8 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+Romain Moyard.
 
 ---
 # Release 0.29.0

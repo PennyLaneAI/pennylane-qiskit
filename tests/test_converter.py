@@ -1115,21 +1115,14 @@ class TestConverterIntegration:
 
         assert np.allclose(res, res_expected)
 
-        jac = qml.jacobian(circuit)(x, y)
+        def cost(x, y):
+            return qml.math.stack(circuit(x, y))
 
-        # Note: with v0.21.0, the behaviour of qml.jacobian changed. Branch
-        # based on the version number to ensure that the test case passes even
-        # with <v0.21.
-        if qml.__version__ < "0.21.0":
-            jac_expected = [
-                [-np.sin(x + np.cos(y)), np.sin(x + np.cos(y)) * np.sin(y)],
-                [np.cos(x * y) * y, np.cos(x * y) * x],
-            ]
+        jac = qml.jacobian(cost)(x, y)
 
-        else:
-            jac_expected = [
-                [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
-                [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],
-            ]
+        jac_expected = [
+            [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
+            [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],
+        ]
 
         assert np.allclose(jac, jac_expected)
