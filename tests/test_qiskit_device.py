@@ -143,7 +143,7 @@ class TestBatchExecution:
 
     def test_result_legacy(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
-        # TODO: remove once the legacy return system is activated.
+        # TODO: remove once the legacy return system is removed.
         pennylane.disable_return()
         dev = device(2)
         tapes = [self.tape1, self.tape2]
