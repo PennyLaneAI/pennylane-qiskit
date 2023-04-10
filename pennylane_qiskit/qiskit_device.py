@@ -481,14 +481,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self._samples = self.generate_samples(circuit_obj)
 
             if not pennylane.active_return():
-                res = self.statistics(circuit)
+                res = self._statistics_legacy(circuit)
                 res = np.asarray(res)
                 results.append(res)
             else:
                 res = self.statistics(circuit)
                 single_measurement = len(circuit.measurements) == 1
-
-                res = res[0] if single_measurement else tuple(results)
+                res = res[0] if single_measurement else tuple(res)
                 results.append(res)
 
         if self.tracker.active:
