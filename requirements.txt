@@ -12,7 +12,7 @@ future==0.18.3
 idna==3.3
 mpmath==1.2.1
 mthree==0.22.0
-networkx==2.8
+networkx==3.1
 ninja==1.11.1
 ntlm-auth==1.5.0
 numpy==1.22.3
