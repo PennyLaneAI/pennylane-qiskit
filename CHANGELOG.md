@@ -1,17 +1,9 @@
-# Release 0.30.0-dev
-
-### New features since last release
+# Release 0.30.0
 
 ### Breaking changes
 
 * The new return system from PennyLane is adopted in the plugin as well.
   [(#281)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/281)
-
-### Improvements
-
-### Documentation
-
-### Bug fixes
 
 ### Contributors
 
