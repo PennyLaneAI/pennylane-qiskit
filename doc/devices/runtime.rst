@@ -23,16 +23,13 @@ Custom Runtime Programs
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Not all Qiskit runtime programs correspond to complete devices, some solve specific problems (VQE, QAOA, etc...).
-We created a custom Qiskit runtime program for solving VQE problems in PennyLane ``runtime_programs\vqe_runtime_program.py``.
-In order to use this program you need to upload on IBMQ (only once), get the program ID and use the VQE runner.
+We created a wrapper to use PennyLane objects while solving VQE problems on IBM backends.
 
 .. code-block:: python
 
-    from pennylane_qiskit import upload_vqe_runner, vqe_runner
+    from pennylane_qiskit import vqe_runner
 
     IBMQ.enable_account(token)
-
-    program_id = upload_vqe_runner(hub="ibm-q", group="open", project="main")
 
     def vqe_circuit(params):
         qml.RX(params[0], wires=0)
@@ -43,7 +40,6 @@ In order to use this program you need to upload on IBMQ (only once), get the pro
     hamiltonian = qml.Hamiltonian(coeffs, obs)
 
     job = vqe_runner(
-        program_id=program_id,
         backend="ibmq_qasm_simulator",
         hamiltonian=hamiltonian,
         ansatz=vqe_circuit,
@@ -54,4 +50,4 @@ In order to use this program you need to upload on IBMQ (only once), get the pro
         kwargs={"hub": "ibm-q", "group": "open", "project": "main"},
     )
 
-More details on Qiskit runtime programs in the `IBMQ runtime documentation <https://qiskit.org/documentation/apidoc/ibmq_runtime.html>`_.
+More details on Qiskit runtime programs in the `IBMQ runtime documentation <https://qiskit.org/documentation/partners/qiskit_ibm_runtime/index.html>`_.
