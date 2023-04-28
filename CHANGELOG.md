@@ -5,11 +5,15 @@
 * The new return system from PennyLane is adopted in the plugin as well.
   [(#281)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/281)
 
+* `vqe_runner` has been updated to use IBMQ's VQE program. The first argument, `provider_id`, has
+  now been removed. The `upload_vqe_runner` and `delete_vqe_runner` functions have also been removed.
+  [(#298)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/298)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
 
-Romain Moyard.
+Romain Moyard, Matthew Silverman
 
 ---
 # Release 0.29.0
