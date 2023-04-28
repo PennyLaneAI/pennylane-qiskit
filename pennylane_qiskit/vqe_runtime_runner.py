@@ -196,7 +196,9 @@ def vqe_runner(
 
     service = QiskitRuntimeService()
     rt_job = RuntimeJobWrapper()
-    rt_job._job = service.run(program_id="vqe", inputs=inputs, options=options, callback=rt_job._callback)
+    rt_job._job = service.run(
+        program_id="vqe", inputs=inputs, options=options, callback=rt_job._callback
+    )
     return rt_job
 
 
