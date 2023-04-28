@@ -27,6 +27,7 @@ python-constraint==1.4.0
 python-dateutil==2.8.2
 qiskit==0.42.1
 qiskit-aer==0.10.1
+qiskit-ibm-runtime==0.9.3
 qiskit-ibmq-provider==0.18.3
 qiskit-ignis==0.7.1
 qiskit-terra==0.23.3

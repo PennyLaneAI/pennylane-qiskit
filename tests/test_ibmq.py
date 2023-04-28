@@ -253,8 +253,8 @@ def test_simple_circuit_with_batch_params(token, tol, shots, mocker):
     phi = np.linspace(0, 0.123, batch_dim)
 
     res = circuit(theta, phi)
-    assert np.allclose(res[:, 0], np.cos(theta), **tol)
-    assert np.allclose(res[:, 1], np.cos(theta) * np.cos(phi), **tol)
+    assert np.allclose(res[0], np.cos(theta), **tol)
+    assert np.allclose(res[1], np.cos(theta) * np.cos(phi), **tol)
 
     # Check that IBMQBackend.run was called once
     assert spy1.call_count == 1

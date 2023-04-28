@@ -16,7 +16,6 @@ This module contains a function to run aa custom PennyLane VQE problem on qiskit
 """
 # pylint: disable=too-few-public-methods,protected-access,too-many-arguments,too-many-branches,too-many-statements
 
-import os
 import warnings
 import inspect
 from collections import OrderedDict
@@ -24,14 +23,16 @@ from collections import OrderedDict
 import pennylane.numpy as np
 import pennylane as qml
 
-from pennylane_qiskit.qiskit_device import QiskitDevice
-from pennylane_qiskit.ibmq import connect
 import qiskit.circuit.library.n_local as lib_local
-from qiskit.providers.ibmq.runtime import ResultDecoder
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime.program import ResultDecoder
+from qiskit.algorithms.optimizers import SPSA, SciPyOptimizer
 from qiskit.circuit import ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit import IBMQ
+from qiskit.opflow.primitive_ops import PauliSumOp
 
+from pennylane_qiskit.ibmq import connect
+from pennylane_qiskit.qiskit_device import QiskitDevice
 from scipy.optimize import OptimizeResult
 
 
@@ -49,7 +50,7 @@ class VQEResultDecoder(ResultDecoder):
 
 class RuntimeJobWrapper:
     """A simple Job wrapper that attaches intermediate results directly to the job object itself
-    in the `intermediate_results attribute` via the `_callback` function.
+    in the ``intermediate_results`` attribute via the ``_callback`` function.
     """
 
     def __init__(self):
@@ -60,7 +61,6 @@ class RuntimeJobWrapper:
             "parameters": [],
             "function": [],
             "step": [],
-            "accepted": [],
         }
 
     def _callback(self, *args):
@@ -71,27 +71,14 @@ class RuntimeJobWrapper:
             xk (array_like): A list or NumPy array to attach.
             fk (float): Value of the function.
             step (float): Value of the step.
-            accepted (bool): True if the loss function value has improved, False otherwise.
         """
         # If it is a dictionary it is the final result and does not belong to intermediate results
         if not isinstance(args[1], dict):
-            _, (nfev, xk, fk, step, accepted) = args
+            _, (nfev, xk, fk, step) = args
             self.intermediate_results["nfev"].append(nfev)
             self.intermediate_results["parameters"].append(xk)
             self.intermediate_results["function"].append(fk)
             self.intermediate_results["step"].append(step)
-            self.intermediate_results["accepted"].append(accepted)
-
-    def _scipy_callback(self, *args):
-        """The callback function that attaches intermediate results to the wrapper:
-
-        Args:
-            xk (array_like): A list or NumPy array to attach.
-        """
-        # If it is a dictionary it is the final result and does not belong to intermediate results
-        if not isinstance(args[1], dict):
-            _, xk = args
-            self.intermediate_results["parameters"].append(xk)
 
     def result(self):
         """Get the result of the job as a SciPy OptimizerResult object.
@@ -104,113 +91,10 @@ class RuntimeJobWrapper:
         return self._job.result(decoder=self._decoder)
 
 
-def upload_vqe_runner(hub="ibm-q", group="open", project="main", **kwargs):
-    """Upload the custom VQE runner to the IBMQ cloud.
-
-    Args:
-        hub (str): Ibmq provider hub.
-        group (str): Ibmq provider group.
-        project (str): Ibmq provider project.
-
-    Returns:
-        str: Program id that can be used to run the program.
-    """
-
-    connect(kwargs)
-
-    # Specify a single hub, group and project
-    hub = kwargs.get("hub", "ibm-q")
-    group = kwargs.get("group", "open")
-    project = kwargs.get("project", "main")
-
-    meta = {
-        "name": "vqe-runtime",
-        "description": "A sample VQE program.",
-        "max_execution_time": 100000,
-        "spec": {},
-    }
-
-    meta["spec"]["parameters"] = {
-        "$schema": "https://json-schema.org/draft/2019-09/schema",
-        "properties": {
-            "hamiltonian": {
-                "description": "Hamiltonian whose ground state we want to find.",
-                "type": "array",
-            },
-            "x0": {
-                "description": "Initial vector of parameters for the quantum circuit.",
-                "type": "array",
-            },
-            "ansatz": {
-                "description": "Qiskit circuit or name of ansatz quantum circuit to use, default='EfficientSU2'",
-                "type": "[QuantumCircuit,string]",
-                "default": "EfficientSU2",
-            },
-            "ansatz_config": {
-                "description": "Configuration parameters for the ansatz circuit.",
-                "type": "dict",
-            },
-            "optimizer": {
-                "description": "Classical optimizer to use, default='SPSA'.",
-                "type": "string",
-                "default": "SPSA",
-            },
-            "optimizer_config": {
-                "description": "Configuration parameters for the optimizer.",
-                "type": "dict",
-            },
-            "shots": {
-                "description": "The number of shots used for each circuit evaluation.",
-                "type": "integer",
-            },
-            "use_measurement_mitigation": {
-                "description": "Use measurement mitigation, default=False.",
-                "type": "boolean",
-                "default": False,
-            },
-        },
-        "required": ["hamiltonian", "x0"],
-    }
-
-    meta["spec"]["return_values"] = {
-        "$schema": "https://json-schema.org/draft/2019-09/schema",
-        "description": "Final result in SciPy optimizer format",
-        "type": "object",
-    }
-
-    meta["spec"]["intermadiate_results"] = {
-        "$schema": "https://json-schema.org/draft/2019-09/schema",
-        "description": "Dictionnary containing: "
-        "The number of evaluation at current optimization step."
-        "Parameter vector at current optimization step."
-        "Function value at the current optimization step."
-        "The size of the step.",
-        "type": "dict",
-    }
-
-    provider = IBMQ.get_provider(hub=hub, group=group, project=project)
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-    PROG_FILE = "vqe_runtime_program.py"
-    program_path = os.path.join(ROOT_DIR, PROG_FILE)
-
-    program_id = provider.runtime.upload_program(data=program_path, metadata=meta)
-    return program_id
-
-
-def delete_vqe_runner(provider, program_id):
-    """Delete the desired program on the IBMQ platform.
-    Args:
-        provider (object): IBMQ provider.
-        program_id (str): Id of the Qiskit runtime to be deleted.
-    """
-    provider.runtime.delete_program(program_id)
-
-
 def vqe_runner(
     backend,
     hamiltonian,
     x0,
-    program_id,
     ansatz="EfficientSU2",
     ansatz_config=None,
     optimizer="SPSA",
@@ -219,14 +103,12 @@ def vqe_runner(
     use_measurement_mitigation=False,
     **kwargs,
 ):
-    """Routine that executes a given VQE problem via the sample-vqe program on the target backend.
+    """Routine that executes a given VQE problem via the VQE program on the target backend.
 
     Args:
-        backend (ProgramBackend): Qiskit backend instance.
+        backend (str): Qiskit backend name.
         hamiltonian (qml.Hamiltonian): Hamiltonian whose ground state we want to find.
         x0 (array_like): Initial vector of parameters.
-        program_id(str): Id of the program, it has to be generated by using the upload_vqe_runner function.
-        Once the program is uploaded, you can find the id in your program list online.
         ansatz (Quantum function or str): Optional, a PennyLane quantum function or the name of the Qiskit
             ansatz quantum circuit to use. Default='EfficientSU2'
         ansatz_config (dict): Optional, configuration parameters for the ansatz circuit if from Qiskit library.
@@ -250,15 +132,16 @@ def vqe_runner(
 
     connect(kwargs)
 
-    options = {"backend_name": backend}
-
     inputs = {}
 
     # Validate circuit ansatz and number of qubits
     if not isinstance(ansatz, str):
-        inputs["x0"], inputs["ansatz"], num_qubits, wires = _pennylane_to_qiskit_ansatz(
-            ansatz, x0, hamiltonian
-        )
+        (
+            inputs["initial_parameters"],
+            inputs["ansatz"],
+            num_qubits,
+            wires,
+        ) = _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian)
 
     # The circuit will be taken from the Qiskit library as a str was passed.
     else:
@@ -268,9 +151,6 @@ def vqe_runner(
         ansatz_circ = getattr(lib_local, ansatz, None)
         if ansatz_circ is None:
             raise ValueError(f"Ansatz {ansatz} not in n_local circuit library.")
-
-        inputs["ansatz"] = ansatz
-        inputs["ansatz_config"] = ansatz_config
 
         # If given x0, validate its length against num_params in ansatz
         x0 = np.asarray(x0)
@@ -283,16 +163,26 @@ def vqe_runner(
             )
             x0 = 2 * np.pi * np.random.rand(num_params)
 
-        inputs["x0"] = x0
+        inputs["ansatz"] = ansatz_circ
+        inputs["initial_parameters"] = x0
 
     # Transform the PennyLane hamilonian to a suitable form
     hamiltonian = hamiltonian_to_list_string(hamiltonian, wires)
 
-    inputs["hamiltonian"] = hamiltonian
+    inputs["operator"] = PauliSumOp.from_list(hamiltonian)
+
+    # Set the optimizer
+    if optimizer == "SPSA":
+        inputs["optimizer"] = SPSA(**optimizer_config)
+    elif optimizer == "QNSPSA":
+        raise ValueError("QNSPSA is not available for vqe_runner")
+        # TODO: fix serialization of fidelity function
+        # fidelity = QNSPSA.get_fidelity(inputs["ansatz"])
+        # inputs["optimizer"] = QNSPSA(fidelity, **optimizer_config)
+    else:  # SciPy optimizers
+        inputs["optimizer"] = SciPyOptimizer(optimizer, options=optimizer_config)
 
     # Set the rest of the inputs
-    inputs["optimizer"] = optimizer
-    inputs["optimizer_config"] = optimizer_config
     inputs["shots"] = shots
     inputs["use_measurement_mitigation"] = use_measurement_mitigation
 
@@ -300,22 +190,13 @@ def vqe_runner(
     hub = kwargs.get("hub", "ibm-q")
     group = kwargs.get("group", "open")
     project = kwargs.get("project", "main")
+    instance = "/".join([hub, group, project])
 
-    provider = IBMQ.get_provider(hub=hub, group=group, project=project)
+    options = {"backend_name": backend, "instance": instance}
 
+    service = QiskitRuntimeService()
     rt_job = RuntimeJobWrapper()
-
-    # Callbacks functions are different between optimizers.
-    if optimizer in ["SPSA", "QNSPSA"]:
-        job = provider.runtime.run(
-            program_id, options=options, inputs=inputs, callback=rt_job._callback
-        )
-    else:
-        job = provider.runtime.run(
-            program_id, options=options, inputs=inputs, callback=rt_job._scipy_callback
-        )
-    rt_job._job = job
-
+    rt_job._job = service.run(program_id="vqe", inputs=inputs, options=options, callback=rt_job._callback)
     return rt_job
 
 
@@ -331,50 +212,44 @@ def _pennylane_to_qiskit_ansatz(ansatz, x0, hamiltonian):
         list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
     """
 
-    if isinstance(ansatz, (qml.QNode, qml.tape.QuantumTape)):
+    if isinstance(ansatz, (qml.QNode, qml.tape.QuantumScript)):
         raise qml.QuantumFunctionError("The ansatz must be a callable quantum function.")
 
-    if callable(ansatz):
-        if len(inspect.getfullargspec(ansatz).args) != 1:
-            raise qml.QuantumFunctionError("Param should be a single vector.")
-        try:
-            tape_param = x0[0] if len(x0) == 1 else x0
-            tape = qml.transforms.make_tape(ansatz)(np.array(tape_param)).expand(
-                depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
-            )
-        except IndexError as e:
-            raise qml.QuantumFunctionError("Not enough parameters in X0.") from e
-
-        # Raise exception if there are no operations
-        if len(tape.operations) == 0:
-            raise qml.QuantumFunctionError("Function contains no quantum operations.")
-
-        params = tape.get_parameters()
-        trainable_params = []
-
-        for p in params:
-            if qml.math.requires_grad(p):
-                trainable_params.append(p)
-
-        num_params = len(trainable_params)
-
-        if len(x0) != num_params:
-            warnings.warn(
-                "In order to match the tape expansion, the number of parameters has been changed."
-            )
-            x0 = 2 * np.pi * np.random.rand(num_params)
-
-        wires_circuit = tape.wires
-        wires_hamiltonian = hamiltonian.wires
-        all_wires = wires_circuit + wires_hamiltonian
-
-        # Set the number of qubits
-        num_qubits = len(all_wires)
-
-        circuit_ansatz = _qiskit_ansatz(num_params, num_qubits, all_wires, tape)
-
-    else:
+    if not callable(ansatz):
         raise ValueError("Input ansatz is not a quantum function or a string.")
+
+    if len(inspect.getfullargspec(ansatz).args) != 1:
+        raise qml.QuantumFunctionError("Param should be a single vector.")
+    try:
+        tape_param = x0[0] if len(x0) == 1 else x0
+        tape = qml.transforms.make_tape(ansatz)(np.array(tape_param)).expand(
+            depth=5, stop_at=lambda obj: obj.name in QiskitDevice._operation_map
+        )
+    except IndexError as e:
+        raise qml.QuantumFunctionError("Not enough parameters in X0.") from e
+
+    # Raise exception if there are no operations
+    if len(tape.operations) == 0:
+        raise qml.QuantumFunctionError("Function contains no quantum operations.")
+
+    params = tape.get_parameters()
+    trainable_params = [p for p in params if qml.math.requires_grad(p)]
+    num_params = len(trainable_params)
+
+    if len(x0) != num_params:
+        warnings.warn(
+            "In order to match the tape expansion, the number of parameters has been changed."
+        )
+        x0 = 2 * np.pi * np.random.rand(num_params)
+
+    wires_circuit = tape.wires
+    wires_hamiltonian = hamiltonian.wires
+    all_wires = wires_circuit + wires_hamiltonian
+
+    # Set the number of qubits
+    num_qubits = len(all_wires)
+
+    circuit_ansatz = _qiskit_ansatz(num_params, num_qubits, all_wires, tape)
 
     return x0, circuit_ansatz, num_qubits, all_wires
 
@@ -414,17 +289,15 @@ def _qiskit_ansatz(num_params, num_qubits, wires, tape):
         adjoint = operation.startswith("Adjoint(")
         split_op = operation.split("Adjoint(")
 
-        if adjoint:
-            if split_op[1] in ("QubitUnitary)", "QubitStateVector)"):
-                # Need to revert the order of the quantum registers used in
-                # Qiskit such that it matches the PennyLane ordering
-                qregs = list(reversed(qregs))
-        else:
-            if split_op[0] in ("QubitUnitary", "QubitStateVector"):
-                # Need to revert the order of the quantum registers used in
-                # Qiskit such that it matches the PennyLane ordering
-                qregs = list(reversed(qregs))
-
+        if (
+            adjoint
+            and split_op[1] in ("QubitUnitary)", "QubitStateVector)")
+            or not adjoint
+            and split_op[0] in ("QubitUnitary", "QubitStateVector")
+        ):
+            # Need to revert the order of the quantum registers used in
+            # Qiskit such that it matches the PennyLane ordering
+            qregs = list(reversed(qregs))
         dag = circuit_to_dag(QuantumCircuit(reg, name=""))
 
         if operation in ("QubitUnitary", "QubitStateVector"):
@@ -434,9 +307,7 @@ def _qiskit_ansatz(num_params, num_qubits, wires, tape):
             # Parameters for the operation
             if par and qml.math.requires_grad(par[0]):
                 op_num_params = len(par)
-                par = []
-                for num in range(op_num_params):
-                    par.append(params_vector[j + num])
+                par = [params_vector[j + num] for num in range(op_num_params)]
                 j += op_num_params
 
             gate = mapped_operation(*par)
@@ -460,7 +331,7 @@ def hamiltonian_to_list_string(hamiltonian, wires):
         wires (qml.wires.Wires): A list of qubits from PennyLane.
 
     Returns:
-        list[tuple[float,str]]: Hamiltonian in a format for the runtime program.
+        list[tuple[str,float]]: Hamiltonian in a format for the runtime program.
     """
 
     num_qubits = len(wires)
@@ -470,7 +341,7 @@ def hamiltonian_to_list_string(hamiltonian, wires):
 
     coeff, observables = hamiltonian.terms()
 
-    authorized_obs = {"PauliX", "PauliY", "PauliZ", "Hadamard", "Identity"}
+    authorized_obs = {"PauliX", "PauliY", "PauliZ", "Identity"}
 
     for obs in observables:
         obs_names = obs.name if isinstance(obs.name, list) else [obs.name]
@@ -485,9 +356,9 @@ def hamiltonian_to_list_string(hamiltonian, wires):
     for obs in observables:
         # Tensors
         if isinstance(obs.name, list):
-            internal = []
-            for i, j in zip(obs.wires.map(wires_map).tolist(), obs.name):
-                internal.append([i, obs_str[j]])
+            internal = [
+                [i, obs_str[j]] for i, j in zip(obs.wires.map(wires_map).tolist(), obs.name)
+            ]
             internal.sort()
             obs_org.append(internal)
         else:
@@ -503,10 +374,6 @@ def hamiltonian_to_list_string(hamiltonian, wires):
             empty_obs[wire] = observable
         obs_list.append(empty_obs)
 
-    # Create the list of tuples with coeffs and Hamiltonian terms as strings [['YI'], ['IY']] -> [(1, 'YI'), (1, 'IY')]
-    hamiltonian = []
-    for i, elem in enumerate(obs_list):
-        result = "".join(elem)
-        hamiltonian.append((coeff[i], result))
-
+    # Create the list of tuples with coeffs and Hamiltonian terms as strings [['YI'], ['IY']] -> [('YI', 1), ('IY', 1)]
+    hamiltonian = [("".join(elem), coeff[i]) for i, elem in enumerate(obs_list)]
     return hamiltonian
