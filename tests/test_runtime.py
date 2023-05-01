@@ -802,7 +802,7 @@ class TestCustomVQE:
         assert "parameters" in job.intermediate_results
 
     @pytest.mark.parametrize("shots", [8000])
-    def _test_simple_hamiltonian_with_untrainable_parameters(self, token, tol, shots):
+    def test_simple_hamiltonian_with_untrainable_parameters(self, token, tol, shots):
         """Test a simple VQE problem with untrainable parameters."""
         IBMQ.enable_account(token)
         tol = 1e-1

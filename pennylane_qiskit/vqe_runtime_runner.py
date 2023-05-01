@@ -18,6 +18,7 @@ This module contains a function to run aa custom PennyLane VQE problem on qiskit
 
 import warnings
 import inspect
+import os
 from collections import OrderedDict
 
 import pennylane.numpy as np
@@ -30,10 +31,10 @@ from qiskit.algorithms.optimizers import SPSA, SciPyOptimizer
 from qiskit.circuit import ParameterVector, QuantumCircuit, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.opflow.primitive_ops import PauliSumOp
+from scipy.optimize import OptimizeResult
 
 from pennylane_qiskit.ibmq import connect
 from pennylane_qiskit.qiskit_device import QiskitDevice
-from scipy.optimize import OptimizeResult
 
 
 class VQEResultDecoder(ResultDecoder):
@@ -194,7 +195,7 @@ def vqe_runner(
 
     options = {"backend_name": backend, "instance": instance}
 
-    service = QiskitRuntimeService()
+    service = QiskitRuntimeService(channel="ibm_quantum", token=os.getenv("IBMQX_TOKEN"))
     rt_job = RuntimeJobWrapper()
     rt_job._job = service.run(
         program_id="vqe", inputs=inputs, options=options, callback=rt_job._callback
