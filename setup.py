@@ -25,7 +25,7 @@ requirements = [
     "qiskit>=0.32",
     "qiskit-ibm-runtime",
     "mthree>=0.17",
-    "pennylane @ git+https://github.com/PennyLaneAI/pennylane.git",
+    "pennylane>=0.30",
     "numpy",
     "networkx>=2.2",
 ]
