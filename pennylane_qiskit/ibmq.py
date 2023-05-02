@@ -18,8 +18,9 @@ using PennyLane.
 """
 import os
 
-from qiskit import IBMQ
-from qiskit.providers.ibmq.exceptions import IBMQAccountError
+from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_provider.exceptions import IBMAccountError
+from qiskit_ibm_provider.accounts.exceptions import AccountsError
 
 from .qiskit_device import QiskitDevice
 
@@ -41,7 +42,7 @@ class IBMQDevice(QiskitDevice):
             or strings (``['ancilla', 'q1', 'q2']``). Note that for some backends, the number
             of wires has to match the number of qubits accessible.
         provider (Provider): The IBM Q provider you wish to use. If not provided,
-            then the default provider returned by ``IBMQ.get_provider()`` is used.
+            then the default provider returned by ``IBMProvider()`` is used.
         backend (str): the desired provider backend
         shots (int): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables
@@ -67,9 +68,10 @@ class IBMQDevice(QiskitDevice):
         hub = kwargs.get("hub", "ibm-q")
         group = kwargs.get("group", "open")
         project = kwargs.get("project", "main")
+        instance = "/".join([hub, group, project])
 
         # get a provider
-        p = provider or IBMQ.get_provider(hub=hub, group=group, project=project)
+        p = provider or IBMProvider(instance=instance)
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
 
@@ -101,41 +103,24 @@ def connect(kwargs):
     Args:
         kwargs(dict): dictionary that contains the token and the url"""
 
+    hub = kwargs.get("hub", "ibm-q")
+    group = kwargs.get("group", "open")
+    project = kwargs.get("project", "main")
+    instance = "/".join([hub, group, project])
+
     token = kwargs.get("ibmqx_token", None) or os.getenv("IBMQX_TOKEN")
     url = kwargs.get("ibmqx_url", None) or os.getenv("IBMQX_URL")
 
-    # TODO: remove "no cover" when #173 is resolved
-    if token:  # pragma: no cover
-        # token was provided by the user, so attempt to enable an
-        # IBM Q account manually
-        def login():
-            ibmq_kwargs = {"url": url} if url is not None else {}
-            IBMQ.enable_account(token, **ibmq_kwargs)
-
-        active_account = IBMQ.active_account()
-        if active_account is None:
-            login()
-        else:
-            # There is already an active account:
-            # If the token is the same, do nothing.
-            # If the token is different, authenticate with the new account.
-            if active_account["token"] != token:
-                IBMQ.disable_account()
-                login()
-    else:
-        # check if an IBM Q account is already active.
-        #
-        # * IBMQ v2 credentials stored in active_account().
-        #   If no accounts are active, it returns None.
-
-        if IBMQ.active_account() is None:
-            # no active account
-            try:
-                # attempt to load a v2 account stored on disk
-                IBMQ.load_account()
-            except IBMQAccountError:
-                # attempt to enable an account manually using
-                # a provided token
-                raise IBMQAccountError(
-                    "No active IBM Q account, and no IBM Q token provided."
-                ) from None
+    saved_accounts = IBMProvider.saved_accounts()
+    if not token:
+        if not saved_accounts:
+            raise IBMAccountError("No active IBM Q account, and no IBM Q token provided.")
+        try:
+            IBMProvider(url=url, instance=instance)
+        except AccountsError as e:
+            raise AccountsError(f"Accounts were found ({set(saved_accounts)}), but all failed to load.") from e
+        return
+    for account in saved_accounts.values():
+        if account["token"] == token:
+            return
+    IBMProvider(token=token, url=url, instance=instance).save_account(token=token)

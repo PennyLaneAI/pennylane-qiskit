@@ -18,7 +18,7 @@ This module contains classes for constructing Qiskit runtime devices for PennyLa
 
 import numpy as np
 
-from qiskit.providers.ibmq import RunnerResult
+from qiskit_ibm_runtime.constants import RunnerResult
 from pennylane_qiskit.ibmq import IBMQDevice
 
 
