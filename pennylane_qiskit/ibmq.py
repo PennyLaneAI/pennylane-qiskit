@@ -118,7 +118,9 @@ def connect(kwargs):
         try:
             IBMProvider(url=url, instance=instance)
         except AccountsError as e:
-            raise AccountsError(f"Accounts were found ({set(saved_accounts)}), but all failed to load.") from e
+            raise AccountsError(
+                f"Accounts were found ({set(saved_accounts)}), but all failed to load."
+            ) from e
         return
     for account in saved_accounts.values():
         if account["token"] == token:

@@ -158,7 +158,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         self.provider = provider
         self.backend_name = backend
-        self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
+
+        def _get_backend_name(name):
+            return name if isinstance(name, str) else name()
+
+        self._capabilities["backend"] = [
+            _get_backend_name(b.name) for b in self.provider.backends()
+        ]
         self._capabilities["returns_state"] = backend in self._state_backends
 
         # Check that the backend exists

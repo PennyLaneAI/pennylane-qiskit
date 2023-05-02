@@ -18,6 +18,9 @@ This module contains classes for constructing Qiskit runtime devices for PennyLa
 
 import numpy as np
 
+from qiskit.primitives import Sampler
+from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_runtime import Options, QiskitRuntimeService
 from qiskit_ibm_runtime.constants import RunnerResult
 from pennylane_qiskit.ibmq import IBMQDevice
 
@@ -55,6 +58,7 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
         self.kwargs = kwargs
         super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
+        self.runtime_service = QiskitRuntimeService(channel="ibm_quantum")
 
     def batch_execute(self, circuits):
         compiled_circuits = self.compile_circuits(circuits)
@@ -65,10 +69,10 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
             program_inputs[kwarg] = self.kwargs.get(kwarg)
 
         # Specify the backend.
-        options = {"backend_name": self.backend.name()}
+        options = {"backend": self.backend.name}
 
         # Send circuits to the cloud for execution by the circuit-runner program.
-        job = self.provider.runtime.run(
+        job = self.runtime_service.run(
             program_id="circuit-runner", options=options, inputs=program_inputs
         )
         self._current_job = job.result(decoder=RunnerResult)
@@ -140,6 +144,7 @@ class IBMQSamplerDevice(IBMQDevice):
     def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
         self.kwargs = kwargs
         super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
+        self.runtime_service = QiskitRuntimeService(channel="ibm_quantum")
 
     def batch_execute(self, circuits):
         compiled_circuits = self.compile_circuits(circuits)
@@ -147,13 +152,13 @@ class IBMQSamplerDevice(IBMQDevice):
         program_inputs = {"circuits": compiled_circuits}
 
         if "circuits_indices" not in self.kwargs:
-            circuit_indices = list(range(0, len(compiled_circuits)))
+            circuit_indices = list(range(len(compiled_circuits)))
             program_inputs["circuit_indices"] = circuit_indices
         else:
             circuit_indices = self.kwargs.get("circuit_indices")
 
         if "run_options" in self.kwargs:
-            if not "shots" in self.kwargs["run_options"]:
+            if "shots" not in self.kwargs["run_options"]:
                 self.kwargs["run_options"]["shots"] = self.shots
         else:
             self.kwargs["run_options"] = {"shots": self.shots}
@@ -162,11 +167,9 @@ class IBMQSamplerDevice(IBMQDevice):
             program_inputs[kwarg] = self.kwargs.get(kwarg)
 
         # Specify the backend.
-        options = {"backend_name": self.backend.name()}
+        options = {"backend": self.backend.name}
         # Send circuits to the cloud for execution by the sampler program.
-        job = self.provider.runtime.run(
-            program_id="sampler", options=options, inputs=program_inputs
-        )
+        job = self.runtime_service.run(program_id="sampler", options=options, inputs=program_inputs)
         self._current_job = job.result()
 
         results = []
@@ -199,14 +202,13 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.get("quasi_dists")[circuit_id]
+        counts = self._current_job.quasi_dists[circuit_id]
         keys = list(counts.keys())
 
-        number_of_states = 2 ** len(keys[0])
-
-        # Convert state to int
-        for i, elem in enumerate(keys):
-            keys[i] = int(elem, 2)
+        if isinstance(keys[0], str):
+            for i, elem in enumerate(keys):
+                keys[i] = int(elem, 2)
+        number_of_states = len(keys)
 
         values = list(counts.values())
         states, probs = zip(*sorted(zip(keys, values)))

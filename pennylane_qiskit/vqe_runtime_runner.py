@@ -193,7 +193,7 @@ def vqe_runner(
     project = kwargs.get("project", "main")
     instance = "/".join([hub, group, project])
 
-    options = {"backend_name": backend, "instance": instance}
+    options = {"backend": backend, "instance": instance}
 
     service = QiskitRuntimeService(channel="ibm_quantum", token=os.getenv("IBMQX_TOKEN"))
     rt_job = RuntimeJobWrapper()

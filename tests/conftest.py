@@ -21,6 +21,8 @@ import numpy as np
 
 import pennylane as qml
 from qiskit import IBMQ
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime.accounts.exceptions import AccountNotFoundError
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
 np.random.seed(42)
@@ -52,8 +54,15 @@ def token():
     if t is None:
         pytest.skip("Skipping test, no IBMQ token available")
 
-    yield t
-    IBMQ.disable_account()
+    return t
+
+
+@pytest.fixture
+def skip_if_no_account():
+    try:
+        QiskitRuntimeService()
+    except AccountNotFoundError:
+        pytest.skip("Skipping test, no IBMQ account available")
 
 
 @pytest.fixture

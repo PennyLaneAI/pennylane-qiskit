@@ -16,7 +16,7 @@ This module contains the :class:`~.AerDevice` class, a PennyLane device that all
 evaluation and differentiation of Qiskit Aer's C++ simulator
 using PennyLane.
 """
-import qiskit
+import qiskit_aer
 
 from .qiskit_device import QiskitDevice
 
@@ -60,4 +60,4 @@ class AerDevice(QiskitDevice):
         if method != "automatic":
             backend += "_" + method
 
-        super().__init__(wires, provider=qiskit.Aer, backend=backend, shots=shots, **kwargs)
+        super().__init__(wires, provider=qiskit_aer.Aer, backend=backend, shots=shots, **kwargs)
