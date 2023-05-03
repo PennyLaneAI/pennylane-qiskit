@@ -292,7 +292,10 @@ class TestIBMQWithRealAccount:
         assert "job_time" in dev.tracker.history
         assert set(dev.tracker.history["job_time"][0]) == {"queued", "running"}
 
-    @patch("qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob.time_per_step", return_value={"CREATING": "1683149330"})
+    @patch(
+        "qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob.time_per_step",
+        return_value={"CREATING": "1683149330"},
+    )
     def test_track_fails_with_unexpected_metadata(self, mock_time_per_step):
         """Tests that the tracker fails when it doesn't get the required metadata."""
         dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)

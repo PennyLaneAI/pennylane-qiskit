@@ -92,7 +92,9 @@ class IBMQDevice(QiskitDevice):
             self._current_job.refresh()
             time_per_step = self._current_job.time_per_step()
             if not set(time_per_step).issuperset(expected_keys):
-                raise IBMJobError(f"time_per_step had keys {set(time_per_step)}, needs {expected_keys}")
+                raise IBMJobError(
+                    f"time_per_step had keys {set(time_per_step)}, needs {expected_keys}"
+                )
 
         job_time = {
             "queued": (time_per_step["running"] - time_per_step["created"]).total_seconds(),
