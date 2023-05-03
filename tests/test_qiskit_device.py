@@ -4,7 +4,7 @@ import pytest
 import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
-import qiskit.providers.aer.noise as noise
+from qiskit_aer import noise
 
 test_transpile_options = [
     {},

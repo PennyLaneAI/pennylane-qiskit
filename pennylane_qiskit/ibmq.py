@@ -125,4 +125,4 @@ def connect(kwargs):
     for account in saved_accounts.values():
         if account["token"] == token:
             return
-    IBMProvider(token=token, url=url, instance=instance).save_account(token=token)
+    IBMProvider.save_account(token=token, url=url, instance=instance)

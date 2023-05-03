@@ -19,14 +19,11 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from qiskit import IBMQ
-
 from pennylane_qiskit import IBMQCircuitRunnerDevice, IBMQSamplerDevice
 from pennylane_qiskit.vqe_runtime_runner import vqe_runner, hamiltonian_to_list_string
 
-pytest.mark.usefixtures("skip_if_no_account")
 
-
+@pytest.mark.usefixtures("skip_if_no_account")
 class TestCircuitRunner:
     """Test class for the circuit runner IBMQ runtime device."""
 
@@ -134,6 +131,7 @@ class TestCircuitRunner:
             assert len(dev.tracker.history["job_time"][0]) == 1
 
 
+@pytest.mark.usefixtures("skip_if_no_account")
 class TestSampler:
     """Test class for the sampler IBMQ runtime device."""
 
@@ -230,18 +228,9 @@ class TestSampler:
         assert len(dev.tracker.history) == 2
 
 
+@pytest.mark.usefixtures("skip_if_no_account")
 class TestCustomVQE:
     """Class to test the custom VQE program."""
-
-    def test_hamiltonian_to_list_string(self):
-        """Test the function that transforms a PennyLane Hamiltonian to a list string Hamiltonian."""
-        coeffs = [1, 1]
-        obs = [qml.PauliX(0) @ qml.PauliX(2), qml.PauliY(0) @ qml.PauliZ(1)]
-
-        hamiltonian = qml.Hamiltonian(coeffs, obs)
-        result = hamiltonian_to_list_string(hamiltonian, hamiltonian.wires)
-
-        assert [("XIX", 1), ("YZI", 1)] == result
 
     @pytest.mark.parametrize("shots", [8000])
     def test_simple_hamiltonian(self, tol, shots):
@@ -603,33 +592,6 @@ class TestCustomVQE:
         assert "step" in job.intermediate_results
 
     @pytest.mark.parametrize("shots", [8000])
-    def test_hamiltonian_format(self, shots):
-        """Test that a PennyLane Hamiltonian is required."""
-
-        def vqe_circuit(params):
-            qml.RX(params[0], wires=0)
-            qml.RX(params[1], wires=1)
-
-        hamiltonian = qml.PauliZ(wires=0)
-
-        with pytest.raises(
-            qml.QuantumFunctionError, match="A PennyLane Hamiltonian object is required."
-        ):
-            vqe_runner(
-                backend="ibmq_qasm_simulator",
-                hamiltonian=hamiltonian,
-                ansatz=vqe_circuit,
-                x0=[3.97507603, 3.00854038],
-                shots=shots,
-                optimizer_config={"maxiter": 10},
-                kwargs={
-                    "hub": "ibm-q-startup",
-                    "group": "ibm-q-startup",
-                    "project": "reservations",
-                },
-            )
-
-    @pytest.mark.parametrize("shots", [8000])
     def test_hamiltonian_tensor(self, shots):
         """Test that we can handle tensor Hamiltonians."""
 
@@ -877,3 +839,42 @@ class TestCustomVQE:
                 x0=[3.97507603, 3.00854038],
                 optimizer="QNSPSA",
             )
+
+
+def test_hamiltonian_to_list_string():
+    """Test the function that transforms a PennyLane Hamiltonian to a list string Hamiltonian."""
+    coeffs = [1, 1]
+    obs = [qml.PauliX(0) @ qml.PauliX(2), qml.PauliY(0) @ qml.PauliZ(1)]
+
+    hamiltonian = qml.Hamiltonian(coeffs, obs)
+    result = hamiltonian_to_list_string(hamiltonian, hamiltonian.wires)
+
+    assert [("XIX", 1), ("YZI", 1)] == result
+
+
+@pytest.mark.parametrize("shots", [8000])
+def test_hamiltonian_format(shots):
+    """Test that a PennyLane Hamiltonian is required."""
+
+    def vqe_circuit(params):
+        qml.RX(params[0], wires=0)
+        qml.RX(params[1], wires=1)
+
+    hamiltonian = qml.PauliZ(wires=0)
+
+    with pytest.raises(
+        qml.QuantumFunctionError, match="A PennyLane Hamiltonian object is required."
+    ):
+        vqe_runner(
+            backend="ibmq_qasm_simulator",
+            hamiltonian=hamiltonian,
+            ansatz=vqe_circuit,
+            x0=[3.97507603, 3.00854038],
+            shots=shots,
+            optimizer_config={"maxiter": 10},
+            kwargs={
+                "hub": "ibm-q-startup",
+                "group": "ibm-q-startup",
+                "project": "reservations",
+            },
+        )
