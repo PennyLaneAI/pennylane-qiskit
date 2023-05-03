@@ -29,8 +29,6 @@ We created a wrapper to use PennyLane objects while solving VQE problems on IBM 
 
     from pennylane_qiskit import vqe_runner
 
-    IBMQ.enable_account(token)
-
     def vqe_circuit(params):
         qml.RX(params[0], wires=0)
         qml.RY(params[1], wires=0)
@@ -38,6 +36,7 @@ We created a wrapper to use PennyLane objects while solving VQE problems on IBM 
     coeffs = [1, 1]
     obs = [qml.PauliX(0), qml.PauliZ(0)]
     hamiltonian = qml.Hamiltonian(coeffs, obs)
+    shots = 8000
 
     job = vqe_runner(
         backend="ibmq_qasm_simulator",

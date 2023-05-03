@@ -45,7 +45,7 @@ or, alternatively,
 
 .. code-block:: python
 
-    from qiskit import Aer
+    from qiskit_aer import Aer
     Aer.backends()
 
 .. note::
@@ -103,7 +103,7 @@ which you can instantiate and apply to the device as follows
     import pennylane as qml
 
     import qiskit
-    import qiskit.providers.aer.noise as noise
+    from qiskit_aer import noise
 
     # Error probabilities
     prob_1 = 0.001  # 1-qubit gate
