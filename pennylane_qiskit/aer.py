@@ -49,7 +49,7 @@ class AerDevice(QiskitDevice):
         name (str): The name of the circuit. Default ``'circuit'``.
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
-        noise_model (NoiseModel): NoiseModel Object from ``qiskit.providers.aer.noise``
+        noise_model (NoiseModel): NoiseModel Object from ``qiskit_aer.noise``
     """
 
     # pylint: disable=too-many-arguments

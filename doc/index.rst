@@ -67,7 +67,7 @@ follows:
 
 PennyLane chooses the ``qasm_simulator`` as the default backend if no backend is specified.
 For more details on the ``qasm_simulator``, including available backend options, see
-`Qiskit Qasm Simulator documentation <https://qiskit.org/documentation/stubs/qiskit.providers.aer.QasmSimulator.html>`_.
+`Qiskit Qasm Simulator documentation <https://qiskit.org/ecosystem/aer/stubs/qiskit_aer.QasmSimulator.html>`_.
 
 Tutorials
 ~~~~~~~~~

@@ -52,7 +52,7 @@ class IBMQDevice(QiskitDevice):
             variable ``IBMQX_TOKEN`` is used.
         ibmqx_url (str): The IBM Q URL. If not provided, the environment
             variable ``IBMQX_URL`` is used, followed by the default URL.
-        noise_model (NoiseModel): NoiseModel Object from ``qiskit.providers.aer.noise``.
+        noise_model (NoiseModel): NoiseModel Object from ``qiskit_aer.noise``.
             Only applicable for simulator backends.
         hub (str): Name of the provider hub.
         group (str): Name of the provider group.
