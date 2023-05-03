@@ -6,6 +6,13 @@
   now been removed. The `upload_vqe_runner` and `delete_vqe_runner` functions have also been removed.
   [(#298)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/298)
 
+### Improvements
+
+* Updated many small things across the plugin to match re-works and deprecations in `qiskit`. The plugin
+  can still be used in the same way as before. However, we suggest you authenticate with
+  `qiskit_ibm_provider.IBMProvider` instead of `qiskit.IBMQ` from now on, as the latter is deprecated.
+  [(#301)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/301)
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
