@@ -17,9 +17,11 @@ This module contains tests for PennyLane IBMQ devices.
 import numpy as np
 import pennylane as qml
 import pytest
+from unittest.mock import patch
 
-from qiskit_ibm_provider.exceptions import IBMAccountError
 from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_provider.exceptions import IBMAccountError
+from qiskit_ibm_provider.job import IBMJobError
 
 from pennylane_qiskit import IBMQDevice
 from pennylane_qiskit import ibmq
@@ -275,7 +277,7 @@ class TestIBMQWithRealAccount:
         assert np.allclose(prob_analytic(x), hw_prob, **tol)
         assert not np.array_equal(prob_analytic(x), hw_prob)
 
-    def _test_track(self):  # TODO: fix tracker
+    def test_track(self):
         """Test that the tracker works."""
         dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
         dev.tracker.active = True
@@ -288,9 +290,20 @@ class TestIBMQWithRealAccount:
         circuit()
 
         assert "job_time" in dev.tracker.history
-        if "job_time" in dev.tracker.history:
-            assert "creating" in dev.tracker.history["job_time"][0]
-            assert "validating" in dev.tracker.history["job_time"][0]
-            assert "queued" in dev.tracker.history["job_time"][0]
-            assert "running" in dev.tracker.history["job_time"][0]
-            assert len(dev.tracker.history["job_time"][0]) == 4
+        assert set(dev.tracker.history["job_time"][0]) == {"queued", "running"}
+
+    @patch("qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob.time_per_step", return_value={"CREATING": "1683149330"})
+    def test_track_fails_with_unexpected_metadata(self, mock_time_per_step):
+        """Tests that the tracker fails when it doesn't get the required metadata."""
+        dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
+        dev.tracker.active = True
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(wires=0)
+            return qml.probs(wires=0)
+
+        with pytest.raises(IBMJobError, match="time_per_step had keys"):
+            circuit()
+
+        assert mock_time_per_step.call_count == 2

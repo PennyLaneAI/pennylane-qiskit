@@ -21,6 +21,7 @@ import os
 from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_provider.exceptions import IBMAccountError
 from qiskit_ibm_provider.accounts.exceptions import AccountsError
+from qiskit_ibm_provider.job import IBMJobError
 
 from .qiskit_device import QiskitDevice
 
@@ -84,14 +85,18 @@ class IBMQDevice(QiskitDevice):
     def _track_run(self):  # pragma: no cover
         """Provide runtime information."""
 
+        expected_keys = {"created", "running", "finished"}
         time_per_step = self._current_job.time_per_step()
+        if not set(time_per_step).issuperset(expected_keys):
+            self._current_job.wait_for_final_state(timeout=60)  # seconds
+            self._current_job.refresh()
+            time_per_step = self._current_job.time_per_step()
+            if not set(time_per_step).issuperset(expected_keys):
+                raise IBMJobError(f"time_per_step had keys {set(time_per_step)}, needs {expected_keys}")
+
         job_time = {
-            "creating": (time_per_step["CREATED"] - time_per_step["CREATING"]).total_seconds(),
-            "validating": (
-                time_per_step["VALIDATED"] - time_per_step["VALIDATING"]
-            ).total_seconds(),
-            "queued": (time_per_step["RUNNING"] - time_per_step["QUEUED"]).total_seconds(),
-            "running": (time_per_step["COMPLETED"] - time_per_step["RUNNING"]).total_seconds(),
+            "queued": (time_per_step["running"] - time_per_step["created"]).total_seconds(),
+            "running": (time_per_step["finished"] - time_per_step["running"]).total_seconds(),
         }
         self.tracker.update(job_time=job_time)
         self.tracker.record()
