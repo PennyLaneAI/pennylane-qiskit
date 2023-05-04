@@ -5,14 +5,13 @@ import pennylane as qml
 from pennylane.numpy import tensor
 import pytest
 import qiskit
-import qiskit.providers.aer as aer
+import qiskit_aer as aer
 
-from pennylane_qiskit import AerDevice, BasicAerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
 
 from conftest import state_backends
 
-pldevices = [("qiskit.aer", qiskit.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+pldevices = [("qiskit.aer", aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
 
 
 class TestDeviceIntegration:
