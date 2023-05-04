@@ -200,13 +200,14 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.quasi_dists[circuit_id]
+        counts = self._current_job.quasi_dists[circuit_id].binary_probabilities()
         keys = list(counts.keys())
 
-        if isinstance(keys[0], str):
-            for i, elem in enumerate(keys):
-                keys[i] = int(elem, 2)
-        number_of_states = len(keys)
+        number_of_states = 2 ** len(keys[0])
+
+        # Convert state to int
+        for i, elem in enumerate(keys):
+            keys[i] = int(elem, 2)
 
         values = list(counts.values())
         states, probs = zip(*sorted(zip(keys, values)))
