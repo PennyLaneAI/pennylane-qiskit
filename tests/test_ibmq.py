@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_provider.exceptions import IBMAccountError
-from qiskit_ibm_provider.job import IBMJobError
+from qiskit_ibm_provider.job import IBMJobError, IBMCircuitJob
 
 from pennylane_qiskit import IBMQDevice
 from pennylane_qiskit import ibmq
@@ -296,9 +296,13 @@ class TestIBMQWithRealAccount:
         "qiskit_ibm_provider.job.ibm_circuit_job.IBMCircuitJob.time_per_step",
         return_value={"CREATING": "1683149330"},
     )
-    def test_track_fails_with_unexpected_metadata(self, mock_time_per_step):
+    @pytest.mark.parametrize("timeout", [None, 120])
+    def test_track_fails_with_unexpected_metadata(self, mock_time_per_step, timeout, mocker):
         """Tests that the tracker fails when it doesn't get the required metadata."""
-        dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1)
+        batch_execute_spy = mocker.spy(ibmq.QiskitDevice, "batch_execute")
+        wait_spy = mocker.spy(IBMCircuitJob, "wait_for_final_state")
+
+        dev = IBMQDevice(wires=1, backend="ibmq_qasm_simulator", shots=1, timeout_secs=timeout)
         dev.tracker.active = True
 
         @qml.qnode(dev)
@@ -310,3 +314,5 @@ class TestIBMQWithRealAccount:
             circuit()
 
         assert mock_time_per_step.call_count == 2
+        batch_execute_spy.assert_called_with(dev, mocker.ANY, timeout=timeout)
+        wait_spy.assert_called_with(mocker.ANY, timeout=timeout or 60)

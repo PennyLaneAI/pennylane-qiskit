@@ -459,14 +459,14 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         return compiled_circuits
 
-    def batch_execute(self, circuits):
+    def batch_execute(self, circuits, timeout: int = None):
         # pylint: disable=missing-function-docstring
 
         compiled_circuits = self.compile_circuits(circuits)
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
-        result = self._current_job.result()
+        result = self._current_job.result(timeout=timeout)
 
         # increment counter for number of executions of qubit device
         self._num_executions += 1

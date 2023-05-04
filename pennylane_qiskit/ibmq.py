@@ -47,6 +47,8 @@ class IBMQDevice(QiskitDevice):
         backend (str): the desired provider backend
         shots (int): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables
+        timeout_secs (int): A timeout value in seconds to wait for job results from an IBMQ backend.
+            The default value of ``None`` means no timeout
 
     Keyword Args:
         ibmqx_token (str): The IBM Q API token. If not provided, the environment
@@ -62,7 +64,15 @@ class IBMQDevice(QiskitDevice):
 
     short_name = "qiskit.ibmq"
 
-    def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
+    def __init__(
+        self,
+        wires,
+        provider=None,
+        backend="ibmq_qasm_simulator",
+        shots=1024,
+        timeout_secs=None,
+        **kwargs,
+    ):  # pylint:disable=too-many-arguments
         # Connection to IBMQ
         connect(kwargs)
 
@@ -75,9 +85,10 @@ class IBMQDevice(QiskitDevice):
         p = provider or IBMProvider(instance=instance)
 
         super().__init__(wires=wires, provider=p, backend=backend, shots=shots, **kwargs)
+        self.timeout_secs = timeout_secs
 
-    def batch_execute(self, circuits):  # pragma: no cover
-        res = super().batch_execute(circuits)
+    def batch_execute(self, circuits):  # pragma: no cover, pylint:disable=arguments-differ
+        res = super().batch_execute(circuits, timeout=self.timeout_secs)
         if self.tracker.active:
             self._track_run()
         return res
@@ -88,12 +99,15 @@ class IBMQDevice(QiskitDevice):
         expected_keys = {"created", "running", "finished"}
         time_per_step = self._current_job.time_per_step()
         if not set(time_per_step).issuperset(expected_keys):
-            self._current_job.wait_for_final_state(timeout=60)  # seconds
+            # self._current_job.result() should have already run by now
+            # tests see a race condition, so this is ample time for that case
+            timeout_secs = self.timeout_secs or 60
+            self._current_job.wait_for_final_state(timeout=timeout_secs)
             self._current_job.refresh()
             time_per_step = self._current_job.time_per_step()
             if not set(time_per_step).issuperset(expected_keys):
                 raise IBMJobError(
-                    f"time_per_step had keys {set(time_per_step)}, needs {expected_keys}"
+                    f"time_per_step had keys {set(time_per_step)}, needs {expected_keys}. If your program takes a long time, you may want to configure the device with a higher `timeout_secs`"
                 )
 
         job_time = {
