@@ -2,7 +2,7 @@
 
 ### Breaking changes
 
-* `vqe_runner` has been updated to use IBMQ's VQE program. The first argument, `provider_id`, has
+* `vqe_runner` has been updated to use IBMQ's VQE program. The first argument, `program_id`, has
   now been removed. The `upload_vqe_runner` and `delete_vqe_runner` functions have also been removed.
   [(#298)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/298)
 
