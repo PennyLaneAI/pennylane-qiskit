@@ -1,11 +1,10 @@
 import numpy as np
-import pennylane
 import pytest
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
-import qiskit.providers.aer.noise as noise
+from qiskit_aer import noise
 
 test_transpile_options = [
     {},
@@ -63,14 +62,14 @@ class TestAnalyticWarningHWSimulator:
         assert len(record) == 1
         # check that the message matches
         assert (
-                record[0].message.args[0] == "The analytic calculation of "
-                                             "expectations, variances and probabilities is only supported on "
-                                             "statevector backends, not on the {}. Such statistics obtained from this "
-                                             "device are estimates based on samples.".format(dev.backend)
+            record[0].message.args[0] == "The analytic calculation of "
+            "expectations, variances and probabilities is only supported on "
+            "statevector backends, not on the {}. Such statistics obtained from this "
+            "device are estimates based on samples.".format(dev.backend)
         )
 
     def test_no_warning_raised_for_software_backend_analytic_expval(
-            self, statevector_backend, recorder, recwarn
+        self, statevector_backend, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
@@ -144,7 +143,7 @@ class TestBatchExecution:
     def test_result_legacy(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
         # TODO: remove once the legacy return system is removed.
-        pennylane.disable_return()
+        qml.disable_return()
         dev = device(2)
         tapes = [self.tape1, self.tape2]
         res = dev.batch_execute(tapes)
@@ -164,7 +163,7 @@ class TestBatchExecution:
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
 
-        pennylane.enable_return()
+        qml.enable_return()
 
     def test_result(self, device, tol):
         """Tests that the result has the correct shape and entry types."""

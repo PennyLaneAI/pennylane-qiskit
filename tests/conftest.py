@@ -20,7 +20,7 @@ import pytest
 import numpy as np
 
 import pennylane as qml
-from qiskit import IBMQ
+from qiskit_ibm_provider import IBMProvider
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
 np.random.seed(42)
@@ -46,14 +46,19 @@ hw_backends = ["qasm_simulator", "aer_simulator"]
 
 
 @pytest.fixture
-def token():
+def skip_if_no_account():
     t = os.getenv("IBMQX_TOKEN", None)
+    try:
+        IBMProvider(token=t)
+    except Exception:
+        missing = "token" if t else "account"
+        pytest.skip(f"Skipping test, no IBMQ {missing} available")
 
-    if t is None:
-        pytest.skip("Skipping test, no IBMQ token available")
 
-    yield t
-    IBMQ.disable_account()
+@pytest.fixture
+def skip_if_account_saved():
+    if IBMProvider.saved_accounts():
+        pytest.skip("Skipping test, IBMQ will load an account successfully")
 
 
 @pytest.fixture

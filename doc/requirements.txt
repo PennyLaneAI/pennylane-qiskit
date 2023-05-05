@@ -9,6 +9,8 @@ pybind11==2.9.2
 pygments==2.7.4
 pygments-github-lexers==0.0.5
 qiskit==0.42.1
+qiskit-ibm-runtime==0.9.3
+qiskit-ibm-provider==0.5.2
 sphinxcontrib-bibtex==2.5.0
 sphinx-automodapi==0.14.1
 pennylane-sphinx-theme
