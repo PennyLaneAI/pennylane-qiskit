@@ -15,7 +15,7 @@ mthree==0.22.0
 networkx==3.1
 ninja==1.11.1
 ntlm-auth==1.5.0
-numpy==1.22.3
+numpy==1.24.3
 orjson==3.6.8
 pbr==5.8.1
 pennylane==0.30.0
