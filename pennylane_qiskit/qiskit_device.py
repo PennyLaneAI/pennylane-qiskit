@@ -27,6 +27,7 @@ from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from pennylane import QubitDevice, DeviceError
 
@@ -86,6 +87,13 @@ QISKIT_OPERATION_INVERSES_MAP = {
 }
 
 
+def _get_backend_name(backend):
+    try:
+        return backend.name()  # BackendV1
+    except TypeError:
+        return backend.name  # BackendV2
+
+
 class QiskitDevice(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
 
@@ -93,8 +101,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
-        provider (Provider): The Qiskit simulation provider
-        backend (str): the desired backend
+        provider (Provider | None): The Qiskit backend provider.
+        backend (str | Backend): the desired backend. If a string, a provider must be given.
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. For state vector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
@@ -154,25 +162,26 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             self.shots = 1024
 
-        self._backend = None
-
         self.provider = provider
-        self.backend_name = backend
 
-        def _get_backend_name(name):
-            return name if isinstance(name, str) else name()
+        if isinstance(backend, Backend):
+            self._backend = backend
+            self.backend_name = _get_backend_name(backend)
+        elif provider is None:
+            raise ValueError("Must pass a provider if the backend is not a Backend instance.")
+        else:
+            try:
+                self._backend = provider.get_backend(backend)
+            except QiskitBackendNotFoundError as e:
+                available_backends = list(map(_get_backend_name, provider.backends()))
+                raise ValueError(
+                    f"Backend '{backend}' does not exist. Available backends "
+                    f"are:\n {available_backends}"
+                ) from e
 
-        self._capabilities["backend"] = [
-            _get_backend_name(b.name) for b in self.provider.backends()
-        ]
-        self._capabilities["returns_state"] = backend in self._state_backends
+            self.backend_name = _get_backend_name(self._backend)
 
-        # Check that the backend exists
-        if backend not in self._capabilities["backend"]:
-            raise ValueError(
-                f"Backend '{backend}' does not exist. Available backends "
-                f"are:\n {self._capabilities['backend']}"
-            )
+        self._capabilities["returns_state"] = self.backend_name in self._state_backends
 
         # Perform validation against backend
         b = self.backend
@@ -230,13 +239,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def backend(self):
-        """The Qiskit simulation backend object.
+        """The Qiskit backend object.
 
         Returns:
             qiskit.providers.backend: Qiskit backend object.
         """
-        if self._backend is None:
-            self._backend = self.provider.get_backend(self.backend_name)
         return self._backend
 
     def reset(self):
@@ -466,7 +473,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
-        result = self._current_job.result(timeout=timeout)
+
+        try:
+            result = self._current_job.result(timeout=timeout)
+        except TypeError:  # timeout not supported
+            result = self._current_job.result()
 
         # increment counter for number of executions of qubit device
         self._num_executions += 1

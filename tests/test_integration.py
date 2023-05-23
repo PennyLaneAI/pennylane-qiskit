@@ -8,6 +8,7 @@ import qiskit
 import qiskit_aer as aer
 
 from pennylane_qiskit.qiskit_device import QiskitDevice
+from qiskit.providers import QiskitBackendNotFoundError
 
 from conftest import state_backends
 
@@ -32,6 +33,42 @@ class TestDeviceIntegration:
         assert dev.provider == d[1]
         assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
+    @pytest.mark.parametrize("d", pldevices)
+    def test_load_generic_device_with_backend_instance(self, d, backend):
+        """Test that the qiskit.generic device loads correctly when passed a backend instance."""
+        _, provider = d
+
+        try:
+            backend_instance = provider.get_backend(backend)
+        except QiskitBackendNotFoundError:
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        dev = qml.device("qiskit.generic", wires=2, backend=backend_instance, shots=1024)
+        assert dev.num_wires == 2
+        assert dev.shots == 1024
+        assert dev.short_name == "qiskit.generic"
+        assert dev.provider is None
+        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+
+    @pytest.mark.parametrize("d", pldevices)
+    def test_load_generic_device_by_name(self, d, backend):
+        """Test that the qiskit.generic device loads correctly when passed a provider and a backend
+        name. This test is equivalent to `test_load_device` but on the qiskit.generic device instead
+        of specialized devices that expose more configuration options."""
+        _, provider = d
+
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        dev = qml.device("qiskit.generic", wires=2, provider=provider, backend=backend, shots=1024)
+        assert dev.num_wires == 2
+        assert dev.shots == 1024
+        assert dev.short_name == "qiskit.generic"
+        assert dev.provider == provider
+        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+
     def test_incorrect_backend(self):
         """Test that exception is raised if name is incorrect"""
         with pytest.raises(ValueError, match="Backend 'none' does not exist"):
@@ -43,6 +80,12 @@ class TestDeviceIntegration:
             ValueError, match=r"Backend 'aer_simulator\_statevector' supports maximum"
         ):
             qml.device("qiskit.aer", wires=100, method="statevector")
+
+    def test_generic_device_no_provider(self):
+        """Test that the qiskit.generic device raises a ValueError if passed a backend
+        by name but no provider to look up the name on."""
+        with pytest.raises(ValueError, match=r"Must pass a provider"):
+            qml.device("qiskit.generic", wires=2, backend="aer_simulator_statevector")
 
     def test_args(self):
         """Test that the device requires correct arguments"""
