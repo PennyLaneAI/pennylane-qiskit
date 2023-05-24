@@ -188,7 +188,10 @@ def load(quantum_circuit: QuantumCircuit):
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
-            if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops._qubit__ops__:
+            if (
+                instruction_name in inv_map
+                and inv_map[instruction_name] in pennylane_ops._qubit__ops__
+            ):
                 # Extract the bound parameters from the operation. If the bound parameters are a
                 # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
                 # variable from the var_ref_map dictionary.
