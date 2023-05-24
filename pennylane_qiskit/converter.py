@@ -188,6 +188,7 @@ def load(quantum_circuit: QuantumCircuit):
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
+            # pylint:disable=protected-access
             if (
                 instruction_name in inv_map
                 and inv_map[instruction_name] in pennylane_ops._qubit__ops__
