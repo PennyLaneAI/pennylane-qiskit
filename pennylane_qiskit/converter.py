@@ -25,7 +25,7 @@ from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
 import pennylane as qml
-import pennylane.ops.qubit as pennylane_ops
+import pennylane.ops as pennylane_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes
@@ -188,7 +188,11 @@ def load(quantum_circuit: QuantumCircuit):
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
-            if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
+            # pylint:disable=protected-access
+            if (
+                instruction_name in inv_map
+                and inv_map[instruction_name] in pennylane_ops._qubit__ops__
+            ):
                 # Extract the bound parameters from the operation. If the bound parameters are a
                 # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
                 # variable from the var_ref_map dictionary.
