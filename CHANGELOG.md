@@ -11,7 +11,7 @@
 ### Bug fixes
 
 * The list of supported gates is replaced with `pennylane.ops._qubit__ops__` so that the `CZ` gate is included.
-  [(#304)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/305)
+  [(#305)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/305)
 
 ### Contributors
 
