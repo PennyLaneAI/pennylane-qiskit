@@ -22,6 +22,7 @@ import inspect
 import warnings
 
 import numpy as np
+import pennylane
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
@@ -32,7 +33,7 @@ from pennylane import QubitDevice, DeviceError
 from ._version import __version__
 
 
-QISKIT_OPERATION_MAP = {
+QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
     "PauliY": ex.YGate,
@@ -45,12 +46,6 @@ QISKIT_OPERATION_MAP = {
     "RX": ex.RXGate,
     "RY": ex.RYGate,
     "RZ": ex.RZGate,
-    "S": ex.SGate,
-    "Adjoint(S)": ex.SdgGate,
-    "T": ex.TGate,
-    "Adjoint(T)": ex.TdgGate,
-    "SX": ex.SXGate,
-    "Adjoint(SX)": ex.SXdgGate,
     "Identity": ex.IGate,
     "CSWAP": ex.CSwapGate,
     "CRX": ex.CRXGate,
@@ -68,9 +63,27 @@ QISKIT_OPERATION_MAP = {
     "IsingXX": ex.RXXGate,
 }
 
+QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT = {
+    "Adjoint(" + k + ")": v for k, v in QISKIT_OPERATION_MAP_SELF_ADJOINT.items()
+}
+
 # Separate dictionary for the inverses as the operations dictionary needs
 # to be invertible for the conversion functionality to work
-QISKIT_OPERATION_INVERSES_MAP = {k + ".inv": v for k, v in QISKIT_OPERATION_MAP.items()}
+QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
+QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {
+    "Adjoint(S)": ex.SdgGate,
+    "Adjoint(T)": ex.TdgGate,
+    "Adjoint(SX)": ex.SXdgGate,
+}
+
+QISKIT_OPERATION_MAP = {
+    **QISKIT_OPERATION_MAP_SELF_ADJOINT,
+    **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
+}
+QISKIT_OPERATION_INVERSES_MAP = {
+    **QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT,
+    **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
+}
 
 
 class QiskitDevice(QubitDevice, abc.ABC):
@@ -92,7 +105,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.20.0"
+    pennylane_requires = ">=0.30.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
@@ -136,7 +149,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         # Keep track if the user specified analytic to be True
         if shots is None and backend not in self._state_backends:
-
             # Raise a warning if no shots were specified for a hardware device
             warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
@@ -146,7 +158,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         self.provider = provider
         self.backend_name = backend
-        self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
+
+        def _get_backend_name(name):
+            return name if isinstance(name, str) else name()
+
+        self._capabilities["backend"] = [
+            _get_backend_name(b.name) for b in self.provider.backends()
+        ]
         self._capabilities["returns_state"] = backend in self._state_backends
 
         # Check that the backend exists
@@ -295,20 +313,26 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             mapped_operation = self._operation_map[operation]
 
-            self.qubit_state_vector_check(operation, par, device_wires)
+            self.qubit_state_vector_check(operation)
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
-            if operation.split(".inv")[0] in ("QubitUnitary", "QubitStateVector"):
-                # Need to revert the order of the quantum registers used in
-                # Qiskit such that it matches the PennyLane ordering
-                qregs = list(reversed(qregs))
+            adjoint = operation.startswith("Adjoint(")
+            split_op = operation.split("Adjoint(")
+
+            if adjoint:
+                if split_op[1] in ("QubitUnitary)", "QubitStateVector)"):
+                    # Need to revert the order of the quantum registers used in
+                    # Qiskit such that it matches the PennyLane ordering
+                    qregs = list(reversed(qregs))
+            else:
+                if split_op[0] in ("QubitUnitary", "QubitStateVector"):
+                    # Need to revert the order of the quantum registers used in
+                    # Qiskit such that it matches the PennyLane ordering
+                    qregs = list(reversed(qregs))
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
             gate = mapped_operation(*par)
-
-            if operation.endswith(".inv"):
-                gate = gate.inverse()
 
             dag.apply_operation_back(gate, qargs=qregs)
             circuit = dag_to_circuit(dag)
@@ -316,7 +340,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         return circuits
 
-    def qubit_state_vector_check(self, operation, par, wires):
+    def qubit_state_vector_check(self, operation):
         """Input check for the the QubitStateVector operation.
 
         Args:
@@ -324,7 +348,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         Raises:
             DeviceError: If the operation is QubitStateVector
-            ValueError: If the state has not the right length
         """
         if operation == "QubitStateVector":
             if "unitary" in self.backend_name:
@@ -332,9 +355,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
                     "The QubitStateVector operation "
                     "is not supported on the unitary simulator backend."
                 )
-
-            if len(par[0]) != 2 ** len(wires):
-                raise ValueError("State vector must be of length 2**wires.")
 
     def compile(self):
         """Compile the quantum circuit to target the provided compile_backend.
@@ -439,19 +459,21 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         return compiled_circuits
 
-    def batch_execute(self, circuits):
+    def batch_execute(self, circuits, timeout: int = None):
         # pylint: disable=missing-function-docstring
 
         compiled_circuits = self.compile_circuits(circuits)
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
-        result = self._current_job.result()
+        result = self._current_job.result(timeout=timeout)
+
+        # increment counter for number of executions of qubit device
+        self._num_executions += 1
 
         # Compute statistics using the state and/or samples
         results = []
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
-
             # Update the tracker
             if self.tracker.active:
                 self.tracker.update(executions=1, shots=self.shots)
@@ -464,12 +486,15 @@ class QiskitDevice(QubitDevice, abc.ABC):
             if self.shots is not None or circuit.is_sampled:
                 self._samples = self.generate_samples(circuit_obj)
 
-            res = self.statistics(circuit)
-            res = np.asarray(res)
-            results.append(res)
-
-            # increment counter for number of executions of qubit device
-            self._num_executions += 1
+            if not pennylane.active_return():
+                res = self._statistics_legacy(circuit)
+                res = np.asarray(res)
+                results.append(res)
+            else:
+                res = self.statistics(circuit)
+                single_measurement = len(circuit.measurements) == 1
+                res = res[0] if single_measurement else tuple(res)
+                results.append(res)
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))

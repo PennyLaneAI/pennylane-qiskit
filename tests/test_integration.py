@@ -5,14 +5,13 @@ import pennylane as qml
 from pennylane.numpy import tensor
 import pytest
 import qiskit
-import qiskit.providers.aer as aer
+import qiskit_aer as aer
 
-from pennylane_qiskit import AerDevice, BasicAerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
 
 from conftest import state_backends
 
-pldevices = [("qiskit.aer", qiskit.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+pldevices = [("qiskit.aer", aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
 
 
 class TestDeviceIntegration:
@@ -302,7 +301,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2 ** dev.num_wires)
+        expected_state = np.zeros(2**dev.num_wires)
         expected_state[2] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
@@ -322,7 +321,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2 ** dev.num_wires)
+        expected_state = np.zeros(2**dev.num_wires)
         expected_state[0] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
@@ -347,7 +346,6 @@ class TestPLTemplates:
         mock_func = lambda par, wires: lst.append(par)
 
         with monkeypatch.context() as m:
-
             # Mock the gates used in RandomLayers
             m.setattr(qml, "RX", mock_func)
             m.setattr(qml, "RY", mock_func)
@@ -401,17 +399,15 @@ class TestPLTemplates:
             return qml.expval(qml.PauliZ(0))
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
-
-        with qml.tape.OperationRecorder() as rec:
-            circuit(phi=phi)
-
+        circuit(phi)
+        ops = circuit.tape.operations
         for i in range(phi.shape[1]):
             # Test each rotation applied
-            assert rec.queue[i].name == "RX"
-            assert len(rec.queue[i].parameters) == 1
+            assert ops[i].name == "RX"
+            assert len(ops[i].parameters) == 1
 
             # Test that the gate parameter is a PennyLane tensor
-            assert isinstance(rec.queue[i].parameters[0], tensor)
+            assert isinstance(ops[i].parameters[0], tensor)
 
     def test_multiple_gate_parameter(self):
         """Test that when supplied a PennyLane tensor, a QNode passes arguments
@@ -426,19 +422,18 @@ class TestPLTemplates:
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
-        with qml.tape.OperationRecorder() as rec:
-            circuit(phi=phi)
-
+        circuit(phi)
+        ops = circuit.tape.operations
         # Test the rotation applied
-        assert rec.queue[0].name == "Rot"
-        assert len(rec.queue[0].parameters) == 3
+        assert ops[0].name == "Rot"
+        assert len(ops[0].parameters) == 3
 
         # Test that the gate parameters are PennyLane tensors,
-        assert isinstance(rec.queue[0].parameters[0], tensor)
+        assert isinstance(ops[0].parameters[0], tensor)
 
-        assert isinstance(rec.queue[0].parameters[1], tensor)
+        assert isinstance(ops[0].parameters[1], tensor)
 
-        assert isinstance(rec.queue[0].parameters[2], tensor)
+        assert isinstance(ops[0].parameters[2], tensor)
 
 
 class TestInverses:
@@ -455,14 +450,14 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit_with_inverses(angle):
-            qml.Hadamard(0).inv()
-            qml.RX(angle, wires=0).inv()
+            qml.adjoint(qml.Hadamard(0))
+            qml.adjoint(qml.RX(angle, wires=0))
             return qml.expval(qml.PauliZ(0))
 
         @qml.qnode(dev2)
         def circuit_with_inverses_default_qubit(angle):
-            qml.Hadamard(0).inv()
-            qml.RX(angle, wires=0).inv()
+            qml.adjoint(qml.Hadamard(0))
+            qml.adjoint(qml.RX(angle, wires=0))
             return qml.expval(qml.PauliZ(0))
 
         for x in angles:
@@ -573,7 +568,7 @@ class TestBatchExecution:
 
     def test_tracker(self):
         """Tests the device tracker with batch execution."""
-        dev = qml.device('qiskit.aer', shots=100, wires=3)
+        dev = qml.device("qiskit.aer", shots=100, wires=3)
 
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
@@ -585,9 +580,11 @@ class TestBatchExecution:
         with qml.Tracker(dev) as tracker:
             qml.grad(circuit)(x)
 
-        expected = {'executions': [1, 1, 1],
-                     'shots': [100, 100, 100],
-                     'batches': [1, 1],
-                     'batch_len': [1, 2]}
+        expected = {
+            "executions": [1, 1, 1],
+            "shots": [100, 100, 100],
+            "batches": [1, 1],
+            "batch_len": [1, 2],
+        }
 
         assert tracker.history == expected

@@ -1,4 +1,4 @@
-# Release 0.29.0-dev
+# Release 0.31.0-dev
 
 ### New features since last release
 
@@ -13,6 +13,64 @@
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
+
+---
+# Release 0.30.1
+
+### Breaking changes
+
+* `vqe_runner` has been updated to use IBMQ's VQE program. The first argument, `program_id`, has
+  now been removed. The `upload_vqe_runner` and `delete_vqe_runner` functions have also been removed.
+  [(#298)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/298)
+
+### Improvements
+
+* Updated many small things across the plugin to match re-works and deprecations in `qiskit`. The plugin
+  can still be used in the same way as before. However, we suggest you authenticate with
+  `qiskit_ibm_provider.IBMProvider` instead of `qiskit.IBMQ` from now on, as the latter is deprecated.
+  [(#301)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/301)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Matthew Silverman
+
+# Release 0.30.0
+
+### Breaking changes
+
+* The new return system from PennyLane is adopted in the plugin as well.
+  [(#281)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/281)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Romain Moyard.
+
+---
+# Release 0.29.0
+
+### Breaking changes
+
+* `.inv` is replaced by `qml.adjoint` in PennyLane `0.30.0` and therefore the plugin is adapted as well.
+  [(#260)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/260)
+
+* The minimum required version of PennyLane is bumped to `0.28`. The current plugin
+  does not work with PennyLane v0.27.
+
+### Bug fixes
+
+* The number of executions of the device is now correct.
+  [(#259)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/259)
+
+### Contributors
+
+This release contains contributions from (in alphabetical order):
+
+Christina Lee
+Romain Moyard
 
 ---
 # Release 0.28.0

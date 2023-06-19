@@ -466,7 +466,11 @@ class TestConverterGates:
 
     @pytest.mark.parametrize(
         "qiskit_operation, pennylane_name",
-        [(QuantumCircuit.rxx, "IsingXX"), (QuantumCircuit.ryy, "IsingYY"), (QuantumCircuit.rzz, "IsingZZ")],
+        [
+            (QuantumCircuit.rxx, "IsingXX"),
+            (QuantumCircuit.ryy, "IsingYY"),
+            (QuantumCircuit.rzz, "IsingZZ"),
+        ],
     )
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit Ising operations."""
@@ -714,45 +718,6 @@ class TestConverterGates:
         assert len(recorder.queue[0].parameters) == 1
         assert np.array_equal(recorder.queue[0].parameters[0], ex.CHGate().to_matrix())
         assert recorder.queue[0].wires == Wires([0, 1])
-
-    def test_qiskit_gates_to_be_deprecated(self, recorder):
-        """Tests the Qiskit gates that will be deprecated in an upcoming Qiskit version.
-
-        This test case can be removed once the gates are finally deprecated.
-        """
-        qc = QuantumCircuit(1, 1)
-
-        single_wire = [0]
-
-        with pytest.warns(DeprecationWarning) as record:
-            with recorder:
-                qc.u1(0.1, single_wire)
-                qc.u2(0.1, 0.2, single_wire)
-                qc.u3(0.1, 0.2, 0.3, single_wire)
-
-        # check that warnings were raised
-        assert len(record) == 3
-        # check that the message matches
-        deprecation_substring = "method is deprecated"
-        assert deprecation_substring in record[0].message.args[0]
-        assert deprecation_substring in record[1].message.args[0]
-        assert deprecation_substring in record[2].message.args[0]
-
-        quantum_circuit = load(qc)
-        with recorder:
-            quantum_circuit()
-
-        assert recorder.queue[0].name == "U1"
-        assert recorder.queue[0].parameters == [0.1]
-        assert recorder.queue[0].wires == Wires(single_wire)
-
-        assert recorder.queue[1].name == "U2"
-        assert recorder.queue[1].parameters == [0.1, 0.2]
-        assert recorder.queue[1].wires == Wires(single_wire)
-
-        assert recorder.queue[2].name == "U3"
-        assert recorder.queue[2].parameters == [0.1, 0.2, 0.3]
-        assert recorder.queue[2].wires == Wires(single_wire)
 
 
 class TestConverterUtils:
@@ -1150,23 +1115,14 @@ class TestConverterIntegration:
 
         assert np.allclose(res, res_expected)
 
-        jac = qml.jacobian(circuit)(x, y)
+        def cost(x, y):
+            return qml.math.stack(circuit(x, y))
 
-        # Note: with v0.21.0, the behaviour of qml.jacobian changed. Branch
-        # based on the version number to ensure that the test case passes even
-        # with <v0.21.
-        if qml.__version__ < "0.21.0":
+        jac = qml.jacobian(cost)(x, y)
 
-            jac_expected = [
-                [-np.sin(x + np.cos(y)), np.sin(x + np.cos(y)) * np.sin(y)],
-                [np.cos(x * y) * y, np.cos(x * y) * x],
-            ]
-
-        else:
-
-            jac_expected = [
-                [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
-                [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],
-            ]
+        jac_expected = [
+            [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
+            [np.sin(x + np.cos(y)) * np.sin(y), np.cos(x * y) * x],
+        ]
 
         assert np.allclose(jac, jac_expected)

@@ -4,7 +4,7 @@ import pytest
 import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
-import qiskit.providers.aer.noise as noise
+from qiskit_aer import noise
 
 test_transpile_options = [
     {},
@@ -140,8 +140,10 @@ class TestBatchExecution:
 
         assert spy.call_count == n_tapes
 
-    def test_result(self, device, tol):
+    def test_result_legacy(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
+        # TODO: remove once the legacy return system is removed.
+        qml.disable_return()
         dev = device(2)
         tapes = [self.tape1, self.tape2]
         res = dev.batch_execute(tapes)
@@ -157,6 +159,30 @@ class TestBatchExecution:
         assert len(res) == 2
         assert isinstance(res[0], np.ndarray)
         assert np.allclose(res[0], tape1_expected, atol=0)
+
+        assert isinstance(res[1], np.ndarray)
+        assert np.allclose(res[1], tape2_expected, atol=0)
+
+        qml.enable_return()
+
+    def test_result(self, device, tol):
+        """Tests that the result has the correct shape and entry types."""
+        dev = device(2)
+        tapes = [self.tape1, self.tape2]
+        res = dev.batch_execute(tapes)
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        tape1_expected = dev.execute(self.tape1)
+
+        dev.reset()
+        tape2_expected = dev.execute(self.tape2)
+
+        assert len(res) == 2
+        assert isinstance(res[0], tuple)
+        assert len(res[0]) == 2
+        assert np.allclose(qml.math.stack(res[0]), tape1_expected, atol=0)
 
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
@@ -177,8 +203,8 @@ class TestBatchExecution:
         assert np.allclose(res[0], dev.execute(empty_tape), atol=0)
 
     def test_num_executions_recorded(self, device):
-        """Tests that the number of exeuctions are recorded correctly.."""
+        """Tests that the number of executions are recorded correctly.."""
         dev = device(2)
         tapes = [self.tape1, self.tape2]
         res = dev.batch_execute(tapes)
-        assert dev.num_executions == 2
+        assert dev.num_executions == 1
