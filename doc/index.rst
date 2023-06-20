@@ -129,6 +129,7 @@ hardware access.
    devices/basicaer
    devices/ibmq
    devices/runtime
+   devices/remote
 
 .. toctree::
    :maxdepth: 1
