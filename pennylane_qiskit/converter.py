@@ -210,8 +210,8 @@ def load(quantum_circuit: QuantumCircuit):
                             for i_ordered_params in ordered_params:
                                 f_args.append(var_ref_map.get(i_ordered_params))
                             pl_parameters.append(f(*f_args))
-                        else:
-                            pl_parameters.append(float(p))
+                        else:  # needed for qiskit<0.43.1
+                            pl_parameters.append(float(p))  # pragma: no cover
                     else:
                         pl_parameters.append(p)
 
