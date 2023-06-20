@@ -90,7 +90,7 @@ QISKIT_OPERATION_INVERSES_MAP = {
 def _get_backend_name(backend):
     try:
         return backend.name()  # BackendV1
-    except TypeError:
+    except TypeError:  # pragma: no cover
         return backend.name  # BackendV2
 
 
@@ -476,7 +476,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         try:
             result = self._current_job.result(timeout=timeout)
-        except TypeError:  # timeout not supported
+        except TypeError:  # pragma: no cover
+            # timeout not supported
             result = self._current_job.result()
 
         # increment counter for number of executions of qubit device
