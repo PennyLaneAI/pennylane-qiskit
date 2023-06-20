@@ -5,6 +5,10 @@
 * Added a `RemoteDevice` (PennyLane device name: `qiskit.remote`) that accepts a backend
   instance directly. [(#304)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/304)
 
+### Breaking changes
+
+* The `vqe_runner` has been removed, as the Qiskit Runtime VQE program has been retired.
+
 ### Bug fixes
 
 * The list of supported gates is replaced with `pennylane.ops._qubit__ops__` so that the `CZ` gate is included.
@@ -14,6 +18,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Matthew Silverman,
 Frederik Wilde,
 Etienne Wodey (Alpine Quantum Technologies GmbH)
 

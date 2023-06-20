@@ -21,4 +21,3 @@ from .remote import RemoteDevice
 from .converter import load, load_qasm, load_qasm_from_file
 from .runtime_devices import IBMQCircuitRunnerDevice
 from .runtime_devices import IBMQSamplerDevice
-from .vqe_runtime_runner import vqe_runner
