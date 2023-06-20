@@ -43,6 +43,7 @@ info = {
     ],
     'entry_points': {
         'pennylane.plugins': [
+            'qiskit.remote = pennylane_qiskit:RemoteDevice',
             'qiskit.aer = pennylane_qiskit:AerDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
             'qiskit.ibmq = pennylane_qiskit:IBMQDevice',

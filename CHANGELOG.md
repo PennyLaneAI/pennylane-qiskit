@@ -2,6 +2,9 @@
 
 ### New features since last release
 
+* Added a `RemoteDevice` (PennyLane device name: `qiskit.remote`) that accepts a backend
+  instance directly. [(#304)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/304)
+
 ### Breaking changes
 
 ### Improvements
@@ -17,7 +20,8 @@
 
 This release contains contributions from (in alphabetical order):
 
-Frederik Wilde
+Frederik Wilde,
+Etienne Wodey (Alpine Quantum Technologies GmbH)
 
 ---
 # Release 0.30.1
