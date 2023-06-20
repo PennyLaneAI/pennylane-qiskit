@@ -41,6 +41,11 @@ Currently, there are three different devices available:
     :description: Allows integration with qiskit's sampler runtime program.
     :link: devices/runtime.html
 
+.. title-card::
+    :name: 'qiskit.remote'
+    :description: Allows integration with any qiskit backend.
+    :link: devices/remote.html
+
 .. raw:: html
 
     <div style='clear:both'></div>
