@@ -95,6 +95,12 @@ Check out these demos to see the PennyLane-Qiskit plugin in action:
     :link:  https://pennylane.ai/qml/demos/quantum_volume.html
     :tooltip: Learn how to compute the quantum volume of a quantum processor
 
+.. demogalleryitem::
+    :name: Using PennyLane with IBM's quantum devices and Qiskit
+    :figure: https://pennylane.ai/_images/thumbnail_tutorial_ibm_pennylane.png
+    :link: https://pennylane.ai/qml/demos/ibm_pennylane
+    :tooltip: Use IBM devices with PennyLane through the pennylane-qiskit plugin
+
 .. raw:: html
 
     </div></div><div style='clear:both'> <br/>
