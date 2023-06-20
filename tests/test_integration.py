@@ -34,8 +34,8 @@ class TestDeviceIntegration:
         assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     @pytest.mark.parametrize("d", pldevices)
-    def test_load_generic_device_with_backend_instance(self, d, backend):
-        """Test that the qiskit.generic device loads correctly when passed a backend instance."""
+    def test_load_remote_device_with_backend_instance(self, d, backend):
+        """Test that the qiskit.remote device loads correctly when passed a backend instance."""
         _, provider = d
 
         try:
@@ -43,17 +43,17 @@ class TestDeviceIntegration:
         except QiskitBackendNotFoundError:
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
-        dev = qml.device("qiskit.generic", wires=2, backend=backend_instance, shots=1024)
+        dev = qml.device("qiskit.remote", wires=2, backend=backend_instance, shots=1024)
         assert dev.num_wires == 2
         assert dev.shots == 1024
-        assert dev.short_name == "qiskit.generic"
+        assert dev.short_name == "qiskit.remote"
         assert dev.provider is None
         assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     @pytest.mark.parametrize("d", pldevices)
-    def test_load_generic_device_by_name(self, d, backend):
-        """Test that the qiskit.generic device loads correctly when passed a provider and a backend
-        name. This test is equivalent to `test_load_device` but on the qiskit.generic device instead
+    def test_load_remote_device_by_name(self, d, backend):
+        """Test that the qiskit.remote device loads correctly when passed a provider and a backend
+        name. This test is equivalent to `test_load_device` but on the qiskit.remote device instead
         of specialized devices that expose more configuration options."""
         _, provider = d
 
@@ -62,10 +62,10 @@ class TestDeviceIntegration:
         ):
             pytest.skip("Only the AerSimulator is supported on AerDevice")
 
-        dev = qml.device("qiskit.generic", wires=2, provider=provider, backend=backend, shots=1024)
+        dev = qml.device("qiskit.remote", wires=2, provider=provider, backend=backend, shots=1024)
         assert dev.num_wires == 2
         assert dev.shots == 1024
-        assert dev.short_name == "qiskit.generic"
+        assert dev.short_name == "qiskit.remote"
         assert dev.provider == provider
         assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
@@ -81,11 +81,11 @@ class TestDeviceIntegration:
         ):
             qml.device("qiskit.aer", wires=100, method="statevector")
 
-    def test_generic_device_no_provider(self):
-        """Test that the qiskit.generic device raises a ValueError if passed a backend
+    def test_remote_device_no_provider(self):
+        """Test that the qiskit.remote device raises a ValueError if passed a backend
         by name but no provider to look up the name on."""
         with pytest.raises(ValueError, match=r"Must pass a provider"):
-            qml.device("qiskit.generic", wires=2, backend="aer_simulator_statevector")
+            qml.device("qiskit.remote", wires=2, backend="aer_simulator_statevector")
 
     def test_args(self):
         """Test that the device requires correct arguments"""

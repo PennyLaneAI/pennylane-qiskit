@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This module contains the :class:`~.GenericDevice` class, a PennyLane device that allows
+This module contains the :class:`~.RemoteDevice` class, a PennyLane device that allows
 evaluation and differentiation on any Qiskit backend using Pennylane.
 """
 
 from .qiskit_device import QiskitDevice
 
 
-class GenericDevice(QiskitDevice):
+class RemoteDevice(QiskitDevice):
     """A PennyLane device for any Qiskit backend.
 
     Args:
@@ -37,7 +37,7 @@ class GenericDevice(QiskitDevice):
         name (str): The name of the circuit. Default ``'circuit'``.
     """
 
-    short_name = "qiskit.generic"
+    short_name = "qiskit.remote"
 
     def __init__(self, wires, backend, provider=None, shots=1024, **kwargs):
         super().__init__(wires, provider=provider, backend=backend, shots=shots, **kwargs)

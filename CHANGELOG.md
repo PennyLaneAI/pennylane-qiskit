@@ -2,7 +2,7 @@
 
 ### New features since last release
 
-* Added a `GenericDevice` (PennyLane device name: `qiskit.generic`) that accepts a backend
+* Added a `RemoteDevice` (PennyLane device name: `qiskit.remote`) that accepts a backend
   instance directly. [(#304)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/304)
 
 ### Breaking changes
