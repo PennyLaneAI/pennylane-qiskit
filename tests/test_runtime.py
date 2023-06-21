@@ -59,7 +59,7 @@ class TestCircuitRunner:
                 "initial_layout": [0, 1],
                 "layout_method": "trivial",
                 "routing_method": "basic",
-                "translation_method": "unroller",
+                "translation_method": "translator",
                 "seed_transpiler": 42,
                 "optimization_level": 2,
                 "init_qubits": True,
