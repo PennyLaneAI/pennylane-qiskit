@@ -8,6 +8,7 @@
 ### Breaking changes
 
 * The `vqe_runner` has been removed, as the Qiskit Runtime VQE program has been retired.
+  [(#313)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/313)
 
 ### Bug fixes
 
