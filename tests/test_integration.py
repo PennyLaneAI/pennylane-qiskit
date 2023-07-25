@@ -373,7 +373,7 @@ class TestPLOperations:
 class TestPLTemplates:
     """Integration tests for checking certain PennyLane templates."""
 
-    def test_random_layers_tensor_unwrapped(self, monkeypatch):
+    def test_random_layers_tensor_unwrapped(self, mocker):
         """Test that if random_layer() receives a one element PennyLane tensor,
         then it is unwrapped successfully.
 
@@ -383,31 +383,24 @@ class TestPLTemplates:
         """
         dev = qml.device("qiskit.aer", wires=4)
 
-        lst = []
+        # spy on RandomLayers.compute_decomposition to make sure returned data is a tensor
+        spy = mocker.spy(qml.RandomLayers, "compute_decomposition")
 
-        # Mock function that accumulates gate parameters
-        mock_func = lambda par, wires: lst.append(par)
+        @qml.qnode(dev)
+        def circuit(phi=None):
+            qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
+            return qml.expval(qml.PauliZ(0))
 
-        with monkeypatch.context() as m:
-            # Mock the gates used in RandomLayers
-            m.setattr(qml, "RX", mock_func)
-            m.setattr(qml, "RY", mock_func)
-            m.setattr(qml, "RZ", mock_func)
+        # RandomLayers loops over the random_layer function, with each call to random_layer
+        # being passed a `np.tensor` scalar.
+        phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
 
-            @qml.qnode(dev)
-            def circuit(phi=None):
-                qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
-                return qml.expval(qml.PauliZ(0))
+        # Call the QNode, accumulate parameters
+        circuit(phi=phi)
 
-            # RandomLayers loops over the random_layer function, with each call to random_layer
-            # being passed a `np.tensor` scalar.
-            phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
-
-            # Call the QNode, accumulate parameters
-            circuit(phi=phi)
-
-            # Check parameters
-            assert all([isinstance(x, tensor) for x in lst])
+        # Check parameters
+        decomp_data = [d for op in spy.spy_return for d in op.data]
+        assert all([isinstance(x, tensor) for x in decomp_data])
 
     def test_tensor_unwrapped_gradient_no_error(self, monkeypatch):
         """Tests that the gradient calculation of a circuit that contains a
