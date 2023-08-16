@@ -1011,7 +1011,7 @@ class TestConverterIntegration:
 
         @qml.qnode(qubit_device_single_wire)
         def circuit_native_pennylane():
-            qml.QubitStateVector(np.array(prob_amplitudes), wires=[0])
+            qml.StatePrep(np.array(prob_amplitudes), wires=[0])
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()

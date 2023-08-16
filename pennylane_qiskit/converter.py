@@ -129,7 +129,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
     """Utility function that executes an operation that is natively supported by PennyLane.
 
     Args:
-        operation_name (str): wires specified for the template
+        operation_name (str): Name of the PL operator to be executed
         parameters (str): parameters of the operation that will be executed
         wires (list): wires of the operation
     """
@@ -137,7 +137,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
 
     if not parameters:
         operation(wires=wires)
-    elif operation_name == "QubitStateVector":
+    elif operation_name == "StatePrep":
         operation(np.array(parameters), wires=wires)
     else:
         operation(*parameters, wires=wires)

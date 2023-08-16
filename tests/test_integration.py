@@ -293,7 +293,7 @@ class TestPLOperations:
 
     @pytest.mark.parametrize("shots", [None, 1000])
     def test_rotation(self, init_state, state_vector_device, shots, tol):
-        """Test that the QubitStateVector and Rot operations are decomposed using a
+        """Test that the StatePrep and Rot operations are decomposed using a
         Qiskit device with statevector backend"""
 
         dev = state_vector_device(1)
@@ -319,7 +319,7 @@ class TestPLOperations:
 
         @qml.qnode(dev)
         def qubitstatevector_and_rot():
-            qml.QubitStateVector(state, wires=[0])
+            qml.StatePrep(state, wires=[0])
             qml.Rot(a, b, c, wires=[0])
             return qml.expval(qml.Identity(0))
 
