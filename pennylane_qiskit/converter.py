@@ -137,7 +137,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
 
     if not parameters:
         operation(wires=wires)
-    elif operation_name == "StatePrep":
+    elif operation_name in ["QubitStateVector", "StatePrep"]:
         operation(np.array(parameters), wires=wires)
     else:
         operation(*parameters, wires=wires)
