@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Added support for `qml.StatePrep` as a state preparation operation.
+  [(#326)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/326)
+
 ### Breaking changes 💔
 
 * Support for Python 3.8 has been removed.
@@ -19,7 +22,8 @@
 
 This release contains contributions from (in alphabetical order):
 
-Mudit Pandey
+Mudit Pandey,
+Jay Soni,
 
 ---
 # Release 0.31.0

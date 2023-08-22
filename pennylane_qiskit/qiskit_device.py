@@ -54,6 +54,7 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "CRZ": ex.CRZGate,
     "PhaseShift": ex.PhaseGate,
     "QubitStateVector": ex.Initialize,
+    "StatePrep": ex.Initialize,
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
     "U1": ex.U1Gate,
@@ -328,12 +329,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
             split_op = operation.split("Adjoint(")
 
             if adjoint:
-                if split_op[1] in ("QubitUnitary)", "QubitStateVector)"):
+                if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
                     # Need to revert the order of the quantum registers used in
                     # Qiskit such that it matches the PennyLane ordering
                     qregs = list(reversed(qregs))
             else:
-                if split_op[0] in ("QubitUnitary", "QubitStateVector"):
+                if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
                     # Need to revert the order of the quantum registers used in
                     # Qiskit such that it matches the PennyLane ordering
                     qregs = list(reversed(qregs))
@@ -348,18 +349,18 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return circuits
 
     def qubit_state_vector_check(self, operation):
-        """Input check for the the QubitStateVector operation.
+        """Input check for the StatePrepBase operations.
 
         Args:
             operation (pennylane.Operation): operation to be checked
 
         Raises:
-            DeviceError: If the operation is QubitStateVector
+            DeviceError: If the operation is QubitStateVector or StatePrep
         """
-        if operation == "QubitStateVector":
+        if operation in ("QubitStateVector", "StatePrep"):
             if "unitary" in self.backend_name:
                 raise DeviceError(
-                    "The QubitStateVector operation "
+                    f"The {operation} operation "
                     "is not supported on the unitary simulator backend."
                 )
 
