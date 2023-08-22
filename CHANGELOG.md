@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* Support for Python 3.8 has been removed.
+  [(#)]()
+
 ### Deprecations 👋
 
 ### Documentation 📝
@@ -15,6 +18,8 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Mudit Pandey
 
 ---
 # Release 0.31.0
