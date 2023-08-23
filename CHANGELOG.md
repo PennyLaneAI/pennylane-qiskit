@@ -9,6 +9,9 @@
 
 ### Breaking changes 💔
 
+* Support for Python 3.8 has been removed.
+  [(#328)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/328)
+
 ### Deprecations 👋
 
 ### Documentation 📝
@@ -19,6 +22,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Mudit Pandey,
 Jay Soni,
 
 ---

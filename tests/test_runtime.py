@@ -56,7 +56,6 @@ class TestCircuitRunner:
         "kwargs",
         [
             {
-                "initial_layout": [0, 1],
                 "layout_method": "trivial",
                 "routing_method": "basic",
                 "translation_method": "translator",
