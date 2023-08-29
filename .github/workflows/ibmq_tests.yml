@@ -1,7 +1,7 @@
-name: IBMQ integration tests
+name: IBMQ integration tests with Qiskit 1.0
 on:
   schedule:
-    - cron: '0 0 * * 0,4' # At 00:00 on Sunday and Thursday.
+    - cron: '1 0 * * 0,4' # At 01:00 on Sunday and Thursday.
   workflow_dispatch:
 
 jobs:
@@ -30,11 +30,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
+          pip freeze
 
       - name: Install Plugin
         run: |
-          python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
+          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ github.ref }}
+          pip freeze
 
       - name: Run tests
         # Only run IBMQ and Runtime tests (skipped otherwise)

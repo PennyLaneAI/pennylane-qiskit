@@ -16,39 +16,34 @@ This module contains the :class:`~.BasicAerDevice` class, a PennyLane device tha
 evaluation and differentiation of Qiskit Terra's BasicAer simulator
 using PennyLane.
 """
-import qiskit
-
+from qiskit.providers.basic_provider import BasicProvider
 from .qiskit_device import QiskitDevice
 
 
-class BasicAerDevice(QiskitDevice):
+class BasicSimulatorDevice(QiskitDevice):
     """A PennyLane device for the native Python Qiskit simulator.
 
-    Please see the `Qiskit documentations <https://qiskit.org/documentation/>`_
-    further information on the backend options and transpile options.
-
-    A range of :code:`backend_options` that will be passed to the simulator and
-    a range of transpile options can be given as kwargs.
-
-    For more information on backends, please visit the
-    `Basic Aer provider documentation <https://qiskit.org/documentation/apidoc/providers_basicaer.html>`_.
+    For more information on the ``BasicSimulator`` backend options and transpile options, please visit the
+    `BasicProvider documentation <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_.
+    These options can be passed to this plugin device as keyword arguments.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
-            or strings (``['ancilla', 'q1', 'q2']``).
+            or strings (``['aux_wire', 'q1', 'q2']``).
         backend (str): the desired backend
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. For statevector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
-
-    Keyword Args:
-        name (str): The name of the circuit. Default ``'circuit'``.
-        compile_backend (BaseBackend): The backend used for compilation. If you wish
-            to simulate a device compliant circuit, you can specify a backend here.
     """
 
-    short_name = "qiskit.basicaer"
+    short_name = "qiskit.basicsim"
 
-    def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
-        super().__init__(wires, provider=qiskit.BasicAer, backend=backend, shots=shots, **kwargs)
+    analytic_warning_message = (
+        "The plugin does not currently support analytic calculation of expectations, variances "
+        "and probabilities with the BasicProvider backend {}. Such statistics obtained from this "
+        "device are estimates based on samples."
+    )
+
+    def __init__(self, wires, shots=1024, backend="basic_simulator", **kwargs):
+        super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)

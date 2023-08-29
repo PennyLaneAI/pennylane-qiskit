@@ -1,10 +1,87 @@
+# Copyright 2021-2024 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains tests qiskit devices for PennyLane IBMQ devices.
+"""
+from unittest.mock import Mock
 import numpy as np
 import pytest
+
+from qiskit_aer import noise
+from qiskit.providers import BackendV1, BackendV2
+from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
-from qiskit_aer import noise
+
+
+class Configuration:
+    def __init__(self, n_qubits, backend_name):
+        self.n_qubits = n_qubits
+        self.backend_name = backend_name
+        self.noise_model = None
+        self.method = "placeholder"
+
+    def get(self, attribute, default=None):
+        return getattr(self, attribute, default)
+
+
+class MockedBackend(BackendV2):
+    def __init__(self, num_qubits=10, name="mocked_backend"):
+        self._options = Configuration(num_qubits, name)
+        self._service = "SomeServiceProvider"
+        self.name = name
+        self._target = Mock()
+        self._target.num_qubits = num_qubits
+
+    def set_options(self, noise_model):
+        self.options.noise_model = noise_model
+
+    def _default_options(self):
+        return {}
+
+    def max_circuits(self):
+        return 10
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def target(self):
+        return self._target
+
+
+class MockedBackendLegacy(BackendV1):
+    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
+        self._configuration = Configuration(num_qubits, backend_name=name)
+        self._service = "SomeServiceProvider"
+        self._options = self._default_options()
+
+    def configuration(self):
+        return self._configuration
+
+    def _default_options(self):
+        return {}
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def options(self):
+        return self._options
+
 
 test_transpile_options = [
     {},
@@ -13,6 +90,45 @@ test_transpile_options = [
 ]
 
 test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
+backend = MockedBackend()
+legacy_backend = MockedBackendLegacy()
+
+
+class TestSupportForV1andV2:
+    """Tests compatibility with BackendV1 and BackendV2"""
+
+    @pytest.mark.parametrize(
+        "dev_backend",
+        [
+            legacy_backend,
+            backend,
+        ],
+    )
+    def test_v1_and_v2_mocked(self, dev_backend):
+        """Test that device initializes with no error mocked"""
+        dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
+        assert dev._backend == backend
+
+    @pytest.mark.parametrize(
+        "backend",
+        [
+            FakeManila(),
+            FakeManilaV2(),
+        ],
+    )
+    def test_v1_and_v2_manila(self, dev_backend):
+        """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
+        dev = qml.device("qiskit.remote", wires=5, backend=backend, use_primitives=True)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample(qml.PauliZ(0))
+
+        res = circuit(np.pi / 2)
+        assert isinstance(res, np.ndarray)
+        assert np.shape(res) == (1024,)
 
 
 class TestProbabilities:
@@ -49,37 +165,43 @@ class TestTranspilationOptionInitialization:
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    def test_warning_raised_for_hardware_backend_analytic_expval(self, hardware_backend, recorder):
+    def test_warning_raised_for_hardware_backend_analytic_expval(self, recorder):
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
-        if "aer" in hardware_backend:
-            pytest.skip("Not supported on basicaer")
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, shots=None)
+            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
-        # check that only one warning was raised
-        assert len(record) == 1
-        # check that the message matches
         assert (
-            record[0].message.args[0] == "The analytic calculation of "
+            record[1].message.args[0] == "The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
-            "statevector backends, not on the {}. Such statistics obtained from this "
-            "device are estimates based on samples.".format(dev.backend)
+            f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
+            "device are estimates based on samples."
         )
 
+        assert (
+            record[1].message.args[0] == "The analytic calculation of "
+            "expectations, variances and probabilities is only supported on "
+            f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
+            "device are estimates based on samples."
+        )
+
+        # Two warnings are being raised: one about analytic calculations and another about deprecation.
+        assert len(record) == 2
+
+    @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
-        self, statevector_backend, recorder, recwarn
+        self, method, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
-        if "aer" in statevector_backend:
-            pytest.skip("Not supported on basicaer")
 
-        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, shots=None)
+        _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
 
-        # check that no warnings were raised
-        assert len(recwarn) == 0
+        # These simulators are being deprecated. Warning is raised in Qiskit 1.0
+        # Migrate to AerSimulator with AerSimulator(method=method) and append
+        # run circuits with the `save_state` instruction.
+        assert len(recwarn) == 1
 
 
 class TestAerBackendOptions:
@@ -107,7 +229,7 @@ class TestBatchExecution:
 
     with qml.tape.QuantumTape() as tape1:
         qml.PauliX(wires=0)
-        qml.expval(qml.PauliZ(wires=0)), qml.expval(qml.PauliZ(wires=1))
+        _ = qml.expval(qml.PauliZ(wires=0)), qml.expval(qml.PauliZ(wires=1))
 
     with qml.tape.QuantumTape() as tape2:
         qml.PauliX(wires=0)
@@ -140,31 +262,6 @@ class TestBatchExecution:
 
         assert spy.call_count == n_tapes
 
-    def test_result_legacy(self, device, tol):
-        """Tests that the result has the correct shape and entry types."""
-        # TODO: remove once the legacy return system is removed.
-        qml.disable_return()
-        dev = device(2)
-        tapes = [self.tape1, self.tape2]
-        res = dev.batch_execute(tapes)
-
-        # We're calling device methods directly, need to reset before the next
-        # execution
-        dev.reset()
-        tape1_expected = dev.execute(self.tape1)
-
-        dev.reset()
-        tape2_expected = dev.execute(self.tape2)
-
-        assert len(res) == 2
-        assert isinstance(res[0], np.ndarray)
-        assert np.allclose(res[0], tape1_expected, atol=0)
-
-        assert isinstance(res[1], np.ndarray)
-        assert np.allclose(res[1], tape2_expected, atol=0)
-
-        qml.enable_return()
-
     def test_result(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
         dev = device(2)
@@ -187,6 +284,16 @@ class TestBatchExecution:
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
 
+    def test_result_no_tapes(self, device):
+        """Tests that the result is correct when there are no tapes to execute."""
+        dev = device(2)
+        res = dev.batch_execute([])
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        assert not res
+
     def test_result_empty_tape(self, device, tol):
         """Tests that the result has the correct shape and entry types for
         empty tapes."""
@@ -206,5 +313,18 @@ class TestBatchExecution:
         """Tests that the number of executions are recorded correctly.."""
         dev = device(2)
         tapes = [self.tape1, self.tape2]
-        res = dev.batch_execute(tapes)
+        _ = dev.batch_execute(tapes)
         assert dev.num_executions == 1
+
+    def test_barrier_tape(self, device, tol):
+        """Tests that the barriers are accounted for during conversion."""
+        dev = device(2)
+
+        @qml.qnode(dev)
+        def barrier_func():
+            qml.Barrier([0, 1])
+            return qml.state()
+
+        res = barrier_func()
+        assert barrier_func.tape.operations[0] == qml.Barrier([0, 1])
+        assert np.allclose(res, dev.batch_execute([barrier_func.tape]), atol=0)

@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
+# Copyright 2021-2024 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-This module contains tests for PennyLane runtime programs.
+This module contains some configuration for PennyLane IBMQ devices.
 """
 
 import os
@@ -21,7 +21,9 @@ import numpy as np
 
 import pennylane as qml
 from qiskit_ibm_provider import IBMProvider
-from pennylane_qiskit import AerDevice, BasicAerDevice
+from pennylane_qiskit import AerDevice, BasicSimulatorDevice
+
+# pylint: disable=protected-access, unused-argument, redefined-outer-name
 
 np.random.seed(42)
 
@@ -36,13 +38,14 @@ U2 = np.array([[0, 1, 1, 1], [1, 0, 1, -1], [1, -1, 0, 1], [1, 1, -1, 0]]) / np.
 A = np.array([[1.02789352, 1.61296440 - 0.3498192j], [1.61296440 + 0.3498192j, 1.23920938 + 0j]])
 
 
+test_devices = [AerDevice, BasicSimulatorDevice]
+hw_backends = ["qasm_simulator", "aer_simulator", "basic_simulator"]
 state_backends = [
     "statevector_simulator",
     "unitary_simulator",
     "aer_simulator_statevector",
     "aer_simulator_unitary",
 ]
-hw_backends = ["qasm_simulator", "aer_simulator"]
 
 
 @pytest.fixture
@@ -50,7 +53,7 @@ def skip_if_no_account():
     t = os.getenv("IBMQX_TOKEN", None)
     try:
         IBMProvider(token=t)
-    except Exception:
+    except:  # pylint: disable=broad-except, bare-except
         missing = "token" if t else "account"
         pytest.skip(f"Skipping test, no IBMQ {missing} available")
 
@@ -106,15 +109,22 @@ def hardware_backend(request):
     return request.param
 
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
+@pytest.fixture(params=test_devices)
 def device(request, backend, shots):
-    if backend not in state_backends and shots is None:
-        pytest.skip("Hardware simulators do not support analytic mode")
+    print("getting a device")
+    if backend not in state_backends:
+        if shots is None:
+            pytest.skip("Hardware simulators do not support analytic mode")
 
-    if (issubclass(request.param, AerDevice) and "aer" not in backend) or (
-        issubclass(request.param, BasicAerDevice) and "aer" in backend
-    ):
-        pytest.skip("Only the AerSimulator is supported on AerDevice")
+    if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        print("I should be skipping this test")
+        pytest.skip("Only the AerDevice can use the aer_simulator backend")
+
+    if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
+
+    if backend == "basic_simulator" and not issubclass(request.param, BasicSimulatorDevice):
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n, device_options=None):
         if device_options is None:
@@ -124,12 +134,17 @@ def device(request, backend, shots):
     return _device
 
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
+@pytest.fixture(params=test_devices)
 def state_vector_device(request, statevector_backend, shots):
-    if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) or (
-        issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend
-    ):
-        pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+    if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        pytest.skip("Only the AerDevice can use the aer_simulator backend")
+
+    if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
+
+    if backend == "basic_simulator" and not issubclass(request.param, BasicSimulatorDevice):
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n):
         return request.param(wires=n, backend=statevector_backend, shots=shots)

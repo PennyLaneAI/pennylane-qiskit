@@ -1,7 +1,7 @@
 PennyLane-Qiskit Plugin
 #######################
 
-.. image:: https://img.shields.io/github/workflow/status/PennyLaneAI/pennylane-qiskit/Tests/master?logo=github&style=flat-square
+.. image:: https://img.shields.io/github/actions/workflow/status/PennyLaneAI/pennylane-qiskit/tests.yml?branch=master&logo=github&style=flat-square
     :alt: GitHub Workflow Status (branch)
     :target: https://github.com/PennyLaneAI/pennylane-qiskit/actions?query=workflow%3ATests
 
@@ -66,8 +66,7 @@ To test that the PennyLane-Qiskit plugin is working correctly you can run
 
     make test
 
-in the source folder. Tests restricted to a specific provider can be run by executing
-``make test-basicaer``, ``make test-aer``, and ``make test-ibmq``.
+in the source folder.
 
 .. note::
 
@@ -81,9 +80,8 @@ in the source folder. Tests restricted to a specific provider can be run by exec
     `new IBMProvider <https://qiskit.org/ecosystem/ibm-provider/stubs/qiskit_ibm_provider.IBMProvider.html>`_
 
     If this is the case, running ``make test`` also executes tests on the ``ibmq`` device.
-    By default tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend
-    and those done by the ``basicaer`` and ``aer`` device are run with the ``qasm_simulator``
-    backend. At the time of writing this means that the test are "free".
+    By default, tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend. At
+    the time of writing this means that the test are "free".
     Please verify that this is also the case for your account.
 
 .. installation-end-inclusion-marker-do-not-remove
