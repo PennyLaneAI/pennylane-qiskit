@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* The old return type system has been removed.
+  [(#)]()
+
 ### Deprecations 👋
 
 ### Documentation 📝

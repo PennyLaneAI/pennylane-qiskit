@@ -143,7 +143,6 @@ class TestBatchExecution:
     def test_result_legacy(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
         # TODO: remove once the legacy return system is removed.
-        qml.disable_return()
         dev = device(2)
         tapes = [self.tape1, self.tape2]
         res = dev.batch_execute(tapes)
@@ -162,8 +161,6 @@ class TestBatchExecution:
 
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
-
-        qml.enable_return()
 
     def test_result(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
