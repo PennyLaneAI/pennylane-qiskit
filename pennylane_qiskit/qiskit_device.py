@@ -22,7 +22,6 @@ import inspect
 import warnings
 
 import numpy as np
-import pennylane
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
