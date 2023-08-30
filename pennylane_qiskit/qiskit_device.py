@@ -499,15 +499,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
             if self.shots is not None or circuit.is_sampled:
                 self._samples = self.generate_samples(circuit_obj)
 
-            if not pennylane.active_return():
-                res = self._statistics_legacy(circuit)
-                res = np.asarray(res)
-                results.append(res)
-            else:
-                res = self.statistics(circuit)
-                single_measurement = len(circuit.measurements) == 1
-                res = res[0] if single_measurement else tuple(res)
-                results.append(res)
+            res = self.statistics(circuit)
+            single_measurement = len(circuit.measurements) == 1
+            res = res[0] if single_measurement else tuple(res)
+            results.append(res)
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))
