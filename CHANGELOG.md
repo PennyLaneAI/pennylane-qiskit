@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* The old return type system has been removed.
+  [(#331)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/331)
+
 ### Deprecations 👋
 
 ### Documentation 📝
@@ -15,6 +18,8 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Mudit Pandey,
 
 ---
 # Release 0.32.0
