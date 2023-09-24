@@ -184,16 +184,28 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._capabilities["returns_state"] = self.backend_name in self._state_backends
 
         # Perform validation against backend
-        b = self.backend
-        if len(self.wires) > int(b.configuration().n_qubits):
-            raise ValueError(
-                f"Backend '{backend}' supports maximum {b.configuration().n_qubits} wires"
-            )
-
+        self.validate_wires_against_backend()
+        
         # Initialize inner state
         self.reset()
 
         self.process_kwargs(kwargs)
+
+
+    def validate_wires_against_backend(self):
+        b = self.backend
+        
+        try:
+            num_qubits = int(b.configuration().n_qubits)
+        except AttributeError:
+            try:
+                num_qubits = int(b.num_qubits)
+            except AttributeError:
+                raise AttributeError("Neither 'b.configuration().n_qubits' nor 'b.num_qubits' exist.")
+                
+        if len(self.wires) > num_qubits:
+            raise ValueError(f"Backend '{b}' supports a maximum of {num_qubits} wires.")
+
 
     def process_kwargs(self, kwargs):
         """Processing the keyword arguments that were provided upon device initialization.
