@@ -298,7 +298,7 @@ class TestPLOperations:
 
         dev = state_vector_device(1)
 
-        if "unitary" in dev.backend_name:
+        if dev._is_unitary_backend:
             pytest.skip("Test only runs for backends that are not the unitary simulator.")
 
         state = init_state(1)
@@ -480,7 +480,7 @@ class TestNoise:
         bit_flip = aer.noise.pauli_error([("X", 1), ("I", 0)])
 
         # Create a noise model where the RX operation always flips the bit
-        noise_model.add_all_qubit_quantum_error(bit_flip, ["z"])
+        noise_model.add_all_qubit_quantum_error(bit_flip, ["z", "rz"])
 
         dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
 
