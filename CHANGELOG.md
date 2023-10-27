@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Logic updated to support Aer V2 device naming conventions.
+  [(#343)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/343)
+
 ### Breaking changes 💔
 
 * The old return type system has been removed.
@@ -20,6 +23,7 @@
 This release contains contributions from (in alphabetical order):
 
 Mudit Pandey,
+Matthew Silverman
 
 ---
 # Release 0.32.0
