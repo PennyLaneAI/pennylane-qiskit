@@ -1,6 +1,4 @@
-# Release 0.33.0-dev
-
-### New features since last release
+# Release 0.33.0
 
 ### Improvements 🛠
 
@@ -11,12 +9,6 @@
 
 * The old return type system has been removed.
   [(#331)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/331)
-
-### Deprecations 👋
-
-### Documentation 📝
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 
