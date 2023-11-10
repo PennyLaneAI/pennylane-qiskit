@@ -267,7 +267,6 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: x, phi: y})
 
-
     def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
         """Tests the load method raises a QiskitError if arguments
         that are not required were passed."""
