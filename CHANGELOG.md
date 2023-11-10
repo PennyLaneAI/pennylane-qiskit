@@ -5,7 +5,7 @@
 ### Improvements 🛠
 
 * Stop using the now-deprecated `tape.is_sampled` property.
-  [(#)]()
+  [(#348)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/348)
 
 ### Breaking changes 💔
 
