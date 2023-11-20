@@ -33,9 +33,11 @@ from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
 
-from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import QiskitRuntimeService, Session
 from qiskit_ibm_runtime.constants import RunnerResult
+from qiskit_ibm_runtime import Sampler, Estimator
 
+from pennylane import transform
 from pennylane import QubitDevice, DeviceError
 from pennylane.transforms.core import TransformProgram
 from pennylane.transforms import broadcast_expand
@@ -47,11 +49,10 @@ from pennylane.devices.preprocess import (
     decompose,
     validate_observables,
     validate_measurements,
-    validate_multiprocessing_workers,
     validate_device_wires,
-    warn_about_trainable_observables,
-    no_sampling,
+    null_postprocessing
 )
+from pennylane.measurements import CountsMP, ExpectationMP, VarianceMP
 
 from ._version import __version__
 
@@ -123,6 +124,47 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
         ),
     )
 
+@transform
+def split_measurement_types(
+    tape: qml.tape.QuantumTape,
+) -> (Sequence[qml.tape.QuantumTape], Callable):
+    """Split into seperate tapes based on measurement type. Counts will use the
+    Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
+    strictly sample-based measurements will use the standard backend.run function"""
+
+    use_sampler = [mp for mp in tape.measurements if isinstance(mp, CountsMP)]
+    use_estimator = [mp for mp in tape.measurements if isinstance(mp, (ExpectationMP, VarianceMP))]
+    other = [mp for mp in tape.measurements if not isinstance(mp, (CountsMP, ExpectationMP, VarianceMP))]
+
+    output_tapes = []
+    if use_sampler:
+        output_tapes.append(qml.tape.QuantumScript(tape.operations, use_sampler, shots=tape.shots))
+    if use_estimator:
+        output_tapes.append(qml.tape.QuantumScript(tape.operations, use_estimator, shots=tape.shots))
+    if other:
+        output_tapes.append(qml.tape.QuantumScript(tape.operations, other, shots=tape.shots))
+
+    return tuple(output_tapes), null_postprocessing
+
+@transform
+def validate_measurement_types(
+        tape: qml.tape.QuantumTape,
+    ) -> (Sequence[qml.tape.QuantumTape], Callable):
+
+    measurement_types = set(type(mp) for mp in tape.measurements)
+
+    if measurement_types.issubset({ExpectationMP, VarianceMP}):
+        return (tape,), null_postprocessing
+    elif measurement_types.issubset({CountsMP}):
+        return (tape,), null_postprocessing
+    else:
+        if measurement_types.intersection({CountsMP, ExpectationMP, VarianceMP}):
+            raise RuntimeError("Bad measurement combination")
+
+    return (tape,), null_postprocessing
+
+
+
 
 class QiskitDevice2(Device):
     r"""Abstract Qiskit device for PennyLane.
@@ -136,6 +178,7 @@ class QiskitDevice2(Device):
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
+        use_primitives(bool): whether or not to use Qiskit Primitives and the Qiskit Runtime Session. Defaults to False.
     """
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.30.0"
@@ -158,11 +201,13 @@ class QiskitDevice2(Device):
 
     short_name = "qiskit.remote2"
 
-    def __init__(self, wires, backend, shots=1024, **kwargs):
+    def __init__(self, wires, backend, shots=1024, use_primitives=False, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
+
         self.runtime_service = QiskitRuntimeService(channel="ibm_quantum")
+        self._use_primitives = use_primitives
 
         # Keep track if the user specified analytic to be True
         if shots is None:
@@ -251,6 +296,8 @@ class QiskitDevice2(Device):
         )
 
         transform_program.add_transform(broadcast_expand)
+        # transform_program.add_transform(split_measurement_types)
+        transform_program.add_transform(validate_measurement_types)
 
         return transform_program, config
 
@@ -278,12 +325,6 @@ class QiskitDevice2(Device):
 
         for qr, cr in zip(self._reg, self._creg):
             self._circuit.measure(qr, cr)
-
-    def map_wires(self, wires):
-        consecutive_wires = Wires(range(self.num_wires))
-
-        wire_map = zip(wires, consecutive_wires)
-        return OrderedDict(wire_map)
 
     def apply_operations(self, operations):
         """Apply the circuit operations.
@@ -366,31 +407,58 @@ class QiskitDevice2(Device):
         circuits: QuantumTape_or_Batch,
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
-        compiled_circuits = self.compile_circuits(circuits)
 
-        program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
+        first_measurement = circuits[0].measurements[0]
+        print(first_measurement)
 
-        # for kwarg in self.kwargs:
-        #     program_inputs[kwarg] = self.kwargs.get(kwarg)
+        if isinstance(first_measurement, CountsMP) and self._use_primitives:
+            print("results should come from sampler")
+            results = self._execute_sampler(circuits)
+        elif isinstance(first_measurement, (ExpectationMP, VarianceMP)) and self._use_primitives:
+            print("results should come from estimator")
+            results = self._execute_estimator(circuits)
+        else:
+            print("using old run function")
+            compiled_circuits = self.compile_circuits(circuits)
 
-        options = {"backend": self.backend.name}
+            program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
 
-        # Send circuits to the cloud for execution by the circuit-runner program.
-        job = self.runtime_service.run(
-            program_id="circuit-runner", options=options, inputs=program_inputs
-        )
-        self._current_job = job.result(decoder=RunnerResult)
+            # for kwarg in self.kwargs:
+            #     program_inputs[kwarg] = self.kwargs.get(kwarg)
 
-        results = []
+            options = {"backend": self.backend.name}
 
-        for index, circuit in enumerate(circuits):
-            self._samples = self.generate_samples(index)
-            res = [mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements]
-            single_measurement = len(circuit.measurements) == 1
-            res = res[0] if single_measurement else tuple(res)
-            results.append(res)
+            # Send circuits to the cloud for execution by the circuit-runner program.
+            job = self.runtime_service.run(
+                program_id="circuit-runner", options=options, inputs=program_inputs
+            )
+            self._current_job = job.result(decoder=RunnerResult)
+
+            results = []
+
+            for index, circuit in enumerate(circuits):
+                self._samples = self.generate_samples(index)
+                res = [mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements]
+                single_measurement = len(circuit.measurements) == 1
+                res = res[0] if single_measurement else tuple(res)
+                results.append(res)
 
         return results
+
+    def _execute_sampler(self, circuits):
+        """Execution for the Sampler primitive"""
+
+        raise NotImplementedError()
+
+        with Session(backend=self.backend):
+            sampler = Sampler()
+
+            for qc in circuits:
+                result = sampler.run(qc).result()
+                res.append(result.quasi_dists[0])
+
+    def _execute_estimator(self, circuits):
+        raise NotImplementedError()
 
     def generate_samples(self, circuit=None):
         r"""Returns the computational basis samples generated for all wires.
