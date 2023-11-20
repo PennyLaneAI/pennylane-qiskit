@@ -29,8 +29,11 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from pennylane import QubitDevice, DeviceError
+from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
 
 from ._version import __version__
+
+SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 
 QISKIT_OPERATION_MAP_SELF_ADJOINT = {
@@ -515,7 +518,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self._state = self._get_state(result, experiment=circuit_obj)
 
             # generate computational basis samples
-            if self.shots is not None or circuit.is_sampled:
+            if self.shots is not None or any(
+                isinstance(m, SAMPLE_TYPES) for m in circuit.measurements
+            ):
                 self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit)

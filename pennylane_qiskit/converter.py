@@ -179,7 +179,8 @@ def load(quantum_circuit: QuantumCircuit):
 
         # Processing the dictionary of parameters passed
         for op, qargs, cargs in qc.data:
-            instruction_name = op.__class__.__name__
+            # the new Singleton classes have different names than the objects they represent, but base_class.__name__ still matches
+            instruction_name = getattr(op, "base_class", op.__class__).__name__
 
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
 

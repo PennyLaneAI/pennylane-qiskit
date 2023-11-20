@@ -15,6 +15,7 @@ r"""
 This module contains tests for PennyLane runtime programs.
 """
 
+from functools import partial
 import numpy as np
 import pennylane as qml
 import pytest
@@ -99,7 +100,7 @@ class TestCircuitRunner:
         b = np.linspace(0, 0.123, batch_dim)
         c = np.linspace(0, 0.987, batch_dim)
 
-        @qml.batch_params(all_operations=True)
+        @partial(qml.batch_params, all_operations=True)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
@@ -199,7 +200,7 @@ class TestSampler:
         b = np.linspace(0, 0.123, batch_dim)
         c = np.linspace(0, 0.987, batch_dim)
 
-        @qml.batch_params(all_operations=True)
+        @partial(qml.batch_params, all_operations=True)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
