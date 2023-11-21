@@ -18,20 +18,18 @@ for PennyLane with the new device API.
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 
 
-import abc
-import inspect
 import warnings
+from typing import Union, Callable, Tuple, Sequence
 
 import numpy as np
 import pennylane as qml
 
-from typing import Union, Callable, Tuple, Optional, Sequence
+
 
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.providers import Backend, QiskitBackendNotFoundError
 from qiskit.quantum_info import SparsePauliOp
 
 from qiskit_ibm_runtime import QiskitRuntimeService, Session
@@ -40,10 +38,9 @@ from qiskit_ibm_runtime import Sampler, Estimator
 
 
 from pennylane import transform
-from pennylane import QubitDevice, DeviceError
 from pennylane.transforms.core import TransformProgram
 from pennylane.transforms import broadcast_expand
-from pennylane.tape import QuantumTape, QuantumScript
+from pennylane.tape import QuantumTape
 from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig, DefaultExecutionConfig
@@ -154,17 +151,19 @@ def split_measurement_types(
 def validate_measurement_types(
         tape: qml.tape.QuantumTape,
     ) -> (Sequence[qml.tape.QuantumTape], Callable):
+    """Temporary transform instead of split_measurement_types - until correct splitting of
+    types is implemented, only allow certain groupings of types to catch invalid circuits before executing"""
 
     measurement_types = set(type(mp) for mp in tape.measurements)
 
     if measurement_types.issubset({ExpectationMP, VarianceMP}):
         return (tape,), null_postprocessing
-    elif measurement_types.issubset({ProbabilityMP}):
+    if measurement_types.issubset({ProbabilityMP}):
         return (tape,), null_postprocessing
-    else:
-        if measurement_types.intersection({ProbabilityMP, ExpectationMP, VarianceMP}):
-            raise RuntimeError("Bad measurement combination")
 
+    # combination of Probability, Expectation and Variance other than the ones above not allowed
+    if measurement_types.intersection({ProbabilityMP, ExpectationMP, VarianceMP}):
+        raise RuntimeError("Bad measurement combination")
     return (tape,), null_postprocessing
 
 
