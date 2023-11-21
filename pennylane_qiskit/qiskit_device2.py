@@ -167,7 +167,7 @@ def validate_measurement_types(
 
 
 class QiskitDevice2(Device):
-    r"""Abstract Qiskit device for PennyLane.
+    r"""Hardware/hardware simulator Qiskit device for PennyLane.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
@@ -301,7 +301,7 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def create_circuit_object(self, operations, **kwargs):
+    def circuit_to_qiskit(self, circuit, diagonalize=False):
         """Builds the circuit objects based on the operations and measurements
         specified to apply.
 
@@ -312,72 +312,66 @@ class QiskitDevice2(Device):
             rotations (list[~.Operation]): Operations that rotate the circuit
                 pre-measurement into the eigenbasis of the observables.
         """
-        rotations = kwargs.get("rotations", [])
+        qc = QuantumCircuit(self._reg, self._creg, name="temp")
 
-        applied_operations = self.apply_operations(operations)
+        for op in circuit.operations:
+            qc &= self.operation_to_qiskit(op)
 
         # Rotating the state for measurement in the computational basis
-        rotation_circuits = self.apply_operations(rotations)
-        applied_operations.extend(rotation_circuits)
-
-        for circuit in applied_operations:
-            self._circuit &= circuit
+        if diagonalize:
+            rotations = circuit.diagonalizing_gates
+            for rot in rotations:
+                qc &= self.operation_to_qiskit(rot)
 
         for qr, cr in zip(self._reg, self._creg):
-            self._circuit.measure(qr, cr)
+            qc.measure(qr, cr)
 
-    def apply_operations(self, operations):
-        """Apply the circuit operations.
+        return qc
 
-        This method serves as an auxiliary method to :meth:`~.QiskitDevice.apply`.
+    def operation_to_qiskit(self, operation):
+        """Take a Pennylane operator and convert to a Qiskit circuit
 
         Args:
-            operations (List[pennylane.Operation]): operations to be applied
+            operation (List[pennylane.Operation]): operation to be converted
+            num_qubits (int): the total number of qubits on the device
 
         Returns:
-            list[QuantumCircuit]: a list of quantum circuit objects that
-                specify the corresponding operations
+            QuantumCircuit: a quantum circuit objects containing the translated operation
         """
-        circuits = []
+        # Apply the circuit operations
+        op_wires = operation.wires
+        par = operation.parameters
 
-        for operation in operations:
-            # Apply the circuit operations
-            op_wires = operation.wires
-            par = operation.parameters
+        for idx, p in enumerate(par):
+            if isinstance(p, np.ndarray):
+                # Convert arrays so that Qiskit accepts the parameter
+                par[idx] = p.tolist()
 
-            for idx, p in enumerate(par):
-                if isinstance(p, np.ndarray):
-                    # Convert arrays so that Qiskit accepts the parameter
-                    par[idx] = p.tolist()
+        operation = operation.name
 
-            operation = operation.name
+        mapped_operation = self._operation_map[operation]
 
-            mapped_operation = self._operation_map[operation]
+        qregs = [self._reg[i] for i in op_wires.labels]
 
-            qregs = [self._reg[i] for i in op_wires.labels]
+        adjoint = operation.startswith("Adjoint(")
+        split_op = operation.split("Adjoint(")
 
-            adjoint = operation.startswith("Adjoint(")
-            split_op = operation.split("Adjoint(")
+        # Need to revert the order of the quantum registers used in
+        # Qiskit such that it matches the PennyLane ordering
+        if adjoint:
+            if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
+                qregs = list(reversed(qregs))
+        else:
+            if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+                qregs = list(reversed(qregs))
 
-            if adjoint:
-                if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
-                    # Need to revert the order of the quantum registers used in
-                    # Qiskit such that it matches the PennyLane ordering
-                    qregs = list(reversed(qregs))
-            else:
-                if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
-                    # Need to revert the order of the quantum registers used in
-                    # Qiskit such that it matches the PennyLane ordering
-                    qregs = list(reversed(qregs))
+        dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
+        gate = mapped_operation(*par)
 
-            dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-            gate = mapped_operation(*par)
+        dag.apply_operation_back(gate, qargs=qregs)
+        circuit = dag_to_circuit(dag)
 
-            dag.apply_operation_back(gate, qargs=qregs)
-            circuit = dag_to_circuit(dag)
-            circuits.append(circuit)
-
-        return circuits
+        return circuit
 
     def compile_circuits(self, circuits):
         r"""Compiles multiple circuits one after the other.
@@ -395,7 +389,7 @@ class QiskitDevice2(Device):
             # We need to reset the device here, else it will
             # not start the next computation in the zero state
             self.reset()
-            self.create_circuit_object(circuit.operations, rotations=circuit.diagonalizing_gates)
+            self._circuit = self.circuit_to_qiskit(circuit, diagonalize=True)
             compiled_circ = transpile(self._circuit, backend=self.backend)
             compiled_circ.name = f"circ{len(compiled_circuits)}"
             compiled_circuits.append(compiled_circ)
