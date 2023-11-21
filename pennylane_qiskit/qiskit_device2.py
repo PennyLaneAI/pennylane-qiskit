@@ -52,7 +52,7 @@ from pennylane.devices.preprocess import (
     validate_device_wires,
     null_postprocessing
 )
-from pennylane.measurements import CountsMP, ExpectationMP, VarianceMP
+from pennylane.measurements import ProbabilityMP, ExpectationMP, VarianceMP
 
 from ._version import __version__
 
@@ -113,6 +113,8 @@ QISKIT_OPERATION_INVERSES_MAP = {
     **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
 }
 
+FULL_OPERATION_MAP = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
+
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
     return isinstance(
@@ -132,9 +134,9 @@ def split_measurement_types(
     Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
     strictly sample-based measurements will use the standard backend.run function"""
 
-    use_sampler = [mp for mp in tape.measurements if isinstance(mp, CountsMP)]
+    use_sampler = [mp for mp in tape.measurements if isinstance(mp, ProbabilityMP)]
     use_estimator = [mp for mp in tape.measurements if isinstance(mp, (ExpectationMP, VarianceMP))]
-    other = [mp for mp in tape.measurements if not isinstance(mp, (CountsMP, ExpectationMP, VarianceMP))]
+    other = [mp for mp in tape.measurements if not isinstance(mp, (ProbabilityMP, ExpectationMP, VarianceMP))]
 
     output_tapes = []
     if use_sampler:
@@ -155,13 +157,99 @@ def validate_measurement_types(
 
     if measurement_types.issubset({ExpectationMP, VarianceMP}):
         return (tape,), null_postprocessing
-    elif measurement_types.issubset({CountsMP}):
+    elif measurement_types.issubset({ProbabilityMP}):
         return (tape,), null_postprocessing
     else:
-        if measurement_types.intersection({CountsMP, ExpectationMP, VarianceMP}):
+        if measurement_types.intersection({ProbabilityMP, ExpectationMP, VarianceMP}):
             raise RuntimeError("Bad measurement combination")
 
     return (tape,), null_postprocessing
+
+
+def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
+    """Builds the circuit objects based on the operations and measurements
+    specified to apply.
+
+    Args:
+        operations (list[~.Operation]): operations to apply to the device
+
+    Keyword args:
+        rotations (list[~.Operation]): Operations that rotate the circuit
+            pre-measurement into the eigenbasis of the observables.
+    """
+
+    reg = QuantumRegister(register_size, "q")
+    creg = ClassicalRegister(register_size, "c")
+    qc = QuantumCircuit(register_size, register_size, name="temp")
+
+    for op in circuit.operations:
+        qc &= operation_to_qiskit(op, register_size)
+
+    # rotate the state for measurement in the computational basis
+    if diagonalize:
+        rotations = circuit.diagonalizing_gates
+        for rot in rotations:
+            qc &= operation_to_qiskit(rot, register_size)
+
+    if measure:
+        # barrier ensures we first do all operations, then do all measurements
+        qc.barrier(reg)
+        # we always measure the full register
+        qc.measure(reg, creg)
+
+    return qc
+
+def operation_to_qiskit(operation, register_size=None):
+    """Take a Pennylane operator and convert to a Qiskit circuit
+
+    Args:
+        operation (List[pennylane.Operation]): operation to be converted
+        num_qubits (int): the total number of qubits on the device
+
+    Returns:
+        QuantumCircuit: a quantum circuit objects containing the translated operation
+    """
+    op_wires = operation.wires
+    par = operation.parameters
+
+    # make quantum and classical registers for the full register
+    if register_size is None:
+        register_size = len(op_wires)
+    reg = QuantumRegister(register_size, "q")
+    creg = ClassicalRegister(register_size, "c")
+
+    for idx, p in enumerate(par):
+        if isinstance(p, np.ndarray):
+            # Convert arrays so that Qiskit accepts the parameter
+            par[idx] = p.tolist()
+
+    operation = operation.name
+
+    mapped_operation = FULL_OPERATION_MAP[operation]
+
+    qregs = [reg[i] for i in op_wires.labels]
+
+    adjoint = operation.startswith("Adjoint(")
+    split_op = operation.split("Adjoint(")
+
+    # Need to revert the order of the quantum registers used in
+    # Qiskit such that it matches the PennyLane ordering
+    if adjoint:
+        if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
+            qregs = list(reversed(qregs))
+    else:
+        if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+            qregs = list(reversed(qregs))
+
+    dag = circuit_to_dag(QuantumCircuit(reg, creg, name=""))
+    gate = mapped_operation(*par)
+
+    dag.apply_operation_back(gate, qargs=qregs)
+    circuit = dag_to_circuit(dag)
+
+    return circuit
+
+
 
 
 
@@ -186,9 +274,7 @@ class QiskitDevice2(Device):
     plugin_version = __version__
     author = "Xanadu"
 
-    _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
-
-    operations = set(_operation_map.keys())
+    operations = set(FULL_OPERATION_MAP.keys())
     observables = {
         "PauliX",
         "PauliY",
@@ -301,83 +387,11 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def circuit_to_qiskit(self, circuit, diagonalize=False):
-        """Builds the circuit objects based on the operations and measurements
-        specified to apply.
-
-        Args:
-            operations (list[~.Operation]): operations to apply to the device
-
-        Keyword args:
-            rotations (list[~.Operation]): Operations that rotate the circuit
-                pre-measurement into the eigenbasis of the observables.
-        """
-        qc = QuantumCircuit(self._reg, self._creg, name="temp")
-
-        for op in circuit.operations:
-            qc &= self.operation_to_qiskit(op)
-
-        # Rotating the state for measurement in the computational basis
-        if diagonalize:
-            rotations = circuit.diagonalizing_gates
-            for rot in rotations:
-                qc &= self.operation_to_qiskit(rot)
-
-        for qr, cr in zip(self._reg, self._creg):
-            qc.measure(qr, cr)
-
-        return qc
-
-    def operation_to_qiskit(self, operation):
-        """Take a Pennylane operator and convert to a Qiskit circuit
-
-        Args:
-            operation (List[pennylane.Operation]): operation to be converted
-            num_qubits (int): the total number of qubits on the device
-
-        Returns:
-            QuantumCircuit: a quantum circuit objects containing the translated operation
-        """
-        # Apply the circuit operations
-        op_wires = operation.wires
-        par = operation.parameters
-
-        for idx, p in enumerate(par):
-            if isinstance(p, np.ndarray):
-                # Convert arrays so that Qiskit accepts the parameter
-                par[idx] = p.tolist()
-
-        operation = operation.name
-
-        mapped_operation = self._operation_map[operation]
-
-        qregs = [self._reg[i] for i in op_wires.labels]
-
-        adjoint = operation.startswith("Adjoint(")
-        split_op = operation.split("Adjoint(")
-
-        # Need to revert the order of the quantum registers used in
-        # Qiskit such that it matches the PennyLane ordering
-        if adjoint:
-            if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
-                qregs = list(reversed(qregs))
-        else:
-            if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
-                qregs = list(reversed(qregs))
-
-        dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-        gate = mapped_operation(*par)
-
-        dag.apply_operation_back(gate, qargs=qregs)
-        circuit = dag_to_circuit(dag)
-
-        return circuit
-
     def compile_circuits(self, circuits):
         r"""Compiles multiple circuits one after the other.
 
         Args:
-            circuits (list[.tapes.QuantumTape]): the circuits to be compiled
+            circuits (list[QuantumCircuit]): the circuits to be compiled
 
         Returns:
              list[QuantumCircuit]: the list of compiled circuits
@@ -386,11 +400,7 @@ class QiskitDevice2(Device):
         compiled_circuits = []
 
         for circuit in circuits:
-            # We need to reset the device here, else it will
-            # not start the next computation in the zero state
-            self.reset()
-            self._circuit = self.circuit_to_qiskit(circuit, diagonalize=True)
-            compiled_circ = transpile(self._circuit, backend=self.backend)
+            compiled_circ = transpile(circuit, backend=self.backend)
             compiled_circ.name = f"circ{len(compiled_circuits)}"
             compiled_circuits.append(compiled_circ)
 
@@ -405,15 +415,21 @@ class QiskitDevice2(Device):
         first_measurement = circuits[0].measurements[0]
         print(first_measurement)
 
-        if isinstance(first_measurement, CountsMP) and self._use_primitives:
-            print("results should come from sampler")
-            results = self._execute_sampler(circuits)
-        elif isinstance(first_measurement, (ExpectationMP, VarianceMP)) and self._use_primitives:
+        if isinstance(first_measurement, (ExpectationMP, VarianceMP)) and self._use_primitives:
+            # get results from Estimator
             print("results should come from estimator")
             results = self._execute_estimator(circuits)
+        elif isinstance(first_measurement, ProbabilityMP) and self._use_primitives:
+            # get results from Sampler
+            print("results should come from sampler")
+            results = self._execute_sampler(circuits)
         else:
-            print("using old run function")
-            compiled_circuits = self.compile_circuits(circuits)
+            # the old run_service execution (this is the only option sample-based measurements)
+            qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
+            compiled_circuits = self.compile_circuits(qcirc)
+
+            print(qcirc[0].draw("text"))
+            print(compiled_circuits[0])
 
             program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
 
@@ -442,16 +458,23 @@ class QiskitDevice2(Device):
     def _execute_sampler(self, circuits):
         """Execution for the Sampler primitive"""
 
-        raise NotImplementedError()
+        qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
+        results = []
 
         with Session(backend=self.backend):
             sampler = Sampler()
 
-            for qc in circuits:
+            for qc in qcirc:
                 result = sampler.run(qc).result()
-                res.append(result.quasi_dists[0])
+                results.append(result.quasi_dists[0])
+
+        return results
 
     def _execute_estimator(self, circuits):
+
+        qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=False, measure=False) for circ in circuits]
+
+        print(qcirc[0].draw("text"))
         raise NotImplementedError()
 
     def generate_samples(self, circuit=None):
