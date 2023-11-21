@@ -32,10 +32,12 @@ from qiskit import extensions as ex
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
+from qiskit.quantum_info import SparsePauliOp
 
 from qiskit_ibm_runtime import QiskitRuntimeService, Session
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime import Sampler, Estimator
+
 
 from pennylane import transform
 from pennylane import QubitDevice, DeviceError
@@ -249,6 +251,27 @@ def operation_to_qiskit(operation, register_size=None):
 
     return circuit
 
+def mp_to_pauli(mp, register_size):
+    """Convert a Pauli observable to a SparsePauliOp for measurement via Estimator
+
+        Args:
+            mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
+            register_size(int): total size of the qubit register being measured
+    """
+
+    # ToDo: I believe this could be extended to cover expectation values of Hamiltonians
+
+    observables = {"PauliX": "X",
+                   "PauliY": "Y",
+                   "PauliZ": "Z",
+                   "Identity": "I"}
+
+    pauli_string = ["I"] * register_size
+    pauli_string[mp.wires[0]] = observables[mp.name]
+
+    pauli_string = ('').join(pauli_string)
+
+    return SparsePauliOp(pauli_string)
 
 
 
@@ -268,11 +291,6 @@ class QiskitDevice2(Device):
             to estimate expectation values and variances of observables.
         use_primitives(bool): whether or not to use Qiskit Primitives and the Qiskit Runtime Session. Defaults to False.
     """
-    name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.30.0"
-    version = __version__
-    plugin_version = __version__
-    author = "Xanadu"
 
     operations = set(FULL_OPERATION_MAP.keys())
     observables = {
@@ -285,7 +303,10 @@ class QiskitDevice2(Device):
         "Projector",
     }
 
-    short_name = "qiskit.remote2"
+    @property
+    def name(self):
+        """The name of the device."""
+        return "qiskit.remote2"
 
     def __init__(self, wires, backend, shots=1024, use_primitives=False, **kwargs):
         super().__init__(wires=wires, shots=shots)
@@ -299,7 +320,7 @@ class QiskitDevice2(Device):
         if shots is None:
             # Raise a warning if no shots were specified for a hardware device
             warnings.warn(f"The analytic calculation of expectations, variances and probabilities "
-                          f"is only supported on statevector backends, not on the {backend}. Such "
+                          f"is only supported on statevector backends, not on the {backend.name}. Such "
                           f"statistics obtained from this device are estimates based on samples.",
                           UserWarning)
 
@@ -413,23 +434,17 @@ class QiskitDevice2(Device):
     ) -> Result_or_ResultBatch:
 
         first_measurement = circuits[0].measurements[0]
-        print(first_measurement)
 
         if isinstance(first_measurement, (ExpectationMP, VarianceMP)) and self._use_primitives:
             # get results from Estimator
-            print("results should come from estimator")
             results = self._execute_estimator(circuits)
         elif isinstance(first_measurement, ProbabilityMP) and self._use_primitives:
             # get results from Sampler
-            print("results should come from sampler")
             results = self._execute_sampler(circuits)
         else:
             # the old run_service execution (this is the only option sample-based measurements)
             qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
             compiled_circuits = self.compile_circuits(qcirc)
-
-            print(qcirc[0].draw("text"))
-            print(compiled_circuits[0])
 
             program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
 
@@ -472,10 +487,34 @@ class QiskitDevice2(Device):
 
     def _execute_estimator(self, circuits):
 
+        # initially we assume only one measurement per tape
         qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=False, measure=False) for circ in circuits]
+        results = []
 
-        print(qcirc[0].draw("text"))
-        raise NotImplementedError()
+        with Session(backend=self.backend):
+            estimator = Estimator()
+
+            for circ, qc in zip(circuits, qcirc):
+                pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circ.observables]
+                result = estimator.run([qc]*len(pauli_observables), pauli_observables).result()
+                result = self._process_estimator_job(circ.measurements, result)
+                results.append(result)
+        # raise NotImplementedError
+        return results
+
+    def _process_estimator_job(self, measurements, job_result):
+
+        expvals = job_result.values
+        variances = [res["variance"] for res in job_result.metadata]
+
+        result = []
+        for i, mp in enumerate(measurements):
+            if isinstance(mp, ExpectationMP):
+                result.append(expvals[i])
+            elif isinstance(mp, VarianceMP):
+                result.append(variances[i])
+
+        return result
 
     def generate_samples(self, circuit=None):
         r"""Returns the computational basis samples generated for all wires.
