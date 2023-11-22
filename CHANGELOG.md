@@ -1,24 +1,21 @@
-# Release 0.34.0-dev
-
-### New features since last release
+# Release 0.33.1
 
 ### Improvements 🛠
 
 * Stop using the now-deprecated `tape.is_sampled` property.
   [(#348)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/348)
 
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
-
 ### Bug fixes 🐛
+
+* Update conversion of PennyLane to Qiskit operators to accommodate 
+  the addition of Singleton classes in the newest version of Qiskit.
+  [(#347)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/347)
 
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
 
+Lillian Frederiksen,
 Matthew Silverman
 
 ---
