@@ -133,38 +133,38 @@ def split_measurement_types(
     Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
     strictly sample-based measurements will use the standard backend.run function"""
 
-    use_sampler = [mp for mp in tape.measurements if isinstance(mp, ProbabilityMP)]
-    use_estimator = [mp for mp in tape.measurements if isinstance(mp, (ExpectationMP, VarianceMP))]
-    other = [mp for mp in tape.measurements if not isinstance(mp, (ProbabilityMP, ExpectationMP, VarianceMP))]
+    estimator = []
+    sampler = []
+    no_prim = []
 
-    output_tapes = []
-    if use_sampler:
-        output_tapes.append(qml.tape.QuantumScript(tape.operations, use_sampler, shots=tape.shots))
-    if use_estimator:
-        output_tapes.append(qml.tape.QuantumScript(tape.operations, use_estimator, shots=tape.shots))
-    if other:
-        output_tapes.append(qml.tape.QuantumScript(tape.operations, other, shots=tape.shots))
+    for i, mp in enumerate(tape.measurements):
+        if isinstance(mp, (ExpectationMP, VarianceMP)):
+            estimator.append((mp, i))
+        elif isinstance(mp, ProbabilityMP):
+            sampler.append((mp, i))
+        else:
+            no_prim.append((mp, i))
 
-    return tuple(output_tapes), null_postprocessing
+    order_indices = [[i for mp, i in group] for group in [estimator, sampler, no_prim]]
 
-@transform
-def validate_measurement_types(
-        tape: qml.tape.QuantumTape,
-    ) -> (Sequence[qml.tape.QuantumTape], Callable):
-    """Temporary transform instead of split_measurement_types - until correct splitting of
-    types is implemented, only allow certain groupings of types to catch invalid circuits before executing"""
+    tapes = []
+    if estimator:
+        tapes.extend([qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in estimator])])
+    if sampler:
+        tapes.extend([qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in sampler])])
+    if no_prim:
+        tapes.extend([qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in no_prim])])
 
-    measurement_types = set(type(mp) for mp in tape.measurements)
+    def reorder_fn(res):
+        """re-order the output to the original shape and order"""
+        result = {}
 
-    if measurement_types.issubset({ExpectationMP, VarianceMP}):
-        return (tape,), null_postprocessing
-    if measurement_types.issubset({ProbabilityMP}):
-        return (tape,), null_postprocessing
+        for idx, r in zip(order_indices, res):
+            result.update({k: v for k, v in zip(idx, r)})
 
-    # combination of Probability, Expectation and Variance other than the ones above not allowed
-    if measurement_types.intersection({ProbabilityMP, ExpectationMP, VarianceMP}):
-        raise RuntimeError("Bad measurement combination")
-    return (tape,), null_postprocessing
+        return tuple([result[i] for i in sorted(result.keys())])
+
+    return tapes, reorder_fn
 
 
 def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
@@ -348,12 +348,6 @@ class QiskitDevice2(Device):
         return len(self.wires)
 
     def reset(self):
-        # Reset only internal data, not the options that are determined on
-        # device creation
-        self._reg = QuantumRegister(self.num_wires, "q")
-        self._creg = ClassicalRegister(self.num_wires, "c")
-        self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
-
         self._current_job = None
 
     def stopping_condition(self, op: qml.operation.Operator) -> bool:
@@ -401,9 +395,11 @@ class QiskitDevice2(Device):
             validate_observables, stopping_condition=self.observable_stopping_condition, name=self.name
         )
 
-        transform_program.add_transform(broadcast_expand)
-        # transform_program.add_transform(split_measurement_types)
-        transform_program.add_transform(validate_measurement_types)
+        if self._use_primitives:
+            transform_program.add_transform(split_measurement_types)
+
+        # transform_program.add_transform(broadcast_expand)
+        # missing: split non-commuting, sum_expand, etc.
 
         return transform_program, config
 
@@ -432,45 +428,67 @@ class QiskitDevice2(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
 
-        first_measurement = circuits[0].measurements[0]
+        if not self._use_primitives:
+            results = self._execute_runtime_service(circuits)
+            return results
 
-        if isinstance(first_measurement, (ExpectationMP, VarianceMP)) and self._use_primitives:
+        results = []
+
+        estimator_circuits = [circ for circ in circuits if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP))]
+        sampler_circuits = [circ for circ in circuits if isinstance(circ.measurements[0], ProbabilityMP)]
+        other_circuts = [circ for circ in circuits if not isinstance(circ.measurements[0], (ExpectationMP, VarianceMP, ProbabilityMP))]
+
+        if estimator_circuits:
             # get results from Estimator
-            results = self._execute_estimator(circuits)
-        elif isinstance(first_measurement, ProbabilityMP) and self._use_primitives:
+            result = self._execute_estimator(estimator_circuits)
+            results.append(result)
+        if sampler_circuits:
             # get results from Sampler
-            results = self._execute_sampler(circuits)
-        else:
-            # the old run_service execution (this is the only option sample-based measurements)
-            qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
-            compiled_circuits = self.compile_circuits(qcirc)
+            result = self._execute_sampler(sampler_circuits)
+            results.append(result)
+        if other_circuts:
+            # still use the old run_service execution (this is the only option sample-based measurements)
+            result = self._execute_runtime_service(other_circuts)
+            results.append(result)
 
-            program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
+        return results
 
-            # for kwarg in self.kwargs:
-            #     program_inputs[kwarg] = self.kwargs.get(kwarg)
+    def _execute_runtime_service(self, circuits):
+        """Execution using old runtime_service (can't use runtime sessions)"""
 
-            options = {"backend": self.backend.name}
+        print(f"using old runtime services, with circuits {circuits}")
 
-            # Send circuits to the cloud for execution by the circuit-runner program.
-            job = self.runtime_service.run(
-                program_id="circuit-runner", options=options, inputs=program_inputs
-            )
-            self._current_job = job.result(decoder=RunnerResult)
+        qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
+        compiled_circuits = self.compile_circuits(qcirc)
 
-            results = []
+        program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
 
-            for index, circuit in enumerate(circuits):
-                self._samples = self.generate_samples(index)
-                res = [mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements]
-                single_measurement = len(circuit.measurements) == 1
-                res = res[0] if single_measurement else tuple(res)
-                results.append(res)
+        # for kwarg in self.kwargs:
+        #     program_inputs[kwarg] = self.kwargs.get(kwarg)
+
+        options = {"backend": self.backend.name}
+
+        # Send circuits to the cloud for execution by the circuit-runner program.
+        job = self.runtime_service.run(
+            program_id="circuit-runner", options=options, inputs=program_inputs
+        )
+        self._current_job = job.result(decoder=RunnerResult)
+
+        results = []
+
+        for index, circuit in enumerate(circuits):
+            self._samples = self.generate_samples(index)
+            res = [mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements]
+            single_measurement = len(circuit.measurements) == 1
+            res = res[0] if single_measurement else tuple(res)
+            results.append(res)
 
         return results
 
     def _execute_sampler(self, circuits):
         """Execution for the Sampler primitive"""
+
+        print(f"using sampler, with circuits {circuits}")
 
         qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
         results = []
@@ -486,6 +504,8 @@ class QiskitDevice2(Device):
 
     def _execute_estimator(self, circuits):
 
+        print(f"using estimator, with circuits {circuits}")
+
         # initially we assume only one measurement per tape
         qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=False, measure=False) for circ in circuits]
         results = []
@@ -497,8 +517,8 @@ class QiskitDevice2(Device):
                 pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circ.observables]
                 result = estimator.run([qc]*len(pauli_observables), pauli_observables).result()
                 result = self._process_estimator_job(circ.measurements, result)
-                results.append(result)
-        # raise NotImplementedError
+                results.extend(result)
+
         return results
 
     def _process_estimator_job(self, measurements, job_result):
