@@ -116,12 +116,23 @@ class QiskitDevice2(Device):
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
-        backend (str | Backend): the initialized Qiskit backend
+        backend (Backend): the initialized Qiskit backend
 
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        use_primitives(bool): whether or not to use Qiskit Primitives and the Qiskit Runtime Session. Defaults to False.
+        use_primitives(bool): whether or not to use Qiskit Primitives. Defaults to False. If True,
+            getting expectation values and variance from the backend will use a Qiskit Estimator,
+            and getting probabilities will use a Qiskit Sampler. Other measurement types will continue
+            to return results from the backend without using a Primitive.
+        sampler_options (Options): a Qiskit Options object for specifying handling of Sampler primitives
+            (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
+            for more details.
+        estimator_options (Options): a Qiskit Options object for specifying handling of Estimator primitives
+            (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
+            for more details.
+        session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
+            be created at each device execution.
     """
 
     operations = set(FULL_OPERATION_MAP.keys())
@@ -140,14 +151,18 @@ class QiskitDevice2(Device):
         """The name of the device."""
         return "qiskit.remote2"
 
-    def __init__(self, wires, backend, shots=1024, use_primitives=False, **kwargs):
+    def __init__(self, wires, backend, shots=1024, use_primitives=False, sampler_options=None, estimator_options=None, session=None, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
 
         self._service = QiskitRuntimeService(channel="ibm_quantum")
         self._use_primitives = use_primitives
-        self._session = None
+
+        self._estimator_options = estimator_options
+        self._sampler_options = sampler_options
+
+        self._session = session
 
         # Keep track if the user specified analytic to be True
         if shots is None:
@@ -281,6 +296,8 @@ class QiskitDevice2(Device):
         # so this will be extremely slow if you include them when using primitves. This should at least raise a
         # warning if not outright fail and tell you not to do it this way.
 
+        session = self._session or Session(backend=self.backend)
+
         for circ in circuits:
             if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
                 execute_fn = self._execute_estimator
@@ -288,11 +305,11 @@ class QiskitDevice2(Device):
                 execute_fn = self._execute_sampler
             else:
                 execute_fn = self._execute_runtime_service
-            results.append(execute_fn(circ))
+            results.append(execute_fn(circ, session))
 
         return results
 
-    def _execute_runtime_service(self, circuits):
+    def _execute_runtime_service(self, circuits, session):
         """Execution using old runtime_service (can't use runtime sessions)"""
 
         # in case a single circuit is passed
@@ -326,15 +343,13 @@ class QiskitDevice2(Device):
 
         return tuple(results)
 
-    def _execute_sampler(self, circuit):
+    def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
         results = []
 
-        session = self._session or Session(backend=self.backend)
-
-        sampler = Sampler(session=session)
+        sampler = Sampler(session=session, options=self._sampler_options)
 
         result = sampler.run(qcirc).result()
 
@@ -345,13 +360,11 @@ class QiskitDevice2(Device):
 
         return (result.quasi_dists[0], )
 
-    def _execute_estimator(self, circuit):
+    def _execute_estimator(self, circuit, session):
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
 
-        session = self._session or Session(backend=self.backend)
-
-        estimator = Estimator(session=session)
+        estimator = Estimator(session=session, options=self._estimator_options)
 
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
