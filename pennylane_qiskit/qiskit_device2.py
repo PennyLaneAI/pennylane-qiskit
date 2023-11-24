@@ -26,9 +26,9 @@ import pennylane as qml
 
 from qiskit.compiler import transpile
 
-from qiskit_ibm_runtime import QiskitRuntimeService, Session
+from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler, Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
-from qiskit_ibm_runtime import Sampler, Estimator
+from qiskit_ibm_runtime.options import Options
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
@@ -159,11 +159,6 @@ class QiskitDevice2(Device):
         self._service = QiskitRuntimeService(channel="ibm_quantum")
         self._use_primitives = use_primitives
 
-        self._estimator_options = estimator_options
-        self._sampler_options = sampler_options
-
-        self._session = session
-
         # Keep track if the user specified analytic to be True
         if shots is None:
             # Raise a warning if no shots were specified for a hardware device
@@ -173,6 +168,23 @@ class QiskitDevice2(Device):
                           UserWarning)
 
             self.shots = 1024
+
+        # currently if shots are provided in both the estimator/sampler options and as a kwarg,
+        # the estimator/sampler options will take precedence, but shots will still be used for sampling runs
+        self.estimator_options = estimator_options or Options(execution={"shots": shots})
+        self.sampler_options = sampler_options or Options(execution={"shots": shots})
+
+        # if no shots are provided on the options, use the shots passed to the device (otherwise will default to 4000)
+        if self.estimator_options.execution.shots is None:
+            self.estimator_options.execution.shots = shots
+        if self.sampler_options.execution.shots is None:
+            self.sampler_options.execution.shots = shots
+
+        # I'm not sure if we should allow passing a session directly to a device or if we
+        # should encourage people to use a context manager that will close the session when they are done.
+        # if you have a notebook running a long time it sounds like strange things can happen with your
+        # session timing out that aren't very clear
+        self._session = session
 
         # Perform validation against backend
         b = self.backend
@@ -296,6 +308,7 @@ class QiskitDevice2(Device):
         # so this will be extremely slow if you include them when using primitves. This should at least raise a
         # warning if not outright fail and tell you not to do it this way.
 
+        reset_session = self._session is None
         session = self._session or Session(backend=self.backend)
 
         for circ in circuits:
@@ -306,6 +319,10 @@ class QiskitDevice2(Device):
             else:
                 execute_fn = self._execute_runtime_service
             results.append(execute_fn(circ, session))
+
+        if reset_session:
+            self._session.close()
+            self._session = None
 
         return results
 
@@ -349,7 +366,7 @@ class QiskitDevice2(Device):
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
         results = []
 
-        sampler = Sampler(session=session, options=self._sampler_options)
+        sampler = Sampler(session=session, options=self.sampler_options)
 
         result = sampler.run(qcirc).result()
 
@@ -364,7 +381,7 @@ class QiskitDevice2(Device):
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
 
-        estimator = Estimator(session=session, options=self._estimator_options)
+        estimator = Estimator(session=session, options=self.estimator_options)
 
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
