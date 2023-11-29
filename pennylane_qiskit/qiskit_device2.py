@@ -55,19 +55,6 @@ QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
-
-@contextmanager
-def qiskit_session(device):
-    # Code to acquire session:
-    device._session = Session(backend=device.backend)
-    try:
-        yield device._session
-    finally:
-        # Code to release session:
-        device._session.close()
-        device._session = None
-
-
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
     return isinstance(
