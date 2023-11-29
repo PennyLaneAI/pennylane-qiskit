@@ -20,6 +20,7 @@ for PennyLane with the new device API.
 
 import warnings
 from typing import Union, Callable, Tuple, Sequence
+from contextlib import contextmanager
 
 import numpy as np
 import pennylane as qml
@@ -53,6 +54,18 @@ QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
+
+
+@contextmanager
+def qiskit_session(device):
+    # Code to acquire session:
+    device._session = Session(backend=device.backend)
+    try:
+        yield device._session
+    finally:
+        # Code to release session:
+        device._session.close()
+        device._session = None
 
 
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
@@ -302,13 +315,18 @@ class QiskitDevice2(Device):
             results = self._execute_runtime_service(circuits)
             return results
 
+        measurement_types = set([type(meas) for circ in circuits for meas in circ.measurements])
+        non_primitive_meas = measurement_types - set([ProbabilityMP, ExpectationMP, VarianceMP])
+        if non_primitive_meas:
+            warnings.warn(f"Executing a circuit where some measurement types ({non_primitive_meas}) "
+                          f"do not correspond to Qiskit Primitives. When running on hardware, it is more "
+                          f"efficient to execute these seperately on a device initialized with "
+                          f"``use_primitives=False``")
+
+        mps = [mp for circ in circuits for mp in circ.measurements]
+
         results = []
 
-        # this feels messy because we don't group the circuits before sending them to execute_runtime_service,
-        # so this will be extremely slow if you include them when using primitves. This should at least raise a
-        # warning if not outright fail and tell you not to do it this way.
-
-        reset_session = self._session is None
         session = self._session or Session(backend=self.backend)
 
         for circ in circuits:
@@ -320,9 +338,9 @@ class QiskitDevice2(Device):
                 execute_fn = self._execute_runtime_service
             results.append(execute_fn(circ, session))
 
-        if reset_session:
-            self._session.close()
-            self._session = None
+        if self._session is None:
+            # if this was not a session set on the device, but just one created for this execution, close
+            session.close()
 
         return results
 
