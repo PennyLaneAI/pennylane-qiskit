@@ -19,6 +19,7 @@ for PennyLane with the new device API.
 
 
 import warnings
+import inspect
 from typing import Union, Callable, Tuple, Sequence
 from contextlib import contextmanager
 
@@ -54,6 +55,17 @@ QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
+@contextmanager
+def qiskit_session(device):
+    # Code to acquire session:
+    session = Session(backend=device.backend)
+    device._session = session
+    try:
+        yield session
+    finally:
+        # Code to release session:
+        device._session.close()
+        device._session = None
 
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
@@ -108,6 +120,25 @@ def split_measurement_types(
 
     return tapes, reorder_fn
 
+def qiskit_options_to_flat_dict(options):
+    """Create a dictionary from a Qiskit Options object"""
+    # this will break (or at least overwrite potentially relevant information)
+    # if they name things in some categories on Options the same as things in
+    # other categories, but at that point they've really departed from the kwarg API
+    options_dict = vars(options)
+    all_option_kwargs = {}
+    for key, val in vars(options).items():
+        if not hasattr(val, "__dict__"):
+            if val is not None:
+                all_option_kwargs[key] = val
+
+        else:
+            for k, v in vars(val).items():
+                if v is not None:
+                    all_option_kwargs[k] = v
+
+    return all_option_kwargs
+
 
 class QiskitDevice2(Device):
     r"""Hardware/hardware simulator Qiskit device for PennyLane.
@@ -125,10 +156,7 @@ class QiskitDevice2(Device):
             getting expectation values and variance from the backend will use a Qiskit Estimator,
             and getting probabilities will use a Qiskit Sampler. Other measurement types will continue
             to return results from the backend without using a Primitive.
-        sampler_options (Options): a Qiskit Options object for specifying handling of Sampler primitives
-            (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
-            for more details.
-        estimator_options (Options): a Qiskit Options object for specifying handling of Estimator primitives
+        options (Options): a Qiskit Options object for specifying handling the Qiskit task
             (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
             for more details.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
@@ -151,13 +179,14 @@ class QiskitDevice2(Device):
         """The name of the device."""
         return "qiskit.remote2"
 
-    def __init__(self, wires, backend, shots=1024, use_primitives=False, sampler_options=None, estimator_options=None, session=None, **kwargs):
+    def __init__(self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
 
         self._service = QiskitRuntimeService(channel="ibm_quantum")
         self._use_primitives = use_primitives
+        self._session = session
 
         # Keep track if the user specified analytic to be True
         if shots is None:
@@ -169,22 +198,18 @@ class QiskitDevice2(Device):
 
             self.shots = 1024
 
-        # currently if shots are provided in both the estimator/sampler options and as a kwarg,
-        # the estimator/sampler options will take precedence, but shots will still be used for sampling runs
-        self.estimator_options = estimator_options or Options(execution={"shots": shots})
-        self.sampler_options = sampler_options or Options(execution={"shots": shots})
+        # use device shots, even if shots are defined on the Options - to do this, we update the Options
+        if options and options.execution.shots != 4000:  # 4000 is the default value on Options
+            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
+                          f"passed to the device will be used.")
+        self._options = options or Options()
+        self._options.execution.shots = shots
 
-        # if no shots are provided on the options, use the shots passed to the device (otherwise will default to 4000)
-        if self.estimator_options.execution.shots is None:
-            self.estimator_options.execution.shots = shots
-        if self.sampler_options.execution.shots is None:
-            self.sampler_options.execution.shots = shots
-
-        # I'm not sure if we should allow passing a session directly to a device or if we
-        # should encourage people to use a context manager that will close the session when they are done.
-        # if you have a notebook running a long time it sounds like strange things can happen with your
-        # session timing out that aren't very clear
-        self._session = session
+        # store information used for raw sample based measurements (using old Qiskit API)
+        self._init_kwargs = kwargs
+        self.kwargs = self.combine_kwargs_and_options(kwargs)
+        if self._options.simulator.noise_model:
+            self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
         # Perform validation against backend
         b = self.backend
@@ -194,6 +219,39 @@ class QiskitDevice2(Device):
             )
 
         self.reset()
+
+    def combine_kwargs_and_options(self, kwargs):
+        """Combine the settings defined in options and the settings passed as kwargs, with
+        the definition in options taking precedence if there there is conflicting information"""
+        option_kwargs = qiskit_options_to_flat_dict(self.options)
+
+        overlapping_kwargs = set(kwargs).intersection(set(option_kwargs))
+
+        if overlapping_kwargs:
+            warnings.warn(f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
+                          f"defined in the device Options. The definition in Options will be used.")
+
+        kwargs.update(option_kwargs)
+
+        return kwargs
+
+    @property
+    def options(self):
+        """The Options object defining settings for the backend"""
+        return self._options
+
+    @options.setter
+    def options(self, options: Options):
+        if options.execution.shots != 4000:  # 4000 is the default value on Options
+            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
+                          f"passed to the device will be used.")
+        self._options = options
+        self._options.execution.shots = shots
+
+        # store information used for raw sample based measurements (using old Qiskit API)
+        self.kwargs = self.combine_kwargs_and_options(self._init_kwargs)
+        if self._options.simulator.noise_model:
+            self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
     @property
     def backend(self):
@@ -216,6 +274,9 @@ class QiskitDevice2(Device):
     @property
     def num_wires(self):
         return len(self.wires)
+
+    def update_session(self, session):
+        self._session = session
 
     def reset(self):
         self._current_job = None
@@ -273,6 +334,22 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
+    def get_transpile_args(self, kwargs):
+        """The transpile argument setter.
+
+        Keyword Args:
+            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+                `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+        """
+
+        transpile_sig = inspect.signature(transpile).parameters
+
+        transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
+        transpile_args.pop("circuits", None)
+        transpile_args.pop("backend", None)
+
+        return transpile_args
+
     def compile_circuits(self, circuits):
         r"""Compiles multiple circuits one after the other.
 
@@ -284,9 +361,10 @@ class QiskitDevice2(Device):
         """
         # Compile each circuit object
         compiled_circuits = []
+        transpile_args = self.get_transpile_args(self.kwargs)
 
         for circuit in circuits:
-            compiled_circ = transpile(circuit, backend=self.backend)
+            compiled_circ = transpile(circuit, backend=self.backend, **transpile_args)
             compiled_circ.name = f"circ{len(compiled_circuits)}"
             compiled_circuits.append(compiled_circ)
 
@@ -343,14 +421,19 @@ class QiskitDevice2(Device):
 
         program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
 
-        # for kwarg in self.kwargs:
-        #     program_inputs[kwarg] = self.kwargs.get(kwarg)
+        # update kwargs in case Options has been modified since last execution
+        # self.kwargs is the original kwargs passed to the device
+        for kwarg in self.kwargs:
+            program_inputs[kwarg] = self.kwargs.get(kwarg)
 
-        options = {"backend": self.backend.name}
+        options = {"backend": self.backend.name,
+                   "log_level": self.options.environment.log_level,
+                   "job_tags": self.options.environment.job_tags,
+                   "max_execution_time": self.options.max_execution_time}
 
         # Send circuits to the cloud for execution by the circuit-runner program.
         job = self.service.run(
-            program_id="circuit-runner", options=options, inputs=program_inputs
+            program_id="circuit-runner", options=options, inputs=program_inputs, session_id=session.session_id,
         )
         self._current_job = job.result(decoder=RunnerResult)
 
@@ -369,9 +452,8 @@ class QiskitDevice2(Device):
         """Execution for the Sampler primitive"""
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
-        results = []
 
-        sampler = Sampler(session=session, options=self.sampler_options)
+        sampler = Sampler(session=session, options=self.options)
 
         result = sampler.run(qcirc).result()
 
@@ -386,7 +468,7 @@ class QiskitDevice2(Device):
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
 
-        estimator = Estimator(session=session, options=self.estimator_options)
+        estimator = Estimator(session=session, options=self.options)
 
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
