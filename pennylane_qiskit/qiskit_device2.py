@@ -58,14 +58,15 @@ Result_or_ResultBatch = Union[Result, ResultBatch]
 @contextmanager
 def qiskit_session(device):
     # Code to acquire session:
+    existing_session = device._session
     session = Session(backend=device.backend)
     device._session = session
     try:
         yield session
     finally:
         # Code to release session:
-        device._session.close()
-        device._session = None
+        session.close()
+        device._session = existing_session
 
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
@@ -125,19 +126,18 @@ def qiskit_options_to_flat_dict(options):
     # this will break (or at least overwrite potentially relevant information)
     # if they name things in some categories on Options the same as things in
     # other categories, but at that point they've really departed from the kwarg API
-    options_dict = vars(options)
-    all_option_kwargs = {}
+    options_dict = {}
     for key, val in vars(options).items():
         if not hasattr(val, "__dict__"):
             if val is not None:
-                all_option_kwargs[key] = val
+                options_dict[key] = val
 
         else:
             for k, v in vars(val).items():
                 if v is not None:
-                    all_option_kwargs[k] = v
+                    options_dict[k] = v
 
-    return all_option_kwargs
+    return options_dict
 
 
 class QiskitDevice2(Device):
@@ -161,6 +161,10 @@ class QiskitDevice2(Device):
             for more details.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
+        **kwargs: transpilation and runtime kwargs to be used for measurements without Qiskit Primitives.
+            If any values are defined both in ``options`` and in the remaining ``kwargs``, the value
+            provided in ``options`` will take precedence. These kwargs will be ignored for all Primitive-based
+            measurements on the device.
     """
 
     operations = set(FULL_OPERATION_MAP.keys())
@@ -188,7 +192,6 @@ class QiskitDevice2(Device):
         self._use_primitives = use_primitives
         self._session = session
 
-        # Keep track if the user specified analytic to be True
         if shots is None:
             # Raise a warning if no shots were specified for a hardware device
             warnings.warn(f"The analytic calculation of expectations, variances and probabilities "
@@ -205,7 +208,7 @@ class QiskitDevice2(Device):
         self._options = options or Options()
         self._options.execution.shots = shots
 
-        # store information used for raw sample based measurements (using old Qiskit API)
+        # store information used for performing raw sample based measurements (using old Qiskit API)
         self._init_kwargs = kwargs
         self.kwargs = self.combine_kwargs_and_options(kwargs)
         if self._options.simulator.noise_model:
@@ -226,14 +229,14 @@ class QiskitDevice2(Device):
         option_kwargs = qiskit_options_to_flat_dict(self.options)
 
         overlapping_kwargs = set(kwargs).intersection(set(option_kwargs))
-
         if overlapping_kwargs:
             warnings.warn(f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
                           f"defined in the device Options. The definition in Options will be used.")
 
-        kwargs.update(option_kwargs)
+        new_kwargs = kwargs.copy()
+        new_kwargs.update(option_kwargs)
 
-        return kwargs
+        return new_kwargs
 
     @property
     def options(self):
@@ -241,17 +244,18 @@ class QiskitDevice2(Device):
         return self._options
 
     @options.setter
-    def options(self, options: Options):
-        if options.execution.shots != 4000:  # 4000 is the default value on Options
+    def options(self, new_options: Options):
+        if new_options.execution.shots != 4000:  # 4000 is the default value on Options
             warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
                           f"passed to the device will be used.")
-        self._options = options
-        self._options.execution.shots = shots
+        self._options = new_options
+        self._options.execution.shots = self.shots
 
         # store information used for raw sample based measurements (using old Qiskit API)
         self.kwargs = self.combine_kwargs_and_options(self._init_kwargs)
         if self._options.simulator.noise_model:
             self.backend.set_options(noise_model=self.options.simulator.noise_model)
+
 
     @property
     def backend(self):
@@ -376,23 +380,13 @@ class QiskitDevice2(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
 
+        session = self._session or Session(backend=self.backend)
+
         if not self._use_primitives:
-            results = self._execute_runtime_service(circuits)
+            results = self._execute_runtime_service(circuits, session=session)
             return results
 
-        measurement_types = set([type(meas) for circ in circuits for meas in circ.measurements])
-        non_primitive_meas = measurement_types - set([ProbabilityMP, ExpectationMP, VarianceMP])
-        if non_primitive_meas:
-            warnings.warn(f"Executing a circuit where some measurement types ({non_primitive_meas}) "
-                          f"do not correspond to Qiskit Primitives. When running on hardware, it is more "
-                          f"efficient to execute these seperately on a device initialized with "
-                          f"``use_primitives=False``")
-
-        mps = [mp for circ in circuits for mp in circ.measurements]
-
         results = []
-
-        session = self._session or Session(backend=self.backend)
 
         for circ in circuits:
             if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
@@ -475,7 +469,9 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.observables]
+        print(pauli_observables)
         result = estimator.run([qcirc]*len(pauli_observables), pauli_observables).result()
+        self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
         return result
