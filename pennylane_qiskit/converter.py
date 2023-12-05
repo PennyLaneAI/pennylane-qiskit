@@ -327,18 +327,18 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
             pre-measurement into the eigenbasis of the observables.
     """
 
-    reg = QuantumRegister(register_size, "q")
-    creg = ClassicalRegister(register_size, "c")
-    qc = QuantumCircuit(register_size, register_size, name="temp")
+    reg = QuantumRegister(register_size)
+    creg = ClassicalRegister(register_size)
+    qc = QuantumCircuit(reg, creg, name="temp")
 
     for op in circuit.operations:
-        qc &= operation_to_qiskit(op, register_size)
+        qc &= operation_to_qiskit(op, reg, creg)
 
     # rotate the state for measurement in the computational basis
     if diagonalize:
         rotations = circuit.diagonalizing_gates
         for rot in rotations:
-            qc &= operation_to_qiskit(rot, register_size)
+            qc &= operation_to_qiskit(rot, reg, creg)
 
     if measure:
         # barrier ensures we first do all operations, then do all measurements
@@ -348,7 +348,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
 
     return qc
 
-def operation_to_qiskit(operation, register_size=None):
+def operation_to_qiskit(operation, reg, creg):
     """Take a Pennylane operator and convert to a Qiskit circuit
 
     Args:
@@ -360,12 +360,6 @@ def operation_to_qiskit(operation, register_size=None):
     """
     op_wires = operation.wires
     par = operation.parameters
-
-    # make quantum and classical registers for the full register
-    if register_size is None:
-        register_size = len(op_wires)
-    reg = QuantumRegister(register_size, "q")
-    creg = ClassicalRegister(register_size, "c")
 
     for idx, p in enumerate(par):
         if isinstance(p, np.ndarray):

@@ -469,7 +469,6 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.observables]
-        print(pauli_observables)
         result = estimator.run([qcirc]*len(pauli_observables), pauli_observables).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
