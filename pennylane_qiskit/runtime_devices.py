@@ -200,27 +200,21 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.quasi_dists[circuit_id].binary_probabilities()
+        # we recover a quasi-probability distribution, 
+        # which can have negative probabilities
+        old_counts = self._current_job.quasi_dists[circuit_id].binary_probabilities()
+        # we then transform it into the nearest probability distribution
+        counts = self._current_job.quasi_dists[circuit_id].nearest_probability_distribution().binary_probabilities()
+        
+        # Calculate number of states by taking the length of the first key
         keys = list(counts.keys())
-
         number_of_states = 2 ** len(keys[0])
-
-        # Convert state to int
-        for i, elem in enumerate(keys):
-            keys[i] = int(elem, 2)
-
-        values = list(counts.values())
-        states, probs = zip(*sorted(zip(keys, values)))
-
-        states = list(states)
-        probs = list(probs)
-
-        # If prob for a state is 0, it does not appear in counts.
-        if len(states) != number_of_states:
-            for i in range(0, number_of_states):
-                if states[i] != i:
-                    states.insert(i, i)
-                    probs.insert(i, 0.0)
+        
+        # Initialize probabilities to 0
+        probs = [0] * number_of_states
+        # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))
+        for state, prob in counts.items():
+            probs[int(state, 2)] = prob
 
         return self.states_to_binary(
             self.sample_basis_states(number_of_states, probs), self.num_wires
