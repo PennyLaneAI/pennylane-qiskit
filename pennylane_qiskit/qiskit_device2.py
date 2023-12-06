@@ -205,13 +205,12 @@ class QiskitDevice2(Device):
         if options and options.execution.shots != 4000:  # 4000 is the default value on Options
             warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
                           f"passed to the device will be used.")
-        self._options = options or Options()
-        self._options.execution.shots = shots
+        self.options = options or Options()
+        self.options.execution.shots = shots
 
         # store information used for performing raw sample based measurements (using old Qiskit API)
         self._init_kwargs = kwargs
-        self.kwargs = self.combine_kwargs_and_options(kwargs)
-        if self._options.simulator.noise_model:
+        if self.options.simulator.noise_model:
             self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
         # Perform validation against backend
@@ -222,40 +221,7 @@ class QiskitDevice2(Device):
             )
 
         self.reset()
-
-    def combine_kwargs_and_options(self, kwargs):
-        """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there there is conflicting information"""
-        option_kwargs = qiskit_options_to_flat_dict(self.options)
-
-        overlapping_kwargs = set(kwargs).intersection(set(option_kwargs))
-        if overlapping_kwargs:
-            warnings.warn(f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
-                          f"defined in the device Options. The definition in Options will be used.")
-
-        new_kwargs = kwargs.copy()
-        new_kwargs.update(option_kwargs)
-
-        return new_kwargs
-
-    @property
-    def options(self):
-        """The Options object defining settings for the backend"""
-        return self._options
-
-    @options.setter
-    def options(self, new_options: Options):
-        if new_options.execution.shots != 4000:  # 4000 is the default value on Options
-            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
-                          f"passed to the device will be used.")
-        self._options = new_options
-        self._options.execution.shots = self.shots
-
-        # store information used for raw sample based measurements (using old Qiskit API)
-        self.kwargs = self.combine_kwargs_and_options(self._init_kwargs)
-        if self._options.simulator.noise_model:
-            self.backend.set_options(noise_model=self.options.simulator.noise_model)
-
+        self._update_kwargs()
 
     @property
     def backend(self):
@@ -338,6 +304,24 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
+    def _update_kwargs(self):
+        """Combine the settings defined in options and the settings passed as kwargs, with
+        the definition in options taking precedence if there there is conflicting information"""
+        option_kwargs = qiskit_options_to_flat_dict(self.options)
+
+        overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
+        if overlapping_kwargs:
+            warnings.warn(f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
+                          f"defined in the device Options. The definition in Options will be used.")
+        if options.execution.shots != 4000:  # 4000 is the default value on Options
+            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
+                          f"passed to the device will be used.")
+
+        kwargs = self._init_kwargs.copy()
+        kwargs.update(option_kwargs)
+
+        self._kwargs = kwargs
+
     def get_transpile_args(self, kwargs):
         """The transpile argument setter.
 
@@ -365,7 +349,7 @@ class QiskitDevice2(Device):
         """
         # Compile each circuit object
         compiled_circuits = []
-        transpile_args = self.get_transpile_args(self.kwargs)
+        transpile_args = self.get_transpile_args(self._kwargs)
 
         for circuit in circuits:
             compiled_circ = transpile(circuit, backend=self.backend, **transpile_args)
@@ -406,6 +390,9 @@ class QiskitDevice2(Device):
     def _execute_runtime_service(self, circuits, session):
         """Execution using old runtime_service (can't use runtime sessions)"""
 
+        # update kwargs in case Options has been modified since last execution
+        self._update_kwargs()
+
         # in case a single circuit is passed
         if isinstance(circuits, (QuantumTape, QuantumScript)):
             circuits = [circuits]
@@ -415,10 +402,8 @@ class QiskitDevice2(Device):
 
         program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
 
-        # update kwargs in case Options has been modified since last execution
-        # self.kwargs is the original kwargs passed to the device
-        for kwarg in self.kwargs:
-            program_inputs[kwarg] = self.kwargs.get(kwarg)
+        for kwarg in self._kwargs:
+            program_inputs[kwarg] = self._kwargs.get(kwarg)
 
         options = {"backend": self.backend.name,
                    "log_level": self.options.environment.log_level,
