@@ -315,6 +315,9 @@ def load_qasm_from_file(file: str):
     """
     return load(QuantumCircuit.from_qasm_file(file))
 
+# diagonalize is currently only used if measuring
+# maybe always diagonalize when measuring, and never when not?
+# will this be used for a user-facing function to convert from PL to Qiskit as well?
 def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     """Builds the circuit objects based on the operations and measurements
     specified to apply.
@@ -328,6 +331,15 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     """
 
     reg = QuantumRegister(register_size)
+
+    if not measure:
+        qc = QuantumCircuit(reg, name="temp")
+
+        for op in circuit.operations:
+            qc &= operation_to_qiskit(op, reg)
+
+        return qc
+
     creg = ClassicalRegister(register_size)
     qc = QuantumCircuit(reg, creg, name="temp")
 
@@ -340,15 +352,14 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
         for rot in rotations:
             qc &= operation_to_qiskit(rot, reg, creg)
 
-    if measure:
-        # barrier ensures we first do all operations, then do all measurements
-        qc.barrier(reg)
-        # we always measure the full register
-        qc.measure(reg, creg)
+    # barrier ensures we first do all operations, then do all measurements
+    qc.barrier(reg)
+    # we always measure the full register
+    qc.measure(reg, creg)
 
     return qc
 
-def operation_to_qiskit(operation, reg, creg):
+def operation_to_qiskit(operation, reg, creg=None):
     """Take a Pennylane operator and convert to a Qiskit circuit
 
     Args:
@@ -384,7 +395,10 @@ def operation_to_qiskit(operation, reg, creg):
         if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
             qregs = list(reversed(qregs))
 
-    dag = circuit_to_dag(QuantumCircuit(reg, creg, name=""))
+    if creg:
+        dag = circuit_to_dag(QuantumCircuit(reg, creg, name=""))
+    else:
+        dag = circuit_to_dag(QuantumCircuit(reg, name=""))
     gate = mapped_operation(*par)
 
     dag.apply_operation_back(gate, qargs=qregs)
