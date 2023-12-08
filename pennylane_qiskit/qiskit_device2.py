@@ -313,10 +313,11 @@ class QiskitDevice2(Device):
         if overlapping_kwargs:
             warnings.warn(f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
                           f"defined in the device Options. The definition in Options will be used.")
-        if options.execution.shots != 4000:  # 4000 is the default value on Options
+        if option_kwargs["shots"] != 4000 and option_kwargs["shots"] != self.shots.total_shots:  # 4000 is the default value on Options
             warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
                           f"passed to the device will be used.")
 
+        option_kwargs.pop("shots")
         kwargs = self._init_kwargs.copy()
         kwargs.update(option_kwargs)
 
