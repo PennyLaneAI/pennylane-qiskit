@@ -200,10 +200,7 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        # we recover a quasi-probability distribution, 
-        # which can have negative probabilities
-        old_counts = self._current_job.quasi_dists[circuit_id].binary_probabilities()
-        # we then transform it into the nearest probability distribution
+        # we get nearest probability distribution because the quasi-distribution may contain negative probabilities
         counts = self._current_job.quasi_dists[circuit_id].nearest_probability_distribution().binary_probabilities()
         
         # Calculate number of states by taking the length of the first key
