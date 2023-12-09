@@ -202,17 +202,14 @@ class IBMQSamplerDevice(IBMQDevice):
         """
         # we get nearest probability distribution because the quasi-distribution may contain negative probabilities
         counts = self._current_job.quasi_dists[circuit_id].nearest_probability_distribution().binary_probabilities()
-        
         # Calculate number of states by taking the length of the first key
         keys = list(counts.keys())
         number_of_states = 2 ** len(keys[0])
-        
         # Initialize probabilities to 0
         probs = [0] * number_of_states
         # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))
         for state, prob in counts.items():
-            probs[int(state, 2)] = prob
-
+            probs[int(state[::-1], 2)] = prob
         return self.states_to_binary(
             self.sample_basis_states(number_of_states, probs), self.num_wires
         )
