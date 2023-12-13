@@ -211,6 +211,7 @@ class IBMQSamplerDevice(IBMQDevice):
             # Formatting all strings to the same lenght
             while len(state) < self.num_wires:
                 state = '0' + state[:]
+            # Inverting the order to recover Pennylane convention
             probs[int(state[::-1], 2)] = prob
         return self.states_to_binary(
             self.sample_basis_states(number_of_states, probs), self.num_wires
