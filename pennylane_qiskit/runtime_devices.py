@@ -208,6 +208,7 @@ class IBMQSamplerDevice(IBMQDevice):
         probs = [0] * number_of_states
         # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))
         for state, prob in counts.items():
+            # Formatting all strings to the same lenght
             while len(state) < self.num_wires:
                 state = '0' + state[:]
             probs[int(state[::-1], 2)] = prob
