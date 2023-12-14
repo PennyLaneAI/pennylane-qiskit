@@ -1,6 +1,61 @@
-# Release 0.33.0-dev
+# Release 0.34.0-dev
 
 ### New features since last release
+
+### Improvements 🛠
+
+### Breaking changes 💔
+
+### Deprecations 👋
+
+### Documentation 📝
+
+### Bug fixes 🐛
+
+* The kwargs `job_tags` and `session_id` are passed to the correct arguments in the 
+  `circuit_runner` device so that they will be used in the Qiskit backend; these 
+  were previously ignored.
+  [(#358)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/358)
+
+* In `IBMQSamplerDevice` the `generate_samples` function:
+  1. gets counts from the nearest probability distribution because 
+  the quasi-distribution may contain negative probabilities. 
+  2. Avoid indexing error. 
+  3. Returns the qubit with Pennylane convention instead of Qiskit convention.
+  [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
+
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Lillian Frederiksen
+Francesco Scala
+
+
+---
+# Release 0.33.1
+
+### Improvements 🛠
+
+* Stop using the now-deprecated `tape.is_sampled` property.
+  [(#348)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/348)
+
+### Bug fixes 🐛
+
+* Update conversion of PennyLane to Qiskit operators to accommodate 
+  the addition of Singleton classes in the newest version of Qiskit.
+  [(#347)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/347)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Lillian Frederiksen,
+Matthew Silverman
+
+---
+# Release 0.33.0
 
 ### Improvements 🛠
 
@@ -11,12 +66,6 @@
 
 * The old return type system has been removed.
   [(#331)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/331)
-
-### Deprecations 👋
-
-### Documentation 📝
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 

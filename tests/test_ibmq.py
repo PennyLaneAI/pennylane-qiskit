@@ -14,6 +14,7 @@
 r"""
 This module contains tests for PennyLane IBMQ devices.
 """
+from functools import partial
 import numpy as np
 import pennylane as qml
 import pytest
@@ -198,7 +199,7 @@ class TestIBMQWithRealAccount:
         submitted to IBMQ once."""
         dev = IBMQDevice(wires=2, backend="ibmq_qasm_simulator", shots=shots)
 
-        @qml.batch_params(all_operations=True)
+        @partial(qml.batch_params, all_operations=True)
         @qml.qnode(dev)
         def circuit(theta, phi):
             qml.RX(theta, wires=0)

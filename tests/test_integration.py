@@ -1,5 +1,6 @@
 import sys
 
+from functools import partial
 import numpy as np
 import pennylane as qml
 from pennylane.numpy import tensor
@@ -519,7 +520,7 @@ class TestBatchExecution:
         spy1 = mocker.spy(QiskitDevice, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
-        @qml.batch_params(all_operations=True)
+        @partial(qml.batch_params, all_operations=True)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""

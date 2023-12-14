@@ -5,12 +5,12 @@ cachetools==5.0.0
 certifi==2023.7.22
 cffi==1.15.1
 charset-normalizer==2.0.12
-cryptography==39.0.1
+cryptography==41.0.7
 Cython==0.29.28
-dill==0.3.4
+dill==0.3.6
 future==0.18.3
 idna==3.3
-mpmath==1.2.1
+mpmath==1.3.0
 networkx==3.1
 ninja==1.11.1
 ntlm-auth==1.5.0
@@ -30,7 +30,7 @@ qiskit-ibm-runtime==0.9.3
 qiskit-ibm-provider==0.5.2
 qiskit-ignis==0.7.1
 qiskit-terra==0.23.3
-requests==2.27.1
+requests==2.31.0
 requests-ntlm==1.1.0
 retworkx==0.11.0
 scipy==1.10.1

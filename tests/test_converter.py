@@ -267,22 +267,6 @@ class TestConverter:
             with recorder:
                 quantum_circuit(params={theta: x, phi: y})
 
-    def test_quantum_circuit_error_by_passing_wrong_parameters(self, recorder):
-        """Tests the load method for a QuantumCircuit raises a QiskitError,
-        if the wrong type of arguments were passed."""
-
-        theta = Parameter("θ")
-        angle = np.tensor("some_string_instead_of_an_angle", requires_grad=False)
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(theta, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(QiskitError):
-            with recorder:
-                quantum_circuit(params={theta: angle})
-
     def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
         """Tests the load method raises a QiskitError if arguments
         that are not required were passed."""
