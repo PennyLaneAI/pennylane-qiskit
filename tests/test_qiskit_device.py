@@ -140,31 +140,6 @@ class TestBatchExecution:
 
         assert spy.call_count == n_tapes
 
-    def test_result_legacy(self, device, tol):
-        """Tests that the result has the correct shape and entry types."""
-        # TODO: remove once the legacy return system is removed.
-        qml.disable_return()
-        dev = device(2)
-        tapes = [self.tape1, self.tape2]
-        res = dev.batch_execute(tapes)
-
-        # We're calling device methods directly, need to reset before the next
-        # execution
-        dev.reset()
-        tape1_expected = dev.execute(self.tape1)
-
-        dev.reset()
-        tape2_expected = dev.execute(self.tape2)
-
-        assert len(res) == 2
-        assert isinstance(res[0], np.ndarray)
-        assert np.allclose(res[0], tape1_expected, atol=0)
-
-        assert isinstance(res[1], np.ndarray)
-        assert np.allclose(res[1], tape2_expected, atol=0)
-
-        qml.enable_return()
-
     def test_result(self, device, tol):
         """Tests that the result has the correct shape and entry types."""
         dev = device(2)

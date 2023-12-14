@@ -1,5 +1,6 @@
 import sys
 
+from functools import partial
 import numpy as np
 import pennylane as qml
 from pennylane.numpy import tensor
@@ -293,12 +294,12 @@ class TestPLOperations:
 
     @pytest.mark.parametrize("shots", [None, 1000])
     def test_rotation(self, init_state, state_vector_device, shots, tol):
-        """Test that the QubitStateVector and Rot operations are decomposed using a
+        """Test that the StatePrep and Rot operations are decomposed using a
         Qiskit device with statevector backend"""
 
         dev = state_vector_device(1)
 
-        if "unitary" in dev.backend_name:
+        if dev._is_unitary_backend:
             pytest.skip("Test only runs for backends that are not the unitary simulator.")
 
         state = init_state(1)
@@ -319,7 +320,7 @@ class TestPLOperations:
 
         @qml.qnode(dev)
         def qubitstatevector_and_rot():
-            qml.QubitStateVector(state, wires=[0])
+            qml.StatePrep(state, wires=[0])
             qml.Rot(a, b, c, wires=[0])
             return qml.expval(qml.Identity(0))
 
@@ -480,7 +481,7 @@ class TestNoise:
         bit_flip = aer.noise.pauli_error([("X", 1), ("I", 0)])
 
         # Create a noise model where the RX operation always flips the bit
-        noise_model.add_all_qubit_quantum_error(bit_flip, ["z"])
+        noise_model.add_all_qubit_quantum_error(bit_flip, ["z", "rz"])
 
         dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
 
@@ -519,7 +520,7 @@ class TestBatchExecution:
         spy1 = mocker.spy(QiskitDevice, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
-        @qml.batch_params(all_operations=True)
+        @partial(qml.batch_params, all_operations=True)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""

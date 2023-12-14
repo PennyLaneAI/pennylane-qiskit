@@ -61,7 +61,7 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit():
-            qml.QubitStateVector(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
+            qml.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
             qml.adjoint(op(wires=[0, 1]))
             return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
 
@@ -192,7 +192,7 @@ class TestInverses:
 
         @qml.qnode(dev)
         def circuit():
-            qml.QubitStateVector(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
+            qml.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
             qml.adjoint(op(*np.negative(par), wires=[0, 1]))
             return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
 

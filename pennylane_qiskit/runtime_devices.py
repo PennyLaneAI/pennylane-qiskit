@@ -67,11 +67,16 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
             program_inputs[kwarg] = self.kwargs.get(kwarg)
 
         # Specify the backend.
-        options = {"backend": self.backend.name}
+        options = {"backend": self.backend.name, "job_tags": self.kwargs.get("job_tags")}
+
+        session_id = self.kwargs.get("session_id")
 
         # Send circuits to the cloud for execution by the circuit-runner program.
         job = self.runtime_service.run(
-            program_id="circuit-runner", options=options, inputs=program_inputs
+            program_id="circuit-runner",
+            options=options,
+            inputs=program_inputs,
+            session_id=session_id,
         )
         self._current_job = job.result(decoder=RunnerResult)
 
@@ -200,28 +205,23 @@ class IBMQSamplerDevice(IBMQDevice):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-        counts = self._current_job.quasi_dists[circuit_id].binary_probabilities()
-        keys = list(counts.keys())
-
-        number_of_states = 2 ** len(keys[0])
-
-        # Convert state to int
-        for i, elem in enumerate(keys):
-            keys[i] = int(elem, 2)
-
-        values = list(counts.values())
-        states, probs = zip(*sorted(zip(keys, values)))
-
-        states = list(states)
-        probs = list(probs)
-
-        # If prob for a state is 0, it does not appear in counts.
-        if len(states) != number_of_states:
-            for i in range(0, number_of_states):
-                if states[i] != i:
-                    states.insert(i, i)
-                    probs.insert(i, 0.0)
-
+        # We get nearest probability distribution because the quasi-distribution may contain negative probabilities
+        counts = (
+            self._current_job.quasi_dists[circuit_id]
+            .nearest_probability_distribution()
+            .binary_probabilities()
+        )
+        # Since qiskit does not return padded string we need to recover the number of qubits with self.num_wires
+        number_of_states = 2**self.num_wires
+        # Initialize probabilities to 0
+        probs = [0] * number_of_states
+        # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))
+        for state, prob in counts.items():
+            # Formatting all strings to the same lenght
+            while len(state) < self.num_wires:
+                state = "0" + state[:]
+            # Inverting the order to recover Pennylane convention
+            probs[int(state[::-1], 2)] = prob
         return self.states_to_binary(
             self.sample_basis_states(number_of_states, probs), self.num_wires
         )
