@@ -31,7 +31,7 @@ qiskit-ibm-provider==0.7.2
 qiskit-ignis==0.7.1
 qiskit-terra==0.23.3
 requests==2.31.0
-requests-ntlm==1.1.0
+requests-ntlm==1.2.0
 retworkx==0.11.0
 scipy==1.10.1
 semantic-version==2.10.0
