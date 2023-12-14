@@ -25,7 +25,7 @@ from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
 import pennylane as qml
-import pennylane.ops.qubit as pennylane_ops
+import pennylane.ops as pennylane_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes
@@ -129,7 +129,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
     """Utility function that executes an operation that is natively supported by PennyLane.
 
     Args:
-        operation_name (str): wires specified for the template
+        operation_name (str): Name of the PL operator to be executed
         parameters (str): parameters of the operation that will be executed
         wires (list): wires of the operation
     """
@@ -137,7 +137,7 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
 
     if not parameters:
         operation(wires=wires)
-    elif operation_name == "QubitStateVector":
+    elif operation_name in ["QubitStateVector", "StatePrep"]:
         operation(np.array(parameters), wires=wires)
     else:
         operation(*parameters, wires=wires)
@@ -179,7 +179,8 @@ def load(quantum_circuit: QuantumCircuit):
 
         # Processing the dictionary of parameters passed
         for op, qargs, cargs in qc.data:
-            instruction_name = op.__class__.__name__
+            # the new Singleton classes have different names than the objects they represent, but base_class.__name__ still matches
+            instruction_name = getattr(op, "base_class", op.__class__).__name__
 
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
 
@@ -188,7 +189,11 @@ def load(quantum_circuit: QuantumCircuit):
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
-            if instruction_name in inv_map and inv_map[instruction_name] in pennylane_ops.ops:
+            # pylint:disable=protected-access
+            if (
+                instruction_name in inv_map
+                and inv_map[instruction_name] in pennylane_ops._qubit__ops__
+            ):
                 # Extract the bound parameters from the operation. If the bound parameters are a
                 # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
                 # variable from the var_ref_map dictionary.
@@ -206,8 +211,8 @@ def load(quantum_circuit: QuantumCircuit):
                             for i_ordered_params in ordered_params:
                                 f_args.append(var_ref_map.get(i_ordered_params))
                             pl_parameters.append(f(*f_args))
-                        else:
-                            pl_parameters.append(float(p))
+                        else:  # needed for qiskit<0.43.1
+                            pl_parameters.append(float(p))  # pragma: no cover
                     else:
                         pl_parameters.append(p)
 
