@@ -67,11 +67,16 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
             program_inputs[kwarg] = self.kwargs.get(kwarg)
 
         # Specify the backend.
-        options = {"backend": self.backend.name}
+        options = {"backend": self.backend.name, "job_tags": self.kwargs.get("job_tags")}
+
+        session_id = self.kwargs.get("session_id")
 
         # Send circuits to the cloud for execution by the circuit-runner program.
         job = self.runtime_service.run(
-            program_id="circuit-runner", options=options, inputs=program_inputs
+            program_id="circuit-runner",
+            options=options,
+            inputs=program_inputs,
+            session_id=session_id,
         )
         self._current_job = job.result(decoder=RunnerResult)
 

@@ -12,6 +12,11 @@
 
 ### Bug fixes 🐛
 
+* The kwargs `job_tags` and `session_id` are passed to the correct arguments in the 
+  `circuit_runner` device so that they will be used in the Qiskit backend; these 
+  were previously ignored.
+  [(#358)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/358)
+
 * In `IBMQSamplerDevice` the `generate_samples` function:
   1. gets counts from the nearest probability distribution because 
   the quasi-distribution may contain negative probabilities. 
@@ -24,7 +29,9 @@
 
 This release contains contributions from (in alphabetical order):
 
+Lillian Frederiksen
 Francesco Scala
+
 
 ---
 # Release 0.33.1
