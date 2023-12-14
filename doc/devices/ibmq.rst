@@ -15,8 +15,8 @@ IBM Q account. If the device finds no account it will raise an error:
 
     'No active IBM Q account, and no IBM Q token provided.
 
-You can use the ``qiskit.IBMQ.save_account("<my_token>")`` function to permanently store an account,
-and the ``qiskit.IBMQ.load_account()`` function to load the stored account in a given session.
+You can use the ``qiskit_ibm_provider.IBMProvider.save_account("<my_token>")`` function to permanently
+store an account, and the account will be automatically used from then onward.
 Alternatively, you can specify the token with PennyLane via the
 `PennyLane configuration file <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`__ by
 adding the section
@@ -34,6 +34,11 @@ You may also directly pass your IBM Q API token to the device:
 
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', ibmqx_token="XXX")
 
+You may also save your token as an environment variable by running the following in a terminal:
+
+.. code::
+
+    export IBMQX_TOKEN=<my_token>
 
 .. warning:: Never publish code containing your token online.
 
@@ -58,8 +63,8 @@ Custom providers can be passed as arguments when a ``qiskit.ibmq`` device is cre
 
 .. code-block:: python
 
-    from qiskit import IBMQ
-    provider = IBMQ.enable_account('XYZ')
+    from qiskit_ibm_provider import IBMProvider
+    provider = IBMProvider("XYZ")
 
     import pennylane as qml
     dev = qml.device('qiskit.ibmq', wires=2, backend='ibmq_qasm_simulator', provider=provider)
@@ -76,4 +81,4 @@ Custom provider options can also be passed as keyword arguments when creating a 
                      ibmqx_token='XXX', hub='MYHUB', group='MYGROUP', project='MYPROJECT')
 
 More details on Qiskit providers can be found
-in the `IBMQ provider documentation <https://qiskit.org/documentation/apidoc/ibmq-provider.html>`_.
+in the `IBMQ provider documentation <https://qiskit.org/ecosystem/ibm-provider/stubs/qiskit_ibm_provider.IBMProvider.html>`_.

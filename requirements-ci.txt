@@ -1,5 +1,4 @@
-git+https://github.com/PennyLaneAI/pennylane.git
+pennylane>=0.32
 qiskit
-mthree
 numpy
 sympy

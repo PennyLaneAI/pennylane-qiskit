@@ -1,18 +1,19 @@
 import sys
 
+from functools import partial
 import numpy as np
 import pennylane as qml
 from pennylane.numpy import tensor
 import pytest
 import qiskit
-import qiskit.providers.aer as aer
+import qiskit_aer as aer
 
-from pennylane_qiskit import AerDevice, BasicAerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
+from qiskit.providers import QiskitBackendNotFoundError
 
 from conftest import state_backends
 
-pldevices = [("qiskit.aer", qiskit.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+pldevices = [("qiskit.aer", aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
 
 
 class TestDeviceIntegration:
@@ -33,6 +34,42 @@ class TestDeviceIntegration:
         assert dev.provider == d[1]
         assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
+    @pytest.mark.parametrize("d", pldevices)
+    def test_load_remote_device_with_backend_instance(self, d, backend):
+        """Test that the qiskit.remote device loads correctly when passed a backend instance."""
+        _, provider = d
+
+        try:
+            backend_instance = provider.get_backend(backend)
+        except QiskitBackendNotFoundError:
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        dev = qml.device("qiskit.remote", wires=2, backend=backend_instance, shots=1024)
+        assert dev.num_wires == 2
+        assert dev.shots == 1024
+        assert dev.short_name == "qiskit.remote"
+        assert dev.provider is None
+        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+
+    @pytest.mark.parametrize("d", pldevices)
+    def test_load_remote_device_by_name(self, d, backend):
+        """Test that the qiskit.remote device loads correctly when passed a provider and a backend
+        name. This test is equivalent to `test_load_device` but on the qiskit.remote device instead
+        of specialized devices that expose more configuration options."""
+        _, provider = d
+
+        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
+            d[0] == "qiskit.basicaer" and "aer" in backend
+        ):
+            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        dev = qml.device("qiskit.remote", wires=2, provider=provider, backend=backend, shots=1024)
+        assert dev.num_wires == 2
+        assert dev.shots == 1024
+        assert dev.short_name == "qiskit.remote"
+        assert dev.provider == provider
+        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+
     def test_incorrect_backend(self):
         """Test that exception is raised if name is incorrect"""
         with pytest.raises(ValueError, match="Backend 'none' does not exist"):
@@ -44,6 +81,12 @@ class TestDeviceIntegration:
             ValueError, match=r"Backend 'aer_simulator\_statevector' supports maximum"
         ):
             qml.device("qiskit.aer", wires=100, method="statevector")
+
+    def test_remote_device_no_provider(self):
+        """Test that the qiskit.remote device raises a ValueError if passed a backend
+        by name but no provider to look up the name on."""
+        with pytest.raises(ValueError, match=r"Must pass a provider"):
+            qml.device("qiskit.remote", wires=2, backend="aer_simulator_statevector")
 
     def test_args(self):
         """Test that the device requires correct arguments"""
@@ -251,12 +294,12 @@ class TestPLOperations:
 
     @pytest.mark.parametrize("shots", [None, 1000])
     def test_rotation(self, init_state, state_vector_device, shots, tol):
-        """Test that the QubitStateVector and Rot operations are decomposed using a
+        """Test that the StatePrep and Rot operations are decomposed using a
         Qiskit device with statevector backend"""
 
         dev = state_vector_device(1)
 
-        if "unitary" in dev.backend_name:
+        if dev._is_unitary_backend:
             pytest.skip("Test only runs for backends that are not the unitary simulator.")
 
         state = init_state(1)
@@ -277,7 +320,7 @@ class TestPLOperations:
 
         @qml.qnode(dev)
         def qubitstatevector_and_rot():
-            qml.QubitStateVector(state, wires=[0])
+            qml.StatePrep(state, wires=[0])
             qml.Rot(a, b, c, wires=[0])
             return qml.expval(qml.Identity(0))
 
@@ -330,42 +373,6 @@ class TestPLOperations:
 
 class TestPLTemplates:
     """Integration tests for checking certain PennyLane templates."""
-
-    def test_random_layers_tensor_unwrapped(self, monkeypatch):
-        """Test that if random_layer() receives a one element PennyLane tensor,
-        then it is unwrapped successfully.
-
-        The test involves using RandomLayers, which then calls random_layer
-        internally. Eventually each gate used by random_layer receives a single
-        scalar.
-        """
-        dev = qml.device("qiskit.aer", wires=4)
-
-        lst = []
-
-        # Mock function that accumulates gate parameters
-        mock_func = lambda par, wires: lst.append(par)
-
-        with monkeypatch.context() as m:
-            # Mock the gates used in RandomLayers
-            m.setattr(qml, "RX", mock_func)
-            m.setattr(qml, "RY", mock_func)
-            m.setattr(qml, "RZ", mock_func)
-
-            @qml.qnode(dev)
-            def circuit(phi=None):
-                qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
-                return qml.expval(qml.PauliZ(0))
-
-            # RandomLayers loops over the random_layer function, with each call to random_layer
-            # being passed a `np.tensor` scalar.
-            phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
-
-            # Call the QNode, accumulate parameters
-            circuit(phi=phi)
-
-            # Check parameters
-            assert all([isinstance(x, tensor) for x in lst])
 
     def test_tensor_unwrapped_gradient_no_error(self, monkeypatch):
         """Tests that the gradient calculation of a circuit that contains a
@@ -474,7 +481,7 @@ class TestNoise:
         bit_flip = aer.noise.pauli_error([("X", 1), ("I", 0)])
 
         # Create a noise model where the RX operation always flips the bit
-        noise_model.add_all_qubit_quantum_error(bit_flip, ["z"])
+        noise_model.add_all_qubit_quantum_error(bit_flip, ["z", "rz"])
 
         dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
 
@@ -513,7 +520,7 @@ class TestBatchExecution:
         spy1 = mocker.spy(QiskitDevice, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
-        @qml.batch_params(all_operations=True)
+        @partial(qml.batch_params, all_operations=True)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
