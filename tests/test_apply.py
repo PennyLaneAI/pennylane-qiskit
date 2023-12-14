@@ -94,13 +94,14 @@ three_qubit = [qml.Toffoli, qml.CSWAP]
 class TestAnalyticApply:
     """Test application of PennyLane operations with analytic calculation."""
 
-    def test_qubit_state_vector(self, init_state, device, tol):
-        """Test that the QubitStateVector operation produces the expected
-        result with the apply method."""
+    @pytest.mark.parametrize("op", [qml.QubitStateVector, qml.StatePrep])
+    def test_qubit_state_vector(self, op, init_state, device, tol):
+        """Test that the QubitStateVector and StatePrep operations produce the expected
+        results with the apply method."""
         dev = device(1)
         state = init_state(1)
 
-        dev.apply([qml.QubitStateVector(state, wires=[0])])
+        dev.apply([op(state, wires=[0])])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(state) ** 2
@@ -114,7 +115,7 @@ class TestAnalyticApply:
         state = init_state(1)
         applied_operation = operation(wires=[0])
 
-        dev.apply([qml.QubitStateVector(state, wires=[0]), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
 
@@ -130,7 +131,7 @@ class TestAnalyticApply:
         state = init_state(1)
         applied_operation = operation(theta, wires=[0])
 
-        dev.apply([qml.QubitStateVector(state, wires=[0]), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -146,7 +147,7 @@ class TestAnalyticApply:
 
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -162,7 +163,7 @@ class TestAnalyticApply:
         wires = [0, 1]
         applied_operation = operation(theta, wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -176,7 +177,7 @@ class TestAnalyticApply:
         state = init_state(3)
         applied_operation = operation(wires=[0, 1, 2])
 
-        dev.apply([qml.QubitStateVector(state, wires=[0, 1, 2]), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=[0, 1, 2]), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -196,9 +197,9 @@ class TestStateApplyUnitarySimulator:
 
         with pytest.raises(
             qml.DeviceError,
-            match="The QubitStateVector operation is not supported on the unitary simulator backend",
+            match="The StatePrep operation is not supported on the unitary simulator backend",
         ):
-            dev.apply([qml.QubitStateVector(state, wires=[0])])
+            dev.apply([qml.StatePrep(state, wires=[0])])
 
 
 @pytest.mark.parametrize("shots", [8192])
@@ -206,21 +207,23 @@ class TestStateApplyUnitarySimulator:
 class TestNonAnalyticApply:
     """Test application of PennyLane operations with non-analytic calculation."""
 
-    def test_qubit_state_vector(self, init_state, device, tol):
-        """Test that the QubitStateVector operation produces the expected
+    @pytest.mark.parametrize("op", [qml.QubitStateVector, qml.StatePrep])
+    def test_qubit_state_vector(self, op, init_state, device, tol):
+        """Test that the QubitStateVector and StatePrep operations produces the expected
         result with the apply method."""
         dev = device(1)
         state = init_state(1)
         wires = [0]
 
-        dev.apply([qml.QubitStateVector(state, wires=wires)])
+        dev.apply([op(state, wires=wires)])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(state) ** 2
         assert np.allclose(res, expected, **tol)
 
-    def test_invalid_qubit_state_vector(self, device):
+    @pytest.mark.parametrize("op", [qml.QubitStateVector, qml.StatePrep])
+    def test_invalid_qubit_state_vector(self, op, device):
         """Test that an exception is raised if the state
         vector is the wrong size"""
         dev = device(2)
@@ -228,7 +231,7 @@ class TestNonAnalyticApply:
         wires = [0, 1]
 
         with pytest.raises(ValueError, match=r"State vector must have shape"):
-            dev.apply([qml.QubitStateVector(state, wires=wires)])
+            dev.apply([op(state, wires=wires)])
 
     @pytest.mark.parametrize("mat", [U, U2])
     def test_qubit_unitary(self, init_state, device, mat, tol):
@@ -239,7 +242,7 @@ class TestNonAnalyticApply:
         state = init_state(N)
         wires = list(range(N))
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
+        dev.apply([qml.StatePrep(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -264,7 +267,7 @@ class TestNonAnalyticApply:
         wires = [0]
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -281,7 +284,7 @@ class TestNonAnalyticApply:
         wires = [0]
         applied_operation = operation(theta, wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -298,7 +301,7 @@ class TestNonAnalyticApply:
 
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -316,7 +319,7 @@ class TestNonAnalyticApply:
 
         applied_operation = operation(theta, wires=wires)
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -332,7 +335,7 @@ class TestNonAnalyticApply:
         applied_operation = operation(wires=[0, 1, 2])
         wires = [0, 1, 2]
 
-        dev.apply([qml.QubitStateVector(state, wires=wires), applied_operation])
+        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)

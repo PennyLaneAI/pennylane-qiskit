@@ -23,9 +23,9 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.32",
+    "qiskit-aer",
     "qiskit-ibm-runtime",
     "qiskit-ibm-provider",
-    "mthree>=0.17",
     "pennylane>=0.30",
     "numpy",
     "networkx>=2.2",
@@ -79,7 +79,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
