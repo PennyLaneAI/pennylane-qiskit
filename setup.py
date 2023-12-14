@@ -23,8 +23,10 @@ with open("README.rst", "r") as fh:
 
 requirements = [
     "qiskit>=0.32",
-    "mthree>=0.17",
-    "pennylane @ git+https://github.com/PennyLaneAI/pennylane.git",
+    "qiskit-aer",
+    "qiskit-ibm-runtime",
+    "qiskit-ibm-provider",
+    "pennylane>=0.30",
     "numpy",
     "networkx>=2.2",
 ]
@@ -41,6 +43,7 @@ info = {
     ],
     'entry_points': {
         'pennylane.plugins': [
+            'qiskit.remote = pennylane_qiskit:RemoteDevice',
             'qiskit.aer = pennylane_qiskit:AerDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
             'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
@@ -76,7 +79,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',

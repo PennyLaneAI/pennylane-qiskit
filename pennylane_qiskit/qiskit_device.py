@@ -22,15 +22,18 @@ import inspect
 import warnings
 
 import numpy as np
-import pennylane
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from pennylane import QubitDevice, DeviceError
+from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
 
 from ._version import __version__
+
+SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 
 QISKIT_OPERATION_MAP_SELF_ADJOINT = {
@@ -53,6 +56,7 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "CRZ": ex.CRZGate,
     "PhaseShift": ex.PhaseGate,
     "QubitStateVector": ex.Initialize,
+    "StatePrep": ex.Initialize,
     "Toffoli": ex.CCXGate,
     "QubitUnitary": ex.UnitaryGate,
     "U1": ex.U1Gate,
@@ -86,6 +90,13 @@ QISKIT_OPERATION_INVERSES_MAP = {
 }
 
 
+def _get_backend_name(backend):
+    try:
+        return backend.name()  # BackendV1
+    except TypeError:  # pragma: no cover
+        return backend.name  # BackendV2
+
+
 class QiskitDevice(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
 
@@ -93,8 +104,8 @@ class QiskitDevice(QubitDevice, abc.ABC):
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
-        provider (Provider): The Qiskit simulation provider
-        backend (str): the desired backend
+        provider (Provider | None): The Qiskit backend provider.
+        backend (str | Backend): the desired backend. If a string, a provider must be given.
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. For state vector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
@@ -105,7 +116,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             to simulate a device compliant circuit, you can specify a backend here.
     """
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.28.0"
+    pennylane_requires = ">=0.30.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
@@ -147,26 +158,33 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
+        self.provider = provider
+
+        if isinstance(backend, Backend):
+            self._backend = backend
+            self.backend_name = _get_backend_name(backend)
+        elif provider is None:
+            raise ValueError("Must pass a provider if the backend is not a Backend instance.")
+        else:
+            try:
+                self._backend = provider.get_backend(backend)
+            except QiskitBackendNotFoundError as e:
+                available_backends = list(map(_get_backend_name, provider.backends()))
+                raise ValueError(
+                    f"Backend '{backend}' does not exist. Available backends "
+                    f"are:\n {available_backends}"
+                ) from e
+
+            self.backend_name = _get_backend_name(self._backend)
+
         # Keep track if the user specified analytic to be True
-        if shots is None and backend not in self._state_backends:
+        if shots is None and not self._is_state_backend:
             # Raise a warning if no shots were specified for a hardware device
             warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
 
             self.shots = 1024
 
-        self._backend = None
-
-        self.provider = provider
-        self.backend_name = backend
-        self._capabilities["backend"] = [b.name() for b in self.provider.backends()]
-        self._capabilities["returns_state"] = backend in self._state_backends
-
-        # Check that the backend exists
-        if backend not in self._capabilities["backend"]:
-            raise ValueError(
-                f"Backend '{backend}' does not exist. Available backends "
-                f"are:\n {self._capabilities['backend']}"
-            )
+        self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
         b = self.backend
@@ -210,6 +228,26 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Consider the remaining kwargs as keyword arguments to run
         self.run_args.update(kwargs)
 
+    @property
+    def _is_state_backend(self):
+        """Returns whether this device has a state backend."""
+        return self.backend_name in self._state_backends or self.backend.options.get("method") in {
+            "unitary",
+            "statevector",
+        }
+
+    @property
+    def _is_statevector_backend(self):
+        """Returns whether this device has a statevector backend."""
+        method = "statevector"
+        return method in self.backend_name or self.backend.options.get("method") == method
+
+    @property
+    def _is_unitary_backend(self):
+        """Returns whether this device has a unitary backend."""
+        method = "unitary"
+        return method in self.backend_name or self.backend.options.get("method") == method
+
     def set_transpile_args(self, **kwargs):
         """The transpile argument setter.
 
@@ -224,13 +262,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def backend(self):
-        """The Qiskit simulation backend object.
+        """The Qiskit backend object.
 
         Returns:
             qiskit.providers.backend: Qiskit backend object.
         """
-        if self._backend is None:
-            self._backend = self.provider.get_backend(self.backend_name)
         return self._backend
 
     def reset(self):
@@ -265,7 +301,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         for circuit in applied_operations:
             self._circuit &= circuit
 
-        if self.backend_name not in self._state_backends:
+        if not self._is_state_backend:
             # Add measurements if they are needed
             for qr, cr in zip(self._reg, self._creg):
                 self._circuit.measure(qr, cr)
@@ -315,12 +351,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
             split_op = operation.split("Adjoint(")
 
             if adjoint:
-                if split_op[1] in ("QubitUnitary)", "QubitStateVector)"):
+                if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
                     # Need to revert the order of the quantum registers used in
                     # Qiskit such that it matches the PennyLane ordering
                     qregs = list(reversed(qregs))
             else:
-                if split_op[0] in ("QubitUnitary", "QubitStateVector"):
+                if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
                     # Need to revert the order of the quantum registers used in
                     # Qiskit such that it matches the PennyLane ordering
                     qregs = list(reversed(qregs))
@@ -335,18 +371,18 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return circuits
 
     def qubit_state_vector_check(self, operation):
-        """Input check for the the QubitStateVector operation.
+        """Input check for the StatePrepBase operations.
 
         Args:
             operation (pennylane.Operation): operation to be checked
 
         Raises:
-            DeviceError: If the operation is QubitStateVector
+            DeviceError: If the operation is QubitStateVector or StatePrep
         """
-        if operation == "QubitStateVector":
-            if "unitary" in self.backend_name:
+        if operation in ("QubitStateVector", "StatePrep"):
+            if self._is_unitary_backend:
                 raise DeviceError(
-                    "The QubitStateVector operation "
+                    f"The {operation} operation "
                     "is not supported on the unitary simulator backend."
                 )
 
@@ -369,7 +405,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
         result = self._current_job.result()
 
-        if self.backend_name in self._state_backends:
+        if self._is_state_backend:
             self._state = self._get_state(result)
 
     def _get_state(self, result, experiment=None):
@@ -382,10 +418,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         Returns:
             array[float]: size ``(2**num_wires,)`` statevector
         """
-        if "statevector" in self.backend_name:
+        if self._is_statevector_backend:
             state = np.asarray(result.get_statevector(experiment))
 
-        elif "unitary" in self.backend_name:
+        elif self._is_unitary_backend:
             unitary = np.asarray(result.get_unitary(experiment))
             initial_state = np.zeros([2**self.num_wires])
             initial_state[0] = 1
@@ -409,7 +445,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         """
 
         # branch out depending on the type of backend
-        if self.backend_name in self._state_backends:
+        if self._is_state_backend:
             # software simulator: need to sample from probabilities
             return super().generate_samples()
 
@@ -453,14 +489,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         return compiled_circuits
 
-    def batch_execute(self, circuits):
+    def batch_execute(self, circuits, timeout: int = None):
         # pylint: disable=missing-function-docstring
 
         compiled_circuits = self.compile_circuits(circuits)
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
-        result = self._current_job.result()
+
+        try:
+            result = self._current_job.result(timeout=timeout)
+        except TypeError:  # pragma: no cover
+            # timeout not supported
+            result = self._current_job.result()
 
         # increment counter for number of executions of qubit device
         self._num_executions += 1
@@ -473,22 +514,19 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 self.tracker.update(executions=1, shots=self.shots)
                 self.tracker.record()
 
-            if self.backend_name in self._state_backends:
+            if self._is_state_backend:
                 self._state = self._get_state(result, experiment=circuit_obj)
 
             # generate computational basis samples
-            if self.shots is not None or circuit.is_sampled:
+            if self.shots is not None or any(
+                isinstance(m, SAMPLE_TYPES) for m in circuit.measurements
+            ):
                 self._samples = self.generate_samples(circuit_obj)
 
-            if not pennylane.active_return():
-                res = self._statistics_legacy(circuit)
-                res = np.asarray(res)
-                results.append(res)
-            else:
-                res = self.statistics(circuit)
-                single_measurement = len(circuit.measurements) == 1
-                res = res[0] if single_measurement else tuple(res)
-                results.append(res)
+            res = self.statistics(circuit)
+            single_measurement = len(circuit.measurements) == 1
+            res = res[0] if single_measurement else tuple(res)
+            results.append(res)
 
         if self.tracker.active:
             self.tracker.update(batches=1, batch_len=len(circuits))

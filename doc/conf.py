@@ -64,7 +64,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PennyLane-Qiskit'
-copyright = "Copyright 2022, Xanadu Quantum Technologies"
+copyright = "Copyright 2023, Xanadu Quantum Technologies"
 author = 'Xanadu Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -294,7 +294,7 @@ html_theme_options = {
     ],
     "toc_overview": True,
     "navbar_active_link": 3,
-    "google_analytics_tracking_id": "UA-130507810-1"
+    "google_analytics_tracking_id": "G-C480Z9JL0D"
 }
 
 edit_on_github_project = 'PennyLaneAI/pennylane-qiskit'

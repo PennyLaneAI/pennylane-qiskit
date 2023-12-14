@@ -45,7 +45,7 @@ or, alternatively,
 
 .. code-block:: python
 
-    from qiskit import Aer
+    from qiskit_aer import Aer
     Aer.backends()
 
 .. note::
@@ -84,7 +84,7 @@ The options are set via additional keyword arguments:
     )
 
 For more information on available methods and their options, please visit the `AerSimulator
-documentation <https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html>`_.
+documentation <https://qiskit.org/ecosystem/aer/stubs/qiskit_aer.AerSimulator.html>`_.
 
 .. warning::
 
@@ -103,7 +103,7 @@ which you can instantiate and apply to the device as follows
     import pennylane as qml
 
     import qiskit
-    import qiskit.providers.aer.noise as noise
+    from qiskit_aer import noise
 
     # Error probabilities
     prob_1 = 0.001  # 1-qubit gate

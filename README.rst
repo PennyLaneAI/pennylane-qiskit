@@ -1,7 +1,7 @@
 PennyLane-Qiskit Plugin
 #######################
 
-.. image:: https://img.shields.io/github/workflow/status/PennyLaneAI/pennylane-qiskit/Tests/master?logo=github&style=flat-square
+.. image:: https://img.shields.io/github/actions/workflow/status/PennyLaneAI/pennylane-qiskit/tests.yml?branch=master&logo=github&style=flat-square
     :alt: GitHub Workflow Status (branch)
     :target: https://github.com/PennyLaneAI/pennylane-qiskit/actions?query=workflow%3ATests
 
@@ -53,7 +53,7 @@ Features
 Installation
 ============
 
-This plugin requires Python version 3.8 and above, as well as PennyLane and Qiskit.
+This plugin requires Python version 3.9 and above, as well as PennyLane and Qiskit.
 Installation of this plugin, as well as all dependencies, can be done using ``pip``:
 
 .. code-block:: bash
@@ -75,7 +75,10 @@ in the source folder. Tests restricted to a specific provider can be run by exec
     only be run if a ``ibmqx_token`` for the
     `IBM Q experience <https://quantum-computing.ibm.com/>`_ is
     configured in the `PennyLane configuration file
-    <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`_.
+    <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`_, if the token is
+    exported in your environment under the name ``IBMQX_TOKEN``, or if you have previously saved your
+    account credentials using the
+    `new IBMProvider <https://qiskit.org/ecosystem/ibm-provider/stubs/qiskit_ibm_provider.IBMProvider.html>`_
 
     If this is the case, running ``make test`` also executes tests on the ``ibmq`` device.
     By default tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend
