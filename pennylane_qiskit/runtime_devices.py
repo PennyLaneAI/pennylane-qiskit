@@ -201,16 +201,20 @@ class IBMQSamplerDevice(IBMQDevice):
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
         # We get nearest probability distribution because the quasi-distribution may contain negative probabilities
-        counts = self._current_job.quasi_dists[circuit_id].nearest_probability_distribution().binary_probabilities()
+        counts = (
+            self._current_job.quasi_dists[circuit_id]
+            .nearest_probability_distribution()
+            .binary_probabilities()
+        )
         # Since qiskit does not return padded string we need to recover the number of qubits with self.num_wires
-        number_of_states = 2 ** self.num_wires
+        number_of_states = 2**self.num_wires
         # Initialize probabilities to 0
         probs = [0] * number_of_states
         # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))
         for state, prob in counts.items():
             # Formatting all strings to the same lenght
             while len(state) < self.num_wires:
-                state = '0' + state[:]
+                state = "0" + state[:]
             # Inverting the order to recover Pennylane convention
             probs[int(state[::-1], 2)] = prob
         return self.states_to_binary(
