@@ -9,7 +9,7 @@ pygments==2.17.2
 pygments-github-lexers==0.0.5
 qiskit==0.44.0
 qiskit-aer==0.12.2
-qiskit-ibm-runtime==0.9.3
+qiskit-ibm-runtime==0.17.0
 qiskit-ibm-provider==0.5.2
 sphinxcontrib-bibtex==2.5.0
 sphinx-automodapi==0.14.1
