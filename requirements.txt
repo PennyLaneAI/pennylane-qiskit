@@ -7,7 +7,7 @@ cffi==1.15.1
 charset-normalizer==2.0.12
 cryptography==41.0.7
 Cython==0.29.28
-dill==0.3.4
+dill==0.3.6
 future==0.18.3
 idna==3.3
 mpmath==1.2.1
