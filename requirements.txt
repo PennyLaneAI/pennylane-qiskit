@@ -2,7 +2,7 @@ appdirs==1.4.4
 autograd==1.4
 autoray==0.3.2
 cachetools==5.0.0
-certifi==2023.7.22
+certifi==2023.11.17
 cffi==1.15.1
 charset-normalizer==3.1.0
 cryptography==41.0.7
@@ -20,7 +20,7 @@ pbr==5.8.1
 pennylane==0.30.0
 PennyLane-Lightning==0.30.0
 ply==3.11
-psutil==5.9.4
+psutil==5.9.6
 pycparser==2.21
 python-constraint==1.4.0
 python-dateutil==2.8.2
@@ -29,7 +29,7 @@ qiskit-aer==0.12.0
 qiskit-ibm-runtime==0.17.0
 qiskit-ibm-provider==0.7.2
 qiskit-ignis==0.7.1
-qiskit-terra==0.23.3
+qiskit-terra==0.45.1
 requests==2.31.0
 requests-ntlm==1.2.0
 retworkx==0.11.0
@@ -38,7 +38,7 @@ semantic-version==2.10.0
 six==1.16.0
 stevedore==5.0.0
 symengine==0.9.2
-sympy==1.10.1
+sympy==1.12
 toml==0.10.2
 tweedledum==1.1.1
 urllib3==2.0.7
