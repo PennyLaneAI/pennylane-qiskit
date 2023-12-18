@@ -85,19 +85,19 @@ Check out these demos to see the PennyLane-Qiskit plugin in action:
 
 .. demogalleryitem::
     :name: Ensemble classification with Forest and Qiskit devices
-    :figure: https://pennylane.ai/_images/ensemble_diagram.png
+    :figure: https://pennylane.ai/_static/demonstration_assets/ensemble_multi_qpu/ensemble_diagram.png
     :link:  https://pennylane.ai/qml/demos/ensemble_multi_qpu.html
     :tooltip: Use multiple QPUs to improve classification
 
 .. demogalleryitem::
     :name: Quantum volume
-    :figure: _static/quantum_volume_thumbnail.png
+    :figure: https://pennylane.ai/_static/demonstration_assets/quantum_volume/quantum_volume_thumbnail.png
     :link:  https://pennylane.ai/qml/demos/quantum_volume.html
     :tooltip: Learn how to compute the quantum volume of a quantum processor
 
 .. demogalleryitem::
     :name: Using PennyLane with IBM's quantum devices and Qiskit
-    :figure: https://pennylane.ai/_images/thumbnail_tutorial_ibm_pennylane.png
+    :figure: https://pennylane.ai/_static/demonstration_assets/ibm_pennylane/thumbnail_tutorial_ibm_pennylane.png
     :link: https://pennylane.ai/qml/demos/ibm_pennylane
     :tooltip: Use IBM devices with PennyLane through the pennylane-qiskit plugin
 
