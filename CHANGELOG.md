@@ -7,11 +7,14 @@
   were previously ignored.
   [(#358)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/358)
 
-* In `IBMQSamplerDevice` the `generate_samples` function:
-  1. gets counts from the nearest probability distribution because 
-  the quasi-distribution may contain negative probabilities. 
-  2. Avoid indexing error. 
-  3. Returns the qubit with Pennylane convention instead of Qiskit convention.
+* The `generate_samples` method for the `IBMQSamplerDevice` is updated to get counts 
+  from the nearest probability distribution rather than the quasi-distribution (which 
+  may contain negative probabilities and therefore raise errors). 
+  [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
+  
+* The `generate_samples` method for the `IBMQSamplerDevice` now avoids raising an 
+  indexing error when some states are not populated, and labels states according to 
+  the Pennylane convention instead of Qiskit convention.
   [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
 
 
