@@ -1,14 +1,4 @@
-# Release 0.34.0-dev
-
-### New features since last release
-
-### Improvements 🛠
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
+# Release 0.34.0
 
 ### Bug fixes 🐛
 
