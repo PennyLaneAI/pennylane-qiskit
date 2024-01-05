@@ -1,6 +1,6 @@
 dc-qiskit-algorithms==0.0.14
 docutils==0.19
-ipykernel==6.22.0
+ipykernel==6.28.0
 jinja2==3.0.3
 nbsphinx==0.9.3
 pennylane==0.30.0
@@ -10,7 +10,7 @@ pygments-github-lexers==0.0.5
 qiskit==0.44.1
 qiskit-aer==0.12.2
 qiskit-ibm-runtime==0.17.0
-qiskit-ibm-provider==0.7.2
+qiskit-ibm-provider==0.7.3
 sphinxcontrib-bibtex==2.5.0
 sphinx-automodapi==0.14.1
 pennylane-sphinx-theme
