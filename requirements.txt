@@ -1,5 +1,5 @@
 appdirs==1.4.4
-autograd==1.4
+autograd==1.6.2
 autoray==0.3.2
 cachetools==5.0.0
 certifi==2023.11.17
