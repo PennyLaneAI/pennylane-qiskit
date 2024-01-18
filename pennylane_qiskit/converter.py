@@ -369,6 +369,8 @@ def operation_to_qiskit(operation, reg, creg=None):
     Returns:
         QuantumCircuit: a quantum circuit objects containing the translated operation
     """
+    raise RuntimeError()
+
     op_wires = operation.wires
     par = operation.parameters
 
