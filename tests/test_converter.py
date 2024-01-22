@@ -1193,6 +1193,7 @@ class TestConverterPennyLaneCircuitToQiskit:
 class TestConverterGatePennyLaneToQiskit:
 
     def test_non_parameteric_operation_to_qiskit(self):
+        """Test that a non-parameteric operation is correctly converted to Qiskit"""
         raise NotImplementedError
 
     def test_parameteric_operation_to_qiskit(self):
@@ -1219,14 +1220,15 @@ class TestConverterGatePennyLaneToQiskit:
 
 class TestConverterUtilsPennyLaneToQiskit:
 
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
     @pytest.mark.parametrize("observable, obs_string", [(qml.PauliX, "X"), (qml.PauliY, "Y"), (qml.PauliZ, "Z"), (qml.Identity, "I")])
     @pytest.mark.parametrize("wire", [0, 1, 2])
     @pytest.mark.parametrize("register_size", [3, 5])
-    def test_mp_to_pauli(self, observable, obs_string, wire, register_size):
+    def test_mp_to_pauli(self, measurement_type, observable, obs_string, wire, register_size):
         """Tests that a SparsePauliOp is created from a Pauli observable, and that
         it has the expected format"""
 
-        obs = observable(wire)
+        obs = measurement_type(observable(wire))
 
         pauli_op = mp_to_pauli(obs, register_size)
         assert isinstance(pauli_op, SparsePauliOp)

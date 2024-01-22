@@ -430,7 +430,7 @@ def mp_to_pauli(mp, register_size):
                    "Identity": "I"}
 
     pauli_string = ["I"] * register_size
-    pauli_string[mp.wires[0]] = observables[mp.name]
+    pauli_string[mp.wires[0]] = observables[mp.obs.name]
 
     pauli_string = ('').join(pauli_string)
 
