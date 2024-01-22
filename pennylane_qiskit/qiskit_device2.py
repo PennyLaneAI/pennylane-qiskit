@@ -446,6 +446,8 @@ class QiskitDevice2(Device):
 
     def _execute_estimator(self, circuit, session):
 
+        # the Estimator primitive takes care of diagonalization and measurements itself,
+        # so diagonalizing gates and measurements are not included in the circuit
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
 
         estimator = Estimator(session=session, options=self.options)

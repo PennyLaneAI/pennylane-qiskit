@@ -353,7 +353,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
 
     for op in circuit.operations:
         qc &= operation_to_qiskit(op, reg, creg)
-        
+
     # rotate the state for measurement in the computational basis
     if diagonalize:
         rotations = circuit.diagonalizing_gates

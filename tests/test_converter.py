@@ -10,8 +10,9 @@ from qiskit.quantum_info.operators import Operator
 
 import pennylane as qml
 from pennylane import numpy as np
-from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires
+from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires, circuit_to_qiskit
 from pennylane.wires import Wires
+from pennylane.tape.qscript import QuantumScript
 
 
 THETA = np.linspace(0.11, 3, 5)
@@ -19,7 +20,7 @@ PHI = np.linspace(0.32, 3, 5)
 VARPHI = np.linspace(0.02, 3, 5)
 
 
-class TestConverter:
+class TestConverterQiskitToPennyLane:
     """Tests the converter function that allows converting QuantumCircuit objects
     to Pennylane templates."""
 
@@ -1110,3 +1111,49 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(jac, jac_expected)
+
+class TestConverterPennyLaneToQiskit:
+
+    @pytest.mark.parametrize("operations", [[], [qml.PauliX(0), qml.PauliY(1)], [qml.Hadamard(0)]])
+    @pytest.mark.parametrize("register_size", [2, 5])
+    def test_circuit_to_qiskit_register_size(self, operations, register_size):
+        """Test that the regsiter_size determines the shape of the Qiskit
+        QuantumCircuit register"""
+
+        qc = circuit_to_qiskit(QuantumScript(operations), register_size)
+
+        # there is a single classical and a single quantum register
+        assert len(qc.cregs) == len(qc.qregs) == 1
+
+        # the register contains qubits equal to the register size
+        assert len(qc.qubits) == register_size
+
+    @pytest.mark.parametrize("operations, final_op_name", [([qml.PauliX(0), qml.PauliY(1)], 'y'), ([[qml.CNOT([0, 1]), qml.Hadamard(1)], 'h'])])
+    @pytest.mark.parametrize("measure", [True, False])
+    def test_circuit_to_qiskit_measure_kwarg(self, operations, final_op_name, measure):
+        """Test that measurements are added to the circuit if and only if measure=True"""
+
+        qc = circuit_to_qiskit(QuantumScript(operations), 2, measure=measure)
+        final_instruction = qc.data[-1]
+
+        if measure:
+            assert final_instruction.operation.name == "measure"
+        else:
+            final_instruction.operation.name == final_op_name
+
+    @pytest.mark.parametrize("diagonalize", [True, False])
+    def test_circuit_to_qiskit_diagonalize_kwarg(self, diagonalize):
+        """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
+
+        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))])
+        assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
+
+        qc = circuit_to_qiskit(qscript, 2, diagonalize=diagonalize, measure=False)
+
+
+        if diagonalize:
+            pass
+
+
+
+
