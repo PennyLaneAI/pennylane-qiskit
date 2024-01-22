@@ -1193,29 +1193,91 @@ class TestConverterPennyLaneCircuitToQiskit:
 class TestConverterGatePennyLaneToQiskit:
 
     def test_non_parameteric_operation_to_qiskit(self):
-        """Test that a non-parameteric operation is correctly converted to Qiskit"""
-        raise NotImplementedError
+        """Test that a non-parameteric operation is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.PauliX(0)
+
+        qc = operation_to_qiskit(op, QuantumRegister(1))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        wires = [qc.find_bit(q).index for q in qubits]
+
+        assert ops == ["x"]
+        assert wires == [0]
 
     def test_parameteric_operation_to_qiskit(self):
-        raise NotImplementedError
+        """Test that a parameteric operation is correctly converted to a
+        Qiskit circuit with a single operation"""
 
-    def test_multi_wire_operation_to_qiskit(self):
-        raise NotImplementedError
+        op = qml.RX(1.23, 2)
 
-    def test_register_larger_than_op(self):
-        raise NotImplementedError
+        qc = operation_to_qiskit(op, QuantumRegister(3))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        wires = [qc.find_bit(q).index for q in qubits]
+        params = [instruction.operation.params for instruction in qc.data]
 
-    def test_pennylane_op_with_custom_wire_labels(self):
-        raise NotImplementedError
 
-    def test_adjoint(self):
-        raise NotImplementedError
+        assert ops == ["rx"]
+        assert wires == [2]
+        assert params == [[1.23]]
 
-    def test_state_prep_ops_have_reversed_register(self):  # test both normal and adjoint
-        raise NotImplementedError
+    #ToDo: add custom wire label support? Or have we already mapped to integers here? Story #55168
+    @pytest.mark.parametrize("op_wires", ([0, 1], [2, 4]))
+    def test_multi_wire_operation_to_qiskit(self, op_wires):
+        """Test that an operation with multiple wires is correctly converted to a
+        Qiskit circuit with a single operation"""
 
-    def test_with_and_without_creg(self):
-        raise NotImplementedError
+        op = qml.CNOT(op_wires)
+
+        qc = operation_to_qiskit(op, QuantumRegister(5))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        qc_wires = [qc.find_bit(q).index for q in qubits]
+
+        assert ops == ["cx"]
+        assert qc_wires == op_wires
+
+    @pytest.mark.parametrize("op", [qml.QubitUnitary([[1, 0, 0, 0],[0, 1, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]], wires=[0, 1]),
+                                    qml.StatePrep(np.array([1, 0, 0, 0]), wires=[0, 1]),
+                                    qml.QubitStateVector(np.array([1, 0, 0, 0]), wires=[0, 1])])
+    def test_state_prep_ops_have_reversed_register(self, op):
+        """Tests that the wire order is reversed when applying matrix-based operators from PennyLane,
+        because the Qiskit convention for inferring wire order for matrices is the reverse of the
+        PennyLane convention"""
+
+        qc = operation_to_qiskit(op, reg=QuantumRegister(3))
+        qubits = qc[0].qubits
+        wires = [qc.find_bit(q).index for q in qubits]
+
+        # wires on the qiskit circuit are the PL wires reversed
+        assert Wires(wires) == op.wires[::-1]
+
+    def test_with_predefined_creg(self):
+        """Test that it also works if passing in an already existing classical register"""
+
+        creg = ClassicalRegister(3)
+
+        op = qml.RX(1.23, 2)
+
+        qc1 = operation_to_qiskit(op, QuantumRegister(3), creg=creg)
+        qc2 = operation_to_qiskit(op, QuantumRegister(3), creg=None)
+
+        ops1 = [instruction.operation.name for instruction in qc1.data]
+        params1 = [instruction.operation.params for instruction in qc1.data]
+        ops2 = [instruction.operation.name for instruction in qc2.data]
+        params2 = [instruction.operation.params for instruction in qc2.data]
+
+        qubits1 = [instruction.qubits for instruction in qc1.data][0]
+        wires1 = [qc1.find_bit(q).index for q in qubits1]
+        qubits2 = [instruction.qubits for instruction in qc2.data][0]
+        wires2 = [qc2.find_bit(q).index for q in qubits2]
+
+
+        assert ops1 == ops2 == ["rx"]
+        assert wires1 == wires2 == [2]
+        assert params1 == params2 == [[1.23]]
 
 
 class TestConverterUtilsPennyLaneToQiskit:

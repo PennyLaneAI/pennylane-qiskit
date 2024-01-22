@@ -63,10 +63,6 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "IsingXX": ex.RXXGate,
 }
 
-QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT = {
-    "Adjoint(" + k + ")": v for k, v in QISKIT_OPERATION_MAP_SELF_ADJOINT.items()
-}
-
 # Separate dictionary for the inverses as the operations dictionary needs
 # to be invertible for the conversion functionality to work
 QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
@@ -81,7 +77,6 @@ QISKIT_OPERATION_MAP = {
     **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
 }
 QISKIT_OPERATION_INVERSES_MAP = {
-    **QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT,
     **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
 }
 
@@ -391,17 +386,10 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     qregs = [reg[i] for i in op_wires.labels]
 
-    adjoint = operation.startswith("Adjoint(")
-    split_op = operation.split("Adjoint(")
-
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering
-    if adjoint:
-        if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
-            qregs = list(reversed(qregs))
-    else:
-        if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
-            qregs = list(reversed(qregs))
+    if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+        qregs = list(reversed(qregs))
 
     if creg:
         dag = circuit_to_dag(QuantumCircuit(reg, creg, name=""))
