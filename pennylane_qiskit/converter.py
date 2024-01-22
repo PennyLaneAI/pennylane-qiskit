@@ -323,11 +323,19 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     specified to apply.
 
     Args:
-        operations (list[~.Operation]): operations to apply to the device
+        circuit (Union[~.QuantumScript, ~.QuantumTape]): the circuit applied
+            to the device
+        register_size (int): the total number of qubits on the device the circuit is
+            executed on; this must include any qubits not used in the given
+            circuit to ensure correct indexing of the returned samples
 
     Keyword args:
-        rotations (list[~.Operation]): Operations that rotate the circuit
-            pre-measurement into the eigenbasis of the observables.
+        diagonalize (bool): whether or not to apply diagonalizing gates before the
+            measurements
+        measure (bool): whether or not to apply measurements at the end of the circuit;
+            a full circuit is represented either as a Qiskit circuit with operations
+            and measurements (measure=True), or a Qiskit circuit with only operations,
+            paired with a Qiskit Estimator defining the measurement process.
     """
 
     reg = QuantumRegister(register_size)
@@ -345,7 +353,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
 
     for op in circuit.operations:
         qc &= operation_to_qiskit(op, reg, creg)
-
+        
     # rotate the state for measurement in the computational basis
     if diagonalize:
         rotations = circuit.diagonalizing_gates
