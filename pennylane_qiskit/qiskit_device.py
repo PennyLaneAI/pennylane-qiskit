@@ -36,7 +36,7 @@ from ._version import __version__
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 
-QISKIT_OPERATION_MAP_SELF_ADJOINT = {
+QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
     "PauliY": ex.YGate,
@@ -65,23 +65,12 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "IsingZZ": ex.RZZGate,
     "IsingYY": ex.RYYGate,
     "IsingXX": ex.RXXGate,
-}
-
-# Separate dictionary for the inverses as the operations dictionary needs
-# to be invertible for the conversion functionality to work
-QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
-QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {
+    "S": ex.SGate,
+    "T": ex.TGate,
+    "SX": ex.SXGate
     "Adjoint(S)": ex.SdgGate,
     "Adjoint(T)": ex.TdgGate,
     "Adjoint(SX)": ex.SXdgGate,
-}
-
-QISKIT_OPERATION_MAP = {
-    **QISKIT_OPERATION_MAP_SELF_ADJOINT,
-    **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
-}
-QISKIT_OPERATION_INVERSES_MAP = {
-    **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
 }
 
 
@@ -121,7 +110,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "tensor_observables": True,
         "inverse_operations": True,
     }
-    _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
+    _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {
         "statevector_simulator",
         "unitary_simulator",
