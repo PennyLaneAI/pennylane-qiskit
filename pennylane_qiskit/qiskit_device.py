@@ -67,7 +67,7 @@ QISKIT_OPERATION_MAP = {
     "IsingXX": ex.RXXGate,
     "S": ex.SGate,
     "T": ex.TGate,
-    "SX": ex.SXGate
+    "SX": ex.SXGate,
     "Adjoint(S)": ex.SdgGate,
     "Adjoint(T)": ex.TdgGate,
     "Adjoint(SX)": ex.SXdgGate,
