@@ -49,7 +49,7 @@ from pennylane.devices.preprocess import (
 from pennylane.measurements import ProbabilityMP, ExpectationMP, VarianceMP
 
 from ._version import __version__
-from .converter import FULL_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
+from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
 QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
@@ -68,6 +68,7 @@ def qiskit_session(device):
         session.close()
         device._session = existing_session
 
+# ToDo: why is this working?? I think this should not be working.
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
     return isinstance(
@@ -167,7 +168,7 @@ class QiskitDevice2(Device):
             measurements on the device.
     """
 
-    operations = set(FULL_OPERATION_MAP.keys())
+    operations = set(QISKIT_OPERATION_MAP.keys())
     observables = {
         "PauliX",
         "PauliY",
@@ -234,12 +235,21 @@ class QiskitDevice2(Device):
 
     @property
     def service(self):
-        """The QiskitRuntimeService session.
+        """The QiskitRuntimeService service.
 
         Returns:
             qiskit.qiskit_ibm_runtime.QiskitRuntimeService
         """
         return self._service
+
+    @property
+    def session(self):
+        """The QiskitRuntimeService session.
+
+        Returns:
+            qiskit.qiskit_ibm_runtime.Session
+        """
+        return self._session
 
     @property
     def num_wires(self):
