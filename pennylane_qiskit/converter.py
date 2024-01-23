@@ -32,7 +32,7 @@ import pennylane.ops as pennylane_ops
 
 # pylint: disable=too-many-instance-attributes
 
-QISKIT_OPERATION_MAP_SELF_ADJOINT = {
+QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
     "PauliY": ex.YGate,
@@ -61,26 +61,14 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "IsingZZ": ex.RZZGate,
     "IsingYY": ex.RYYGate,
     "IsingXX": ex.RXXGate,
-}
-
-# Separate dictionary for the inverses as the operations dictionary needs
-# to be invertible for the conversion functionality to work
-QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
-QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {
+    "S": ex.SGate,
+    "T": ex.TGate,
+    "SX": ex.SXGate,
     "Adjoint(S)": ex.SdgGate,
     "Adjoint(T)": ex.TdgGate,
     "Adjoint(SX)": ex.SXdgGate,
 }
 
-QISKIT_OPERATION_MAP = {
-    **QISKIT_OPERATION_MAP_SELF_ADJOINT,
-    **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
-}
-QISKIT_OPERATION_INVERSES_MAP = {
-    **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
-}
-
-FULL_OPERATION_MAP = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
@@ -382,7 +370,7 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     operation = operation.name
 
-    mapped_operation = FULL_OPERATION_MAP[operation]
+    mapped_operation = QISKIT_OPERATION_MAP[operation]
 
     qregs = [reg[i] for i in op_wires.labels]
 
