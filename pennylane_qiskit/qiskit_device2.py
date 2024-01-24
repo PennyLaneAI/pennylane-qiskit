@@ -185,6 +185,23 @@ class QiskitDevice2(Device):
         return "qiskit.remote2"
 
     def __init__(self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs):
+
+        if shots is None:
+            warnings.warn(f"Expected an integer number of shots, but received shots=None. Defaulting "
+                          f"to 1024 shots. The analytic calculation of results is not supported on "
+                          f"this device. All statistics obtained from this device are estimates based "
+                          f"on samples.",
+                          UserWarning)
+
+            shots = 1024
+
+        # use device shots, even if shots are defined on the Options - to do this, we update the Options
+        # shots is a required field in the Options object, and Primitive based measurements *will* use it
+        if options and options.execution.shots != 4000:  # 4000 is the default value on Options
+            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
+                          f"passed to the device will be used.")
+        self.options = options or Options()
+        self.options.execution.shots = shots
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
@@ -193,24 +210,12 @@ class QiskitDevice2(Device):
         self._use_primitives = use_primitives
         self._session = session
 
-        if shots is None:
-            # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(f"The analytic calculation of expectations, variances and probabilities "
-                          f"is only supported on statevector backends, not on the {backend.name}. Such "
-                          f"statistics obtained from this device are estimates based on samples.",
-                          UserWarning)
 
-            self.shots = 1024
-
-        # use device shots, even if shots are defined on the Options - to do this, we update the Options
-        if options and options.execution.shots != 4000:  # 4000 is the default value on Options
-            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
-                          f"passed to the device will be used.")
-        self.options = options or Options()
-        self.options.execution.shots = shots
-
-        # store information used for performing raw sample based measurements (using old Qiskit API)
+        # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
         self._init_kwargs = kwargs
+        # _kwargs are used instead of the Options for performing raw sample based measurements (using old Qiskit API)
+        # the _kwargs are a combination of information from Options and _init_kwargs
+        self._kwargs = None
         if self.options.simulator.noise_model:
             self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
@@ -326,6 +331,7 @@ class QiskitDevice2(Device):
         if option_kwargs["shots"] != 4000 and option_kwargs["shots"] != self.shots.total_shots:  # 4000 is the default value on Options
             warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
                           f"passed to the device will be used.")
+            self.options.execution.shots = self.shots.total_shots
 
         option_kwargs.pop("shots")
         kwargs = self._init_kwargs.copy()
