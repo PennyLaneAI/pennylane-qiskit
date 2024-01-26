@@ -159,11 +159,13 @@ class TestQiskitSessionManagement:
         assert dev._session == session
         assert dev._session != session2
 
-    @pytest.mark.parametrize(
-        "initial_session", [None, Session(backend=backend, max_time="1m")]
-    )
-    def test_using_session_context(self, initial_session):
+    @pytest.mark.parametrize("start_session", [True, False])
+    def test_using_session_context(self, start_session):
         """Test that you can add a session within a context manager"""
+
+        initial_session = None
+        if start_session:
+            initial_session = Session(backend=backend, max_time="1m")
 
         dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
 
