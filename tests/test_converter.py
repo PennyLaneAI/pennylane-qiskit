@@ -1300,9 +1300,9 @@ class TestConverterUtilsPennyLaneToQiskit:
         # all qubits in register are accounted for
         assert len(pauli_op_list) == register_size
 
-        pauli_op_list.reverse()
-
         # the wire the observable acts on is correctly labelled
+        # wire order reversed in Qiskit, so we put it back to use PL wire as an index
+        pauli_op_list.reverse()
         assert pauli_op_list.pop(wire) == obs_string
 
         # remaining wires are all Identity

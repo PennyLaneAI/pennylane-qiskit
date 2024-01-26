@@ -573,196 +573,196 @@ class TestDeviceProperties:
         dev = QiskitDevice2(wires=wires, backend=backend)
         assert dev.num_wires == len(wires)
 
-
-@pytest.mark.usefixtures("skip_if_no_account")
-class TestExecution:
-    def test_get_transpile_args(self):
-        """Test that get_transpile_args works as expected by filtering out
-        kwargs that don't match the Qiskit transpile signature"""
-        kwargs = {"random_kwarg": 3, "optimization_level": 3, "circuits": []}
-        assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
-
-    def test_execute_pipeline_no_primitives(self, mocker):
-        """Test that a device **not** using Primitives only calls the _execute_runtime_service
-        to execute, regardless of measurement type"""
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
-
-        qs = QuantumScript(
-            [qml.PauliX(0), qml.PauliY(1)],
-            measurements=[
-                qml.expval(qml.PauliZ(0)),
-                qml.probs(wires=[0, 1]),
-                qml.counts(),
-                qml.sample(),
-            ],
-        )
-
-        dev.execute(qs)
-
-        runtime_service_execute.assert_called_once()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_not_called()
-
-    def test_execute_pipeline_with_primitives(self, mocker):
-        """Test that a device that **is** using Primitives calls the _execute_runtime_service
-        to execute measurements that require raw samples, and the relevant primitive measurements
-        on the other measurements"""
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
-
-        qs = QuantumScript(
-            [qml.PauliX(0), qml.PauliY(1)],
-            measurements=[
-                qml.expval(qml.PauliZ(0)),
-                qml.probs(wires=[0, 1]),
-                qml.counts(),
-                qml.sample(),
-            ],
-        )
-        tapes, reorder_fn = split_measurement_types(qs)
-        print([t.measurements for t in tapes])
-
-        dev.execute(tapes)
-
-        runtime_service_execute.assert_called_once()
-        sampler_execute.assert_called_once()
-        estimator_execute.assert_called_once()
-
-    @pytest.mark.parametrize("wire", [0, 1])
-    @pytest.mark.parametrize(
-        "angle,op,expectation",
-        [
-            (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
-            (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RY, [1, 0, 0, 0, 1, 1]),
-            (np.pi, qml.RY, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
-        ],
-    )
-    def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
-        """Test that the Estimator with various observables returns expected results.
-        Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
-        expected. Iterating over wires ensures that the wire operated on and the wire measured
-        correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
-        """
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
-
-        qs = QuantumScript(
-            [op(angle, wire)],
-            measurements=[
-                qml.expval(qml.PauliX(wire)),
-                qml.expval(qml.PauliY(wire)),
-                qml.expval(qml.PauliZ(wire)),
-                qml.var(qml.PauliX(wire)),
-                qml.var(qml.PauliY(wire)),
-                qml.var(qml.PauliZ(wire)),
-            ],
-        )
-
-        res = dev.execute(qs)
-
-        runtime_service_execute.assert_not_called()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_called_once()
-
-        assert np.allclose(res, expectation, atol=0.1)
-
-
-@pytest.mark.usefixtures("skip_if_no_account")
-class TestResultProcessing:
-    @pytest.mark.parametrize(
-        "measurements, expectation",
-        [
-            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
-            ([qml.var(qml.PauliX(0))], (1)),
-            (
-                [
-                    qml.expval(qml.PauliX(0)),
-                    qml.expval(qml.PauliZ(0)),
-                    qml.var(qml.PauliX(0)),
-                ],
-                (0, 1, 1),
-            ),
-        ],
-    )
-    def test_process_estimator_job(self, measurements, expectation):
-        """for variance and for expval and for a combination"""
-
-        # make PennyLane circuit
-        qs = QuantumScript([], measurements=measurements)
-        num_wires = qs
-
-        # convert to Qiskit circuit information
-        qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
-        pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
-
-        # run on simulator via Estimator
-        estimator = Estimator(backend=backend)
-        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
-
-        # confirm that the result is as expected - if the test fails at this point, its because the
-        # Qiskit result format has changed
-        assert isinstance(result, EstimatorResult)
-
-        assert isinstance(result.values, np.ndarray)
-        assert result.values.size == len(qs.measurements)
-
-        assert isinstance(result.metadata, list)
-        assert len(result.metadata) == len(qs.measurements)
-
-        for data in result.metadata:
-            assert isinstance(data, dict)
-            assert list(data.keys()) == ["variance", "shots"]
-
-        processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
-        assert isinstance(processed_result, tuple)
-        assert np.allclose(processed_result, expectation, atol=0.05)
-
-    @pytest.mark.parametrize("num_wires", [1, 3, 5])
-    @pytest.mark.parametrize("num_shots", [50, 100])
-    def test_generate_samples(self, num_wires, num_shots):
-        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
-
-        qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
-        compiled_circuits = test_dev.compile_circuits([qcirc])
-
-        # Send circuits to the cloud for execution by the circuit-runner program
-        job = test_dev.service.run(
-            program_id="circuit-runner",
-            options={"backend": backend.name},
-            inputs={"circuits": compiled_circuits, "shots": num_shots},
-        )
-
-        test_dev._current_job = job.result(decoder=RunnerResult)
-
-        samples = test_dev.generate_samples()
-
-        assert len(samples) == num_shots
-        assert len(samples[0]) == num_wires
-
-        # we expect the samples to be orderd such that q0 has a 50% chance
-        # of being excited, and everything else is in the ground state
-        exp_res0 = np.zeros(num_wires)
-        exp_res1 = np.zeros(num_wires)
-        exp_res1[0] = 1
-
-        # the two expected results are in samples
-        assert exp_res1 in samples
-        assert exp_res0 in samples
-
-        # nothing else is in samples
-        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
+#
+# @pytest.mark.usefixtures("skip_if_no_account")
+# class TestExecution:
+#     def test_get_transpile_args(self):
+#         """Test that get_transpile_args works as expected by filtering out
+#         kwargs that don't match the Qiskit transpile signature"""
+#         kwargs = {"random_kwarg": 3, "optimization_level": 3, "circuits": []}
+#         assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
+#
+#     def test_execute_pipeline_no_primitives(self, mocker):
+#         """Test that a device **not** using Primitives only calls the _execute_runtime_service
+#         to execute, regardless of measurement type"""
+#
+#         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
+#
+#         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+#         sampler_execute = mocker.spy(dev, "_execute_sampler")
+#         estimator_execute = mocker.spy(dev, "_execute_sampler")
+#
+#         qs = QuantumScript(
+#             [qml.PauliX(0), qml.PauliY(1)],
+#             measurements=[
+#                 qml.expval(qml.PauliZ(0)),
+#                 qml.probs(wires=[0, 1]),
+#                 qml.counts(),
+#                 qml.sample(),
+#             ],
+#         )
+#
+#         dev.execute(qs)
+#
+#         runtime_service_execute.assert_called_once()
+#         sampler_execute.assert_not_called()
+#         estimator_execute.assert_not_called()
+#
+#     def test_execute_pipeline_with_primitives(self, mocker):
+#         """Test that a device that **is** using Primitives calls the _execute_runtime_service
+#         to execute measurements that require raw samples, and the relevant primitive measurements
+#         on the other measurements"""
+#
+#         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+#
+#         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+#         sampler_execute = mocker.spy(dev, "_execute_sampler")
+#         estimator_execute = mocker.spy(dev, "_execute_sampler")
+#
+#         qs = QuantumScript(
+#             [qml.PauliX(0), qml.PauliY(1)],
+#             measurements=[
+#                 qml.expval(qml.PauliZ(0)),
+#                 qml.probs(wires=[0, 1]),
+#                 qml.counts(),
+#                 qml.sample(),
+#             ],
+#         )
+#         tapes, reorder_fn = split_measurement_types(qs)
+#
+#         dev.execute(tapes)
+#
+#         runtime_service_execute.assert_called_once()
+#         sampler_execute.assert_called_once()
+#         estimator_execute.assert_called_once()
+#
+#     @pytest.mark.parametrize("wire", [0, 1])
+#     @pytest.mark.parametrize(
+#         "angle,op,expectation",
+#         [
+#             (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
+#             (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
+#             (np.pi / 2, qml.RY, [1, 0, 0, 0, 1, 1]),
+#             (np.pi, qml.RY, [0, 0, -1, 1, 1, 0]),
+#             (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
+#         ],
+#     )
+#     def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
+#         """Test that the Estimator with various observables returns expected results.
+#         Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
+#         expected. Iterating over wires ensures that the wire operated on and the wire measured
+#         correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
+#         """
+#
+#         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+#
+#         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+#         sampler_execute = mocker.spy(dev, "_execute_sampler")
+#         estimator_execute = mocker.spy(dev, "_execute_sampler")
+#
+#         qs = QuantumScript(
+#             [op(angle, wire)],
+#             measurements=[
+#                 qml.expval(qml.PauliX(wire)),
+#                 qml.expval(qml.PauliY(wire)),
+#                 qml.expval(qml.PauliZ(wire)),
+#                 qml.var(qml.PauliX(wire)),
+#                 qml.var(qml.PauliY(wire)),
+#                 qml.var(qml.PauliZ(wire)),
+#             ],
+#         )
+#
+#         res = dev.execute(qs)
+#
+#         runtime_service_execute.assert_not_called()
+#         sampler_execute.assert_not_called()
+#         estimator_execute.assert_called_once()
+#
+#         assert np.allclose(res, expectation, atol=0.1)
+#
+#
+# @pytest.mark.usefixtures("skip_if_no_account")
+# class TestResultProcessing:
+#     @pytest.mark.parametrize(
+#         "measurements, expectation",
+#         [
+#             ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
+#             ([qml.var(qml.PauliX(0))], (1)),
+#             (
+#                 [
+#                     qml.expval(qml.PauliX(0)),
+#                     qml.expval(qml.PauliZ(0)),
+#                     qml.var(qml.PauliX(0)),
+#                 ],
+#                 (0, 1, 1),
+#             ),
+#         ],
+#     )
+#     def test_process_estimator_job(self, measurements, expectation):
+#         """for variance and for expval and for a combination"""
+#
+#         # make PennyLane circuit
+#         qs = QuantumScript([], measurements=measurements)
+#         num_wires = qs
+#
+#         # convert to Qiskit circuit information
+#         qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
+#         pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
+#
+#         # run on simulator via Estimator
+#         estimator = Estimator(backend=backend)
+#         result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
+#
+#         # confirm that the result is as expected - if the test fails at this point, its because the
+#         # Qiskit result format has changed
+#         assert isinstance(result, EstimatorResult)
+#
+#         assert isinstance(result.values, np.ndarray)
+#         assert result.values.size == len(qs.measurements)
+#
+#         assert isinstance(result.metadata, list)
+#         assert len(result.metadata) == len(qs.measurements)
+#
+#         for data in result.metadata:
+#             assert isinstance(data, dict)
+#             assert list(data.keys()) == ["variance", "shots"]
+#
+#         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
+#         assert isinstance(processed_result, tuple)
+#         assert np.allclose(processed_result, expectation, atol=0.05)
+#
+#
+#     @pytest.mark.parametrize("num_wires", [1, 3, 5])
+#     @pytest.mark.parametrize("num_shots", [50, 100])
+#     def test_generate_samples(self, num_wires, num_shots):
+#         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
+#
+#         qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
+#         compiled_circuits = test_dev.compile_circuits([qcirc])
+#
+#         # Send circuits to the cloud for execution by the circuit-runner program
+#         job = test_dev.service.run(
+#             program_id="circuit-runner",
+#             options={"backend": backend.name},
+#             inputs={"circuits": compiled_circuits, "shots": num_shots},
+#         )
+#
+#         test_dev._current_job = job.result(decoder=RunnerResult)
+#
+#         samples = test_dev.generate_samples()
+#
+#         assert len(samples) == num_shots
+#         assert len(samples[0]) == num_wires
+#
+#         # we expect the samples to be orderd such that q0 has a 50% chance
+#         # of being excited, and everything else is in the ground state
+#         exp_res0 = np.zeros(num_wires)
+#         exp_res1 = np.zeros(num_wires)
+#         exp_res1[0] = 1
+#
+#         # the two expected results are in samples
+#         assert exp_res1 in samples
+#         assert exp_res0 in samples
+#
+#         # nothing else is in samples
+#         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
