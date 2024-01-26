@@ -1300,6 +1300,8 @@ class TestConverterUtilsPennyLaneToQiskit:
         # all qubits in register are accounted for
         assert len(pauli_op_list) == register_size
 
+        pauli_op_list.reverse()
+
         # the wire the observable acts on is correctly labelled
         assert pauli_op_list.pop(wire) == obs_string
 
