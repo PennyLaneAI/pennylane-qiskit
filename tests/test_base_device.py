@@ -1,3 +1,20 @@
+# Copyright 2021-2024 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+This module contains tests for the base Qiskit device for the new PennyLane device API
+"""
+
 import numpy as np
 import pytest
 import inspect
@@ -158,20 +175,24 @@ class TestQiskitSessionManagement:
 
         assert dev._session == initial_session
 
-    @pytest.mark.parametrize(
-        "initial_session", [None, Session(backend=backend, max_time="1m")]
-    )
     def test_update_session(self, initial_session):
         """Test that you can update the session stored on the device"""
 
-        dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
-        assert dev._session == initial_session
+        initial_session = Session(backend=backend, max_time="1m")
+
+        dev1 = QiskitDevice2(wires=2, backend=backend, session=initial_session)
+        dev2 = QiskitDevice2(wires=2, backend=backend, session=initial_session)
+        assert dev1._session == initial_session
+        assert dev2._session == None
 
         new_session = session2 = Session(backend=backend, max_time="1m")
-        dev.update_session(new_session)
+        dev1.update_session(new_session)
+        dev2.update_session(new_session)
 
-        assert dev._session != initial_session
-        assert dev._session == new_session
+        assert dev1._session != initial_session
+        assert dev2._session != None
+        assert dev1._session == new_session
+        assert dev2._session == new_session
 
 
 class TestDevicePreprocessing:
