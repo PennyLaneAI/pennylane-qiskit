@@ -44,7 +44,6 @@ from pennylane.devices.preprocess import (
     validate_observables,
     validate_measurements,
     validate_device_wires,
-    null_postprocessing
 )
 from pennylane.measurements import ProbabilityMP, ExpectationMP, VarianceMP
 
@@ -55,8 +54,50 @@ QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
+# pylint: disable=protected-access
+
 @contextmanager
 def qiskit_session(device):
+    """A context manager that creates a Qiskit Session and sets it as a session
+    on the device while the context manager is active. Using the context manager
+    will ensure the Session closes properly and is removed from the device after
+    completing the tasks.
+
+    Args:
+        device (QiskitDevice2): the device that will create remote tasks using the session
+
+    **Example:**
+
+    .. code-block:: python
+
+        import pennylane as qml
+        from pennylane_qiskit import qiskit_session
+        from qiskit_ibm_runtime import QiskitRuntimeService
+
+        # get backend
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.least_busy(simulator=False, operational=True)
+
+        # initialize device
+        dev = qml.device('qiskit.remote', wires=2, backend=backend)
+
+        @qml.qnode(dev)
+        def circuit(x):
+	        qml.RX(x, 0)
+	        qml.CNOT([0, 1])
+	        return qml.expval(qml.PauliZ(1))
+
+        angle = 0.1
+
+        with qiskit_session(dev) as session:
+
+            res = circuit(angle)[0] # you queue for the first execution
+
+            # then this loop executes immediately after without qeueing again
+            while res > 0:
+                angle += 0.3
+                res = circuit(angle)[0]
+    """
     # Code to acquire session:
     existing_session = device._session
     session = Session(backend=device.backend)
@@ -68,9 +109,9 @@ def qiskit_session(device):
         session.close()
         device._session = existing_session
 
-# ToDo: why is this working?? I think this should not be working.
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
+
     return isinstance(
         m,
         (
@@ -116,7 +157,7 @@ def split_measurement_types(
         flattened_indices = [i for group in order_indices for i in group]
         flattened_results = [r for group in res for r in group]
 
-        result = {idx: r for idx, r in zip(flattened_indices, flattened_results)}
+        result = dict(zip(flattened_indices, flattened_results))
 
         return tuple([result[i] for i in sorted(result.keys())])
 
@@ -184,13 +225,13 @@ class QiskitDevice2(Device):
         """The name of the device."""
         return "qiskit.remote2"
 
+    # pylint:disable = too-many-arguments
     def __init__(self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs):
-
         if shots is None:
-            warnings.warn(f"Expected an integer number of shots, but received shots=None. Defaulting "
-                          f"to 1024 shots. The analytic calculation of results is not supported on "
-                          f"this device. All statistics obtained from this device are estimates based "
-                          f"on samples.",
+            warnings.warn("Expected an integer number of shots, but received shots=None. Defaulting "
+                          "to 1024 shots. The analytic calculation of results is not supported on "
+                          "this device. All statistics obtained from this device are estimates based "
+                          "on samples.",
                           UserWarning)
 
             shots = 1024
@@ -209,7 +250,6 @@ class QiskitDevice2(Device):
         self._service = QiskitRuntimeService(channel="ibm_quantum")
         self._use_primitives = use_primitives
         self._session = session
-
 
         # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
         self._init_kwargs = kwargs
@@ -302,7 +342,7 @@ class QiskitDevice2(Device):
 
         transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
-            decompose, stopping_condition=self.stopping_condition, name=self.name
+            decompose, stopping_condition=self.stopping_condition, name=self.name, skip_initial_state_prep=False,
         )
         transform_program.add_transform(
             validate_measurements, sample_measurements=accepted_sample_measurement, name=self.name
@@ -339,7 +379,8 @@ class QiskitDevice2(Device):
 
         self._kwargs = kwargs
 
-    def get_transpile_args(self, kwargs):
+    @staticmethod
+    def get_transpile_args(kwargs):
         """The transpile argument setter.
 
         Keyword Args:
@@ -388,6 +429,9 @@ class QiskitDevice2(Device):
             return results
 
         results = []
+
+        if isinstance(circuits, (QuantumTape, QuantumScript)):
+            circuits = [circuits]
 
         for circ in circuits:
             if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
@@ -472,14 +516,15 @@ class QiskitDevice2(Device):
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.observables]
+        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         result = estimator.run([qcirc]*len(pauli_observables), pauli_observables).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
         return result
 
-    def _process_estimator_job(self, measurements, job_result):
+    @staticmethod
+    def _process_estimator_job(measurements, job_result):
         """Estimator returns both expectation value and variance for each observable measured,
         along with some metadata. Extract the relevant number for each measurement process and
         return the requested results from the Estimator executions."""
