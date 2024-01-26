@@ -44,6 +44,7 @@ from qiskit.primitives import EstimatorResult
 
 from qiskit_aer.noise import NoiseModel
 
+
 def get_devices_for_testing():
     try:
         service = QiskitRuntimeService(channel="ibm_quantum")
@@ -67,6 +68,7 @@ def options_for_testing():
 
 
 backend, hw_backend, test_dev = get_devices_for_testing
+
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestDeviceInitialization:
@@ -281,9 +283,7 @@ class TestDevicePreprocessing:
         [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
-        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(
-            qs.measurements
-        )
+        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
 
     @pytest.mark.parametrize(
         "op, expected",
@@ -316,12 +316,16 @@ class TestDevicePreprocessing:
         res = test_dev.observable_stopping_condition(obs)
         assert res == expected
 
-
-    @pytest.mark.parametrize("measurements,num_types", [([qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])], 2),
-                                              ([qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])], 2),
-                                              ([qml.counts(), qml.probs(wires=[0, 1]), qml.sample()], 2),
-                                              ([qml.var(qml.PauliZ(0)), qml.expval(qml.PauliX(1))], 1),
-                                              ([qml.probs(wires=[0]), qml.counts(), qml.var(qml.PauliY(2))], 3)])
+    @pytest.mark.parametrize(
+        "measurements,num_types",
+        [
+            ([qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])], 2),
+            ([qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])], 2),
+            ([qml.counts(), qml.probs(wires=[0, 1]), qml.sample()], 2),
+            ([qml.var(qml.PauliZ(0)), qml.expval(qml.PauliX(1))], 1),
+            ([qml.probs(wires=[0]), qml.counts(), qml.var(qml.PauliY(2))], 3),
+        ],
+    )
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
         """Test that the default behaviour for preprocess it to split the tapes based
         on meausrement type. Expval and Variance are one type (Estimator), Probs another (Sampler),
@@ -336,9 +340,14 @@ class TestDevicePreprocessing:
         # measurements that are incompatible are split when use_primtives=True
         assert len(tapes) == num_types
 
-    @pytest.mark.parametrize("measurements", [[qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])],
-                                              [qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])],
-                                              [qml.counts(), qml.probs(wires=[0, 1]), qml.sample()]])
+    @pytest.mark.parametrize(
+        "measurements",
+        [
+            [qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])],
+            [qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])],
+            [qml.counts(), qml.probs(wires=[0, 1]), qml.sample()],
+        ],
+    )
     def test_preprocess_measurements_without_primitives(self, measurements):
         """Test if Primitives are not being used that the preprocess does not split
         the tapes based on measurement type"""
@@ -357,8 +366,9 @@ class TestDevicePreprocessing:
     def test_preprocess_decomposes_unsupported_operator(self):
         """Test that the device preprocess decomposes operators that
         aren't on the list of Qiskit-supported operators"""
-        qs = QuantumScript([qml.CosineWindow(wires=range(2))],
-                           measurements=[qml.expval(qml.PauliZ(0))])
+        qs = QuantumScript(
+            [qml.CosineWindow(wires=range(2))], measurements=[qml.expval(qml.PauliZ(0))]
+        )
 
         # tape contains unsupported operations
         assert not np.all([op in QISKIT_OPERATION_MAP for op in qs.operations])
@@ -373,8 +383,10 @@ class TestDevicePreprocessing:
         """Test that the device preprocess decomposes
         unsupported operator even if they are state prep operators"""
 
-        qs = QuantumScript([qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
-                           measurements=[qml.expval(qml.PauliZ(0))])
+        qs = QuantumScript(
+            [qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
+            measurements=[qml.expval(qml.PauliZ(0))],
+        )
 
         program, _ = test_dev.preprocess()
         tapes, _ = program([qs])
@@ -437,9 +449,7 @@ class TestOptionsHandling:
         """Test that if there is no overlap between options defined as device kwargs and on Options,
         _update_kwargs creates a combined dictionary"""
 
-        dev = QiskitDevice2(
-            wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a"
-        )
+        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a")
 
         assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
         assert dev._kwargs == {
@@ -473,9 +483,7 @@ class TestOptionsHandling:
         _update_kwargs creates a combined dictionary with Options taking precedence, and raises a
         warning"""
 
-        dev = QiskitDevice2(
-            wires=2, backend=backend, random_kwarg1=True, max_execution_time="1m"
-        )
+        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, max_execution_time="1m")
 
         assert dev._init_kwargs == {"random_kwarg1": True, "max_execution_time": "1m"}
         assert dev._kwargs == {
@@ -641,9 +649,7 @@ class TestExecution:
             (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
         ],
     )
-    def test_estimator_with_different_pauli_obs(
-        self, mocker, wire, angle, op, expectation
-    ):
+    def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
         """Test that the Estimator with various observables returns expected results.
         Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
         expected. Iterating over wires ensures that the wire operated on and the wire measured
@@ -702,16 +708,12 @@ class TestResultProcessing:
         num_wires = qs
 
         # convert to Qiskit circuit information
-        qcirc = circuit_to_qiskit(
-            qs, register_size=qs.num_wires, diagonalize=False, measure=False
-        )
+        qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
         pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
 
         # run on simulator via Estimator
         estimator = Estimator(backend=backend)
-        result = estimator.run(
-            [qcirc] * len(pauli_observables), pauli_observables
-        ).result()
+        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
 
         # confirm that the result is as expected - if the test fails at this point, its because the
         # Qiskit result format has changed
@@ -734,15 +736,17 @@ class TestResultProcessing:
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
     def test_generate_samples(self, num_wires, num_shots):
-
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
 
         qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
         compiled_circuits = test_dev.compile_circuits([qcirc])
 
         # Send circuits to the cloud for execution by the circuit-runner program
-        job = test_dev.service.run(program_id="circuit-runner", options={"backend": backend.name},
-                              inputs={"circuits": compiled_circuits, "shots": num_shots})
+        job = test_dev.service.run(
+            program_id="circuit-runner",
+            options={"backend": backend.name},
+            inputs={"circuits": compiled_circuits, "shots": num_shots},
+        )
 
         test_dev._current_job = job.result(decoder=RunnerResult)
 
@@ -763,4 +767,3 @@ class TestResultProcessing:
 
         # nothing else is in samples
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
-

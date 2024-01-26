@@ -75,7 +75,6 @@ inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
 
-
 def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
@@ -298,6 +297,7 @@ def load_qasm_from_file(file: str):
     """
     return load(QuantumCircuit.from_qasm_file(file))
 
+
 # diagonalize is currently only used if measuring
 # maybe always diagonalize when measuring, and never when not?
 # will this be used for a user-facing function to convert from PL to Qiskit as well?
@@ -350,6 +350,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
 
     return qc
 
+
 def operation_to_qiskit(operation, reg, creg=None):
     """Take a Pennylane operator and convert to a Qiskit circuit
 
@@ -390,20 +391,18 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     return circuit
 
+
 def mp_to_pauli(mp, register_size):
     """Convert a Pauli observable to a SparsePauliOp for measurement via Estimator
 
-        Args:
-            mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
-            register_size(int): total size of the qubit register being measured
+    Args:
+        mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
+        register_size(int): total size of the qubit register being measured
     """
 
     # ToDo: I believe this could be extended to cover expectation values of Hamiltonians
 
-    observables = {"PauliX": "X",
-                   "PauliY": "Y",
-                   "PauliZ": "Z",
-                   "Identity": "I"}
+    observables = {"PauliX": "X", "PauliY": "Y", "PauliZ": "Z", "Identity": "I"}
 
     pauli_string = ["I"] * register_size
     pauli_string[mp.wires[0]] = observables[mp.obs.name]
@@ -411,6 +410,6 @@ def mp_to_pauli(mp, register_size):
     # Qiskit orders wires in the opposite direction compared to PL
     pauli_string.reverse()
 
-    pauli_string = ('').join(pauli_string)
+    pauli_string = ("").join(pauli_string)
 
     return SparsePauliOp(pauli_string)

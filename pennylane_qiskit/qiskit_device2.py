@@ -56,6 +56,7 @@ Result_or_ResultBatch = Union[Result, ResultBatch]
 
 # pylint: disable=protected-access
 
+
 @contextmanager
 def qiskit_session(device):
     """A context manager that creates a Qiskit Session and sets it as a session
@@ -83,9 +84,9 @@ def qiskit_session(device):
 
         @qml.qnode(dev)
         def circuit(x):
-	        qml.RX(x, 0)
-	        qml.CNOT([0, 1])
-	        return qml.expval(qml.PauliZ(1))
+                qml.RX(x, 0)
+                qml.CNOT([0, 1])
+                return qml.expval(qml.PauliZ(1))
 
         angle = 0.1
 
@@ -109,6 +110,7 @@ def qiskit_session(device):
         session.close()
         device._session = existing_session
 
+
 def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
 
@@ -120,6 +122,7 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
             qml.measurements.ShadowExpvalMP,
         ),
     )
+
 
 @transform
 def split_measurement_types(
@@ -145,11 +148,17 @@ def split_measurement_types(
 
     tapes = []
     if estimator:
-        tapes.extend([qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in estimator])])
+        tapes.extend(
+            [qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in estimator])]
+        )
     if sampler:
-        tapes.extend([qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in sampler])])
+        tapes.extend(
+            [qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in sampler])]
+        )
     if no_prim:
-        tapes.extend([qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in no_prim])])
+        tapes.extend(
+            [qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in no_prim])]
+        )
 
     def reorder_fn(res):
         """re-order the output to the original shape and order"""
@@ -162,6 +171,7 @@ def split_measurement_types(
         return tuple([result[i] for i in sorted(result.keys())])
 
     return tapes, reorder_fn
+
 
 def qiskit_options_to_flat_dict(options):
     """Create a dictionary from a Qiskit Options object"""
@@ -226,21 +236,27 @@ class QiskitDevice2(Device):
         return "qiskit.remote2"
 
     # pylint:disable = too-many-arguments
-    def __init__(self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs):
+    def __init__(
+        self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs
+    ):
         if shots is None:
-            warnings.warn("Expected an integer number of shots, but received shots=None. Defaulting "
-                          "to 1024 shots. The analytic calculation of results is not supported on "
-                          "this device. All statistics obtained from this device are estimates based "
-                          "on samples.",
-                          UserWarning)
+            warnings.warn(
+                "Expected an integer number of shots, but received shots=None. Defaulting "
+                "to 1024 shots. The analytic calculation of results is not supported on "
+                "this device. All statistics obtained from this device are estimates based "
+                "on samples.",
+                UserWarning,
+            )
 
             shots = 1024
 
         # use device shots, even if shots are defined on the Options - to do this, we update the Options
         # shots is a required field in the Options object, and Primitive based measurements *will* use it
         if options and options.execution.shots != 4000:  # 4000 is the default value on Options
-            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
-                          f"passed to the device will be used.")
+            warnings.warn(
+                f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
+                f"passed to the device will be used."
+            )
         self.options = options or Options()
         self.options.execution.shots = shots
         super().__init__(wires=wires, shots=shots)
@@ -342,13 +358,18 @@ class QiskitDevice2(Device):
 
         transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
-            decompose, stopping_condition=self.stopping_condition, name=self.name, skip_initial_state_prep=False,
+            decompose,
+            stopping_condition=self.stopping_condition,
+            name=self.name,
+            skip_initial_state_prep=False,
         )
         transform_program.add_transform(
             validate_measurements, sample_measurements=accepted_sample_measurement, name=self.name
         )
         transform_program.add_transform(
-            validate_observables, stopping_condition=self.observable_stopping_condition, name=self.name
+            validate_observables,
+            stopping_condition=self.observable_stopping_condition,
+            name=self.name,
         )
 
         transform_program.add_transform(broadcast_expand)
@@ -366,11 +387,17 @@ class QiskitDevice2(Device):
 
         overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
         if overlapping_kwargs:
-            warnings.warn(f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
-                          f"defined in the device Options. The definition in Options will be used.")
-        if option_kwargs["shots"] != 4000 and option_kwargs["shots"] != self.shots.total_shots:  # 4000 is the default value on Options
-            warnings.warn(f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
-                          f"passed to the device will be used.")
+            warnings.warn(
+                f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
+                f"defined in the device Options. The definition in Options will be used."
+            )
+        if (
+            option_kwargs["shots"] != 4000 and option_kwargs["shots"] != self.shots.total_shots
+        ):  # 4000 is the default value on Options
+            warnings.warn(
+                f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
+                f"passed to the device will be used."
+            )
             self.options.execution.shots = self.shots.total_shots
 
         option_kwargs.pop("shots")
@@ -421,7 +448,6 @@ class QiskitDevice2(Device):
         circuits: QuantumTape_or_Batch,
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
-
         session = self._session or Session(backend=self.backend)
 
         if not self._use_primitives:
@@ -458,7 +484,10 @@ class QiskitDevice2(Device):
         if isinstance(circuits, (QuantumTape, QuantumScript)):
             circuits = [circuits]
 
-        qcirc = [circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True) for circ in circuits]
+        qcirc = [
+            circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True)
+            for circ in circuits
+        ]
         compiled_circuits = self.compile_circuits(qcirc)
 
         program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
@@ -466,14 +495,19 @@ class QiskitDevice2(Device):
         for kwarg in self._kwargs:
             program_inputs[kwarg] = self._kwargs.get(kwarg)
 
-        options = {"backend": self.backend.name,
-                   "log_level": self.options.environment.log_level,
-                   "job_tags": self.options.environment.job_tags,
-                   "max_execution_time": self.options.max_execution_time}
+        options = {
+            "backend": self.backend.name,
+            "log_level": self.options.environment.log_level,
+            "job_tags": self.options.environment.job_tags,
+            "max_execution_time": self.options.max_execution_time,
+        }
 
         # Send circuits to the cloud for execution by the circuit-runner program.
         job = self.service.run(
-            program_id="circuit-runner", options=options, inputs=program_inputs, session_id=session.session_id,
+            program_id="circuit-runner",
+            options=options,
+            inputs=program_inputs,
+            session_id=session.session_id,
         )
         self._current_job = job.result(decoder=RunnerResult)
 
@@ -481,7 +515,10 @@ class QiskitDevice2(Device):
 
         for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
-            res = [mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements]
+            res = [
+                mp.process_samples(self._samples, wire_order=self.wires)
+                for mp in circuit.measurements
+            ]
             single_measurement = len(circuit.measurements) == 1
             res = res[0] if single_measurement else tuple(res)
             results.append(res)
@@ -502,10 +539,9 @@ class QiskitDevice2(Device):
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        return (result.quasi_dists[0], )
+        return (result.quasi_dists[0],)
 
     def _execute_estimator(self, circuit, session):
-
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
@@ -517,7 +553,7 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        result = estimator.run([qcirc]*len(pauli_observables), pauli_observables).result()
+        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
@@ -540,7 +576,7 @@ class QiskitDevice2(Device):
                 result.append(variances[i])
 
         single_measurement = len(measurements) == 1
-        result = (result[0], ) if single_measurement else tuple(result)
+        result = (result[0],) if single_measurement else tuple(result)
 
         return result
 
