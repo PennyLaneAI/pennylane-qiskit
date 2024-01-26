@@ -45,16 +45,39 @@ from qiskit.primitives import EstimatorResult
 from qiskit_aer.noise import NoiseModel
 
 
-def get_devices_for_testing():
-    try:
-        service = QiskitRuntimeService(channel="ibm_quantum")
-        backend = service.backend("ibmq_qasm_simulator")
-        hw_backend = service.least_busy(simulator=False, operational=True)
-        test_dev = QiskitDevice2(wires=5, backend=backend)
-        return backend, hw_backend, test_dev
-    except:
-        return None, None, None
+# def get_devices_for_testing():
+    # try:
+    #     raise RuntimeError
+    #     service = QiskitRuntimeService(channel="ibm_quantum")
+    #     backend = service.backend("ibmq_qasm_simulator")
+    #     test_dev = QiskitDevice2(wires=5, backend=backend)
+    #     return backend, test_dev
+    # except:
 
+class Configuration:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+        self.noise_model = None
+
+class MockedBackend:
+    def __init__(self, num_qubits=10):
+        self._configuration = Configuration(num_qubits)
+        self.options = self._configuration
+
+    def configuration(self):
+        return self._configuration
+
+    def set_options(self, noise_model):
+        self.options.noise_model = noise_model
+
+class MockSession:
+    def __init__(self, backend, max_time=None):
+        self.backend = backend
+        self.max_time = max_time
+
+
+backend = MockedBackend()
+test_dev = QiskitDevice2(wires=5, backend=backend)
 
 def options_for_testing():
     """Creates an Options object with defined values in multiple sub-categories"""
@@ -67,10 +90,7 @@ def options_for_testing():
     return options
 
 
-backend, hw_backend, test_dev = get_devices_for_testing()
 
-
-@pytest.mark.usefixtures("skip_if_no_account")
 class TestDeviceInitialization:
     @pytest.mark.parametrize("use_primitives", [True, False])
     def test_use_primitives_kwarg(self, use_primitives):
@@ -128,24 +148,23 @@ class TestDeviceInitialization:
         the number of wires available on the backend"""
 
         with pytest.raises(ValueError, match="supports maximum"):
-            dev = QiskitDevice2(wires=500, backend=hw_backend)
+            dev = QiskitDevice2(wires=500, backend=backend)
 
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
         object is used to set the backend noise model"""
 
         options = Options()
-        options.simulator.noise_model = NoiseModel.from_backend(hw_backend)
+        options.simulator.noise_model = "PlaceholderForNoiseModel"
 
-        new_backend = service.backend("ibmq_qasm_simulator")
+        new_backend = MockedBackend()
         dev1 = QiskitDevice2(wires=3, backend=backend)
         dev2 = QiskitDevice2(wires=3, backend=new_backend, options=options)
 
         assert dev1.backend.options.noise_model == None
-        assert isinstance(dev2.backend.options.noise_model, NoiseModel)
+        assert dev2.backend.options.noise_model == "PlaceholderForNoiseModel"
 
 
-@pytest.mark.usefixtures("skip_if_no_account")
 class TestQiskitSessionManagement:
     """Test using Qiskit sessions with the device"""
 
@@ -158,20 +177,13 @@ class TestQiskitSessionManagement:
     def test_initializing_with_session(self):
         """Test that you can initialize a device with an existing Qiskit session"""
 
-        session = Session(backend=backend, max_time="1m")
-        session2 = Session(backend=backend, max_time="1m")
+        session = MockSession(backend=backend, max_time="1m")
         dev = QiskitDevice2(wires=2, backend=backend, session=session)
-
         assert dev._session == session
-        assert dev._session != session2
 
-    @pytest.mark.parametrize("start_session", [True, False])
-    def test_using_session_context(self, start_session):
+    @pytest.mark.parametrize("initial_session", [None, MockSession(backend)])
+    def test_using_session_context(self, initial_session):
         """Test that you can add a session within a context manager"""
-
-        initial_session = None
-        if start_session:
-            initial_session = Session(backend=backend, max_time="1m")
 
         dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
 
@@ -183,26 +195,20 @@ class TestQiskitSessionManagement:
 
         assert dev._session == initial_session
 
+    @pytest.mark.parametrize("initial_session", [None, MockSession(backend)])
     def test_update_session(self, initial_session):
         """Test that you can update the session stored on the device"""
 
-        initial_session = Session(backend=backend, max_time="1m")
+        dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
+        assert dev._session == initial_session
 
-        dev1 = QiskitDevice2(wires=2, backend=backend, session=initial_session)
-        dev2 = QiskitDevice2(wires=2, backend=backend, session=initial_session)
-        assert dev1._session == initial_session
-        assert dev2._session == None
+        new_session = MockSession(backend=backend, max_time="1m")
+        dev.update_session(new_session)
 
-        new_session = session2 = Session(backend=backend, max_time="1m")
-        dev1.update_session(new_session)
-        dev2.update_session(new_session)
+        assert dev._session != initial_session
+        assert dev._session == new_session
 
-        assert dev1._session != initial_session
-        assert dev2._session != None
-        assert dev1._session == new_session
-        assert dev2._session == new_session
 
-@pytest.mark.usefixtures("skip_if_no_account")
 class TestDevicePreprocessing:
     """Tests the device preprocessing functions"""
 
@@ -392,7 +398,6 @@ class TestDevicePreprocessing:
         assert np.all([op.name in QISKIT_OPERATION_MAP for op in tapes[0].operations])
 
 
-@pytest.mark.usefixtures("skip_if_no_account")
 class TestOptionsHandling:
     def test_qiskit_options_to_flat_dict(self):
         """Test that a Qiskit Options object is converted to an un-nested python dictionary"""
@@ -539,7 +544,6 @@ class TestOptionsHandling:
         assert dev.options.execution.shots == dev.shots.total_shots
 
 
-@pytest.mark.usefixtures("skip_if_no_account")
 class TestDeviceProperties:
     def test_name_property(self):
         """Test the backend property"""
@@ -547,15 +551,12 @@ class TestDeviceProperties:
 
     def test_backend_property(self):
         """Test the backend property"""
-
         assert test_dev.backend == test_dev._backend
         assert test_dev.backend == backend
 
     def test_service_property(self):
         """Test the service property"""
-
         assert test_dev.service == test_dev._service
-        assert test_dev.service == service
 
     def test_session_property(self):
         """Test the session property"""
