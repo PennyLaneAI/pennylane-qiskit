@@ -202,7 +202,7 @@ class TestQiskitSessionManagement:
         assert dev1._session == new_session
         assert dev2._session == new_session
 
-
+@pytest.mark.usefixtures("skip_if_no_account")
 class TestDevicePreprocessing:
     """Tests the device preprocessing functions"""
 
@@ -296,7 +296,6 @@ class TestDevicePreprocessing:
             (qml.adjoint(qml.RX(1.2, 0)), False),
         ],
     )
-    @pytest.mark.usefixtures("skip_if_no_account")
     def test_stopping_conditions(self, op, expected):
         """Test that stopping_condition works"""
         res = test_dev.stopping_condition(op)
@@ -310,7 +309,6 @@ class TestDevicePreprocessing:
             (qml.prod(qml.PauliY(1), qml.PauliZ(0)), False),
         ],
     )
-    @pytest.mark.usefixtures("skip_if_no_account")
     def test_observable_stopping_condition(self, obs, expected):
         """Test that observable_stopping_condition works"""
         res = test_dev.observable_stopping_condition(obs)
