@@ -67,7 +67,7 @@ def options_for_testing():
     return options
 
 
-backend, hw_backend, test_dev = get_devices_for_testing
+backend, hw_backend, test_dev = get_devices_for_testing()
 
 
 @pytest.mark.usefixtures("skip_if_no_account")
