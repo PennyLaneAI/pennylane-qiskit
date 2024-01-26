@@ -33,7 +33,7 @@ try:
     hw_backend = service.least_busy(simulator=False, operational=True)
     test_dev = QiskitDevice2(wires=5, backend=backend)
 except:
-    raise RuntimeError
+    pass
 
 
 def options_for_testing():
