@@ -44,13 +44,15 @@ from qiskit.primitives import EstimatorResult
 
 from qiskit_aer.noise import NoiseModel
 
-try:
-    service = QiskitRuntimeService(channel="ibm_quantum")
-    backend = service.backend("ibmq_qasm_simulator")
-    hw_backend = service.least_busy(simulator=False, operational=True)
-    test_dev = QiskitDevice2(wires=5, backend=backend)
-except:
-    pass
+def get_devices_for_testing():
+    try:
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.backend("ibmq_qasm_simulator")
+        hw_backend = service.least_busy(simulator=False, operational=True)
+        test_dev = QiskitDevice2(wires=5, backend=backend)
+        return backend, hw_backend, test_dev
+    except:
+        return None, None, None
 
 
 def options_for_testing():
@@ -63,6 +65,8 @@ def options_for_testing():
     options.simulator.noise_model = "placeholder"
     return options
 
+
+backend, hw_backend, test_dev = get_devices_for_testing
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestDeviceInitialization:
