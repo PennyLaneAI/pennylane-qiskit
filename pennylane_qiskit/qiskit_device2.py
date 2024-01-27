@@ -263,7 +263,7 @@ class QiskitDevice2(Device):
 
         self._backend = backend
 
-        self._service = QiskitRuntimeService(channel="ibm_quantum")
+        self._service = backend._service
         self._use_primitives = use_primitives
         self._session = session
 
