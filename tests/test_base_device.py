@@ -18,6 +18,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 import numpy as np
 import pytest
 import inspect
+from unittest.mock import patch
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
@@ -182,8 +183,9 @@ class TestQiskitSessionManagement:
         dev = QiskitDevice2(wires=2, backend=backend, session=session)
         assert dev._session == session
 
+    @patch("pennylane_qiskit.qiskit_device2.Session")
     @pytest.mark.parametrize("initial_session", [None, MockSession(backend)])
-    def test_using_session_context(self, initial_session):
+    def test_using_session_context(self, mock_session, initial_session):
         """Test that you can add a session within a context manager"""
 
         dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
@@ -562,7 +564,7 @@ class TestDeviceProperties:
     def test_session_property(self):
         """Test the session property"""
 
-        session = Session(backend=backend)
+        session = MockSession(backend=backend)
         dev = QiskitDevice2(wires=2, backend=backend, session=session)
         assert dev.session == dev._session
         assert dev.session == session
