@@ -28,7 +28,7 @@ import pennylane as qml
 
 from qiskit.compiler import transpile
 
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler, Estimator
+from qiskit_ibm_runtime import Session, Sampler, Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
 
@@ -263,6 +263,7 @@ class QiskitDevice2(Device):
 
         self._backend = backend
 
+        # ToDo: possibly things fail if this is not a QiskitRuntimeService - confirm and decide how to handle (SC 55725)
         self._service = backend._service
         self._use_primitives = use_primitives
         self._session = session
