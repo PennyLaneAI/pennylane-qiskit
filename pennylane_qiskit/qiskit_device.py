@@ -36,7 +36,7 @@ from ._version import __version__
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 
-QISKIT_OPERATION_MAP_SELF_ADJOINT = {
+QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": ex.XGate,
     "PauliY": ex.YGate,
@@ -65,28 +65,12 @@ QISKIT_OPERATION_MAP_SELF_ADJOINT = {
     "IsingZZ": ex.RZZGate,
     "IsingYY": ex.RYYGate,
     "IsingXX": ex.RXXGate,
-}
-
-QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT = {
-    "Adjoint(" + k + ")": v for k, v in QISKIT_OPERATION_MAP_SELF_ADJOINT.items()
-}
-
-# Separate dictionary for the inverses as the operations dictionary needs
-# to be invertible for the conversion functionality to work
-QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
-QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {
+    "S": ex.SGate,
+    "T": ex.TGate,
+    "SX": ex.SXGate,
     "Adjoint(S)": ex.SdgGate,
     "Adjoint(T)": ex.TdgGate,
     "Adjoint(SX)": ex.SXdgGate,
-}
-
-QISKIT_OPERATION_MAP = {
-    **QISKIT_OPERATION_MAP_SELF_ADJOINT,
-    **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
-}
-QISKIT_OPERATION_INVERSES_MAP = {
-    **QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT,
-    **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
 }
 
 
@@ -126,7 +110,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "tensor_observables": True,
         "inverse_operations": True,
     }
-    _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
+    _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {
         "statevector_simulator",
         "unitary_simulator",
@@ -347,19 +331,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
-            adjoint = operation.startswith("Adjoint(")
-            split_op = operation.split("Adjoint(")
-
-            if adjoint:
-                if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
-                    # Need to revert the order of the quantum registers used in
-                    # Qiskit such that it matches the PennyLane ordering
-                    qregs = list(reversed(qregs))
-            else:
-                if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
-                    # Need to revert the order of the quantum registers used in
-                    # Qiskit such that it matches the PennyLane ordering
-                    qregs = list(reversed(qregs))
+            if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+                # Need to revert the order of the quantum registers used in
+                # Qiskit such that it matches the PennyLane ordering
+                qregs = list(reversed(qregs))
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
             gate = mapped_operation(*par)
