@@ -47,18 +47,20 @@ from qiskit_aer.noise import NoiseModel
 
 
 # def get_devices_for_testing():
-    # try:
-    #     raise RuntimeError
-    #     service = QiskitRuntimeService(channel="ibm_quantum")
-    #     backend = service.backend("ibmq_qasm_simulator")
-    #     test_dev = QiskitDevice2(wires=5, backend=backend)
-    #     return backend, test_dev
-    # except:
+# try:
+#     raise RuntimeError
+#     service = QiskitRuntimeService(channel="ibm_quantum")
+#     backend = service.backend("ibmq_qasm_simulator")
+#     test_dev = QiskitDevice2(wires=5, backend=backend)
+#     return backend, test_dev
+# except:
+
 
 class Configuration:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
         self.noise_model = None
+
 
 class MockedBackend:
     def __init__(self, num_qubits=10):
@@ -72,6 +74,7 @@ class MockedBackend:
     def set_options(self, noise_model):
         self.options.noise_model = noise_model
 
+
 class MockSession:
     def __init__(self, backend, max_time=None):
         self.backend = backend
@@ -80,6 +83,7 @@ class MockSession:
 
 backend = MockedBackend()
 test_dev = QiskitDevice2(wires=5, backend=backend)
+
 
 def options_for_testing():
     """Creates an Options object with defined values in multiple sub-categories"""
@@ -90,7 +94,6 @@ def options_for_testing():
     options.resilience_level = 1
     options.simulator.noise_model = "placeholder"
     return options
-
 
 
 class TestDeviceInitialization:
@@ -733,7 +736,6 @@ class TestResultProcessing:
         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.05)
-
 
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
