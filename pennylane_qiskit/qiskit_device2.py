@@ -15,7 +15,7 @@ r"""
 This module contains a prototype base class for constructing Qiskit devices
 for PennyLane with the new device API.
 """
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
+# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init, missing-function-docstring
 
 
 import warnings
@@ -168,7 +168,7 @@ def split_measurement_types(
 
         result = dict(zip(flattened_indices, flattened_results))
 
-        return tuple([result[i] for i in sorted(result.keys())])
+        return tuple(result[i] for i in sorted(result.keys()))
 
     return tapes, reorder_fn
 
@@ -444,6 +444,7 @@ class QiskitDevice2(Device):
 
         return compiled_circuits
 
+    # pylint: disable=unused-argument
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
