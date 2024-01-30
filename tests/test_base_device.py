@@ -669,7 +669,7 @@ class TestMockedExecution:
         """Test that a device **not** using Primitives only calls the _execute_runtime_service
         to execute, regardless of measurement type"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False, session=MockSession())
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
@@ -699,7 +699,7 @@ class TestMockedExecution:
         to execute measurements that require raw samples, and the relevant primitive measurements
         on the other measurements"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True, session=MockSession())
 
         qs = QuantumScript(
             [qml.PauliX(0), qml.PauliY(1)],
