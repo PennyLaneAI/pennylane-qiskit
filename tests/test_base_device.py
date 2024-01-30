@@ -18,7 +18,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 import numpy as np
 import pytest
 import inspect
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
@@ -37,23 +37,15 @@ from qiskit_ibm_runtime import QiskitRuntimeService, Session, Estimator
 from qiskit_ibm_runtime.options import Options
 from qiskit_ibm_runtime.constants import RunnerResult
 
-# do not import Estimator from qiskit.primitives - the identically named Estimator
-# object has a different call signature than the remote device Estimator, and only
-# runs local simulations. We need the Estimator from qiskit_ibm_runtime. They both
-# use this EstimatorResults, however.
+# do not import Estimator (imported above) from qiskit.primitives - the identically
+# named Estimator object has a different call signature than the remote device Estimator,
+# and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
+# both use this EstimatorResults, however:
 from qiskit.primitives import EstimatorResult
 
+from qiskit import QuantumCircuit
+
 from qiskit_aer.noise import NoiseModel
-
-
-# def get_devices_for_testing():
-# try:
-#     raise RuntimeError
-#     service = QiskitRuntimeService(channel="ibm_quantum")
-#     backend = service.backend("ibmq_qasm_simulator")
-#     test_dev = QiskitDevice2(wires=5, backend=backend)
-#     return backend, test_dev
-# except:
 
 
 class Configuration:
@@ -80,8 +72,12 @@ class MockSession:
         self.backend = backend
         self.max_time = max_time
 
+try:
+    service = QiskitRuntimeService(channel="ibm_quantum")
+    backend = service.backend("ibmq_qasm_simulator")
+except:
+    backend = MockedBackend()
 
-backend = MockedBackend()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
 
@@ -580,23 +576,103 @@ class TestDeviceProperties:
         assert dev.num_wires == len(wires)
 
 
-@pytest.mark.usefixtures("skip_if_no_account")
-class TestExecution:
+class TestMockedExecution:
+
     def test_get_transpile_args(self):
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
         kwargs = {"random_kwarg": 3, "optimization_level": 3, "circuits": []}
         assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
 
-    def test_execute_pipeline_no_primitives(self, mocker):
+    @patch("pennylane_qiskit.qiskit_device2.transpile")
+    def test_compile_circuits(self, transpile_mock):
+        """Tests compile_circuits with a mocked transpile function to avoid calling
+        a remote backend. This renders it fairly useless."""
+
+        transpile_mock.return_value = QuantumCircuit(2)
+
+        # technically this doesn't matter due to the mock, but this is the correct input format for the function
+        circuits = [QuantumScript([qml.PauliX(0)], measurements=[qml.expval(qml.PauliZ(0))]),
+                    QuantumScript([qml.PauliX(0)], measurements=[qml.probs(wires=[0])]),
+                    QuantumScript([qml.PauliX(0), qml.PauliZ(1)], measurements=[qml.counts()])]
+        input_circuits = [circuit_to_qiskit(c, register_size=2) for c in circuits]
+
+        compiled_circuits = test_dev.compile_circuits(input_circuits)
+
+        assert len(compiled_circuits) == len(input_circuits)
+        for i, circuit in enumerate(compiled_circuits):
+            assert isinstance(circuit, QuantumCircuit)
+
+    @pytest.mark.parametrize(
+        "measurements, expectation",
+        [
+            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
+            ([qml.var(qml.PauliX(0))], (1)),
+            (
+                [
+                    qml.expval(qml.PauliX(0)),
+                    qml.expval(qml.PauliZ(0)),
+                    qml.var(qml.PauliX(0)),
+                ],
+                (0, 1, 1),
+            ),
+        ],
+    )
+    def test_process_estimator_job_mocked(self, measurements, expectation):
+        """Test the process_estimator_job function with constructed return for
+        Estimator (integration test that runs with a Token is below)"""
+
+        values = np.array([np.random.ranf() for i in range(len(measurements))])
+        metadata = [{'variance': np.random.ranf(), 'shots': 4000} for i in range(len(measurements))]
+
+        result = EstimatorResult(values, metadata)
+        processed_result = QiskitDevice2._process_estimator_job(measurements, result)
+
+        assert isinstance(processed_result, tuple)
+        assert len(processed_result) == len(measurements)
+
+    @pytest.mark.parametrize("results, index", [({'00': 125, '10': 500, '01': 250, '11' : 125}, None),
+                                                ([{}, {'00': 125, '10': 500, '01': 250, '11' : 125}], 1),
+                                                ([{}, {}, {'00': 125, '10': 500, '01': 250, '11' : 125}], 2)])
+    def test_generate_samples_mocked_single_result(self, results, index):
+        """Test generate_samples with a Mocked return for the job result
+        (integration test that runs with a Token is below)"""
+
+        # create mocked Job with results dict
+        def get_counts():
+            return results
+
+        mock_job = Mock()
+        mock_job.configure_mock(get_counts=get_counts)
+        test_dev._current_job = mock_job
+
+        samples = test_dev.generate_samples(circuit=index)
+        results_dict = results if index is None else results[index]
+
+        assert len(samples) == sum(results_dict.values())
+        assert len(samples[0]) == 2
+
+        assert len(np.argwhere([np.allclose(s, [0, 0]) for s in samples])) == results_dict["00"]
+        assert len(np.argwhere([np.allclose(s, [1, 1]) for s in samples])) == results_dict["11"]
+
+        # order of samples is swapped compared to keys (Qiskit wire order convention is reverse of PennyLane)
+        assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
+        assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
+
+
+
+
+
+
+
+    def test_execute_pipeline_no_primitives_mocked(self, mocker):
         """Test that a device **not** using Primitives only calls the _execute_runtime_service
         to execute, regardless of measurement type"""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
 
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
 
         qs = QuantumScript(
             [qml.PauliX(0), qml.PauliY(1)],
@@ -608,22 +684,22 @@ class TestExecution:
             ],
         )
 
-        dev.execute(qs)
+        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
+            runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+            res = dev.execute(qs)
 
         runtime_service_execute.assert_called_once()
         sampler_execute.assert_not_called()
         estimator_execute.assert_not_called()
 
-    def test_execute_pipeline_with_primitives(self, mocker):
+        assert res == "runtime_execute_res"
+
+    def test_execute_pipeline_with_primitives_mocked(self, mocker):
         """Test that a device that **is** using Primitives calls the _execute_runtime_service
         to execute measurements that require raw samples, and the relevant primitive measurements
         on the other measurements"""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
 
         qs = QuantumScript(
             [qml.PauliX(0), qml.PauliY(1)],
@@ -636,11 +712,24 @@ class TestExecution:
         )
         tapes, reorder_fn = split_measurement_types(qs)
 
-        dev.execute(tapes)
+        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
+            with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
+                with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
+                    runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+                    sampler_execute = mocker.spy(dev, "_execute_sampler")
+                    estimator_execute = mocker.spy(dev, "_execute_estimator")
+
+                    res = dev.execute(tapes)
 
         runtime_service_execute.assert_called_once()
         sampler_execute.assert_called_once()
         estimator_execute.assert_called_once()
+
+        assert res == ["estimator_execute_res", "sampler_execute_res", "runtime_execute_res"]
+
+
+@pytest.mark.usefixtures("skip_if_no_account")
+class TestExecution:
 
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
@@ -686,9 +775,6 @@ class TestExecution:
 
         assert np.allclose(res, expectation, atol=0.1)
 
-
-@pytest.mark.usefixtures("skip_if_no_account")
-class TestResultProcessing:
     @pytest.mark.parametrize(
         "measurements, expectation",
         [
@@ -709,7 +795,6 @@ class TestResultProcessing:
 
         # make PennyLane circuit
         qs = QuantumScript([], measurements=measurements)
-        num_wires = qs
 
         # convert to Qiskit circuit information
         qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
