@@ -59,6 +59,7 @@ class MockedBackend:
         self._configuration = Configuration(num_qubits)
         self.options = self._configuration
         self._service = "SomeServiceProvider"
+        self.name = "mocked_backend"
 
     def configuration(self):
         return self._configuration
