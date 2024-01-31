@@ -73,6 +73,7 @@ class MockSession:
         self.max_time = max_time
         self.session_id = "123"
 
+
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
@@ -594,9 +595,11 @@ class TestMockedExecution:
         transpile_mock.return_value = QuantumCircuit(2)
 
         # technically this doesn't matter due to the mock, but this is the correct input format for the function
-        circuits = [QuantumScript([qml.PauliX(0)], measurements=[qml.expval(qml.PauliZ(0))]),
-                    QuantumScript([qml.PauliX(0)], measurements=[qml.probs(wires=[0])]),
-                    QuantumScript([qml.PauliX(0), qml.PauliZ(1)], measurements=[qml.counts()])]
+        circuits = [
+            QuantumScript([qml.PauliX(0)], measurements=[qml.expval(qml.PauliZ(0))]),
+            QuantumScript([qml.PauliX(0)], measurements=[qml.probs(wires=[0])]),
+            QuantumScript([qml.PauliX(0), qml.PauliZ(1)], measurements=[qml.counts()]),
+        ]
         input_circuits = [circuit_to_qiskit(c, register_size=2) for c in circuits]
 
         compiled_circuits = test_dev.compile_circuits(input_circuits)
@@ -625,7 +628,7 @@ class TestMockedExecution:
         Estimator (integration test that runs with a Token is below)"""
 
         values = np.array([np.random.ranf() for i in range(len(measurements))])
-        metadata = [{'variance': np.random.ranf(), 'shots': 4000} for i in range(len(measurements))]
+        metadata = [{"variance": np.random.ranf(), "shots": 4000} for i in range(len(measurements))]
 
         result = EstimatorResult(values, metadata)
         processed_result = QiskitDevice2._process_estimator_job(measurements, result)
@@ -633,9 +636,14 @@ class TestMockedExecution:
         assert isinstance(processed_result, tuple)
         assert len(processed_result) == len(measurements)
 
-    @pytest.mark.parametrize("results, index", [({'00': 125, '10': 500, '01': 250, '11' : 125}, None),
-                                                ([{}, {'00': 125, '10': 500, '01': 250, '11' : 125}], 1),
-                                                ([{}, {}, {'00': 125, '10': 500, '01': 250, '11' : 125}], 2)])
+    @pytest.mark.parametrize(
+        "results, index",
+        [
+            ({"00": 125, "10": 500, "01": 250, "11": 125}, None),
+            ([{}, {"00": 125, "10": 500, "01": 250, "11": 125}], 1),
+            ([{}, {}, {"00": 125, "10": 500, "01": 250, "11": 125}], 2),
+        ],
+    )
     def test_generate_samples_mocked_single_result(self, results, index):
         """Test generate_samples with a Mocked return for the job result
         (integration test that runs with a Token is below)"""
@@ -665,7 +673,9 @@ class TestMockedExecution:
         """Test that a device **not** using Primitives only calls the _execute_runtime_service
         to execute, regardless of measurement type"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False, session=MockSession(backend))
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=False, session=MockSession(backend)
+        )
 
         initial_session = dev._session
 
@@ -696,7 +706,7 @@ class TestMockedExecution:
     @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._execute_estimator")
     def test_execute_pipeline_primitives_no_session(self, mocker):
         """Test that a Primitives-based device initialized with no Session creates one for the
-         execution, and then returns the device session to None."""
+        execution, and then returns the device session to None."""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True, session=None)
 
@@ -715,7 +725,9 @@ class TestMockedExecution:
         to execute measurements that require raw samples, and the relevant primitive measurements
         on the other measurements"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True, session=MockSession(backend))
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
+        )
 
         qs = QuantumScript(
             [qml.PauliX(0), qml.PauliY(1)],
@@ -750,7 +762,9 @@ class TestMockedExecution:
         """Test the _execute_estimator function using a mocked version of Estimator
         that returns a meaningless result."""
 
-        qs = QuantumScript([qml.PauliX(0)], measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))])
+        qs = QuantumScript(
+            [qml.PauliX(0)], measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))]
+        )
         result = test_dev._execute_estimator(qs, session)
 
         # to emphasize, this did nothing except appease CodeCov
@@ -774,7 +788,7 @@ class TestMockedExecution:
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
-        mock_counts = {'00': 125, '10': 500, '01': 250, '11': 125}
+        mock_counts = {"00": 125, "10": 500, "01": 250, "11": 125}
         mock_result = Mock()
         mock_job = Mock()
         mock_service = Mock()
@@ -799,6 +813,7 @@ class TestMockedExecution:
         # order of samples is swapped compared to keys (Qiskit wire order convention is reverse of PennyLane)
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == mock_counts["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == mock_counts["01"]
+
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
