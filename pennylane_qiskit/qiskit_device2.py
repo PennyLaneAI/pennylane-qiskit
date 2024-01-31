@@ -240,7 +240,15 @@ class QiskitDevice2(Device):
 
     # pylint:disable = too-many-arguments
     def __init__(
-        self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, compile_backend=None, **kwargs
+        self,
+        wires,
+        backend,
+        shots=1024,
+        use_primitives=False,
+        options=None,
+        session=None,
+        compile_backend=None,
+        **kwargs,
     ):
         if shots is None:
             warnings.warn(
