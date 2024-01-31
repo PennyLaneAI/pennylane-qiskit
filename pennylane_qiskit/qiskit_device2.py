@@ -213,6 +213,9 @@ class QiskitDevice2(Device):
             for more details.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
+        compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
+            sent to the backend device, to be set if the backend desired for compliation differs from the
+            backend used for execution. Defaults to None. If None, the primary backend will be used.
         **kwargs: transpilation and runtime kwargs to be used for measurements without Qiskit Primitives.
             If any values are defined both in ``options`` and in the remaining ``kwargs``, the value
             provided in ``options`` will take precedence. These kwargs will be ignored for all Primitive-based
@@ -237,7 +240,7 @@ class QiskitDevice2(Device):
 
     # pylint:disable = too-many-arguments
     def __init__(
-        self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs
+        self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, compile_backend=None, **kwargs
     ):
         if shots is None:
             warnings.warn(
@@ -262,6 +265,7 @@ class QiskitDevice2(Device):
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
+        self._compile_backend = compile_backend if compile_backend else backend
 
         # ToDo: possibly things fail if this is not a QiskitRuntimeService - confirm and decide how to handle (SC 55725)
         self._service = backend._service
@@ -294,6 +298,15 @@ class QiskitDevice2(Device):
             qiskit.providers.backend: Qiskit backend object.
         """
         return self._backend
+
+    @property
+    def compile_backend(self):
+        """The compile_backend is a Qiskit backend object to be used for transpilation.
+
+        Returns:
+            qiskit.providers.backend: Qiskit backend object.
+        """
+        return self._compile_backend
 
     @property
     def service(self):
@@ -438,7 +451,7 @@ class QiskitDevice2(Device):
         transpile_args = self.get_transpile_args(self._kwargs)
 
         for circuit in circuits:
-            compiled_circ = transpile(circuit, backend=self.backend, **transpile_args)
+            compiled_circ = transpile(circuit, backend=self.compile_backend, **transpile_args)
             compiled_circ.name = f"circ{len(compiled_circuits)}"
             compiled_circuits.append(compiled_circ)
 
