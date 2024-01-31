@@ -27,6 +27,7 @@ import numpy as np
 import pennylane as qml
 
 from qiskit.compiler import transpile
+from qiskit.providers import BackendV2
 
 from qiskit_ibm_runtime import Session, Sampler, Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
@@ -239,6 +240,7 @@ class QiskitDevice2(Device):
     def __init__(
         self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs
     ):
+
         if shots is None:
             warnings.warn(
                 "Expected an integer number of shots, but received shots=None. Defaulting "
@@ -277,10 +279,10 @@ class QiskitDevice2(Device):
             self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
         # Perform validation against backend
-        b = self.backend
-        if len(self.wires) > int(b.configuration().n_qubits):
+        available_qubits = backend.num_qubits if isinstance(backend, BackendV2) else backend.configuration().n_qubits
+        if len(self.wires) > int(available_qubits):
             raise ValueError(
-                f"Backend '{backend}' supports maximum {b.configuration().n_qubits} wires"
+                f"Backend '{backend}' supports maximum {available_qubits} wires"
             )
 
         self.reset()
@@ -497,8 +499,10 @@ class QiskitDevice2(Device):
         for kwarg in self._kwargs:
             program_inputs[kwarg] = self._kwargs.get(kwarg)
 
+        backend_name = self.backend.name if isinstance(self.backend, BackendV2) else self.backend.configuration().backend_name
+
         options = {
-            "backend": self.backend.name,
+            "backend": backend_name,
             "log_level": self.options.environment.log_level,
             "job_tags": self.options.environment.job_tags,
             "max_execution_time": self.options.max_execution_time,
