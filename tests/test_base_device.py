@@ -42,6 +42,7 @@ from qiskit_ibm_runtime.constants import RunnerResult
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
 from qiskit.primitives import EstimatorResult
+from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
 
@@ -49,23 +50,49 @@ from qiskit_aer.noise import NoiseModel
 
 
 class Configuration:
-    def __init__(self, n_qubits):
+    def __init__(self, n_qubits, backend_name):
         self.n_qubits = n_qubits
+        self.backend_name = backend_name
         self.noise_model = None
 
 
-class MockedBackend:
-    def __init__(self, num_qubits=10):
-        self._configuration = Configuration(num_qubits)
-        self.options = self._configuration
+class MockedBackend(BackendV2):
+    def __init__(self, num_qubits=10, name="mocked_backend"):
+        self._options = Configuration(num_qubits, name)
         self._service = "SomeServiceProvider"
-        self.name = "mocked_backend"
+        self.name = name
+        self._target = Mock()
+        self._target.num_qubits = num_qubits
+
+    def set_options(self, noise_model):
+        self.options.noise_model = noise_model
+
+    def _default_options(self):
+        return {}
+
+    def max_circuits(self):
+        return 10
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def target(self):
+        return self._target
+
+class MockedBackendLegacy(BackendV1):
+    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
+        self._configuration = Configuration(num_qubits, backend_name=name)
+        self._service = "SomeServiceProvider"
 
     def configuration(self):
         return self._configuration
 
-    def set_options(self, noise_model):
-        self.options.noise_model = noise_model
+    def _default_options(self):
+        return {}
+
+    def run(self, *args, **kwargs):
+        return None
 
 
 class MockSession:
@@ -81,6 +108,7 @@ try:
 except:
     backend = MockedBackend()
 
+legacy_backend = MockedBackendLegacy()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
 
@@ -147,9 +175,10 @@ class TestDeviceInitialization:
         # initial kwargs are saved without modification
         assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
 
-    def test_backend_wire_validation(self):
-        """Test that the an error is raised if the number of device wires exceeds
-        the number of wires available on the backend"""
+    @pytest.mark.parametrize("backend", [backend, legacy_backend])
+    def test_backend_wire_validation(self, backend):
+        """Test that an error is raised if the number of device wires exceeds
+        the number of wires available on the backend, for both backend versions"""
 
         with pytest.raises(ValueError, match="supports maximum"):
             dev = QiskitDevice2(wires=500, backend=backend)
@@ -167,6 +196,7 @@ class TestDeviceInitialization:
 
         assert dev1.backend.options.noise_model == None
         assert dev2.backend.options.noise_model == "PlaceholderForNoiseModel"
+
 
 
 class TestQiskitSessionManagement:
@@ -670,7 +700,8 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    def test_execute_pipeline_no_primitives_mocked(self, mocker):
+    @pytest.mark.parametrize("backend", [backend, legacy_backend])
+    def test_execute_pipeline_no_primitives_mocked(self, mocker, backend):
         """Test that a device **not** using Primitives only calls the _execute_runtime_service
         to execute, regardless of measurement type"""
 
@@ -721,7 +752,8 @@ class TestMockedExecution:
 
         assert dev._session is None  # the device session is still None
 
-    def test_execute_pipeline_with_all_execute_types_mocked(self, mocker):
+    @pytest.mark.parametrize("backend", [backend, legacy_backend])
+    def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
         """Test that a device that **is** using Primitives calls the _execute_runtime_service
         to execute measurements that require raw samples, and the relevant primitive measurements
         on the other measurements"""
