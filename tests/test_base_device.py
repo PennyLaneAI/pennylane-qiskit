@@ -80,6 +80,7 @@ class MockedBackend(BackendV2):
     def target(self):
         return self._target
 
+
 class MockedBackendLegacy(BackendV1):
     def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
         self._configuration = Configuration(num_qubits, backend_name=name)
@@ -196,7 +197,6 @@ class TestDeviceInitialization:
 
         assert dev1.backend.options.noise_model == None
         assert dev2.backend.options.noise_model == "PlaceholderForNoiseModel"
-
 
 
 class TestQiskitSessionManagement:

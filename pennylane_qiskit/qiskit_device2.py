@@ -279,11 +279,13 @@ class QiskitDevice2(Device):
             self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
         # Perform validation against backend
-        available_qubits = backend.num_qubits if isinstance(backend, BackendV2) else backend.configuration().n_qubits
+        available_qubits = (
+            backend.num_qubits
+            if isinstance(backend, BackendV2)
+            else backend.configuration().n_qubits
+        )
         if len(self.wires) > int(available_qubits):
-            raise ValueError(
-                f"Backend '{backend}' supports maximum {available_qubits} wires"
-            )
+            raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
         self._update_kwargs()
@@ -499,7 +501,11 @@ class QiskitDevice2(Device):
         for kwarg in self._kwargs:
             program_inputs[kwarg] = self._kwargs.get(kwarg)
 
-        backend_name = self.backend.name if isinstance(self.backend, BackendV2) else self.backend.configuration().backend_name
+        backend_name = (
+            self.backend.name
+            if isinstance(self.backend, BackendV2)
+            else self.backend.configuration().backend_name
+        )
 
         options = {
             "backend": backend_name,
