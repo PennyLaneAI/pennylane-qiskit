@@ -710,7 +710,7 @@ class TestMockedExecution:
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True, session=None)
 
-        dev._session == None
+        assert dev._session is None
 
         qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
 
@@ -718,7 +718,7 @@ class TestMockedExecution:
             res = dev.execute(qs)
             mock_session.assert_called_once()  # a session was created
 
-        assert dev._session == None  # the device session is still None
+        assert dev._session is None  # the device session is still None
 
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker):
         """Test that a device that **is** using Primitives calls the _execute_runtime_service
@@ -782,7 +782,8 @@ class TestMockedExecution:
         # to emphasize, this did nothing except appease CodeCov
         assert isinstance(result[0], Mock)
 
-    def test_execute_runtime_service_mocked(self):
+    @patch("pennylane_qiskit.qiskit_device2.transpile")
+    def test_execute_runtime_service_mocked(self, mocked_transpile):
         """Test the _execute_sampler function using a mocked version of Sampler
         that returns a meaningless result."""
 
