@@ -51,4 +51,4 @@ class BasicAerDevice(QiskitDevice):
     short_name = "qiskit.basicaer"
 
     def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
-        super().__init__(wires, provider=qiskit_aer.AerProvider, backend=backend, shots=shots, **kwargs)
+        super().__init__(wires, provider=qiskit_aer.AerProvider(), backend=backend, shots=shots, **kwargs)
