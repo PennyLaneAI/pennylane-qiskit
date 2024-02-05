@@ -60,4 +60,4 @@ class AerDevice(QiskitDevice):
         if method != "automatic":
             backend += "_" + method
 
-        super().__init__(wires, provider=qiskit_aer.Aer, backend=backend, shots=shots, **kwargs)
+        super().__init__(wires, provider=qiskit_aer.AerProvider(), backend=backend, shots=shots, **kwargs)
