@@ -384,6 +384,7 @@ class TestPLOperations:
 
         assert np.allclose(res, 1)
 
+
 class TestPLTemplates:
     """Integration tests for checking certain PennyLane templates."""
 

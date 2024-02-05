@@ -57,7 +57,9 @@ class TestTranspilationOptionInitialization:
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    @pytest.mark.xfail(reason="expected to fail until we take care of all the 0.46 warnings - len(record) != 1")
+    @pytest.mark.xfail(
+        reason="expected to fail until we take care of all the 0.46 warnings - len(record) != 1"
+    )
     @pytest.mark.parametrize("backend", hw_backends)
     def test_warning_raised_for_hardware_backend_analytic_expval(self, backend, recorder):
         """Tests that a warning is raised if the analytic attribute is true on
@@ -78,7 +80,9 @@ class TestAnalyticWarningHWSimulator:
             "device are estimates based on samples.".format(dev.backend)
         )
 
-    @pytest.mark.xfail(reason="expected to fail until we take care of all the 0.46 warnings - len(record) != 1")
+    @pytest.mark.xfail(
+        reason="expected to fail until we take care of all the 0.46 warnings - len(record) != 1"
+    )
     @pytest.mark.parametrize("backend", state_backends)
     def test_no_warning_raised_for_software_backend_analytic_expval(
         self, backend, recorder, recwarn
