@@ -256,3 +256,24 @@ def load_qasm_from_file(file: str):
         function: the new PennyLane template
     """
     return load(QuantumCircuit.from_qasm_file(file))
+
+def convert_sparse_pauli_op_to_pl(sparse_op, params=None):
+    """docstring with clear examples here - remember to comment on wire ordering!"""
+    
+    if params:
+        sparse_op = sparse_op.assign_parameters(params)
+
+    op_map = {'X': qml.PauliX, 'Y': qml.PauliY, 'Z': qml.PauliZ, 'I': qml.Identity}
+
+    coeffs = sparse_op.coeffs
+    if ParameterExpression in [type(c) for c in coeffs]:
+        raise RuntimeError(f"Not all parameter expressions are assigned in coeffs {coeffs}")
+
+    qiskit_terms = sparse_op.paulis
+    pl_terms = []
+
+    for term in qiskit_terms:
+        operators = [op_map[str(op)](wire) for wire, op in enumerate(term)]
+        pl_terms.append(qml.prod(*operators).simplify())
+
+    return qml.dot(coeffs, pl_terms)
