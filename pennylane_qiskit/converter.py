@@ -35,18 +35,43 @@ inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
 
-def _check_parameter_bound(param: Parameter, var_ref_map: Dict[Parameter, Any]):
+def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
         param (qiskit.circuit.Parameter): the parameter to be checked
-        var_ref_map (dict[qiskit.circuit.Parameter, Any]):
+        trainable_params (dict[qiskit.circuit.Parameter, Any]):
             a dictionary mapping qiskit parameters to trainable parameter values
     """
-    if isinstance(param, Parameter) and param not in var_ref_map:
+    if isinstance(param, Parameter) and param not in trainable_params:
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
+def _format_params_dict(params, *args, **kwargs):
+    # make params dict if using args and/or kwargs
+    if args or kwargs:
+        if params is not None:
+            # ToDo: make error message informative
+            raise RuntimeError
+
+        # create en empty params dict
+        params = {}
+
+        # populate it with any parameters defined as kwargs
+        for k, v in kwargs.items():
+            qc_param = [p for p in quantum_circuit.parameters if p.name == k]
+            if not qc_param:
+                raise RuntimeError(
+                    f"Could not find parameter '{k}' in circuit with parameters {quantum_circuit.parameters}")
+            params[qc_param[0]] = v
+
+        # get any parameters not defined in kwargs (may be all of them) and match to args in order
+        arg_parameters = [p for p in quantum_circuit.parameters if p.name not in kwargs.keys()]
+        params.update(dict(zip(arg_parameters, args)))
+
+        return params
+
+    return params
 
 def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]:
     """Iterate through the parameter mapping to be bound to the circuit,
@@ -90,6 +115,12 @@ def _check_circuit_and_bind_parameters(
         raise ValueError(
             "The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit)
         )
+
+    # confirm parameter names are valid for conversion to PennyLane
+    for name in ['wires', 'params']:
+        if name in [p.name for p in quantum_circuit.parameters]:
+            raise RuntimeError(f"Cannot interpret QuantumCircuit with parameter '{name}' as a PennyLane "
+                               f"quantum function, as this argument is reserved")
 
     if params is None:
         return quantum_circuit
@@ -155,7 +186,7 @@ def load(quantum_circuit: QuantumCircuit):
         function: the resulting PennyLane template
     """
 
-    def _function(params: dict = None, wires: list = None):
+    def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
         not incorporated in the PennyLane template.
@@ -169,8 +200,11 @@ def load(quantum_circuit: QuantumCircuit):
         Returns:
             function: the new PennyLane template
         """
-        var_ref_map = _extract_variable_refs(params)
-        qc = _check_circuit_and_bind_parameters(quantum_circuit, params, var_ref_map)
+
+        # organize parameters, format trainable parameter values correctly, and then bind the parameters to the circuit
+        params = _format_params_dict(params, *args, **kwargs)
+        trainable_params = _extract_variable_refs(params)
+        qc = _check_circuit_and_bind_parameters(quantum_circuit, params, trainable_params)
 
         # Wires from a qiskit circuit have unique IDs, so their hashes are unique too
         qc_wires = [hash(q) for q in qc.qubits]
@@ -196,11 +230,11 @@ def load(quantum_circuit: QuantumCircuit):
             ):
                 # Extract the bound parameters from the operation. If the bound parameters are a
                 # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
-                # variable from the var_ref_map dictionary.
+                # variable from the trainable_params dictionary.
 
                 pl_parameters = []
                 for p in op.params:
-                    _check_parameter_bound(p, var_ref_map)
+                    _check_parameter_bound(p, trainable_params)
 
                     if isinstance(p, ParameterExpression):
                         if p.parameters:  # non-empty set = has unbound parameters
@@ -209,7 +243,7 @@ def load(quantum_circuit: QuantumCircuit):
                             f = lambdify(ordered_params, p._symbol_expr, modules=qml.numpy)
                             f_args = []
                             for i_ordered_params in ordered_params:
-                                f_args.append(var_ref_map.get(i_ordered_params))
+                                f_args.append(trainable_params.get(i_ordered_params))
                             pl_parameters.append(f(*f_args))
                         else:  # needed for qiskit<0.43.1
                             pl_parameters.append(float(p))  # pragma: no cover
