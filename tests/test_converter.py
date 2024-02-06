@@ -10,7 +10,7 @@ from qiskit.quantum_info.operators import Operator
 
 import pennylane as qml
 from pennylane import numpy as np
-from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires
+from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires, _format_params_dict
 from pennylane.wires import Wires
 
 
@@ -767,6 +767,56 @@ class TestConverterUtils:
         ):
             map_wires(qc_wires, wires)
 
+    def test_format_params_dict_old_interface(self):
+        """Test the old interface for setting the value of Qiskit Parameters -
+        passing a dictionary of the form {Parameter("name"): value, ...} as
+        either an arg or with the params kwarg"""
+
+        theta = Parameter("θ")
+        phi = Parameter("φ")
+        rotation_angle1 = 0.5
+        rotation_angle2 = 0.3
+
+        qc = QuantumCircuit(2)
+        qc.rz(theta, [0])
+        qc.rx(phi, [0])
+
+        # works if params was passed as a kwarg, args is ()
+        params = {theta: rotation_angle1, phi: rotation_angle2}
+        output_params = _format_params_dict(qc, params)
+        assert output_params == params
+
+        # works if params was passed as an arg and params=None
+        output_params2 = _format_params_dict(qc, None, params)
+        assert output_params2 == params
+
+    @pytest.mark.parametrize("args, kwargs", [((0.5, 0.3, 0.4), {}),
+                                              ((), {'a': 0.5, 'b': 0.3, 'c': 0.4}),
+                                              ((0.5, 0.3), {'c': 0.4}),
+                                              ((0.5, 0.4), {'b': 0.3}),
+                                              ((0.3,), {'a': 0.5, 'c': 0.4})])
+    def test_format_params_dict_new_interface(self, args, kwargs):
+        """Test the new interface for setting the value of Qiskit Parameters -
+        passing either ordered args, or keyword arguments where the argument
+        matches the Parameter name, or some combination of the two.
+
+        The kwargs are passed as a dictionary to this function, and the args
+        as a tuple. This tests the new case where params=None"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rz(a, [0])
+        qc.rx(b, [0])
+        qc.ry(c, [0])
+
+        params = _format_params_dict(qc, None, *args, **kwargs)
+        assert params == {a: 0.5, b: 0.3, c: 0.4}
+
+
+
 
 class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
@@ -928,7 +978,7 @@ class TestConverterIntegration:
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
-    def test_passing_parameter_into_qnode(self, qubit_device_2_wires):
+    def test_passing_parameter_into_qnode_old_interface(self, qubit_device_2_wires):
         """Tests passing a circuit parameter into the QNode."""
 
         theta = Parameter("θ")
@@ -937,9 +987,16 @@ class TestConverterIntegration:
         qc = QuantumCircuit(2)
         qc.rz(theta, [0])
 
+        # with params dict as arg
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit(angle):
             load(qc)({theta: angle})
+            return qml.expval(qml.PauliZ(0))
+
+        # with params dict as kwarg
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit2(angle):
+            load(qc)(params={theta: angle})
             return qml.expval(qml.PauliZ(0))
 
         @qml.qnode(qubit_device_2_wires)
@@ -950,13 +1007,97 @@ class TestConverterIntegration:
         assert circuit_loaded_qiskit_circuit(rotation_angle) == circuit_native_pennylane(
             rotation_angle
         )
+        assert circuit_loaded_qiskit_circuit2(rotation_angle) == circuit_native_pennylane(
+            rotation_angle
+        )
+
+    def test_passing_parameters_new_interface_args(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters by passing args in order."""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rx(c, [0])
+        qc.ry(a, [0])
+        qc.rz(b, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RX(0.4, wires=0)
+            qml.RY(0.5, wires=0)
+            qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_passing_parameters_new_interface_kwargs(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters by passing kwargs matching the parameter names"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rx(c, [0])
+        qc.ry(a, [0])
+        qc.rz(b, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(a=0.5, b=0.3, c=0.4)
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RX(0.4, wires=0)
+            qml.RY(0.5, wires=0)
+            qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_passing_parameters_new_interface_mixed(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters - by passing a combination of kwargs and args"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rx(c, [0])
+        qc.ry(a, [0])
+        qc.rz(b, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(0.3, a=0.5, c=0.4)
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RX(0.4, wires=0)
+            qml.RY(0.5, wires=0)
+            qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
     def test_one_parameter_in_qc_one_passed_into_qnode(self, qubit_device_2_wires):
         """Tests passing a parameter by pre-defining it and then
         passing another to the QNode."""
 
-        theta = Parameter("θ")
-        phi = Parameter("φ")
+        theta = Parameter("theta")
+        phi = Parameter("phi")
         rotation_angle1 = 0.5
         rotation_angle2 = 0.3
 
@@ -964,9 +1105,16 @@ class TestConverterIntegration:
         qc.rz(theta, [0])
         qc.rx(phi, [0])
 
+        # as args
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit(angle):
-            load(qc)({theta: angle, phi: rotation_angle2})
+            load(qc)(rotation_angle2, angle)  # order is phi, theta (alphabetical)
+            return qml.expval(qml.PauliZ(0))
+
+        # as kwargs
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit2(angle):
+            load(qc)(theta = angle, phi = rotation_angle2)
             return qml.expval(qml.PauliZ(0))
 
         @qml.qnode(qubit_device_2_wires)
@@ -975,7 +1123,18 @@ class TestConverterIntegration:
             qml.RX(rotation_angle2, wires=0)
             return qml.expval(qml.PauliZ(0))
 
+        circuit_loaded_qiskit_circuit(rotation_angle1)
+        circuit_loaded_qiskit_circuit2(rotation_angle1)
+        circuit_native_pennylane(rotation_angle1)
+
+
+        print(circuit_loaded_qiskit_circuit.tape.operations)
+        print(circuit_loaded_qiskit_circuit2.tape.operations)
+        print(circuit_native_pennylane.tape.operations)
         assert circuit_loaded_qiskit_circuit(rotation_angle1) == circuit_native_pennylane(
+            rotation_angle1
+        )
+        assert circuit_loaded_qiskit_circuit2(rotation_angle1) == circuit_native_pennylane(
             rotation_angle1
         )
 
