@@ -1132,13 +1132,6 @@ class TestConverterIntegration:
             qml.RX(rotation_angle2, wires=0)
             return qml.expval(qml.PauliZ(0))
 
-        circuit_loaded_qiskit_circuit(rotation_angle1)
-        circuit_loaded_qiskit_circuit2(rotation_angle1)
-        circuit_native_pennylane(rotation_angle1)
-
-        print(circuit_loaded_qiskit_circuit.tape.operations)
-        print(circuit_loaded_qiskit_circuit2.tape.operations)
-        print(circuit_native_pennylane.tape.operations)
         assert circuit_loaded_qiskit_circuit(rotation_angle1) == circuit_native_pennylane(
             rotation_angle1
         )
