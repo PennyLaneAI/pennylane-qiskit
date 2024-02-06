@@ -16,7 +16,7 @@ This module contains the :class:`~.BasicAerDevice` class, a PennyLane device tha
 evaluation and differentiation of Qiskit Terra's BasicAer simulator
 using PennyLane.
 """
-import qiskit
+import qiskit_aer
 
 from .qiskit_device import QiskitDevice
 
@@ -51,4 +51,6 @@ class BasicAerDevice(QiskitDevice):
     short_name = "qiskit.basicaer"
 
     def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
-        super().__init__(wires, provider=qiskit.BasicAer, backend=backend, shots=shots, **kwargs)
+        super().__init__(
+            wires, provider=qiskit_aer.AerProvider(), backend=backend, shots=shots, **kwargs
+        )
