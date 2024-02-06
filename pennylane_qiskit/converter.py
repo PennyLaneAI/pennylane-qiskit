@@ -47,7 +47,7 @@ def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, A
     if isinstance(param, Parameter) and param not in trainable_params:
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
-def _format_params_dict(params, *args, **kwargs):
+def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     # make params dict if using args and/or kwargs
     if args or kwargs:
         if params is not None:
@@ -202,7 +202,7 @@ def load(quantum_circuit: QuantumCircuit):
         """
 
         # organize parameters, format trainable parameter values correctly, and then bind the parameters to the circuit
-        params = _format_params_dict(params, *args, **kwargs)
+        params = _format_params_dict(quantum_circuit, params, *args, **kwargs)
         trainable_params = _extract_variable_refs(params)
         qc = _check_circuit_and_bind_parameters(quantum_circuit, params, trainable_params)
 
