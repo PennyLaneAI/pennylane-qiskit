@@ -48,11 +48,37 @@ def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, A
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
+    """Processes the inputs for calling the quantum function and returns
+    a dictionary of the format {Parameter("name"): value} for all the parameters.
+
+    For a ``quantum_circuit`` with parameters ``[Parameter("phi"), Parameter("psi"), Parameter("theta")]``,
+    inputs can be one of the following:
+        1. the kwargs passed to when calling the qfunc, other than ``params`` and ``wires``.
+            The keys in kwargs are expected to correspond to the names of the Parameters on
+            the QuantumCircuit, i.e. (qc, None, phi=0.35, theta=0.2, psi=1.7)
+        2. the args passed when calling the qfunc, assigned to the Parameters in alphabetical
+            order, i.e. (qc, None, 0.35, 1.7, 0.2)
+        3. Some combination of args and kwargs, i.e. (qc, None, 0.35, 0.2, psi=1.7)
+        4. (legacy) ``params`` from the kwarg ``params`` of the qfunc call, which is expected
+            to already be a dictionary of the format {Parameter("name"): value}, i.e.
+            (qc, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})
+        5. (legacy) ``params`` passed as a single arg, which is expected
+            to already be a dictionary of the format {Parameter("name"): value}, i.e.
+            (qc, None, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})
+
+    Returns:
+        params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
+    """
+    # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
+    if params is None and (len(args)==1 and isinstance(args[0], dict)):
+        params = args[0]
+        args = ()
+
     # make params dict if using args and/or kwargs
     if args or kwargs:
         if params is not None:
-            # ToDo: make error message informative
-            raise RuntimeError
+            raise RuntimeError("Cannot define params via the params kwarg when passing Parameter values "
+                               "as individual args or kwargs.")
 
         # create en empty params dict
         params = {}
@@ -98,10 +124,10 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]
     return variable_refs  # map qiskit parameters to trainable parameter values
 
 
-def _check_circuit_and_bind_parameters(
+def _check_circuit_and_assign_parameters(
     quantum_circuit: QuantumCircuit, params: dict, diff_params: dict
 ) -> QuantumCircuit:
-    """Utility function for checking for a valid quantum circuit and then binding parameters.
+    """Utility function for checking for a valid quantum circuit and then assigning the parameters.
 
     Args:
         quantum_circuit (QuantumCircuit): the quantum circuit to check and bind the parameters for
@@ -130,7 +156,7 @@ def _check_circuit_and_bind_parameters(
         # we must remove them from the binding dictionary before binding.
         del params[k]
 
-    return quantum_circuit.bind_parameters(params)
+    return quantum_circuit.assign_parameters(params)
 
 
 def map_wires(qc_wires: list, wires: list) -> dict:
@@ -186,6 +212,7 @@ def load(quantum_circuit: QuantumCircuit):
         function: the resulting PennyLane template
     """
 
+    # def _function(*args, params: dict = None, wires: list = None, **kwargs):
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -204,7 +231,7 @@ def load(quantum_circuit: QuantumCircuit):
         # organize parameters, format trainable parameter values correctly, and then bind the parameters to the circuit
         params = _format_params_dict(quantum_circuit, params, *args, **kwargs)
         trainable_params = _extract_variable_refs(params)
-        qc = _check_circuit_and_bind_parameters(quantum_circuit, params, trainable_params)
+        qc = _check_circuit_and_assign_parameters(quantum_circuit, params, trainable_params)
 
         # Wires from a qiskit circuit have unique IDs, so their hashes are unique too
         qc_wires = [hash(q) for q in qc.qubits]
