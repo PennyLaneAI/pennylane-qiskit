@@ -153,6 +153,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: the resulting PennyLane template
     """
 
+    # pylint:disable=fixme, inconsistent-return-statements, too-many-branches
     def _function(params: dict = None, wires: list = None):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -186,7 +187,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
-            # pylint:disable=fixme
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
