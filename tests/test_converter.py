@@ -10,7 +10,13 @@ from qiskit.quantum_info.operators import Operator
 
 import pennylane as qml
 from pennylane import numpy as np
-from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires, _format_params_dict
+from pennylane_qiskit.converter import (
+    load,
+    load_qasm,
+    load_qasm_from_file,
+    map_wires,
+    _format_params_dict,
+)
 from pennylane.wires import Wires
 
 
@@ -790,11 +796,16 @@ class TestConverterUtils:
         output_params2 = _format_params_dict(qc, None, params)
         assert output_params2 == params
 
-    @pytest.mark.parametrize("args, kwargs", [((0.5, 0.3, 0.4), {}),
-                                              ((), {'a': 0.5, 'b': 0.3, 'c': 0.4}),
-                                              ((0.5, 0.3), {'c': 0.4}),
-                                              ((0.5, 0.4), {'b': 0.3}),
-                                              ((0.3,), {'a': 0.5, 'c': 0.4})])
+    @pytest.mark.parametrize(
+        "args, kwargs",
+        [
+            ((0.5, 0.3, 0.4), {}),
+            ((), {"a": 0.5, "b": 0.3, "c": 0.4}),
+            ((0.5, 0.3), {"c": 0.4}),
+            ((0.5, 0.4), {"b": 0.3}),
+            ((0.3,), {"a": 0.5, "c": 0.4}),
+        ],
+    )
     def test_format_params_dict_new_interface(self, args, kwargs):
         """Test the new interface for setting the value of Qiskit Parameters -
         passing either ordered args, or keyword arguments where the argument
@@ -814,8 +825,6 @@ class TestConverterUtils:
 
         params = _format_params_dict(qc, None, *args, **kwargs)
         assert params == {a: 0.5, b: 0.3, c: 0.4}
-
-
 
 
 class TestConverterWarnings:
@@ -1114,7 +1123,7 @@ class TestConverterIntegration:
         # as kwargs
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit2(angle):
-            load(qc)(theta = angle, phi = rotation_angle2)
+            load(qc)(theta=angle, phi=rotation_angle2)
             return qml.expval(qml.PauliZ(0))
 
         @qml.qnode(qubit_device_2_wires)
@@ -1126,7 +1135,6 @@ class TestConverterIntegration:
         circuit_loaded_qiskit_circuit(rotation_angle1)
         circuit_loaded_qiskit_circuit2(rotation_angle1)
         circuit_native_pennylane(rotation_angle1)
-
 
         print(circuit_loaded_qiskit_circuit.tape.operations)
         print(circuit_loaded_qiskit_circuit2.tape.operations)

@@ -47,6 +47,7 @@ def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, A
     if isinstance(param, Parameter) and param not in trainable_params:
         raise ValueError("The parameter {} was not bound correctly.".format(param))
 
+
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     """Processes the inputs for calling the quantum function and returns
     a dictionary of the format {Parameter("name"): value} for all the parameters.
@@ -70,15 +71,17 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
     # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
-    if params is None and (len(args)==1 and isinstance(args[0], dict)):
+    if params is None and (len(args) == 1 and isinstance(args[0], dict)):
         params = args[0]
         args = ()
 
     # make params dict if using args and/or kwargs
     if args or kwargs:
         if params is not None:
-            raise RuntimeError("Cannot define params via the params kwarg when passing Parameter values "
-                               "as individual args or kwargs.")
+            raise RuntimeError(
+                "Cannot define params via the params kwarg when passing Parameter values "
+                "as individual args or kwargs."
+            )
 
         # create en empty params dict
         params = {}
@@ -88,7 +91,8 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
             qc_param = [p for p in quantum_circuit.parameters if p.name == k]
             if not qc_param:
                 raise RuntimeError(
-                    f"Could not find parameter '{k}' in circuit with parameters {quantum_circuit.parameters}")
+                    f"Could not find parameter '{k}' in circuit with parameters {quantum_circuit.parameters}"
+                )
             params[qc_param[0]] = v
 
         # get any parameters not defined in kwargs (may be all of them) and match to args in order
@@ -98,6 +102,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         return params
 
     return params
+
 
 def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]:
     """Iterate through the parameter mapping to be bound to the circuit,
@@ -143,10 +148,12 @@ def _check_circuit_and_assign_parameters(
         )
 
     # confirm parameter names are valid for conversion to PennyLane
-    for name in ['wires', 'params']:
+    for name in ["wires", "params"]:
         if name in [p.name for p in quantum_circuit.parameters]:
-            raise RuntimeError(f"Cannot interpret QuantumCircuit with parameter '{name}' as a PennyLane "
-                               f"quantum function, as this argument is reserved")
+            raise RuntimeError(
+                f"Cannot interpret QuantumCircuit with parameter '{name}' as a PennyLane "
+                f"quantum function, as this argument is reserved"
+            )
 
     if params is None:
         return quantum_circuit
