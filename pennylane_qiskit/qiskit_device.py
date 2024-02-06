@@ -71,6 +71,8 @@ QISKIT_OPERATION_MAP = {
     "Adjoint(S)": ex.SdgGate,
     "Adjoint(T)": ex.TdgGate,
     "Adjoint(SX)": ex.SXdgGate,
+    "Barrier": ex.Barrier,
+    "GlobalPhase": ex.GlobalPhaseGate,
 }
 
 

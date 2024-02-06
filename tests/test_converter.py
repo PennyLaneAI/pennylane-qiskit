@@ -5,6 +5,7 @@ import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.circuit import Parameter
+from qiskit.circuit.library import EfficientSU2
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
 
@@ -771,10 +772,9 @@ class TestConverterUtils:
 class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
-    def test_barrier_not_supported(self, recorder):
+    def test_template_not_supported(self, recorder):
         """Tests that a warning is raised if an unsupported instruction was reached."""
-        qc = QuantumCircuit(3, 1)
-        qc.barrier()
+        qc = EfficientSU2(3, reps=1)
 
         quantum_circuit = load(qc)
 
@@ -785,7 +785,7 @@ class TestConverterWarnings:
         # check that the message matches
         assert (
             record[-1].message.args[0]
-            == "pennylane_qiskit.converter: The Barrier instruction is not supported by"
+            == "pennylane_qiskit.converter: The Gate instruction is not supported by"
             " PennyLane, and has not been added to the template."
         )
 
@@ -821,8 +821,8 @@ class TestConverterQasm:
         with pytest.warns(UserWarning) as record:
             with recorder:
                 quantum_circuit()
-
-        assert len(recorder.queue) == 6
+        print(recorder.queue)
+        assert len(recorder.queue) == 11
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -832,21 +832,25 @@ class TestConverterQasm:
         assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == Wires([2])
 
-        assert recorder.queue[2].name == "Hadamard"
+        assert recorder.queue[2].name == "Barrier"
         assert recorder.queue[2].parameters == []
-        assert recorder.queue[2].wires == Wires([0])
+        assert recorder.queue[2].wires == Wires([0, 1, 2, 3])
 
         assert recorder.queue[3].name == "Hadamard"
         assert recorder.queue[3].parameters == []
-        assert recorder.queue[3].wires == Wires([1])
+        assert recorder.queue[3].wires == Wires([0])
 
         assert recorder.queue[4].name == "Hadamard"
         assert recorder.queue[4].parameters == []
-        assert recorder.queue[4].wires == Wires([2])
+        assert recorder.queue[4].wires == Wires([1])
 
         assert recorder.queue[5].name == "Hadamard"
         assert recorder.queue[5].parameters == []
-        assert recorder.queue[5].wires == Wires([3])
+        assert recorder.queue[5].wires == Wires([2])
+
+        assert recorder.queue[6].name == "Hadamard"
+        assert recorder.queue[6].parameters == []
+        assert recorder.queue[6].wires == Wires([3])
 
     def test_qasm_file_not_found_error(self):
         """Tests that an error is propagated, when a non-existing file is specified for parsing."""
@@ -872,7 +876,7 @@ class TestConverterQasm:
             with recorder:
                 quantum_circuit(params={})
 
-        assert len(recorder.queue) == 2
+        assert len(recorder.queue) == 6
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1110,3 +1114,48 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(jac, jac_expected)
+
+    def test_meas_circuit_in_qnode(self, qubit_device_2_wires):
+        """Tests loading a converted template in a QNode with measurements."""
+
+        angle = 0.543
+
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.rz(angle, [0])
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        quantum_circuit = load(qc, measurements=measurements)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            return quantum_circuit()
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.Hadamard(0)
+            qml.measure(0)
+            qml.RZ(angle, wires=0)
+            qml.CNOT([0, 1])
+            return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+        quantum_circuit = load(qc, measurements=None)
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit2():
+            meas = quantum_circuit()
+            return [qml.expval(m) for m in meas]
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane2():
+            qml.Hadamard(0)
+            qml.measure(0)
+            qml.RZ(angle, wires=0)
+            qml.CNOT([0, 1])
+            return [qml.expval(m) for m in [qml.measure(0), qml.measure(1)]]
+
+        assert circuit_loaded_qiskit_circuit2() == circuit_native_pennylane2()
