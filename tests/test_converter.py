@@ -1145,6 +1145,7 @@ class TestConverterIntegration:
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
         quantum_circuit = load(qc, measurements=None)
+
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit2():
             meas = quantum_circuit()

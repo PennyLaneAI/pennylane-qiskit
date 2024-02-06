@@ -87,9 +87,7 @@ def _check_circuit_and_bind_parameters(
         QuantumCircuit: quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
-        raise ValueError(
-            f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit."
-        )
+        raise ValueError(f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit.")
 
     if params is None:
         return quantum_circuit
@@ -230,8 +228,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             elif isinstance(op, Measure):
                 meas_terminal = True
                 # Look-ahead for more gate(s) on its wire(s)
-                for meas_ix in range(idx, num_inst-1):
-                    (next_op, next_qargs, _), op_wires = qc.data[meas_ix+1], set(operation_wires)
+                for meas_ix in range(idx, num_inst - 1):
+                    (next_op, next_qargs, _), op_wires = qc.data[meas_ix + 1], set(operation_wires)
                     next_op_name = getattr(next_op, "base_class", next_op.__class__).__name__
                     if next_op_name not in ["Barrier", "GlobalPhaseGate"]:
                         next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
