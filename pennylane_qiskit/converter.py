@@ -88,6 +88,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
 
         # populate it with any parameters defined as kwargs
         for k, v in kwargs.items():
+            # the key needs to be the actual Parameter, whereas kwargs keys are parameter names
             qc_param = [p for p in quantum_circuit.parameters if p.name == k]
             if not qc_param:
                 raise RuntimeError(

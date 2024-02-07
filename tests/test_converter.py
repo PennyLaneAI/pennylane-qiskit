@@ -827,8 +827,8 @@ class TestConverterUtils:
         assert params == {a: 0.5, b: 0.3, c: 0.4}
 
 
-class TestConverterWarnings:
-    """Tests that the converter.load function emits warnings."""
+class TestConverterWarningsAndErrors:
+    """Tests that the converter.load function emits warnings and errors."""
 
     def test_barrier_not_supported(self, recorder):
         """Tests that a warning is raised if an unsupported instruction was reached."""
@@ -847,6 +847,38 @@ class TestConverterWarnings:
             == "pennylane_qiskit.converter: The Barrier instruction is not supported by"
             " PennyLane, and has not been added to the template."
         )
+
+    @pytest.mark.parametrize("invalid_param", ["wires", "params"])
+    def test_params_and_wires_not_valid_param_names(self, invalid_param):
+        """Test that ambiguous parameter names 'wires' and 'params' in the Qiskit
+        QuantumCircuit raise an error"""
+
+        parameter = Parameter(invalid_param)
+
+        qc = QuantumCircuit(2, 2)
+        qc.rx(parameter, 0)
+        qc.rx(0.3, 1)
+        qc.measure_all()
+
+        with pytest.raises(RuntimeError, match="this argument is reserved"):
+            load(qc)(0.3)
+
+    def test_kwarg_does_not_match_params(self):
+        """Test that if a parameter kwarg doesn't match the included"""
+
+        parameter = Parameter("name1")
+
+        qc = QuantumCircuit(2, 2)
+        qc.rx(parameter, 0)
+        qc.rx(0.3, 1)
+        qc.measure_all()
+
+        # works with correct name
+        load(qc)(name1=0.3)
+
+        # raises error with incorrect name
+        with pytest.raises(RuntimeError, match="Could not find parameter"):
+            load(qc)(name2=0.3)
 
 
 class TestConverterQasm:
