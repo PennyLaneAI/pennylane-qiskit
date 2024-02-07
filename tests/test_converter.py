@@ -859,7 +859,7 @@ class TestConverterWarningsAndErrors:
         load(qc)(name1=0.3)
 
         # raises error with incorrect name
-        with pytest.raises(RuntimeError, match="Could not find parameter"):
+        with pytest.raises(TypeError, match="Got unexpected parameter keyword argument 'name2'"):
             load(qc)(name2=0.3)
 
     def test_too_many_args(self):

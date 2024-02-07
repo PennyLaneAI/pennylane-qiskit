@@ -92,8 +92,8 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
             # the key needs to be the actual Parameter, whereas kwargs keys are parameter names
             qc_param = [p for p in quantum_circuit.parameters if p.name == k]
             if not qc_param:
-                raise RuntimeError(
-                    f"Could not find parameter '{k}' in circuit with parameters {quantum_circuit.parameters}"
+                raise TypeError(
+                    f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters {quantum_circuit.parameters}"
                 )
             params[qc_param[0]] = v
 
