@@ -16,6 +16,7 @@ from pennylane_qiskit.converter import (
     load_qasm_from_file,
     map_wires,
     _format_params_dict,
+    _check_parameter_bound,
 )
 from pennylane.wires import Wires
 
@@ -240,6 +241,19 @@ class TestConverter:
         assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == Wires([0])
 
+    def test_parameter_was_not_bound(self, recorder):
+        """Tests that an error is raised when parameters were not bound. If we
+        did the input checks correctly, the load function itself will never get
+        to this error"""
+
+        theta = Parameter("θ")
+        trainable_params = {}
+
+        with pytest.raises(
+            ValueError, match="The parameter {} was not bound correctly.".format(theta)
+        ):
+            _check_parameter_bound(theta, trainable_params)
+
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were
         passed."""
@@ -272,23 +286,6 @@ class TestConverter:
         with pytest.raises(QiskitError):
             with recorder:
                 quantum_circuit(params={theta: angle})
-
-    def test_quantum_circuit_error_parameter_not_bound(self, recorder):
-        """Tests the load method for a QuantumCircuit raises a ValueError,
-        if one of the parameters was not bound correctly."""
-
-        theta = Parameter("θ")
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(theta, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(
-            ValueError, match="The parameter {} was not bound correctly.".format(theta)
-        ):
-            with recorder:
-                quantum_circuit()
 
     def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
         """Tests the load method raises a ValueError, if something
@@ -892,17 +889,38 @@ class TestConverterWarningsAndErrors:
 
         qc = QuantumCircuit(2, 2)
         qc.rx(a, 0)
-        qc.rx(b*c, 1)
+        qc.rx(b * c, 1)
         qc.measure_all()
 
-        with pytest.raises(TypeError, match="Missing 1 required argument to define Parameter values"):
+        with pytest.raises(
+            TypeError, match="Missing 1 required argument to define Parameter values"
+        ):
             load(qc)(0.2, 0.3)
 
-        with pytest.raises(TypeError, match="Missing 1 required argument to define Parameter values"):
+        with pytest.raises(
+            TypeError, match="Missing 1 required argument to define Parameter values"
+        ):
             load(qc)(0.2, c=0.4)
 
-        with pytest.raises(TypeError, match="Missing 2 required arguments to define Parameter values"):
+        with pytest.raises(
+            TypeError, match="Missing 2 required arguments to define Parameter values"
+        ):
             load(qc)(b=0.3)
+
+    def test_no_parameters_raises_error(self, recorder):
+        """Tests the load method for a QuantumCircuit raises a TypeError if no
+        parameters are passed to a loaded function that requires parameters"""
+
+        theta = Parameter("θ")
+
+        qc = QuantumCircuit(3, 1)
+        qc.rz(theta, [0])
+
+        quantum_circuit = load(qc)
+
+        with pytest.raises(TypeError, match="Missing required argument to define Parameter value"):
+            quantum_circuit()
+
 
 class TestConverterQasm:
     """Tests that the converter.load function allows conversion from qasm."""

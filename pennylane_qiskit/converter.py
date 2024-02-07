@@ -47,9 +47,6 @@ def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, A
     if isinstance(param, Parameter) and param not in trainable_params:
         raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
 
-    if param in trainable_params and not isinstance(param, Parameter):
-        raise ValueError(f"The parameter {param} was bound correctly.".format(param))
-
 
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     """Processes the inputs for calling the quantum function and returns
@@ -73,6 +70,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     Returns:
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
+
     # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
     if params is None and (len(args) == 1 and isinstance(args[0], dict)):
         params = args[0]
@@ -104,7 +102,8 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         # if too many args were passed to the function call, raise an error
         if len(args) > len(arg_parameters):
             raise TypeError(
-                f"Expected {len(arg_parameters)} positional argument{'s' if len(arg_parameters) > 1 else ''} but {len(args)} were given")
+                f"Expected {len(arg_parameters)} positional argument{'s' if len(arg_parameters) > 1 else ''} but {len(args)} were given"
+            )
         params.update(dict(zip(arg_parameters, args)))
 
         return params
@@ -164,12 +163,22 @@ def _check_circuit_and_assign_parameters(
             )
 
     if params is None:
+        if quantum_circuit.parameters:
+            raise TypeError(
+                f"Missing required argument{'s' if len(quantum_circuit.parameters) > 1 else ''} "
+                f"to define Parameter value{'s' if len(quantum_circuit.parameters) > 1 else ''} "
+                f"for: {quantum_circuit.parameters}"
+            )
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
     undefined_params = set(quantum_circuit.parameters) - set(params)
     if undefined_params:
-        raise TypeError(f"Missing {len(undefined_params)} required argument{'s' if len(undefined_params) > 1 else ''} to define Parameter values for: {undefined_params}")
+        raise TypeError(
+            f"Missing {len(undefined_params)} required argument{'s' if len(undefined_params) > 1 else ''} "
+            f"to define Parameter value{'s' if len(quantum_circuit.parameters) > 1 else ''} for: "
+            f"{undefined_params}"
+        )
 
     for k in diff_params:
         # Since we don't bind trainable values to Qiskit circuits,
