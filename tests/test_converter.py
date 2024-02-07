@@ -864,7 +864,8 @@ class TestConverterWarningsAndErrors:
             load(qc)(0.3)
 
     def test_kwarg_does_not_match_params(self):
-        """Test that if a parameter kwarg doesn't match the included"""
+        """Test that if a parameter kwarg doesn't match any of the Parameter
+        names in a QuantumCircuit, an error is raised"""
 
         parameter = Parameter("name1")
 
@@ -880,6 +881,44 @@ class TestConverterWarningsAndErrors:
         with pytest.raises(RuntimeError, match="Could not find parameter"):
             load(qc)(name2=0.3)
 
+    def test_too_many_args(self):
+        """Test that if too many positional arguments are passed to define Parameter values,
+        a clear error is raised"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+
+        qc = QuantumCircuit(2, 2)
+        qc.rx(a, 0)
+        qc.rx(b, 1)
+        qc.measure_all()
+
+        with pytest.raises(TypeError, match="Expected 2 positional arguments but 3 were given"):
+            load(qc)(0.2, 0.4, 0.5)
+
+        with pytest.raises(TypeError, match="Expected 1 positional argument but 2 were given"):
+            load(qc)(0.4, 0.5, a=0.2)
+
+    def test_missing_argument(self):
+        """Test that if calling with missing arguments, a clear error is raised"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2, 2)
+        qc.rx(a, 0)
+        qc.rx(b*c, 1)
+        qc.measure_all()
+
+        with pytest.raises(TypeError, match="Missing 1 required argument to define Parameter values"):
+            load(qc)(0.2, 0.3)
+
+        with pytest.raises(TypeError, match="Missing 1 required argument to define Parameter values"):
+            load(qc)(0.2, c=0.4)
+
+        with pytest.raises(TypeError, match="Missing 2 required arguments to define Parameter values"):
+            load(qc)(b=0.3)
 
 class TestConverterQasm:
     """Tests that the converter.load function allows conversion from qasm."""

@@ -98,6 +98,10 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
 
         # get any parameters not defined in kwargs (may be all of them) and match to args in order
         arg_parameters = [p for p in quantum_circuit.parameters if p.name not in kwargs.keys()]
+        # if too many args were passed to the function call, raise an error
+        if len(args) > len(arg_parameters):
+            raise TypeError(
+                f"Expected {len(arg_parameters)} positional argument{'s' if len(arg_parameters) > 1 else ''} but {len(args)} were given")
         params.update(dict(zip(arg_parameters, args)))
 
         return params
@@ -158,6 +162,11 @@ def _check_circuit_and_assign_parameters(
 
     if params is None:
         return quantum_circuit
+
+    # if any parameters are missing a value, raise an error
+    undefined_params = set(quantum_circuit.parameters) - set(params)
+    if undefined_params:
+        raise TypeError(f"Missing {len(undefined_params)} required argument{'s' if len(undefined_params) > 1 else ''} to define Parameter values for: {undefined_params}")
 
     for k in diff_params:
         # Since we don't bind trainable values to Qiskit circuits,
