@@ -99,6 +99,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         compile_backend (BaseBackend): The backend used for compilation. If you wish
             to simulate a device compliant circuit, you can specify a backend here.
     """
+
     name = "Qiskit PennyLane plugin"
     pennylane_requires = ">=0.30.0"
     version = __version__
