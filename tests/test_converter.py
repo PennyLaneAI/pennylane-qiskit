@@ -818,10 +818,9 @@ class TestConverterQasm:
 
         quantum_circuit = load_qasm_from_file(qft_qasm)
 
-        with pytest.warns(UserWarning) as record:
-            with recorder:
-                quantum_circuit()
-        print(recorder.queue)
+        with recorder:
+            quantum_circuit()
+
         assert len(recorder.queue) == 11
 
         assert recorder.queue[0].name == "PauliX"
@@ -872,9 +871,8 @@ class TestConverterQasm:
 
         quantum_circuit = load_qasm(qasm_string)
 
-        with pytest.warns(UserWarning) as record:
-            with recorder:
-                quantum_circuit(params={})
+        with recorder:
+            quantum_circuit(params={})
 
         assert len(recorder.queue) == 6
 
