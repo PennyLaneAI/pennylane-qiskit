@@ -240,22 +240,6 @@ class TestConverter:
         assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == Wires([0])
 
-    def test_parameter_was_not_bound(self, recorder):
-        """Tests that loading raises an error when parameters were not bound."""
-
-        theta = Parameter("θ")
-
-        qc = QuantumCircuit(3, 1)
-        qc.rz(theta, [0])
-
-        quantum_circuit = load(qc)
-
-        with pytest.raises(
-            ValueError, match="The parameter {} was not bound correctly.".format(theta)
-        ):
-            with recorder:
-                quantum_circuit(params={})
-
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were
         passed."""

@@ -35,18 +35,6 @@ inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
 
-def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, Any]):
-    """Utility function determining if a certain parameter in a QuantumCircuit has
-    been bound.
-
-    Args:
-        param (qiskit.circuit.Parameter): the parameter to be checked
-        trainable_params (dict[qiskit.circuit.Parameter, Any]):
-            a dictionary mapping qiskit parameters to trainable parameter values
-    """
-    if isinstance(param, Parameter) and param not in trainable_params:
-        raise ValueError("The parameter {} was not bound correctly.".format(param))
-
 
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     """Processes the inputs for calling the quantum function and returns
@@ -278,7 +266,6 @@ def load(quantum_circuit: QuantumCircuit):
 
                 pl_parameters = []
                 for p in op.params:
-                    _check_parameter_bound(p, trainable_params)
 
                     if isinstance(p, ParameterExpression):
                         if p.parameters:  # non-empty set = has unbound parameters
