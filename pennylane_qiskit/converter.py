@@ -72,16 +72,9 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
 
-<<<<<<< HEAD
-    # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
-    if params is None and len(args) == 1 and isinstance(args[0], dict):
-        params = args[0]
-        args = ()
-=======
     # if no kwargs are passed, and a dictionary has been passed as a single argument, then assume it is params
     if params is None and not kwargs and (len(args) == 1 and isinstance(args[0], dict)):
         return args[0]
->>>>>>> 5e11a8f (apply code review suggestions)
 
     # make params dict if using args and/or kwargs
     if args or kwargs:
