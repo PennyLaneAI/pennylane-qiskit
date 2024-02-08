@@ -20,7 +20,8 @@ import warnings
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression, Measure
+from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier
+from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
@@ -180,10 +181,10 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         wire_map = map_wires(qc_wires, wires)
 
         # Stores the measurements encountered in the circuit
-        measurement_ops = []
+        mid_circ_meas, terminal_meas = [], []
 
         # Processing the dictionary of parameters passed
-        for op, qargs, _ in qc.data:
+        for idx, (op, qargs, _) in enumerate(qc.data):
             # the new Singleton classes have different names than the objects they represent, but base_class.__name__ still matches
             instruction_name = getattr(op, "base_class", op.__class__).__name__
 
@@ -230,8 +231,24 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 qml.adjoint(gate)(wires=operation_wires)
 
             elif isinstance(op, Measure):
-                if not measurements:
-                    measurement_ops.append(qml.measure(wires=operation_wires))
+                # Store the current operation wires
+                op_wires = set(operation_wires)
+                # Look-ahead for more gate(s) on its wire(s)
+                meas_terminal = True
+                for next_op, next_qargs, __ in qc.data[idx + 1 :]:
+                    # Check if the subsequent whether next_op is measurement interfering
+                    if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
+                        next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                        # Check if there's any overlapping wires
+                        if next_op_wires.intersection(op_wires):
+                            meas_terminal = False
+                            break
+
+                # Allows for queing the mid-circuit measurements
+                if not meas_terminal:
+                    mid_circ_meas.append(qml.measure(wires=operation_wires))
+                else:
+                    terminal_meas.extend(operation_wires)
 
             else:
                 try:
@@ -249,7 +266,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 return [qml.apply(meas) for meas in measurements]
             return measurements
 
-        return tuple(measurement_ops) or None
+        return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
 
     return _function
 
