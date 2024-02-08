@@ -20,7 +20,8 @@ import warnings
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression
+from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
+from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
@@ -70,6 +71,10 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     Returns:
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
+
+    # print(params)
+    # print(args)
+    # print(kwargs)
 
     # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
     if params is None and (len(args) == 1 and isinstance(args[0], dict)):
@@ -126,7 +131,7 @@ def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]
     # map qiskit parameters to PennyLane trainable parameter values
     if params is not None:
         for k, v in params.items():
-            if getattr(v, "requires_grad", True):
+            if qml.math.requires_grad(v):
                 # Values can be arrays of size 1, need to extract the Python scalar
                 # (this can happen e.g. when indexing into a PennyLane numpy array)
                 if isinstance(v, np.ndarray):
@@ -172,12 +177,20 @@ def _check_circuit_and_assign_parameters(
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
-    undefined_params = set(quantum_circuit.parameters) - set(params)
-    if undefined_params:
+    expected_parameter_arguments = []
+
+    for param in quantum_circuit.parameters:
+        if isinstance(param, ParameterVectorElement):
+            expected_parameter_arguments.append(param.name.split('[')[0])
+        else:
+            expected_parameter_arguments.append(param.name)
+
+    missing_args = set(expected_parameter_arguments) - set([p.name for p in params])
+    if missing_args:
         raise TypeError(
-            f"Missing {len(undefined_params)} required argument{'s' if len(undefined_params) > 1 else ''} "
+            f"Missing {len(missing_args)} required argument{'s' if len(missing_args) > 1 else ''} "
             f"to define Parameter value{'s' if len(quantum_circuit.parameters) > 1 else ''} for: "
-            f"{undefined_params}"
+            f"{missing_args}"
         )
 
     for k in diff_params:
