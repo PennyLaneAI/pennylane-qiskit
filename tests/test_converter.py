@@ -1176,3 +1176,6 @@ class TestConverterIntegration:
 
         qtemp, qtemp1 = load(qc), load(qc1)
         assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
+
+        qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
+        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
