@@ -893,12 +893,12 @@ class TestConverterWarningsAndErrors:
         qc.measure_all()
 
         with pytest.raises(
-            TypeError, match="Missing 1 required argument to define Parameter values"
+            TypeError, match="Missing 1 required argument to define Parameter value"
         ):
             load(qc)(0.2, 0.3)
 
         with pytest.raises(
-            TypeError, match="Missing 1 required argument to define Parameter values"
+            TypeError, match="Missing 1 required argument to define Parameter value"
         ):
             load(qc)(0.2, c=0.4)
 
