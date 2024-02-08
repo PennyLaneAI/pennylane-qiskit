@@ -56,23 +56,23 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     inputs can be one of the following:
         1. the kwargs passed to when calling the qfunc, other than ``params`` and ``wires``.
             The keys in kwargs are expected to correspond to the names of the Parameters on
-            the QuantumCircuit, i.e. (qc, None, phi=0.35, theta=0.2, psi=1.7)
+            the QuantumCircuit, i.e. ``(qc, None, phi=0.35, theta=0.2, psi=1.7)``
         2. the args passed when calling the qfunc, assigned to the Parameters in alphabetical
-            order, i.e. (qc, None, 0.35, 1.7, 0.2)
-        3. Some combination of args and kwargs, i.e. (qc, None, 0.35, 0.2, psi=1.7)
+            order, i.e. ``(qc, None, 0.35, 1.7, 0.2)``
+        3. some combination of args and kwargs, i.e. ``(qc, None, 0.35, 0.2, psi=1.7)``
         4. (legacy) ``params`` from the kwarg ``params`` of the qfunc call, which is expected
-            to already be a dictionary of the format {Parameter("name"): value}, i.e.
-            (qc, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})
+            to already be a dictionary of the format ``{Parameter("name"): value}``, i.e.
+            ``(qc, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})``
         5. (legacy) ``params`` passed as a single arg, which is expected
-            to already be a dictionary of the format {Parameter("name"): value}, i.e.
-            (qc, None, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})
+            to already be a dictionary of the format ``{Parameter("name"): value}``, i.e.
+            ``(qc, None, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})``
 
     Returns:
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
 
     # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
-    if params is None and (len(args) == 1 and isinstance(args[0], dict)):
+    if params is None and len(args) == 1 and isinstance(args[0], dict):
         params = args[0]
         args = ()
 
