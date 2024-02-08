@@ -20,7 +20,8 @@ import warnings
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression, Measure
+from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier
+from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
@@ -148,6 +149,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
     Args:
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
+        measurements (list[pennylane.measurements.MeasurementProcess]): the list of PennyLane
+            `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
+            that overrides the terminal measurements that may be present in the input circuit.
 
     Returns:
         function: the resulting PennyLane template
@@ -176,7 +180,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         wire_map = map_wires(qc_wires, wires)
 
-        num_inst, terminal_measurements = len(qc.data), []
+        # num_inst = len(qc.data)
+        mid_circuit_measurements, terminal_measurements = [], []
 
         # Processing the dictionary of parameters passed
         for idx, (op, qargs, _) in enumerate(qc.data):
@@ -226,20 +231,22 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 qml.adjoint(gate)(wires=operation_wires)
 
             elif isinstance(op, Measure):
-                meas_terminal = True
+                # Store the current operation wires
+                op_wires = set(operation_wires)
                 # Look-ahead for more gate(s) on its wire(s)
-                for meas_ix in range(idx, num_inst - 1):
-                    (next_op, next_qargs, _), op_wires = qc.data[meas_ix + 1], set(operation_wires)
-                    next_op_name = getattr(next_op, "base_class", next_op.__class__).__name__
-                    if next_op_name not in ["Barrier", "GlobalPhaseGate"]:
+                meas_terminal = True
+                for next_op, next_qargs, __ in qc.data[idx + 1 :]:
+                    # Check if the subsequent whether next_op is measurement interfering
+                    if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
                         next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                        # Check if there's any overlapping wires
                         if next_op_wires.intersection(op_wires):
                             meas_terminal = False
                             break
 
-                # Do this if the measurement is mid-circuit
+                # Add to mid-circuit measurements if not terminal
                 if not meas_terminal:
-                    qml.measure(wires=operation_wires)
+                    mid_circuit_measurements.append(qml.measure(wires=operation_wires))
                 else:
                     terminal_measurements.extend(operation_wires if not measurements else [])
 
@@ -259,9 +266,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 return [qml.apply(meas) for meas in measurements]
             return measurements
 
-        # Use mid-circuit measurements as terminal ones
-        if terminal_measurements:
-            return tuple(map(qml.measure, terminal_measurements))
+        # Use the encountered measurements
+        if mid_circuit_measurements or terminal_measurements:
+            return tuple(mid_circuit_measurements + list(map(qml.measure, terminal_measurements)))
 
     return _function
 

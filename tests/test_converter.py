@@ -1148,9 +1148,31 @@ class TestConverterIntegration:
         @qml.qnode(qubit_device_2_wires)
         def circuit_native_pennylane2():
             qml.Hadamard(0)
-            qml.measure(0)
+            m0 = qml.measure(0)
             qml.RZ(angle, wires=0)
             qml.CNOT([0, 1])
-            return [qml.expval(m) for m in [qml.measure(0), qml.measure(1)]]
+            return [qml.expval(m) for m in [m0, qml.measure(0), qml.measure(1)]]
 
         assert circuit_loaded_qiskit_circuit2() == circuit_native_pennylane2()
+
+    def test_diff_meas_circuit(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        angle = 0.543
+
+        qc = QuantumCircuit(3, 3)
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.rx(angle, [0])
+        qc.cx(0, 1)
+        qc.measure(1, 1)
+
+        qc1 = QuantumCircuit(3, 3)
+        qc1.h(0)
+        qc1.measure(2, 2)
+        qc1.rx(angle, [0])
+        qc1.cx(0, 1)
+        qc1.measure(1, 1)
+
+        qtemp, qtemp1 = load(qc), load(qc1)
+        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
