@@ -57,9 +57,10 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         1. the kwargs passed to when calling the qfunc, other than ``params`` and ``wires``.
             The keys in kwargs are expected to correspond to the names of the Parameters on
             the QuantumCircuit, i.e. ``(qc, None, phi=0.35, theta=0.2, psi=1.7)``
-        2. the args passed when calling the qfunc, assigned to the Parameters in alphabetical
-            order, i.e. ``(qc, None, 0.35, 1.7, 0.2)``
-        3. some combination of args and kwargs, i.e. ``(qc, None, 0.35, 0.2, psi=1.7)``
+        2. the args passed when calling the qfunc, i.e. ``(qc, None, 0.35, 1.7, 0.2)``. These
+           are assigned to the Parameters as the are ordered on the Qiskit QuantumCircuit:
+           alphabetized by Parameter name
+        3. Some combination of args and kwargs, i.e. ``(qc, None, 0.35, 0.2, psi=1.7)``
         4. (legacy) ``params`` from the kwarg ``params`` of the qfunc call, which is expected
             to already be a dictionary of the format ``{Parameter("name"): value}``, i.e.
             ``(qc, {Parameter("phi"): 0.35, Parameter("psi"): 1.7, Parameter("theta"): 0.2})``
@@ -71,10 +72,16 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
 
+<<<<<<< HEAD
     # if nothing passed to params, and a dictionary has been passed as a single argument, then assume it is params
     if params is None and len(args) == 1 and isinstance(args[0], dict):
         params = args[0]
         args = ()
+=======
+    # if no kwargs are passed, and a dictionary has been passed as a single argument, then assume it is params
+    if params is None and not kwargs and (len(args) == 1 and isinstance(args[0], dict)):
+        return args[0]
+>>>>>>> 5e11a8f (apply code review suggestions)
 
     # make params dict if using args and/or kwargs
     if args or kwargs:
@@ -162,22 +169,22 @@ def _check_circuit_and_assign_parameters(
                 f"quantum function, as this argument is reserved"
             )
 
+
+
     if params is None:
         if quantum_circuit.parameters:
+            s = 's' if len(quantum_circuit.parameters) > 1 else ''
             raise TypeError(
-                f"Missing required argument{'s' if len(quantum_circuit.parameters) > 1 else ''} "
-                f"to define Parameter value{'s' if len(quantum_circuit.parameters) > 1 else ''} "
-                f"for: {quantum_circuit.parameters}"
+                f"Missing required argument{s} to define Parameter value{s} for: {quantum_circuit.parameters}"
             )
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
     undefined_params = set(quantum_circuit.parameters) - set(params)
     if undefined_params:
+        s = 's' if len(undefined_params) > 1 else ''
         raise TypeError(
-            f"Missing {len(undefined_params)} required argument{'s' if len(undefined_params) > 1 else ''} "
-            f"to define Parameter value{'s' if len(quantum_circuit.parameters) > 1 else ''} for: "
-            f"{undefined_params}"
+            f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {undefined_params}"
         )
 
     for k in diff_params:
@@ -241,7 +248,6 @@ def load(quantum_circuit: QuantumCircuit):
         function: the resulting PennyLane template
     """
 
-    # def _function(*args, params: dict = None, wires: list = None, **kwargs):
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
