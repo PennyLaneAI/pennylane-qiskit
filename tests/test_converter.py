@@ -5,6 +5,7 @@ import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.circuit import Parameter
+from qiskit.circuit.library import EfficientSU2
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
 
@@ -771,10 +772,9 @@ class TestConverterUtils:
 class TestConverterWarnings:
     """Tests that the converter.load function emits warnings."""
 
-    def test_barrier_not_supported(self, recorder):
+    def test_template_not_supported(self, recorder):
         """Tests that a warning is raised if an unsupported instruction was reached."""
-        qc = QuantumCircuit(3, 1)
-        qc.barrier()
+        qc = EfficientSU2(3, reps=1)
 
         quantum_circuit = load(qc)
 
@@ -785,7 +785,7 @@ class TestConverterWarnings:
         # check that the message matches
         assert (
             record[-1].message.args[0]
-            == "pennylane_qiskit.converter: The Barrier instruction is not supported by"
+            == "pennylane_qiskit.converter: The Gate instruction is not supported by"
             " PennyLane, and has not been added to the template."
         )
 
@@ -818,11 +818,10 @@ class TestConverterQasm:
 
         quantum_circuit = load_qasm_from_file(qft_qasm)
 
-        with pytest.warns(UserWarning) as record:
-            with recorder:
-                quantum_circuit()
+        with recorder:
+            quantum_circuit()
 
-        assert len(recorder.queue) == 6
+        assert len(recorder.queue) == 10
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -868,11 +867,10 @@ class TestConverterQasm:
 
         quantum_circuit = load_qasm(qasm_string)
 
-        with pytest.warns(UserWarning) as record:
-            with recorder:
-                quantum_circuit(params={})
+        with recorder:
+            quantum_circuit(params={})
 
-        assert len(recorder.queue) == 2
+        assert len(recorder.queue) == 6
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1110,3 +1108,74 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(jac, jac_expected)
+
+    def test_meas_circuit_in_qnode(self, qubit_device_2_wires):
+        """Tests loading a converted template in a QNode with measurements."""
+
+        angle = 0.543
+
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.rz(angle, [0])
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        quantum_circuit = load(qc, measurements=measurements)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            return quantum_circuit()
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.Hadamard(0)
+            qml.measure(0)
+            qml.RZ(angle, wires=0)
+            qml.CNOT([0, 1])
+            return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+        quantum_circuit = load(qc, measurements=None)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit2():
+            meas = quantum_circuit()
+            return [qml.expval(m) for m in meas]
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane2():
+            qml.Hadamard(0)
+            m0 = qml.measure(0)
+            qml.RZ(angle, wires=0)
+            qml.CNOT([0, 1])
+            return [qml.expval(m) for m in [m0, qml.measure(0), qml.measure(1)]]
+
+        assert circuit_loaded_qiskit_circuit2() == circuit_native_pennylane2()
+
+    def test_diff_meas_circuit(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        angle = 0.543
+
+        qc = QuantumCircuit(3, 3)
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.rx(angle, [0])
+        qc.cx(0, 1)
+        qc.measure(1, 1)
+
+        qc1 = QuantumCircuit(3, 3)
+        qc1.h(0)
+        qc1.measure(2, 2)
+        qc1.rx(angle, [0])
+        qc1.cx(0, 1)
+        qc1.measure(1, 1)
+
+        qtemp, qtemp1 = load(qc), load(qc1)
+        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
+
+        qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
+        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
