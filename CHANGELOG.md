@@ -9,6 +9,13 @@
   a dictionary. The old dictionary UI continues to be supported.
   [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
 
+* Measurement operations are now added to the PennyLane template when a `QuantumCircuit`
+  is converted using `load`. Additionally, one can override any existing terminal
+  measurements by providing a list of PennyLane 
+  `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
+  [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
+
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -21,7 +28,9 @@
 
 This release contains contributions from (in alphabetical order):
 
+Utkarsh Azad
 Lillian Frederiksen
+
 
 ---
 # Release 0.34.0

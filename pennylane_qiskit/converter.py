@@ -20,7 +20,8 @@ import warnings
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression
+from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier
+from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
@@ -153,9 +154,7 @@ def _check_circuit_and_assign_parameters(
         QuantumCircuit: quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
-        raise ValueError(
-            "The circuit {} is not a valid Qiskit QuantumCircuit.".format(quantum_circuit)
-        )
+        raise ValueError(f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit.")
 
     # confirm parameter names are valid for conversion to PennyLane
     for name in ["wires", "params"]:
@@ -209,8 +208,8 @@ def map_wires(qc_wires: list, wires: list) -> dict:
         return dict(zip(qc_wires, wires))
 
     raise qml.QuantumFunctionError(
-        "The specified number of wires - {} - does not match "
-        "the number of wires the loaded quantum circuit acts on.".format(len(wires))
+        f"The specified number of wires - {len(wires)} - does not match "
+        "the number of wires the loaded quantum circuit acts on."
     )
 
 
@@ -232,13 +231,16 @@ def execute_supported_operation(operation_name: str, parameters: list, wires: li
         operation(*parameters, wires=wires)
 
 
-def load(quantum_circuit: QuantumCircuit):
+def load(quantum_circuit: QuantumCircuit, measurements=None):
     """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
     not incorporated in the PennyLane template.
 
     Args:
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
+        measurements (list[pennylane.measurements.MeasurementProcess]): the list of PennyLane
+            `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
+            that overrides the terminal measurements that may be present in the input circuit.
 
     Returns:
         function: the resulting PennyLane template
@@ -324,8 +326,11 @@ def load(quantum_circuit: QuantumCircuit):
 
         wire_map = map_wires(qc_wires, wires)
 
+        # Stores the measurements encountered in the circuit
+        mid_circ_meas, terminal_meas = [], []
+
         # Processing the dictionary of parameters passed
-        for op, qargs, cargs in qc.data:
+        for idx, (op, qargs, _) in enumerate(qc.data):
             # the new Singleton classes have different names than the objects they represent, but base_class.__name__ still matches
             instruction_name = getattr(op, "base_class", op.__class__).__name__
 
@@ -371,16 +376,43 @@ def load(quantum_circuit: QuantumCircuit):
                 gate = dagger_map[instruction_name]
                 qml.adjoint(gate)(wires=operation_wires)
 
+            elif isinstance(op, Measure):
+                # Store the current operation wires
+                op_wires = set(operation_wires)
+                # Look-ahead for more gate(s) on its wire(s)
+                meas_terminal = True
+                for next_op, next_qargs, __ in qc.data[idx + 1 :]:
+                    # Check if the subsequent whether next_op is measurement interfering
+                    if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
+                        next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                        # Check if there's any overlapping wires
+                        if next_op_wires.intersection(op_wires):
+                            meas_terminal = False
+                            break
+
+                # Allows for queing the mid-circuit measurements
+                if not meas_terminal:
+                    mid_circ_meas.append(qml.measure(wires=operation_wires))
+                else:
+                    terminal_meas.extend(operation_wires)
+
             else:
                 try:
                     operation_matrix = op.to_matrix()
                     pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
                 except (AttributeError, QiskitError):
                     warnings.warn(
-                        __name__ + ": The {} instruction is not supported by PennyLane,"
-                        " and has not been added to the template.".format(instruction_name),
+                        f"{__name__}: The {instruction_name} instruction is not supported by PennyLane,"
+                        " and has not been added to the template.",
                         UserWarning,
                     )
+        # Use the user-provided measurements
+        if measurements:
+            if qml.queuing.QueuingManager.active_context():
+                return [qml.apply(meas) for meas in measurements]
+            return measurements
+
+        return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
 
     return _function
 

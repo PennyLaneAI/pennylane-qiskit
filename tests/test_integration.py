@@ -13,7 +13,7 @@ from qiskit.providers import QiskitBackendNotFoundError
 
 from conftest import state_backends
 
-pldevices = [("qiskit.aer", aer.AerProvider()), ("qiskit.basicaer", aer.AerProvider())]
+pldevices = [("qiskit.aer", aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
 
 
 class TestDeviceIntegration:
@@ -201,6 +201,12 @@ class TestKeywordArguments:
             m.setattr(aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs))
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
         assert cache[-1] == {"noise_model": "test value"}
+
+    def test_invalid_noise_model(self):
+        """Test that the noise model argument causes an exception to be raised
+        if the backend does not support it"""
+        with pytest.raises(AttributeError, match="field noise_model is not valid for this backend"):
+            dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
 
     def test_overflow_kwargs(self):
         """Test all overflow kwargs are extracted for the AerDevice"""
