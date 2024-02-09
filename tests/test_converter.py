@@ -817,10 +817,11 @@ class TestConverterWarningsAndErrors:
         qc = EfficientSU2(3, reps=1)
 
         quantum_circuit = load(qc)
+        params = np.arange(12)
 
         with pytest.warns(UserWarning) as record:
             with recorder:
-                quantum_circuit(params={})
+                quantum_circuit(*params)
 
         # check that the message matches
         assert (
