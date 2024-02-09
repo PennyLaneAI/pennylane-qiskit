@@ -164,11 +164,9 @@ def _check_circuit_and_assign_parameters(
                 f"quantum function, as this argument is reserved"
             )
 
-
-
     if params is None:
         if quantum_circuit.parameters:
-            s = 's' if len(quantum_circuit.parameters) > 1 else ''
+            s = "s" if len(quantum_circuit.parameters) > 1 else ""
             raise TypeError(
                 f"Missing required argument{s} to define Parameter value{s} for: {quantum_circuit.parameters}"
             )
@@ -177,7 +175,7 @@ def _check_circuit_and_assign_parameters(
     # if any parameters are missing a value, raise an error
     undefined_params = set(quantum_circuit.parameters) - set(params)
     if undefined_params:
-        s = 's' if len(undefined_params) > 1 else ''
+        s = "s" if len(undefined_params) > 1 else ""
         raise TypeError(
             f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {undefined_params}"
         )
