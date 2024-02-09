@@ -92,8 +92,9 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
             # the key needs to be the actual Parameter, whereas kwargs keys are parameter names
             qc_param = [p for p in quantum_circuit.parameters if p.name == k]
             if not qc_param:
+                param_names = ", ".join([p.name for p in quantum_circuit.parameters])
                 raise TypeError(
-                    f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters {quantum_circuit.parameters}"
+                    f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters: {param_names}"
                 )
             params[qc_param[0]] = v
 
@@ -167,8 +168,9 @@ def _check_circuit_and_assign_parameters(
     if params is None:
         if quantum_circuit.parameters:
             s = "s" if len(quantum_circuit.parameters) > 1 else ""
+            param_names = ", ".join([p.name for p in quantum_circuit.parameters])
             raise TypeError(
-                f"Missing required argument{s} to define Parameter value{s} for: {quantum_circuit.parameters}"
+                f"Missing required argument{s} to define Parameter value{s} for: {param_names}"
             )
         return quantum_circuit
 
@@ -176,8 +178,9 @@ def _check_circuit_and_assign_parameters(
     undefined_params = set(quantum_circuit.parameters) - set(params)
     if undefined_params:
         s = "s" if len(undefined_params) > 1 else ""
+        param_names = ", ".join([p.name for p in undefined_params])
         raise TypeError(
-            f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {undefined_params}"
+            f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {param_names}"
         )
 
     for k in diff_params:
