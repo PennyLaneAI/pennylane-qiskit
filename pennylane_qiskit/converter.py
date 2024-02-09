@@ -51,7 +51,7 @@ def _check_parameter_bound(param: Parameter, trainable_params: Dict[Parameter, A
 
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     """Processes the inputs for calling the quantum function and returns
-    a dictionary of the format {Parameter("name"): value} for all the parameters.
+    a dictionary of the format ``{Parameter("name"): value}`` for all the parameters.
 
     For a ``quantum_circuit`` with parameters ``[Parameter("phi"), Parameter("psi"), Parameter("theta")]``,
     inputs can be one of the following:
@@ -258,7 +258,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         with the parameters (not parameter names) as keys.
 
         Args:
-            *args: positional arguments defining the value of the parameters that need to be bound
+            *args: positional arguments defining the value of the parameters that need to be assigned
             in the QuantumCircuit
 
         Kwargs:
@@ -297,7 +297,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
             this_function = qml.from_qiskit(qc, measurements=[qml.PauliZ(0), qml.PauliZ(1)])
 
-        For the circuit above, based on Parameters with names alpha, beta and gamma, all of the following are
+        For the circuit above, based on ``Parameters`` with names 'alpha', 'beta' and 'gamma', all of the following are
         valid inputs to set the Parameter values for this template:
 
         .. code-block:: python
