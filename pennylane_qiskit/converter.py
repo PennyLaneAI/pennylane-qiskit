@@ -292,7 +292,8 @@ def load(quantum_circuit: QuantumCircuit):
 
             this_function = qml.from_qiskit(qc, measurements=[qml.PauliZ(0), qml.PauliZ(1)])
 
-        For the circuit above, based on Parameters with names alpha, beta and gamma, all of the following are valid inputs to set the Parameter values for this template:
+        For the circuit above, based on Parameters with names alpha, beta and gamma, all of the following are
+        valid inputs to set the Parameter values for this template:
 
         .. code-block:: python
 
