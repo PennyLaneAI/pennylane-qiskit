@@ -907,6 +907,11 @@ class TestConverterWarningsAndErrors:
         ):
             load(qc)(b=0.3)
 
+        with pytest.raises(
+                TypeError, match="Missing 1 required argument to define Parameter value"
+        ):
+            load(qc)({a:0.2, b:0.3})
+
     def test_no_parameters_raises_error(self, recorder):
         """Tests the load method for a QuantumCircuit raises a TypeError if no
         parameters are passed to a loaded function that requires parameters"""
