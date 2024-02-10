@@ -1180,3 +1180,58 @@ class TestConverterIntegration:
 
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+
+    def test_control_flow_ops_circuit(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        qc = QuantumCircuit(3, 3)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure(0, 0)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure(0, 1)
+
+        with qc.if_test((0, 0)) as else_:
+            qc.x(0)
+
+        with else_:
+            qc.h(0)
+            qc.z(2)
+
+        qc.rz(0.24, [0])
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        dev = qml.device("default.qubit", wires=3)
+
+        @qml.qnode(dev)
+        def loaded_qiskit_circuit():
+            meas = load(qc)()
+            return [qml.expval(m) for m in meas]
+
+        @qml.qnode(dev)
+        def built_pl_circuit():
+
+            qml.Hadamard(0)
+            qml.CNOT([0, 1])
+            m0 = qml.measure(0)
+            qml.Hadamard(0)
+            qml.CNOT([0, 1])
+            m1 = qml.measure(0)
+
+            def ansatz_true():
+                qml.Hadamard(wires=0)
+                qml.PauliZ(wires=2)
+
+            def ansatz_false():
+                qml.PauliX(wires=0)
+
+            qml.cond(m0, ansatz_true, ansatz_false)()
+
+            qml.RZ(0.24, wires=0)
+            qml.CNOT([0, 1])
+
+            return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
+
+        assert loaded_qiskit_circuit() == built_pl_circuit()

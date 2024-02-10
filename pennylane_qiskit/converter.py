@@ -17,10 +17,11 @@ into PennyLane circuit templates.
 """
 from typing import Dict, Any
 import warnings
+from functools import partial
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier
+from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, IfElseOp
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
@@ -183,6 +184,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
             operation_kwargs = {"wires": operation_wires}
             operation_args = []
+            operation_cond = False
 
             # Extract the bound parameters from the operation. If the bound parameters are a
             # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
@@ -242,6 +244,10 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     for carg in cargs:
                         mid_circ_regs[carg] = mid_circ_meas[-1]
 
+            # TODO: this can contain logic for the bigger ControlFlowOps
+            elif isinstance(ops, IfElseOp):
+                operation_cond = True
+
             else:
 
                 try:
@@ -257,11 +263,35 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
             # Check if it is a conditional operation
             if ops.condition and ops.condition[0] in mid_circ_regs:
-                qml.cond(
-                    mid_circ_regs[ops.condition[0]],
-                    true_fn=operation_func if ops.condition[1] else qml.Identity,
-                    false_fn=operation_func if not ops.condition[1] else None,
-                )(*operation_args, **operation_kwargs)
+                # Used for branch inversion to match PL formalism
+                # True --> Keep | False --> Invert
+                res_bit = ops.condition[1]
+
+                if operation_cond:
+                    with qml.QueuingManager.stop_recording():
+                        branch_funcs = [
+                            partial(
+                                load(branch_inst, measurements=None), params=params, wires=wires
+                            )
+                            for branch_inst in operation_params
+                            if isinstance(branch_inst, QuantumCircuit)
+                        ]
+
+                        if len(branch_funcs) == 1:
+                            true_fn = [branch_funcs[0], qml.Identity][~res_bit]
+                            false_fn = [branch_funcs[1], None][res_bit]
+
+                        elif len(branch_funcs) == 2:
+                            true_fn = branch_funcs[~res_bit]
+                            false_fn = branch_funcs[res_bit]
+
+                else:
+                    true_fn = [operation_func, qml.Identity][~res_bit]
+                    false_fn = [operation_func, None][res_bit]
+
+                qml.cond(mid_circ_regs[ops.condition[0]], true_fn, false_fn)(
+                    *operation_args, **operation_kwargs
+                )
 
             # Check if it is not a mid-circuit measurement
             elif operation_func and not isinstance(ops, Measure):
