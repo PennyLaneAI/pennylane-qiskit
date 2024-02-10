@@ -5,10 +5,9 @@ import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.circuit import Parameter
-from qiskit.circuit.library import EfficientSU2
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
-
+from qiskit.circuit.library import DraperQFTAdder
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import load, load_qasm, load_qasm_from_file, map_wires
@@ -774,7 +773,7 @@ class TestConverterWarnings:
 
     def test_template_not_supported(self, recorder):
         """Tests that a warning is raised if an unsupported instruction was reached."""
-        qc = EfficientSU2(3, reps=1)
+        qc = DraperQFTAdder(3)
 
         quantum_circuit = load(qc)
 
@@ -1117,6 +1116,7 @@ class TestConverterIntegration:
         qc = QuantumCircuit(2, 2)
         qc.h(0)
         qc.measure(0, 0)
+        qc.z(0).c_if(0, 1)
         qc.rz(angle, [0])
         qc.cx(0, 1)
         qc.measure_all()
@@ -1131,7 +1131,8 @@ class TestConverterIntegration:
         @qml.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
             qml.Hadamard(0)
-            qml.measure(0)
+            m0 = qml.measure(0)
+            qml.cond(m0, qml.PauliZ)(0)
             qml.RZ(angle, wires=0)
             qml.CNOT([0, 1])
             return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]

@@ -124,24 +124,6 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     )
 
 
-def execute_supported_operation(operation_name: str, parameters: list, wires: list):
-    """Utility function that executes an operation that is natively supported by PennyLane.
-
-    Args:
-        operation_name (str): Name of the PL operator to be executed
-        parameters (str): parameters of the operation that will be executed
-        wires (list): wires of the operation
-    """
-    operation = getattr(pennylane_ops, operation_name)
-
-    if not parameters:
-        operation(wires=wires)
-    elif operation_name in ["QubitStateVector", "StatePrep"]:
-        operation(np.array(parameters), wires=wires)
-    else:
-        operation(*parameters, wires=wires)
-
-
 def load(quantum_circuit: QuantumCircuit, measurements=None):
     """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
@@ -157,7 +139,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: the resulting PennyLane template
     """
 
-    # pylint:disable=fixme, too-many-branches
+    # pylint:disable=fixme, too-many-branches, protected-access, unnecessary-lambda-assignment
     def _function(params: dict = None, wires: list = None):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -181,56 +163,58 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         wire_map = map_wires(qc_wires, wires)
 
         # Stores the measurements encountered in the circuit
-        mid_circ_meas, terminal_meas = [], []
+        terminal_meas = []
+        mid_circ_meas, mid_circ_regs = [], {}
 
         # Processing the dictionary of parameters passed
-        for idx, (op, qargs, _) in enumerate(qc.data):
-            # the new Singleton classes have different names than the objects they represent, but base_class.__name__ still matches
-            instruction_name = getattr(op, "base_class", op.__class__).__name__
-
-            operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
-
+        for idx, (ops, qargs, cargs) in enumerate(qc.data):
+            # the new Singleton classes have different names than the objects they represent,
+            # but base_class.__name__ still matches
+            instruction_name = getattr(ops, "base_class", ops.__class__).__name__
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
-            # pylint:disable=protected-access
-            if (
-                instruction_name in inv_map
-                and inv_map[instruction_name] in pennylane_ops._qubit__ops__
-            ):
-                # Extract the bound parameters from the operation. If the bound parameters are a
-                # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
-                # variable from the var_ref_map dictionary.
+            # Define operator builders and helpers
+            operation_func = None
+            operation_overlapper = lambda op: op
+            operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
+            operation_kwargs = {"wires": operation_wires}
+            operation_args = []
 
-                pl_parameters = []
-                for p in op.params:
-                    _check_parameter_bound(p, var_ref_map)
+            # Extract the bound parameters from the operation. If the bound parameters are a
+            # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
+            # variable from the var_ref_map dictionary.
+            operation_params = []
+            for p in ops.params:
+                _check_parameter_bound(p, var_ref_map)
 
-                    if isinstance(p, ParameterExpression):
-                        if p.parameters:  # non-empty set = has unbound parameters
-                            ordered_params = tuple(p.parameters)
+                if isinstance(p, ParameterExpression):
+                    if p.parameters:  # non-empty set = has unbound parameters
+                        ordered_params = tuple(p.parameters)
+                        f = lambdify(ordered_params, p._symbol_expr, modules=qml.numpy)
+                        f_args = []
+                        for i_ordered_params in ordered_params:
+                            f_args.append(var_ref_map.get(i_ordered_params))
+                        operation_params.append(f(*f_args))
+                    else:  # needed for qiskit<0.43.1
+                        operation_params.append(float(p))  # pragma: no cover
+                else:
+                    operation_params.append(p)
 
-                            f = lambdify(ordered_params, p._symbol_expr, modules=qml.numpy)
-                            f_args = []
-                            for i_ordered_params in ordered_params:
-                                f_args.append(var_ref_map.get(i_ordered_params))
-                            pl_parameters.append(f(*f_args))
-                        else:  # needed for qiskit<0.43.1
-                            pl_parameters.append(float(p))  # pragma: no cover
-                    else:
-                        pl_parameters.append(p)
+            if instruction_name in dagger_map:
+                operation_func = dagger_map[instruction_name]
+                operation_overlapper = qml.adjoint
 
-                execute_supported_operation(
-                    inv_map[instruction_name], pl_parameters, operation_wires
-                )
+            elif instruction_name in inv_map:
+                operation_name = inv_map[instruction_name]
+                operation_func = getattr(pennylane_ops, operation_name)
+                operation_args.extend(operation_params)
+                if operation_name in ["QubitStateVector", "StatePrep"]:
+                    operation_args = [np.array(operation_params)]
 
-            elif instruction_name in dagger_map:
-                gate = dagger_map[instruction_name]
-                qml.adjoint(gate)(wires=operation_wires)
-
-            elif isinstance(op, Measure):
+            elif isinstance(ops, Measure):
                 # Store the current operation wires
                 op_wires = set(operation_wires)
                 # Look-ahead for more gate(s) on its wire(s)
@@ -244,22 +228,44 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                             meas_terminal = False
                             break
 
-                # Allows for queing the mid-circuit measurements
-                if not meas_terminal:
-                    mid_circ_meas.append(qml.measure(wires=operation_wires))
-                else:
+                # Allows for adding terminal measurements
+                if meas_terminal:
                     terminal_meas.extend(operation_wires)
 
+                # Allows for queing the mid-circuit measurements
+                else:
+                    operation_func = qml.measure
+                    mid_circ_meas.append(qml.measure(wires=operation_wires))
+
+                    # Allows for tracking conditional operations
+                    for carg in cargs:
+                        mid_circ_regs[carg] = mid_circ_meas[-1]
+
             else:
+
                 try:
-                    operation_matrix = op.to_matrix()
-                    pennylane_ops.QubitUnitary(operation_matrix, wires=operation_wires)
+                    operation_args = [ops.to_matrix()]
+                    operation_func = qml.QubitUnitary
+
                 except (AttributeError, QiskitError):
                     warnings.warn(
                         f"{__name__}: The {instruction_name} instruction is not supported by PennyLane,"
                         " and has not been added to the template.",
                         UserWarning,
                     )
+
+            # Check if it is a conditional operation
+            if ops.condition and ops.condition[0] in mid_circ_regs:
+                qml.cond(
+                    mid_circ_regs[ops.condition[0]],
+                    true_fn=operation_func if ops.condition[1] else qml.Identity,
+                    false_fn=operation_func if not ops.condition[1] else None,
+                )(*operation_args, **operation_kwargs)
+
+            # Check if it is not a mid-circuit measurement
+            elif operation_func and not isinstance(ops, Measure):
+                operation_overlapper(operation_func)(*operation_args, **operation_kwargs)
+
         # Use the user-provided measurements
         if measurements:
             if qml.queuing.QueuingManager.active_context():
