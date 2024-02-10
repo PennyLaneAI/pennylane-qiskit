@@ -124,6 +124,7 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     )
 
 
+# pylint:disable=too-many-statements, too-many-branches
 def load(quantum_circuit: QuantumCircuit, measurements=None):
     """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
@@ -139,7 +140,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: the resulting PennyLane template
     """
 
-    # pylint:disable=fixme, too-many-branches, protected-access, unnecessary-lambda-assignment
+    # pylint:disable=fixme, protected-access, unnecessary-lambda-assignment
     def _function(params: dict = None, wires: list = None):
         """Returns a PennyLane template created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
