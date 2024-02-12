@@ -21,7 +21,7 @@ from functools import partial, reduce
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, IfElseOp, ControlFlowOp
+from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, ControlFlowOp
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
@@ -281,10 +281,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Check for multi-qubit register
                 if tuple(cargs) not in mid_circ_regs:
                     mid_circ_regs[tuple(cargs)] = sum(
-                        [
-                            2**idx * qml.measure(wires=operation_wires[idx])
-                            for idx in range(len(cargs))
-                        ]
+                        2**idx * qml.measure(wires=operation_wires[idx])
+                        for idx in range(len(cargs))
                     )
 
                 # Check for elif branches (doesn't require qjit)
