@@ -17,11 +17,12 @@ into PennyLane circuit templates.
 """
 from typing import Dict, Any
 import warnings
-from functools import partial
+from functools import partial, reduce
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, IfElseOp
+from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, IfElseOp, ControlFlowOp
+from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
@@ -244,8 +245,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     for carg in cargs:
                         mid_circ_regs[carg] = mid_circ_meas[-1]
 
-            # TODO: this can contain logic for the bigger ControlFlowOps
-            elif isinstance(ops, IfElseOp):
+            # TODO: this may contain some logic for the bigger ControlFlowOps
+            elif isinstance(ops, ControlFlowOp):
                 operation_cond = True
 
             else:
@@ -262,36 +263,56 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     )
 
             # Check if it is a conditional operation
-            if ops.condition and ops.condition[0] in mid_circ_regs:
-                # Used for branch inversion to match PL formalism
-                # True --> Keep | False --> Invert
-                res_bit = ops.condition[1]
+            if operation_cond or (ops.condition and ops.condition[0] in mid_circ_regs):
+                # Iteratively recurse over to build different branches
+                with qml.QueuingManager.stop_recording():
+                    branch_funcs = [
+                        partial(load(branch_inst, measurements=None), params=params, wires=wires)
+                        for branch_inst in operation_params
+                        if isinstance(branch_inst, QuantumCircuit)
+                    ]
 
-                if operation_cond:
-                    with qml.QueuingManager.stop_recording():
-                        branch_funcs = [
-                            partial(
-                                load(branch_inst, measurements=None), params=params, wires=wires
-                            )
-                            for branch_inst in operation_params
-                            if isinstance(branch_inst, QuantumCircuit)
-                        ]
-
-                        if len(branch_funcs) == 1:
-                            true_fn = [branch_funcs[0], qml.Identity][~res_bit]
-                            false_fn = [branch_funcs[1], None][res_bit]
-
-                        elif len(branch_funcs) == 2:
-                            true_fn = branch_funcs[~res_bit]
-                            false_fn = branch_funcs[res_bit]
-
-                else:
-                    true_fn = [operation_func, qml.Identity][~res_bit]
-                    false_fn = [operation_func, None][res_bit]
-
-                qml.cond(mid_circ_regs[ops.condition[0]], true_fn, false_fn)(
-                    *operation_args, **operation_kwargs
+                # Get the functions for handling condition
+                true_fn, false_fn, elif_fns, cond_op = _conditional_funcs(
+                    ops, cargs, operation_func, branch_funcs, instruction_name
                 )
+                res_reg, res_bit = cond_op
+
+                # Check for multi-qubit register
+                if tuple(cargs) not in mid_circ_regs:
+                    mid_circ_regs[tuple(cargs)] = sum(
+                        [
+                            2**idx * qml.measure(wires=operation_wires[idx])
+                            for idx in range(len(cargs))
+                        ]
+                    )
+
+                # Check for elif branches (doesn't require qjit)
+                if elif_fns:
+                    for elif_fn in elif_fns:
+                        qml.cond(mid_circ_regs[res_reg] == elif_fn[0], elif_fn[1])(
+                            *operation_args, **operation_kwargs
+                        )
+
+                # Check if just conditional requires some extra work
+                if isinstance(res_bit, str):
+                    # Handles the default case in the SwitchCaseOp
+                    if res_bit == "SwitchDefault":
+                        elif_bits = [elif_fn[0] for elif_fn in elif_fns]
+                        qml.cond(
+                            reduce(
+                                lambda m0, m1: m0 & m1,
+                                [(mid_circ_regs[res_reg] != elif_bit) for elif_bit in elif_bits],
+                            ),
+                            true_fn,
+                        )(*operation_args, **operation_kwargs)
+                # Just do the routine conditional
+                else:
+                    qml.cond(
+                        mid_circ_regs[res_reg] == res_bit,
+                        true_fn,
+                        false_fn,
+                    )(*operation_args, **operation_kwargs)
 
             # Check if it is not a mid-circuit measurement
             elif operation_func and not isinstance(ops, Measure):
@@ -326,3 +347,31 @@ def load_qasm_from_file(file: str):
         function: the new PennyLane template
     """
     return load(QuantumCircuit.from_qasm_file(file))
+
+
+# pylint:disable=fixme, protected-access
+def _conditional_funcs(ops, cargs, operation_func, branch_funcs, ctrl_flow_type):
+    """Builds the conditional functions for Controlled flows"""
+    true_fn, false_fn, elif_fns = operation_func, None, ()
+    # Logic for using legacy c_if
+    if not isinstance(ops, ControlFlowOp):
+        return true_fn, false_fn, elif_fns, ops.condition
+
+    # Logic for handling IfElseOp
+    if ctrl_flow_type == "IfElseOp":
+        true_fn = branch_funcs[0]
+        if len(branch_funcs) == 2:
+            false_fn = branch_funcs[1]
+
+    # Logic for handling SwitchCaseOp
+    elif ctrl_flow_type == "SwitchCaseOp":
+        elif_fns = []
+        for case, res_bit in ops._case_map.items():
+            if not isinstance(case, _DefaultCaseType):
+                elif_fns.append((res_bit, branch_funcs[case]))
+
+        if any((isinstance(case, _DefaultCaseType) for case in ops._case_map)):
+            true_fn = branch_funcs[-1]
+            ops.condition = [tuple(cargs), "SwitchDefault"]
+
+    return true_fn, false_fn, elif_fns, ops.condition

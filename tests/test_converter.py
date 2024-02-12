@@ -1181,7 +1181,7 @@ class TestConverterIntegration:
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
 
-    def test_control_flow_ops_circuit(self):
+    def test_control_flow_ops_circuit_ifelse(self):
         """Tests mid-measurements are recognized and returned correctly."""
 
         qc = QuantumCircuit(3, 3)
@@ -1233,5 +1233,47 @@ class TestConverterIntegration:
             qml.CNOT([0, 1])
 
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
+
+        assert loaded_qiskit_circuit() == built_pl_circuit()
+
+    def test_control_flow_ops_circuit_switch(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        qreg = QuantumRegister(3)
+        creg = ClassicalRegister(3)
+        qc = QuantumCircuit(qreg, creg)
+        with qc.switch(creg) as case:
+            with case(0):
+                qc.x(0)
+            with case(1, 2):
+                qc.x(1)
+            with case(case.DEFAULT):
+                qc.x(2)
+        qc.measure_all()
+
+        dev = qml.device("default.qubit", wires=3)
+
+        @qml.qnode(dev)
+        def loaded_qiskit_circuit():
+            meas = load(qc)()
+            return [qml.expval(m) for m in meas]
+
+        dev = qml.device("default.qubit", wires=6)
+
+        @qml.qnode(dev)
+        def built_pl_circuit():
+            qml.CNOT(wires=[0, 3])
+            qml.CNOT(wires=[1, 4])
+            qml.CNOT(wires=[2, 5])
+            qml.MultiControlledX(wires=[4, 3, 5, 0], control_values=[False, False, False])
+            qml.MultiControlledX(wires=[4, 3, 5, 1], control_values=[False, True, False])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[False, True, False])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[False, False, True])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[False, True, True])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[True, False, False])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[True, False, True])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[True, True, False])
+            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values=[True, True, True])
+            return [qml.expval(m) for m in [qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
