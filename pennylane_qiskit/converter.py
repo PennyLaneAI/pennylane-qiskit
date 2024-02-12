@@ -280,9 +280,10 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
                 # Check for multi-qubit register
                 if tuple(cargs) not in mid_circ_regs:
+                    ctrl_cargs = min(len(cargs), len(qargs))
                     mid_circ_regs[tuple(cargs)] = sum(
                         2**idx * qml.measure(wires=operation_wires[idx])
-                        for idx in range(len(cargs))
+                        for idx in range(ctrl_cargs)
                     )
 
                 # Check for elif branches (doesn't require qjit)
@@ -364,15 +365,12 @@ def _conditional_funcs(ops, cargs, operation_func, branch_funcs, ctrl_flow_type)
     # Logic for handling SwitchCaseOp
     elif ctrl_flow_type == "SwitchCaseOp":
         elif_fns = []
-        print(ops._case_map.items())
         for res_bit, case in ops._case_map.items():
             if not isinstance(case, _DefaultCaseType):
                 elif_fns.append((res_bit, branch_funcs[case]))
-
+        ops.condition = [tuple(cargs), "SwitchCase"]
         if any((isinstance(case, _DefaultCaseType) for case in ops._case_map)):
             true_fn = branch_funcs[-1]
             ops.condition = [tuple(cargs), "SwitchDefault"]
-
-        print(elif_fns)
 
     return true_fn, false_fn, elif_fns, ops.condition
