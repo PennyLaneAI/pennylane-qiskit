@@ -16,7 +16,6 @@ This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
 from typing import Dict, Any
-from collections.abc import Iterable
 import warnings
 
 import numpy as np
@@ -49,6 +48,7 @@ def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any
     """
     if isinstance(param, Parameter) and param not in unbound_params:
         raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
+
 
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     """Processes the inputs for calling the quantum function and returns
@@ -180,8 +180,12 @@ def _check_circuit_and_assign_parameters(
     # note we can't use `set` because it reorders parameters randomly
     expected_params = []
     for p in quantum_circuit.parameters:
-        param = getattr(p, "vector", p)  # we want the p.vector if p is a ParameterVectorElement, otherwise p
-        if param not in expected_params:  # we want each ParameterVector once, not n times for vector of length n
+        param = getattr(
+            p, "vector", p
+        )  # we want the p.vector if p is a ParameterVectorElement, otherwise p
+        if (
+            param not in expected_params
+        ):  # we want each ParameterVector once, not n times for vector of length n
             expected_params.append(param)
 
     if params is None:

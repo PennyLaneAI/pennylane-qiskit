@@ -858,7 +858,10 @@ class TestConverterWarningsAndErrors:
         load(qc)(0.2, name1=0.3)
 
         # raises error with incorrect name
-        with pytest.raises(TypeError, match="Got unexpected parameter keyword argument 'name2'. Circuit contains parameters: a, name1"):
+        with pytest.raises(
+            TypeError,
+            match="Got unexpected parameter keyword argument 'name2'. Circuit contains parameters: a, name1",
+        ):
             load(qc)(0.2, name2=0.3)
 
     def test_kwarg_does_not_match_params_parametervector(self):
@@ -876,7 +879,10 @@ class TestConverterWarningsAndErrors:
         load(qc)(vectorname=[0.3, 0.4])
 
         # raises error with incorrect name
-        with pytest.raises(TypeError, match="Got unexpected parameter keyword argument 'wrong_vectorname'. Circuit contains parameters: vectorname"):
+        with pytest.raises(
+            TypeError,
+            match="Got unexpected parameter keyword argument 'wrong_vectorname'. Circuit contains parameters: vectorname",
+        ):
             load(qc)(wrong_vectorname=[0.3, 0.4])
 
     def test_too_many_args(self):
@@ -1476,7 +1482,7 @@ class TestConverterIntegration:
 class TestPassingParameters:
 
     def _get_parameter_vector_test_circuit(self, qubit_device_2_wires):
-        """A test circuit for testing """
+        """A test circuit for testing"""
         theta = ParameterVector("v", 3)
 
         qc = QuantumCircuit(2)
@@ -1497,7 +1503,9 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        theta, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
+        theta, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -1510,7 +1518,9 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        _, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
+        _, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -1521,9 +1531,12 @@ class TestPassingParameters:
 
     def test_using_parameter_vector_with_keyword_argument(self, qubit_device_2_wires):
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
-        converted to a PennyLane template with the expected arguments passed as a keyword arguement"""
+        converted to a PennyLane template with the expected arguments passed as a keyword arguement
+        """
 
-        _, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
+        _, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
