@@ -51,6 +51,26 @@ def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any
         raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
 
 
+def _process_trivial_param_args(params, *args, **kwargs):
+    """Process the trivial conditions for parameter dictionary computation."""
+
+    # if no kwargs are passed, and a dictionary has been passed as a single argument, then assume it is params
+    if params is None and not kwargs and (len(args) == 1 and isinstance(args[0], dict)):
+        return (args[0], True)
+
+    if not args and not kwargs:
+        return (params, True)
+
+    # make params dict if using args and/or kwargs
+    if params is not None:
+        raise RuntimeError(
+            "Cannot define parameters via the params kwarg when passing Parameter values "
+            "as individual args or kwargs."
+        )
+
+    return ({}, False)
+
+
 def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     """Processes the inputs for calling the quantum function and returns
     a dictionary of the format ``{Parameter("name"): value}`` for all the parameters.
@@ -75,22 +95,10 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
 
-    # if no kwargs are passed, and a dictionary has been passed as a single argument, then assume it is params
-    if params is None and not kwargs and (len(args) == 1 and isinstance(args[0], dict)):
-        return args[0]
+    params, trivial = _process_trivial_param_args(params, *args, **kwargs)
 
-    if not args and not kwargs:
+    if trivial:
         return params
-
-    # make params dict if using args and/or kwargs
-    if params is not None:
-        raise RuntimeError(
-            "Cannot define parameters via the params kwarg when passing Parameter values "
-            "as individual args or kwargs."
-        )
-
-    # create en empty params dict
-    params = {}
 
     # populate it with any parameters defined as kwargs
     for k, v in kwargs.items():
