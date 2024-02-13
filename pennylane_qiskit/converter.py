@@ -22,7 +22,6 @@ import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector, Measure, Barrier
 from qiskit.circuit.library import GlobalPhaseGate
-from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
@@ -132,9 +131,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params[qc_param[0]] = v
 
     # get any parameters not defined in kwargs (may be all of them) and match to args in order
-    expected_arg_params = [
-        getattr(p, "vector", p) for p in expected_params if p.name not in kwargs.keys()
-    ]
+    expected_arg_params = [p for p in expected_params if p.name not in kwargs]
     has_param_vectors = np.any([isinstance(p, ParameterVector) for p in expected_arg_params])
 
     # if too many args were passed to the function call, raise an error
@@ -193,7 +190,6 @@ def _check_circuit_and_assign_parameters(
     Returns:
         QuantumCircuit: quantum circuit with bound parameters
     """
-
     if not isinstance(quantum_circuit, QuantumCircuit):
         raise ValueError(f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit.")
 

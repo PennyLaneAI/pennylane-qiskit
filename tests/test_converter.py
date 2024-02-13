@@ -1017,7 +1017,7 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 10
+        assert len(recorder.queue) == 11
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1027,21 +1027,25 @@ class TestConverterQasm:
         assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == Wires([2])
 
-        assert recorder.queue[2].name == "Hadamard"
+        assert recorder.queue[2].name == "Barrier"
         assert recorder.queue[2].parameters == []
-        assert recorder.queue[2].wires == Wires([0])
+        assert recorder.queue[2].wires == Wires([0, 1, 2, 3])
 
         assert recorder.queue[3].name == "Hadamard"
         assert recorder.queue[3].parameters == []
-        assert recorder.queue[3].wires == Wires([1])
+        assert recorder.queue[3].wires == Wires([0])
 
         assert recorder.queue[4].name == "Hadamard"
         assert recorder.queue[4].parameters == []
-        assert recorder.queue[4].wires == Wires([2])
+        assert recorder.queue[4].wires == Wires([1])
 
         assert recorder.queue[5].name == "Hadamard"
         assert recorder.queue[5].parameters == []
-        assert recorder.queue[5].wires == Wires([3])
+        assert recorder.queue[5].wires == Wires([2])
+
+        assert recorder.queue[6].name == "Hadamard"
+        assert recorder.queue[6].parameters == []
+        assert recorder.queue[6].wires == Wires([3])
 
     def test_qasm_file_not_found_error(self):
         """Tests that an error is propagated, when a non-existing file is specified for parsing."""
@@ -1418,9 +1422,7 @@ class TestPassingParameters:
 
         return theta, qc, circuit_native_pennylane
 
-    def test_passing_parameters_new_interface_args(self, qubit_device_2_wires):
-        """Test calling the qfunc with the new interface for setting the value
-        of Qiskit Parameters by passing args in order."""
+    def _get_parameter_test_circuit(self, qubit_device_2_wires):
 
         a = Parameter("a")
         b = Parameter("b")
@@ -1432,15 +1434,23 @@ class TestPassingParameters:
         qc.rz(b, [0])
 
         @qml.qnode(qubit_device_2_wires)
-        def circuit_loaded_qiskit_circuit():
-            load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
-            return qml.expval(qml.PauliZ(0))
-
-        @qml.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
             qml.RX(0.4, wires=0)
             qml.RY(0.5, wires=0)
             qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        return qc, circuit_native_pennylane
+
+    def test_passing_parameters_new_interface_args(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters by passing args in order."""
+
+        qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
@@ -1449,25 +1459,11 @@ class TestPassingParameters:
         """Test calling the qfunc with the new interface for setting the value
         of Qiskit Parameters by passing kwargs matching the parameter names"""
 
-        a = Parameter("a")
-        b = Parameter("b")
-        c = Parameter("c")
-
-        qc = QuantumCircuit(2)
-        qc.rx(c, [0])
-        qc.ry(a, [0])
-        qc.rz(b, [0])
+        qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qc)(a=0.5, b=0.3, c=0.4)
-            return qml.expval(qml.PauliZ(0))
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
@@ -1476,25 +1472,11 @@ class TestPassingParameters:
         """Test calling the qfunc with the new interface for setting the value
         of Qiskit Parameters - by passing a combination of kwargs and args"""
 
-        a = Parameter("a")
-        b = Parameter("b")
-        c = Parameter("c")
-
-        qc = QuantumCircuit(2)
-        qc.rx(c, [0])
-        qc.ry(a, [0])
-        qc.rz(b, [0])
+        qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qc)(0.3, a=0.5, c=0.4)
-            return qml.expval(qml.PauliZ(0))
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
