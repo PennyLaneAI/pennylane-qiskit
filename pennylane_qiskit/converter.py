@@ -131,6 +131,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params[qc_param[0]] = v
 
     # get any parameters not defined in kwargs (may be all of them) and match to args in order
+
     expected_arg_params = [p for p in expected_params if p.name not in kwargs]
     has_param_vectors = np.any([isinstance(p, ParameterVector) for p in expected_arg_params])
 
