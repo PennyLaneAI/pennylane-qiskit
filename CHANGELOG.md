@@ -15,7 +15,6 @@
   `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
   [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
 
-
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -30,7 +29,6 @@ This release contains contributions from (in alphabetical order):
 
 Utkarsh Azad
 Lillian Frederiksen
-
 
 ---
 # Release 0.34.0
