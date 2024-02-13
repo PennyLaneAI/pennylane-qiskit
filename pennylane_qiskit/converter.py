@@ -246,6 +246,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: the resulting PennyLane template
     """
 
+    # pylint:disable=too-many-branches
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
