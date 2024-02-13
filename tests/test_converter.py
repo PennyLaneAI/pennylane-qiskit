@@ -243,17 +243,15 @@ class TestConverter:
         assert recorder.queue[0].wires == Wires([0])
 
     def test_parameter_was_not_bound(self, recorder):
-        """Tests that an error is raised when parameters were not bound. If we
-        did the input checks correctly, the load function itself will never get
-        to this error"""
+        """Tests that an error is raised when parameters were not bound."""
 
         theta = Parameter("θ")
-        trainable_params = {}
+        unbound_params = {}
 
         with pytest.raises(
             ValueError, match="The parameter {} was not bound correctly.".format(theta)
         ):
-            _check_parameter_bound(theta, trainable_params)
+            _check_parameter_bound(theta, unbound_params)
 
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were
@@ -757,7 +755,7 @@ class TestConverterUtils:
 
     def test_format_params_dict_old_interface(self):
         """Test the old interface for setting the value of Qiskit Parameters -
-        passing a dictionary of the form {Parameter("name"): value, ...} as
+        passing a dictionary of the form ``{Parameter("name"): value, ...}`` as
         either an arg or with the params kwarg"""
 
         theta = Parameter("θ")
@@ -794,7 +792,7 @@ class TestConverterUtils:
         matches the Parameter name, or some combination of the two.
 
         The kwargs are passed as a dictionary to this function, and the args
-        as a tuple. This tests the new case where params=None"""
+        as a tuple. This tests the new case where `params=None`"""
 
         a = Parameter("a")
         b = Parameter("b")
@@ -882,7 +880,7 @@ class TestConverterWarningsAndErrors:
             load(qc)(wrong_vectorname=[0.3, 0.4])
 
     def test_too_many_args(self):
-        """Test that if too many positional arguments are passed to define Parameter values,
+        """Test that if too many positional arguments are passed to define ``Parameter`` values,
         a clear error is raised"""
 
         a = Parameter("a")
