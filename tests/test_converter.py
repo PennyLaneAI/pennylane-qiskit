@@ -243,17 +243,15 @@ class TestConverter:
         assert recorder.queue[0].wires == Wires([0])
 
     def test_parameter_was_not_bound(self, recorder):
-        """Tests that an error is raised when parameters were not bound. If we
-        did the input checks correctly, the load function itself will never get
-        to this error"""
+        """Tests that an error is raised when parameters were not bound."""
 
         theta = Parameter("θ")
-        trainable_params = {}
+        unbound_params = {}
 
         with pytest.raises(
             ValueError, match="The parameter {} was not bound correctly.".format(theta)
         ):
-            _check_parameter_bound(theta, trainable_params)
+            _check_parameter_bound(theta, unbound_params)
 
     def test_extra_parameters_were_passed(self, recorder):
         """Tests that loading raises an error when extra parameters were
