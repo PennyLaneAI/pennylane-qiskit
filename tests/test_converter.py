@@ -1156,87 +1156,6 @@ class TestConverterIntegration:
             rotation_angle
         )
 
-    def test_passing_parameters_new_interface_args(self, qubit_device_2_wires):
-        """Test calling the qfunc with the new interface for setting the value
-        of Qiskit Parameters by passing args in order."""
-
-        a = Parameter("a")
-        b = Parameter("b")
-        c = Parameter("c")
-
-        qc = QuantumCircuit(2)
-        qc.rx(c, [0])
-        qc.ry(a, [0])
-        qc.rz(b, [0])
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_loaded_qiskit_circuit():
-            load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
-            return qml.expval(qml.PauliZ(0))
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
-            return qml.expval(qml.PauliZ(0))
-
-        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
-
-    def test_passing_parameters_new_interface_kwargs(self, qubit_device_2_wires):
-        """Test calling the qfunc with the new interface for setting the value
-        of Qiskit Parameters by passing kwargs matching the parameter names"""
-
-        a = Parameter("a")
-        b = Parameter("b")
-        c = Parameter("c")
-
-        qc = QuantumCircuit(2)
-        qc.rx(c, [0])
-        qc.ry(a, [0])
-        qc.rz(b, [0])
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_loaded_qiskit_circuit():
-            load(qc)(a=0.5, b=0.3, c=0.4)
-            return qml.expval(qml.PauliZ(0))
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
-            return qml.expval(qml.PauliZ(0))
-
-        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
-
-    def test_passing_parameters_new_interface_mixed(self, qubit_device_2_wires):
-        """Test calling the qfunc with the new interface for setting the value
-        of Qiskit Parameters - by passing a combination of kwargs and args"""
-
-        a = Parameter("a")
-        b = Parameter("b")
-        c = Parameter("c")
-
-        qc = QuantumCircuit(2)
-        qc.rx(c, [0])
-        qc.ry(a, [0])
-        qc.rz(b, [0])
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_loaded_qiskit_circuit():
-            load(qc)(0.3, a=0.5, c=0.4)
-            return qml.expval(qml.PauliZ(0))
-
-        @qml.qnode(qubit_device_2_wires)
-        def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
-            return qml.expval(qml.PauliZ(0))
-
-        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
-
     def test_one_parameter_in_qc_one_passed_into_qnode(self, qubit_device_2_wires):
         """Tests passing a parameter by pre-defining it and then
         passing another to the QNode."""
@@ -1498,6 +1417,87 @@ class TestPassingParameters:
             return qml.expval(qml.PauliZ(0))
 
         return theta, qc, circuit_native_pennylane
+
+    def test_passing_parameters_new_interface_args(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters by passing args in order."""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rx(c, [0])
+        qc.ry(a, [0])
+        qc.rz(b, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RX(0.4, wires=0)
+            qml.RY(0.5, wires=0)
+            qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_passing_parameters_new_interface_kwargs(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters by passing kwargs matching the parameter names"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rx(c, [0])
+        qc.ry(a, [0])
+        qc.rz(b, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(a=0.5, b=0.3, c=0.4)
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RX(0.4, wires=0)
+            qml.RY(0.5, wires=0)
+            qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_passing_parameters_new_interface_mixed(self, qubit_device_2_wires):
+        """Test calling the qfunc with the new interface for setting the value
+        of Qiskit Parameters - by passing a combination of kwargs and args"""
+
+        a = Parameter("a")
+        b = Parameter("b")
+        c = Parameter("c")
+
+        qc = QuantumCircuit(2)
+        qc.rx(c, [0])
+        qc.ry(a, [0])
+        qc.rz(b, [0])
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            load(qc)(0.3, a=0.5, c=0.4)
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.RX(0.4, wires=0)
+            qml.RY(0.5, wires=0)
+            qml.RZ(0.3, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
     def test_using_parameter_vector_params_dict(self, qubit_device_2_wires):
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
