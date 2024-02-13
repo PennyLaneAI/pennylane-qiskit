@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Xanadu Quantum Technologies Inc.
+# Copyright 2019-2024 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,9 +84,9 @@ def qiskit_session(device):
 
         @qml.qnode(dev)
         def circuit(x):
-                qml.RX(x, 0)
-                qml.CNOT([0, 1])
-                return qml.expval(qml.PauliZ(1))
+            qml.RX(x, 0)
+            qml.CNOT([0, 1])
+            return qml.expval(qml.PauliZ(1))
 
         angle = 0.1
 
@@ -94,7 +94,7 @@ def qiskit_session(device):
 
             res = circuit(angle)[0] # you queue for the first execution
 
-            # then this loop executes immediately after without qeueing again
+            # then this loop executes immediately after without queueing again
             while res > 0:
                 angle += 0.3
                 res = circuit(angle)[0]
@@ -128,7 +128,7 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 def split_measurement_types(
     tape: qml.tape.QuantumTape,
 ) -> (Sequence[qml.tape.QuantumTape], Callable):
-    """Split into seperate tapes based on measurement type. Counts will use the
+    """Split into separate tapes based on measurement type. Counts will use the
     Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
     strictly sample-based measurements will use the standard backend.run function"""
 
@@ -198,13 +198,13 @@ class QiskitDevice2(Device):
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
-            or strings (``['ancilla', 'q1', 'q2']``).
+            or strings (``['aux_wire', 'q1', 'q2']``).
         backend (Backend): the initialized Qiskit backend
 
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        use_primitives(bool): whether or not to use Qiskit Primitives. Defaults to False. If True,
+        use_primitives (bool): whether or not to use Qiskit Primitives. Defaults to False. If True,
             getting expectation values and variance from the backend will use a Qiskit Estimator,
             and getting probabilities will use a Qiskit Sampler. Other measurement types will continue
             to return results from the backend without using a Primitive.
@@ -254,8 +254,8 @@ class QiskitDevice2(Device):
         # shots is a required field in the Options object, and Primitive based measurements *will* use it
         if options and options.execution.shots != 4000:  # 4000 is the default value on Options
             warnings.warn(
-                f"Setting shots via the Options is not supported on PennyLane devices. The shots {shots} "
-                f"passed to the device will be used."
+                "Setting shots via the Options is not supported on PennyLane devices. The shots "
+                f"value passed to the device ({shots}) will be used."
             )
         self.options = options or Options()
         self.options.execution.shots = shots
@@ -291,7 +291,7 @@ class QiskitDevice2(Device):
         """The Qiskit backend object.
 
         Returns:
-            qiskit.providers.backend: Qiskit backend object.
+            qiskit.providers.Backend: Qiskit backend object.
         """
         return self._backend
 
@@ -383,7 +383,7 @@ class QiskitDevice2(Device):
 
     def _update_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there there is conflicting information"""
+        the definition in options taking precedence if there is conflicting information"""
         option_kwargs = qiskit_options_to_flat_dict(self.options)
 
         overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
@@ -437,9 +437,9 @@ class QiskitDevice2(Device):
         compiled_circuits = []
         transpile_args = self.get_transpile_args(self._kwargs)
 
-        for circuit in circuits:
+        for i, circuit in enumerate(circuits):
             compiled_circ = transpile(circuit, backend=self.backend, **transpile_args)
-            compiled_circ.name = f"circ{len(compiled_circuits)}"
+            compiled_circ.name = f"circ{i}"
             compiled_circuits.append(compiled_circ)
 
         return compiled_circuits
@@ -458,7 +458,7 @@ class QiskitDevice2(Device):
 
         results = []
 
-        if isinstance(circuits, (QuantumTape, QuantumScript)):
+        if isinstance(circuits, QuantumScript):
             circuits = [circuits]
 
         for circ in circuits:
@@ -483,7 +483,7 @@ class QiskitDevice2(Device):
         self._update_kwargs()
 
         # in case a single circuit is passed
-        if isinstance(circuits, (QuantumTape, QuantumScript)):
+        if isinstance(circuits, QuantumScript):
             circuits = [circuits]
 
         qcirc = [

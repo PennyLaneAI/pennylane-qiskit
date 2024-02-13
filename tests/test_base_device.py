@@ -291,7 +291,7 @@ class TestDevicePreprocessing:
         assert np.all([tape.operations == operations for tape in tapes])
 
         # measurements split as expected
-        [tape.measurements for tape in tapes] == expectation
+        assert [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
         assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)

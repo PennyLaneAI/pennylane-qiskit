@@ -306,7 +306,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     specified to apply.
 
     Args:
-        circuit (Union[~.QuantumScript, ~.QuantumTape]): the circuit applied
+        circuit (QuantumTape): the circuit applied
             to the device
         register_size (int): the total number of qubits on the device the circuit is
             executed on; this must include any qubits not used in the given
