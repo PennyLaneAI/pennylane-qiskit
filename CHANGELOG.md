@@ -4,6 +4,11 @@
 
 ### Improvements 🛠
 
+* The UI for passing parameters to a ``qfunc`` generated when loading a Qiskit ``QuantumCircuit`` 
+  into PennyLane is updated to allow passing parameters as args or kwargs, rather than as 
+  a dictionary. The old dictionary UI continues to be supported.
+  [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
+
 * Measurement operations are now added to the PennyLane template when a `QuantumCircuit`
   is converted using `load`. Additionally, one can override any existing terminal
   measurements by providing a list of PennyLane 
@@ -23,6 +28,7 @@
 This release contains contributions from (in alphabetical order):
 
 Utkarsh Azad
+Lillian Frederiksen
 
 ---
 # Release 0.34.0
