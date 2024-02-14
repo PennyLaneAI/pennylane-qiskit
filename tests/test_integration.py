@@ -370,6 +370,26 @@ class TestPLOperations:
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
 
+    @pytest.mark.parametrize("shots", [None, 1000])
+    def test_adjoint(self, state_vector_device, shots, tol):
+
+        dev = state_vector_device(1)
+
+        if dev._is_unitary_backend:
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
+        x = 1.23
+
+        @qml.qnode(dev)
+        def rotate_back_and_forth():
+            qml.RX(x, 0)
+            qml.adjoint(qml.RX(x, 0))
+            return qml.expval(qml.PauliZ(0))
+
+        res = rotate_back_and_forth()
+
+        assert np.allclose(res, 1)
+
 
 class TestPLTemplates:
     """Integration tests for checking certain PennyLane templates."""
