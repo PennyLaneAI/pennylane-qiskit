@@ -51,8 +51,13 @@ def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any
         raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
 
 
-def _process_trivial_param_args(params, *args, **kwargs):
-    """Process the trivial conditions for parameter dictionary computation."""
+def _process_basic_param_args(params, *args, **kwargs):
+    """Process the basic conditions for parameter dictionary computation.
+
+    Returns:
+        params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
+        flag (bool): Indicating whether the returned ``params`` can be used.
+    """
 
     # if no kwargs are passed, and a dictionary has been passed as a single argument, then assume it is params
     if params is None and not kwargs and (len(args) == 1 and isinstance(args[0], dict)):
@@ -95,9 +100,9 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params (dict): A dictionary mapping ``quantum_circuit.parameters`` to values
     """
 
-    params, trivial = _process_trivial_param_args(params, *args, **kwargs)
+    params, flag = _process_basic_param_args(params, *args, **kwargs)
 
-    if trivial:
+    if flag:
         return params
 
     # populate it with any parameters defined as kwargs
@@ -240,7 +245,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: the resulting PennyLane template
     """
 
-    # pylint:disable=too-many-branches, fixme, protected-access, unnecessary-lambda-assignment
+    # pylint:disable=too-many-branches, fixme, protected-access
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -337,7 +342,10 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
             # Define operator builders and helpers
             operation_func = None
-            operation_overlapper = lambda op: op
+
+            def operation_overlapper(op):
+                return op
+
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
             operation_kwargs = {"wires": operation_wires}
             operation_args = []
