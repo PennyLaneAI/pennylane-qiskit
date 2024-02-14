@@ -180,15 +180,10 @@ def qiskit_options_to_flat_dict(options):
     # other categories, but at that point they've really departed from the kwarg API
     options_dict = {}
     for key, val in vars(options).items():
-        if not hasattr(val, "__dict__"):
-            if val is not None:
-                options_dict[key] = val
-
-        else:
-            for k, v in vars(val).items():
-                if v is not None:
-                    options_dict[k] = v
-
+        if hasattr(val, "__dict__"):
+            options_dict.update(qiskit_options_to_flat_dict(val))
+        elif val is not None:
+            options_dict[key] = val
     return options_dict
 
 
