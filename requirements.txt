@@ -41,5 +41,5 @@ symengine==0.11.0
 sympy==1.12
 toml==0.10.2
 tweedledum==1.1.1
-urllib3==2.1.0
+urllib3==2.2.0
 websocket-client==1.7.0
