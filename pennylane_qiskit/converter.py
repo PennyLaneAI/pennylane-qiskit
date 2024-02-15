@@ -206,6 +206,40 @@ def _check_circuit_and_assign_parameters(
     return quantum_circuit.assign_parameters(params)
 
 
+def _get_operation_params(instruction, unbound_params) -> list:
+    """Extract the bound parameters from the operation.
+
+    If the bound parameters are a Qiskit ParameterExpression, then replace it with
+    the corresponding PennyLane variable from the unbound_params dictionary.
+
+    Args:
+        instruction (qiskit.circuit.Instruction): a qiskit's quantum circuit instruction
+        unbound_params dict[qiskit.circuit.Parameter, Any]: a dictionary mapping
+            qiskit parameters to trainable parameter values
+
+    Returns:
+        list: bound parameters of the given instruction
+    """
+    operation_params = []
+    for p in instruction.params:
+        _check_parameter_bound(p, unbound_params)
+
+        if isinstance(p, ParameterExpression):
+            if p.parameters:  # non-empty set = has unbound parameters
+                ordered_params = tuple(p.parameters)
+                f = lambdify(ordered_params, getattr(p, "_symbol_expr"), modules=qml.numpy)
+                f_args = []
+                for i_ordered_params in ordered_params:
+                    f_args.append(unbound_params.get(i_ordered_params))
+                operation_params.append(f(*f_args))
+            else:  # needed for qiskit<0.43.1
+                operation_params.append(float(p))  # pragma: no cover
+        else:
+            operation_params.append(p)
+
+    return operation_params
+
+
 def map_wires(qc_wires: list, wires: list) -> dict:
     """Utility function mapping the wires specified in a quantum circuit with the wires
     specified by the user for the template.
@@ -316,7 +350,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         """
 
-        # organize parameters, format trainable parameter values correctly, and then bind the parameters to the circuit
+        # organize parameters, format trainable parameter values correctly,
+        # and then bind the parameters to the circuit
         params = _format_params_dict(quantum_circuit, params, *args, **kwargs)
         unbound_params = _extract_variable_refs(params)
         qc = _check_circuit_and_assign_parameters(quantum_circuit, params, unbound_params)
@@ -327,62 +362,46 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         wire_map = map_wires(qc_wires, wires)
 
         # Stores the measurements encountered in the circuit
-        terminal_meas = []
-        mid_circ_meas, mid_circ_regs = [], {}
+        # terminal_meas / mid_circ_meas -> terminal / mid-circuit measurements
+        # mid_circ_regs -> maps the classical registers to the measurements done
+        terminal_meas, mid_circ_meas = [], []
+        mid_circ_regs = {}
 
         # Processing the dictionary of parameters passed
-        for idx, (ops, qargs, cargs) in enumerate(qc.data):
+        for idx, circuit_instruction in enumerate(qc.data):
+            (instruction, qargs, cargs) = circuit_instruction
             # the new Singleton classes have different names than the objects they represent,
             # but base_class.__name__ still matches
-            instruction_name = getattr(ops, "base_class", ops.__class__).__name__
+            instruction_name = getattr(instruction, "base_class", instruction.__class__).__name__
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
             # TODO: remove the following when gates have been renamed in PennyLane
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
             # Define operator builders and helpers
-            operation_func = None
-
-            def operation_overlapper(op):
-                return op
-
+            # _class -> PennyLane operation class object mapped from the Qiskit operation
+            # _args and _kwargs -> Parameters required for instantiation of `_class`
+            # _cond -> Flag regarding if we have encountered a classical control flow op
+            operation_class = None
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
             operation_kwargs = {"wires": operation_wires}
             operation_args = []
-            operation_cond = False
 
             # Extract the bound parameters from the operation. If the bound parameters are a
             # Qiskit ParameterExpression, then replace it with the corresponding PennyLane
-            # variable from the var_ref_map dictionary.
-            operation_params = []
-            for p in ops.params:
-                _check_parameter_bound(p, unbound_params)
-
-                if isinstance(p, ParameterExpression):
-                    if p.parameters:  # non-empty set = has unbound parameters
-                        ordered_params = tuple(p.parameters)
-                        f = lambdify(ordered_params, p._symbol_expr, modules=qml.numpy)
-                        f_args = []
-                        for i_ordered_params in ordered_params:
-                            f_args.append(unbound_params.get(i_ordered_params))
-                        operation_params.append(f(*f_args))
-                    else:  # needed for qiskit<0.43.1
-                        operation_params.append(float(p))  # pragma: no cover
-                else:
-                    operation_params.append(p)
+            # variable from the unbound_params dictionary.
+            operation_params = _get_operation_params(instruction, unbound_params)
 
             if instruction_name in dagger_map:
-                operation_func = dagger_map[instruction_name]
-                operation_overlapper = qml.adjoint
+                operation_class = qml.adjoint(dagger_map[instruction_name])
 
             elif instruction_name in inv_map:
-                operation_name = inv_map[instruction_name]
-                operation_func = getattr(pennylane_ops, operation_name)
+                operation_class = getattr(pennylane_ops, inv_map[instruction_name])
                 operation_args.extend(operation_params)
-                if operation_name in ["QubitStateVector", "StatePrep"]:
+                if operation_class in (qml.QubitStateVector, qml.StatePrep):
                     operation_args = [np.array(operation_params)]
 
-            elif isinstance(ops, Measure):
+            elif isinstance(instruction, Measure):
                 # Store the current operation wires
                 op_wires = set(operation_wires)
                 # Look-ahead for more gate(s) on its wire(s)
@@ -402,22 +421,19 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
                 # Allows for queing the mid-circuit measurements
                 else:
-                    operation_func = qml.measure
+                    operation_class = qml.measure
                     mid_circ_meas.append(qml.measure(wires=operation_wires))
 
                     # Allows for tracking conditional operations
                     for carg in cargs:
                         mid_circ_regs[carg] = mid_circ_meas[-1]
 
-            # TODO: this may contain some logic for the bigger ControlFlowOps
-            elif isinstance(ops, ControlFlowOp):
-                operation_cond = True
-
             else:
 
                 try:
-                    operation_args = [ops.to_matrix()]
-                    operation_func = qml.QubitUnitary
+                    if not isinstance(instruction, (ControlFlowOp,)):
+                        operation_args = [instruction.to_matrix()]
+                        operation_class = qml.QubitUnitary
 
                 except (AttributeError, QiskitError):
                     warnings.warn(
@@ -426,8 +442,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                         UserWarning,
                     )
 
-            # Check if it is a conditional operation
-            if operation_cond or (ops.condition and ops.condition[0] in mid_circ_regs):
+            # Check if it is a conditional operation or conditional instruction
+            instruction_cond = instruction.condition and instruction.condition[0] in mid_circ_regs
+            if instruction_cond or isinstance(instruction, ControlFlowOp):
                 # Iteratively recurse over to build different branches
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
@@ -438,22 +455,25 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
                 # Get the functions for handling condition
                 true_fn, false_fn, elif_fns, cond_op = _conditional_funcs(
-                    ops, cargs, operation_func, branch_funcs, instruction_name
+                    instruction, cargs, operation_class, branch_funcs, instruction_name
                 )
                 res_reg, res_bit = cond_op
 
                 # Check for multi-qubit register
                 if tuple(cargs) not in mid_circ_regs:
-                    ctrl_cargs = min(len(cargs), len(qargs))
+                    # For a ControlFlow op, there can be a mismatch on the
+                    # classical bits it is conditioned on and the qubits it acts on.
+                    # We use min of them to be consistent with number of
+                    # classical bits we require and the qc_wires we have.
+                    num_cbits = min(len(cargs), len(qargs))
                     mid_circ_regs[tuple(cargs)] = sum(
-                        2**idx * qml.measure(wires=operation_wires[idx])
-                        for idx in range(ctrl_cargs)
+                        2**idx * qml.measure(wires=operation_wires[idx]) for idx in range(num_cbits)
                     )
 
                 # Check for elif branches (doesn't require qjit)
                 if elif_fns:
-                    for elif_fn in elif_fns:
-                        qml.cond(mid_circ_regs[res_reg] == elif_fn[0], elif_fn[1])(
+                    for elif_bit, elif_branch in elif_fns:
+                        qml.cond(mid_circ_regs[res_reg] == elif_bit, elif_branch)(
                             *operation_args, **operation_kwargs
                         )
 
@@ -461,7 +481,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 if isinstance(res_bit, str):
                     # Handles the default case in the SwitchCaseOp
                     if res_bit == "SwitchDefault":
-                        elif_bits = [elif_fn[0] for elif_fn in elif_fns]
+                        elif_bits = [elif_bit for (elif_bit, _) in elif_fns]
                         qml.cond(
                             reduce(
                                 lambda m0, m1: m0 & m1,
@@ -478,8 +498,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     )(*operation_args, **operation_kwargs)
 
             # Check if it is not a mid-circuit measurement
-            elif operation_func and not isinstance(ops, Measure):
-                operation_overlapper(operation_func)(*operation_args, **operation_kwargs)
+            elif operation_class and not isinstance(instruction, Measure):
+                operation_class(*operation_args, **operation_kwargs)
 
         # Use the user-provided measurements
         if measurements:
@@ -513,9 +533,9 @@ def load_qasm_from_file(file: str):
 
 
 # pylint:disable=fixme, protected-access
-def _conditional_funcs(ops, cargs, operation_func, branch_funcs, ctrl_flow_type):
+def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type):
     """Builds the conditional functions for Controlled flows"""
-    true_fn, false_fn, elif_fns = operation_func, None, ()
+    true_fn, false_fn, elif_fns = operation_class, None, ()
     # Logic for using legacy c_if
     if not isinstance(ops, ControlFlowOp):
         return true_fn, false_fn, elif_fns, ops.condition
