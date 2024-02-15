@@ -12,5 +12,5 @@ qiskit-aer==0.13.3
 qiskit-ibm-runtime==0.17.0
 qiskit-ibm-provider==0.9.0
 sphinxcontrib-bibtex==2.6.2
-sphinx-automodapi==0.14.1
+sphinx-automodapi==0.16.0
 pennylane-sphinx-theme
