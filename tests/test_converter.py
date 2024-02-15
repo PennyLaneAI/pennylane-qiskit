@@ -1019,7 +1019,7 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 11
+        assert len(recorder.queue) == 10
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1029,25 +1029,21 @@ class TestConverterQasm:
         assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == Wires([2])
 
-        assert recorder.queue[2].name == "Barrier"
+        assert recorder.queue[2].name == "Hadamard"
         assert recorder.queue[2].parameters == []
-        assert recorder.queue[2].wires == Wires([0, 1, 2, 3])
+        assert recorder.queue[2].wires == Wires([0])
 
         assert recorder.queue[3].name == "Hadamard"
         assert recorder.queue[3].parameters == []
-        assert recorder.queue[3].wires == Wires([0])
+        assert recorder.queue[3].wires == Wires([1])
 
         assert recorder.queue[4].name == "Hadamard"
         assert recorder.queue[4].parameters == []
-        assert recorder.queue[4].wires == Wires([1])
+        assert recorder.queue[4].wires == Wires([2])
 
         assert recorder.queue[5].name == "Hadamard"
         assert recorder.queue[5].parameters == []
-        assert recorder.queue[5].wires == Wires([2])
-
-        assert recorder.queue[6].name == "Hadamard"
-        assert recorder.queue[6].parameters == []
-        assert recorder.queue[6].wires == Wires([3])
+        assert recorder.queue[5].wires == Wires([3])
 
     def test_qasm_file_not_found_error(self):
         """Tests that an error is propagated, when a non-existing file is specified for parsing."""
