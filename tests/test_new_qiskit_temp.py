@@ -2,6 +2,7 @@ import pytest
 import pennylane as qml
 import qiskit
 
+
 def test_error_is_raised_if_initalizing_device():
     """Test that when Qiskit 1.0 is installed, an error is raised if you try
     to initialize a device. This is a temporary test and will be removed along
@@ -10,5 +11,8 @@ def test_error_is_raised_if_initalizing_device():
         pass
 
     else:
-        with pytest.raises(RuntimeError, match="The devices in the PennyLane Qiskit plugin are currently only compatible with version of Qiskit below 0.46"):
+        with pytest.raises(
+            RuntimeError,
+            match="The devices in the PennyLane Qiskit plugin are currently only compatible with version of Qiskit below 0.46",
+        ):
             qml.device("qiskit.aer", wires=2)
