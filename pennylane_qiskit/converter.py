@@ -207,10 +207,10 @@ def _check_circuit_and_assign_parameters(
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
-    undefined_params = [p for p in expected_params.values() if p not in params]
+    undefined_params = [name for name, param in expected_params.items() if param not in params]
     if undefined_params:
         s = "s" if len(undefined_params) > 1 else ""
-        param_names = ", ".join([p.name for p in undefined_params])
+        param_names = ", ".join(undefined_params)
         raise TypeError(
             f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {param_names}"
         )
