@@ -807,7 +807,6 @@ class TestConverterUtils:
         assert params == {a: 0.5, b: 0.3, c: 0.4}
 
 
-
 class TestConverterWarningsAndErrors:
     """Tests that the converter.load function emits warnings and errors."""
 
@@ -907,7 +906,6 @@ class TestConverterWarningsAndErrors:
 
         with pytest.raises(TypeError, match="Expected 1 positional argument but 2 were given"):
             load(qc)([0.1, 0.3], 0.5, a=0.2, b=0.4)
-
 
     def test_missing_argument(self):
         """Test that if calling with missing arguments, a clear error is raised"""

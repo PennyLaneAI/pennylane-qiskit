@@ -127,7 +127,6 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         if not k in expected_params:
             raise TypeError(
                 f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters: {param_name_string} {referral_to_forum}"
-
             )
         params[expected_params[k]] = v
 
