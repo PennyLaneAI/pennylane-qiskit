@@ -35,8 +35,8 @@ inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
-refferal_to_forum = "If you are experiencing difficulties with converting circuits from Qiskit, you can reach out " \
-                    "on the PennyLane forum at https://discuss.pennylane.ai/c/pennylane-plugins/pennylane-qiskit/"
+refferal_to_forum = "\n \nIf you are experiencing difficulties with converting circuits from Qiskit, you can reach out " \
+                    "\non the PennyLane forum at https://discuss.pennylane.ai/c/pennylane-plugins/pennylane-qiskit/"
 
 def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
