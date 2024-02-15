@@ -24,6 +24,8 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, ControlFlowOp
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
+from qiskit.circuit.classical import expr, types
+from qiskit.circuit import Clbit, ClassicalRegister
 from qiskit.exceptions import QiskitError
 from sympy import lambdify
 
@@ -558,3 +560,33 @@ def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type
             ops.condition = [tuple(cargs), "SwitchDefault"]
 
     return true_fn, false_fn, elif_fns, ops.condition
+
+def _expr_evaluation(condition):
+    """Evaluates the expr condition"""
+
+    _expr_bool_mapping = {
+        "BIT_AND": lambda cbit1, cbit2: cbit1 & cbit2,
+        "BIT_OR": lambda cbit1, cbit2: cbit1 | cbit2,
+        "BIT_XOR": lambda cbit1, cbit2: cbit1 ^ cbit2,
+        "LOGIC_AND": lambda cbit1, cbit2: cbit1 and cbit2,
+        "LOGIC_OR": lambda cbit1, cbit2: cbit1 or cbit2,
+        "EQUAL": lambda cbit1, cbit2: cbit1 == cbit2,
+        "NOT_EQUAL": lambda cbit1, cbit2: cbit1 != cbit2,
+        "LESS": lambda cbit1, cbit2: cbit1 < cbit2,
+        "LESS_EQUAL": lambda cbit1, cbit2: cbit1 <= cbit2,
+        "GREATER": lambda cbit1, cbit2: cbit1 > cbit2,
+        "GREATER_EQUAL": lambda cbit1, cbit2: cbit1 >= cbit2,
+    }
+
+    if isinstance(condition, (int, str)):
+        return condition
+    if isinstance(condition, (Clbit, ClassicalRegister)):
+        return condition
+    if isinstance(condition, expr.Expr):
+        if condition.type.kind in (types.Uint, types.Bool):
+            pass
+
+    warnings.warn(
+        f"The provided {condition} use additional classical information that cannot not be returned.",
+        UserWarning,
+    )
