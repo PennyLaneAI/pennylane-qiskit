@@ -64,17 +64,13 @@ def _expected_parameters(quantum_circuit):
 
     """
 
-    # note we can't use `set` because it reorders parameters randomly
-    expected_params = []
+    expected_params = {}
     for p in quantum_circuit.parameters:
         # we want the p.vector if p is a ParameterVectorElement, otherwise p
         param = getattr(p, "vector", p)
-        if (
-            param not in expected_params
-        ):  # we want each ParameterVector once, not n times for vector of length n
-            expected_params.append(param)
+        expected_params.update({param.name: param})
 
-    param_name_string = ", ".join([p.name for p in expected_params])
+    param_name_string = ", ".join(expected_params.keys())
 
     return expected_params, param_name_string
 
@@ -123,16 +119,14 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     # populate it with any parameters defined as kwargs
     for k, v in kwargs.items():
         # the key needs to be the actual Parameter, whereas kwargs keys are parameter names
-        qc_param = [p for p in expected_params if p.name == k]
-        if not qc_param:
+        if not k in expected_params:
             raise TypeError(
                 f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters: {param_name_string}"
             )
-        params[qc_param[0]] = v
+        params[expected_params[k]] = v
 
     # get any parameters not defined in kwargs (may be all of them) and match to args in order
-
-    expected_arg_params = [p for p in expected_params if p.name not in kwargs]
+    expected_arg_params = [param for name, param in expected_params.items() if name not in kwargs]
     has_param_vectors = np.any([isinstance(p, ParameterVector) for p in expected_arg_params])
 
     # if too many args were passed to the function call, raise an error
@@ -213,7 +207,7 @@ def _check_circuit_and_assign_parameters(
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
-    undefined_params = [p for p in expected_params if p not in params]
+    undefined_params = [p for p in expected_params.values() if p not in params]
     if undefined_params:
         s = "s" if len(undefined_params) > 1 else ""
         param_names = ", ".join([p.name for p in undefined_params])
