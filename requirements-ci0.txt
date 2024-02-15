@@ -1,4 +1,4 @@
 pennylane>=0.32
-qiskit<1.0
+qiskit
 numpy
 sympy
