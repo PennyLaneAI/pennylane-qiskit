@@ -1440,6 +1440,6 @@ class TestConverterIntegration:
             qml.CZ([0, 1])
             return qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])
 
-        qnode = qml.QNode(qml.from_qiskit(qc, measurements), dev)
+        qnode = qml.QNode(load(qc, measurements), dev)
 
         assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
