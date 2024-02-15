@@ -3,7 +3,7 @@ import sys
 
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit import extensions as ex
+from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import EfficientSU2
 from qiskit.exceptions import QiskitError
@@ -212,7 +212,7 @@ class TestConverter:
 
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
-        qc_1 = qc.bind_parameters({theta: 0.5})
+        qc_1 = qc.assign_parameters({theta: 0.5})
 
         quantum_circuit = load(qc_1)
 
@@ -686,7 +686,7 @@ class TestConverterGates:
 
         assert recorder.queue[0].name == "QubitUnitary"
         assert len(recorder.queue[0].parameters) == 1
-        assert np.array_equal(recorder.queue[0].parameters[0], ex.CHGate().to_matrix())
+        assert np.array_equal(recorder.queue[0].parameters[0], lib.CHGate().to_matrix())
         assert recorder.queue[0].wires == Wires([0, 1])
 
 
