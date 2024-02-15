@@ -1,4 +1,4 @@
-name: Tests
+name: Tests for 1.0
 on:
   push:
     branches:
