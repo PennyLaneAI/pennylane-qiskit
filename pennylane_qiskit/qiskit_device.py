@@ -22,6 +22,7 @@ import inspect
 import warnings
 
 import numpy as np
+import qiskit
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
@@ -141,6 +142,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _eigs = {}
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+
+        if qiskit.__version__ in ["0.46.0", "1.0.0"]:
+            raise RuntimeError(f"The devices in the PennyLane Qiskit plugin are currently only compatible "
+                               f"with version of Qiskit below 0.46. It looks like you have {qiskit.__version__} "
+                               f"installed. Please downgrade to use the devices. The devices will be updated "
+                               f"in the coming weeks to be compatible with Qiskit 1.0!")
+
         super().__init__(wires=wires, shots=shots)
 
         self.provider = provider
