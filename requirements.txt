@@ -1,6 +1,6 @@
 appdirs==1.4.4
 autograd==1.6.2
-autoray==0.6.7
+autoray==0.6.8
 cachetools==5.0.0
 certifi==2024.2.2
 cffi==1.16.0
