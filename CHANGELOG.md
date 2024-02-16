@@ -8,6 +8,7 @@
   into PennyLane is updated to allow passing parameters as args or kwargs, rather than as 
   a dictionary. The old dictionary UI continues to be supported.
   [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
+  [(#428)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/428)
 
 * Measurement operations are now added to the PennyLane template when a `QuantumCircuit`
   is converted using `load`. Additionally, one can override any existing terminal
