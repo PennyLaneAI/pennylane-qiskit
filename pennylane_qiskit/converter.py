@@ -35,6 +35,11 @@ inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
 
+referral_to_forum = (
+    "\n \nIf you are experiencing any difficulties with converting circuits from Qiskit, you can reach out "
+    "\non the PennyLane forum at https://discuss.pennylane.ai/c/pennylane-plugins/pennylane-qiskit/"
+)
+
 
 def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any]):
     """Utility function determining if a certain parameter in a QuantumCircuit has
@@ -121,7 +126,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         # the key needs to be the actual Parameter, whereas kwargs keys are parameter names
         if not k in expected_params:
             raise TypeError(
-                f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters: {param_name_string}"
+                f"Got unexpected parameter keyword argument '{k}'. Circuit contains parameters: {param_name_string} {referral_to_forum}"
             )
         params[expected_params[k]] = v
 
@@ -140,7 +145,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
             else ""
         )
         raise TypeError(
-            f"Expected {len(expected_arg_params)} positional argument{'s' if len(expected_arg_params) > 1 else ''} but {len(args)} were given. {param_vector_info}"
+            f"Expected {len(expected_arg_params)} positional argument{'s' if len(expected_arg_params) > 1 else ''} but {len(args)} were given. {param_vector_info} {referral_to_forum}"
         )
     params.update(dict(zip(expected_arg_params, args)))
 
@@ -193,7 +198,7 @@ def _check_circuit_and_assign_parameters(
         if name in [p.name for p in quantum_circuit.parameters]:
             raise RuntimeError(
                 f"Cannot interpret QuantumCircuit with parameter '{name}' as a PennyLane "
-                f"quantum function, as this argument is reserved"
+                f"quantum function, as this argument is reserved. {referral_to_forum}"
             )
 
     expected_params, param_name_string = _expected_parameters(quantum_circuit)
@@ -202,7 +207,7 @@ def _check_circuit_and_assign_parameters(
         if quantum_circuit.parameters:
             s = "s" if len(quantum_circuit.parameters) > 1 else ""
             raise TypeError(
-                f"Missing required argument{s} to define Parameter value{s} for: {param_name_string}"
+                f"Missing required argument{s} to define Parameter value{s} for: {param_name_string} {referral_to_forum}"
             )
         return quantum_circuit
 
@@ -212,7 +217,7 @@ def _check_circuit_and_assign_parameters(
         s = "s" if len(undefined_params) > 1 else ""
         param_names = ", ".join(undefined_params)
         raise TypeError(
-            f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {param_names}"
+            f"Missing {len(undefined_params)} required argument{s} to define Parameter value{s} for: {param_names}. {referral_to_forum}"
         )
 
     for k in diff_params:
