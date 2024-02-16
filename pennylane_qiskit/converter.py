@@ -557,7 +557,7 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     elif ctrl_flow_type == "SwitchCaseOp":
         true_fns, res_bits = [], []
         for res_bit, case in inst._case_map.items():
-             if not isinstance(case, _DefaultCaseType):
+            if not isinstance(case, _DefaultCaseType):
                 true_fns.append(branch_funcs[case])
                 res_bits.append(res_bit)
 
@@ -587,7 +587,8 @@ def _process_condition(cond_op, mid_circ_regs, cargs):
 
         if all(clbit in mid_circ_regs for clbit in clbits):
             pl_meas.append(
-                sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits)) == condition[1]
+                sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+                == condition[1]
             )
 
     if isinstance(condition, list):
@@ -601,15 +602,15 @@ def _process_condition(cond_op, mid_circ_regs, cargs):
             # PL measurement operation
             meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
             if all(clbit in mid_circ_regs for clbit in clbits):
-                pl_meas.extend([
-                    meas_pl_op == clval for clval in condition[1]
-                ])
+                pl_meas.extend([meas_pl_op == clval for clval in condition[1]])
 
             if condition[2] != "SwitchDefault":
-                pl_meas.append(reduce(
-                                lambda m0, m1: m0 & m1,
-                                [(meas_pl_op != clval) for clval in condition[1]],
-                            ))
+                pl_meas.append(
+                    reduce(
+                        lambda m0, m1: m0 & m1,
+                        [(meas_pl_op != clval) for clval in condition[1]],
+                    )
+                )
         else:
             clbits, condition = _expr_evaluation(condition[0])
 
