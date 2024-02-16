@@ -360,6 +360,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         # Wires from a qiskit circuit have unique IDs, so their hashes are unique too
         qc_wires = [hash(q) for q in qc.qubits]
+        cl_wires = [hash(c) for c in qc.clbits]
 
         wire_map = map_wires(qc_wires, wires)
 
@@ -456,9 +457,13 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     ]
 
                 # Get the functions for handling condition
-                true_fn, false_fn, elif_fns, cond_op = _conditional_funcs(
-                    instruction, cargs, operation_class, branch_funcs, instruction_name
+                true_fns, false_fns, inst_cond = _conditional_funcs(
+                    instruction, operation_class, branch_funcs, instruction_name
                 )
+
+                # process qiskit condition to PL conditions
+                pl_meas_cond = _process_condition(inst_cond, mid_circ_regs, cargs)
+
                 res_reg, res_bit = cond_op
 
                 # Check for multi-qubit register
@@ -534,59 +539,128 @@ def load_qasm_from_file(file: str):
     return load(QuantumCircuit.from_qasm_file(file))
 
 
-# pylint:disable=fixme, protected-access
-def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type):
+# pylint:disable=protected-access
+def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     """Builds the conditional functions for Controlled flows"""
-    true_fn, false_fn, elif_fns = operation_class, None, ()
+    true_fns, false_fns = [operation_class], [None]
     # Logic for using legacy c_if
-    if not isinstance(ops, ControlFlowOp):
-        return true_fn, false_fn, elif_fns, ops.condition
+    if not isinstance(inst, ControlFlowOp):
+        return true_fns, false_fns, inst.condition
 
     # Logic for handling IfElseOp
     if ctrl_flow_type == "IfElseOp":
-        true_fn = branch_funcs[0]
+        true_fns[0] = branch_funcs[0]
         if len(branch_funcs) == 2:
-            false_fn = branch_funcs[1]
+            false_fns[0] = branch_funcs[1]
 
     # Logic for handling SwitchCaseOp
     elif ctrl_flow_type == "SwitchCaseOp":
-        elif_fns = []
-        for res_bit, case in ops._case_map.items():
-            if not isinstance(case, _DefaultCaseType):
-                elif_fns.append((res_bit, branch_funcs[case]))
-        ops.condition = [tuple(cargs), "SwitchCase"]
-        if any((isinstance(case, _DefaultCaseType) for case in ops._case_map)):
-            true_fn = branch_funcs[-1]
-            ops.condition = [tuple(cargs), "SwitchDefault"]
+        true_fns, res_bits = [], []
+        for res_bit, case in inst._case_map.items():
+             if not isinstance(case, _DefaultCaseType):
+                true_fns.append(branch_funcs[case])
+                res_bits.append(res_bit)
 
-    return true_fn, false_fn, elif_fns, ops.condition
+        # Switch ops condition is None by default
+        # So we make up a custom one for it ourselves
+        inst.condition = [inst.target, res_bits, "SwitchCase"]
+        if any((isinstance(case, _DefaultCaseType) for case in inst._case_map)):
+            true_fns.append(branch_funcs[-1])
+            # Marker for we have a default case scenario
+            inst.condition[-1] = "SwitchDefault"
+        false_fns = [None] * len(true_fns)
 
-def _expr_evaluation(condition):
-    """Evaluates the expr condition"""
+    return true_fns, false_fns, inst.condition
 
-    _expr_bool_mapping = {
-        "BIT_AND": lambda cbit1, cbit2: cbit1 & cbit2,
-        "BIT_OR": lambda cbit1, cbit2: cbit1 | cbit2,
-        "BIT_XOR": lambda cbit1, cbit2: cbit1 ^ cbit2,
-        "LOGIC_AND": lambda cbit1, cbit2: cbit1 and cbit2,
-        "LOGIC_OR": lambda cbit1, cbit2: cbit1 or cbit2,
-        "EQUAL": lambda cbit1, cbit2: cbit1 == cbit2,
-        "NOT_EQUAL": lambda cbit1, cbit2: cbit1 != cbit2,
-        "LESS": lambda cbit1, cbit2: cbit1 < cbit2,
-        "LESS_EQUAL": lambda cbit1, cbit2: cbit1 <= cbit2,
-        "GREATER": lambda cbit1, cbit2: cbit1 > cbit2,
-        "GREATER_EQUAL": lambda cbit1, cbit2: cbit1 >= cbit2,
-    }
 
-    if isinstance(condition, (int, str)):
-        return condition
-    if isinstance(condition, (Clbit, ClassicalRegister)):
-        return condition
+def _process_condition(cond_op, mid_circ_regs, cargs):
+    """Process the condition"""
+    # container for PL measurements
+    pl_meas = []
+    condition = cond_op
+    # Check if the condition is as a tuple (Creg, Val)
+    if isinstance(condition, tuple):
+        if isinstance(condition[0], Clbit):
+            clbits = [condition[0]]
+        else:
+            clbits = [bit for bit in condition[0]]
+
+        if all(clbit in mid_circ_regs for clbit in clbits):
+            pl_meas.append(
+                sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits)) == condition[1]
+            )
+
+    if isinstance(condition, list):
+        if not isinstance(condition[0], expr.Expr):
+
+            if isinstance(condition[0], Clbit):
+                clbits = [condition[0]]
+            elif isinstance(condition[0], ClassicalRegister):
+                clbits = [bit for bit in condition[0]]
+
+            # PL measurement operation
+            meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+            if all(clbit in mid_circ_regs for clbit in clbits):
+                pl_meas.extend([
+                    meas_pl_op == clval for clval in condition[1]
+                ])
+
+            if condition[2] != "SwitchDefault":
+                pl_meas.append(reduce(
+                                lambda m0, m1: m0 & m1,
+                                [(meas_pl_op != clval) for clval in condition[1]],
+                            ))
+        else:
+            clbits, condition = _expr_evaluation(condition[0])
+
+    # Check if the condition is an `expr`
     if isinstance(condition, expr.Expr):
-        if condition.type.kind in (types.Uint, types.Bool):
-            pass
+        clbits, clvals = _expr_evaluation(condition)
+
+    if not pl_meas:
+        return pl_meas
 
     warnings.warn(
         f"The provided {condition} use additional classical information that cannot not be returned.",
         UserWarning,
     )
+
+
+def _expr_evaluation(condition):
+    """Evaluates the expr condition"""
+
+    # Maps qiskit `expr` names to their mathematical logic
+    _expr_mapping = {
+        "BIT_AND": lambda meas1, meas2: meas1 & meas2,
+        "BIT_OR": lambda meas1, meas2: meas1 | meas2,
+        "BIT_XOR": lambda meas1, meas2: meas1 ^ meas2,
+        "LOGIC_AND": lambda meas1, meas2: meas1 and meas2,
+        "LOGIC_OR": lambda meas1, meas2: meas1 or meas2,
+        "EQUAL": lambda meas1, meas2: meas1 == meas2,
+        "NOT_EQUAL": lambda meas1, meas2: meas1 != meas2,
+        "LESS": lambda meas1, meas2: meas1 < meas2,
+        "LESS_EQUAL": lambda meas1, meas2: meas1 <= meas2,
+        "GREATER": lambda meas1, meas2: meas1 > meas2,
+        "GREATER_EQUAL": lambda meas1, meas2: meas1 >= meas2,
+    }
+
+    # Get the left and right classical controls
+    cond1, cond2 = condition.left, condition.right
+
+    # Iterate over each and extract classical bits
+    clbits, clvals = [], []
+    for idx, carg in enumerate([cond1, cond2]):
+        if isinstance(carg, expr.Value):
+            clvals.append([carg.value])
+        elif isinstance(carg, Clbit):
+            clbits.append([carg.var])
+        elif isinstance(carg, ClassicalRegister):
+            clbits.append([bit for bit in carg.var])
+
+    # divide the bits among left and right
+    if len(clbits) == 2 or len(clvals) == 2:
+        cbits1, cbits2 = clbits or clvals
+    elif len(clbits) == 1 and len(clvals) == 1:
+        [cbits1], [cbits2] = clbits, clvals
+
+    return cbits1, cbits2
