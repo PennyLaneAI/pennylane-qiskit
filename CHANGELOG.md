@@ -20,6 +20,7 @@
   two of the ``ControlFlowOp`` operations - ``IfElseOp`` and ``SwitchCaseOp`` when converting
   a ``QuantumCircuit`` using `load`.
   [(#417)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/417)
+  [(#432)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/432)
 
 ### Breaking changes 💔
 
