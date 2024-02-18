@@ -605,32 +605,8 @@ def _process_condition(cond_op, mid_circ_regs):
 
     # Check if the condition is coming form a SwitchCase -> (Target, Vals, Type)
     if isinstance(condition, list):
-        # if the target is not an Expr
-        if not isinstance(condition[0], expr.Expr):
-            # Prepare the classical bits used for the condition
-            clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
-
-            # Proceed only if we have access to all conditioned classical bits
-            meas_pl_op = None
-            if all(clbit in mid_circ_regs for clbit in clbits):
-                # Build an integer representation for each switch case
-                meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
-
-        # if the target is an Expr
-        else:
-            meas_pl_op = _expr_evaluation(condition[0], mid_circ_regs)
-
-        if meas_pl_op is not None:
-            # Add a measurement for each of the switch cases
-            pl_meas.extend([meas_pl_op == clval for clval in condition[1]])
-            # If we have default case, add an additional measurement for it
-            if condition[2] == "SwitchDefault":
-                pl_meas.append(
-                    reduce(
-                        lambda m0, m1: m0 & m1,
-                        [(meas_pl_op != clval) for clval in condition[1]],
-                    )
-                )
+        meas_pl_ops = _process_switch_condition(condition, mid_circ_regs)
+        pl_meas.extend(meas_pl_ops)
 
     # Check if the condition is an Expr
     if isinstance(condition, expr.Expr):
@@ -648,6 +624,38 @@ def _process_condition(cond_op, mid_circ_regs):
         UserWarning,
     )
     return pl_meas
+
+
+def _process_switch_condition(condition, mid_circ_regs):
+    """Helper method for processesing condition for SwtichCaseOp"""
+    # if the target is not an Expr
+    if not isinstance(condition[0], expr.Expr):
+        # Prepare the classical bits used for the condition
+        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+
+        # Proceed only if we have access to all conditioned classical bits
+        meas_pl_op = None
+        if all(clbit in mid_circ_regs for clbit in clbits):
+            # Build an integer representation for each switch case
+            meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+
+    # if the target is an Expr
+    else:
+        meas_pl_op = _expr_evaluation(condition[0], mid_circ_regs)
+
+    meas_pl_ops = []
+    if meas_pl_op is not None:
+        # Add a measurement for each of the switch cases
+        meas_pl_ops.extend([meas_pl_op == clval for clval in condition[1]])
+        # If we have default case, add an additional measurement for it
+        if condition[2] == "SwitchDefault":
+            meas_pl_ops.append(
+                reduce(
+                    lambda m0, m1: m0 & m1,
+                    [(meas_pl_op != clval) for clval in condition[1]],
+                )
+            )
+    return meas_pl_ops
 
 
 # pylint:disable = unbalanced-tuple-unpacking
