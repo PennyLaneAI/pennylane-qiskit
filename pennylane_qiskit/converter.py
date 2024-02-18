@@ -594,10 +594,7 @@ def _process_condition(cond_op, mid_circ_regs):
 
     # Check if the condition is as a tuple -> (Clbit/Clreg, Val)
     if isinstance(condition, tuple):
-        if isinstance(condition[0], Clbit):
-            clbits = [condition[0]]
-        else:
-            clbits = list(condition[0])
+        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
 
         # Proceed only if we have access to all conditioned classical bits
         if all(clbit in mid_circ_regs for clbit in clbits):
@@ -611,10 +608,7 @@ def _process_condition(cond_op, mid_circ_regs):
         # if the target is not an Expr
         if not isinstance(condition[0], expr.Expr):
             # Prepare the classical bits used for the condition
-            if isinstance(condition[0], Clbit):
-                clbits = [condition[0]]
-            elif isinstance(condition[0], ClassicalRegister):
-                clbits = list(condition[0])
+            clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
 
             # Proceed only if we have access to all conditioned classical bits
             meas_pl_op = None
@@ -687,10 +681,7 @@ def _expr_evaluation(condition, mid_circ_regs):
         if isinstance(carg, expr.Value):
             clvals.append([carg.value])
         elif isinstance(carg, expr.Var):
-            if isinstance(carg.var, Clbit):
-                clbits.append([carg.var])
-            elif isinstance(carg.var, ClassicalRegister):
-                clbits.append(list(carg.var))
+            clbits.append([carg.var] if isinstance(carg.var, Clbit) else list(carg.var))
 
     # Proceed only if we have access to all conditioned classical bits
     for idx, clreg in enumerate(clbits):
@@ -726,7 +717,6 @@ def _expr_evaluation(condition, mid_circ_regs):
 
     # divide the bits into a cbit register and integer
     else:
-        print(clbits, clvals)
         [clreg1], [[clreg2]] = clbits, clvals
         condition_name = condition.op.name
         # For bitwise operations, we first need a binary form for clreg2
