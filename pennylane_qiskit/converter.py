@@ -22,7 +22,7 @@ from functools import partial, reduce
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
-from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit, ClassicalRegister
+from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.circuit.classical import expr
@@ -689,50 +689,69 @@ def _expr_evaluation(condition, mid_circ_regs):
             return None
         clbits[idx] = [mid_circ_regs[clbit] for clbit in clreg]
 
+    bitwise_flag = False
+    condition_name = condition.op.name
+    if condition_name[:3] == "BIT":
+        bitwise_flag = True
+
     # divide the bits among left and right cbit registers
     if len(clbits) == 2:
-        clreg1, clreg2 = clbits
-        # Make both the bits of the same width with padding
-        # We swap the registers so that we only have to pad right one.
-        if len(clreg1) < len(clreg2):
-            clreg1, clreg2 = clreg2, clreg1
-        clreg2 = [0] * (len(clreg2) - len(clreg1)) + clreg2
-        condition_name = condition.op.name
-
-        # For bitwise operations we need to work with individual bits
-        # So we build an integer form 'after' performing the operation.
-        if condition_name[:3] == "BIT":
-            condition_res = sum(
-                2**idx * _expr_mapping[condition_name](meas1, meas2)
-                for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
-            )
-
-        # For other operations we need to work with all bits at once,
-        # So we build an integer form 'before' performing the operation.
-        else:
-            meas1, meas2 = [
-                sum(2**idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
-            ]
-            condition_res = _expr_mapping[condition_name](meas1, meas2)
+        condition_res = _expr_eval_clregs(clbits, _expr_mapping[condition_name], bitwise_flag)
 
     # divide the bits into a cbit register and integer
     else:
-        [clreg1], [[clreg2]] = clbits, clvals
-        condition_name = condition.op.name
-        # For bitwise operations, we first need a binary form for clreg2
-        if condition_name[:3] == "BIT":
-            # Number of bits should be max of the binary-rep of the clvals or clreg.
-            num_bits = max(len(clreg1), int(np.ceil(np.log2(clreg2))))
-            clreg2 = map(int, np.binary_repr(clreg2).zfill(num_bits))
-            clreg1 = [0] * (num_bits - len(clreg1)) + clreg1
-            condition_res = sum(
-                2**idx * _expr_mapping[condition_name](meas1, meas2)
-                for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
-            )
+        condition_res = _expr_eval_clvals(
+            clbits, clvals, _expr_mapping[condition_name], bitwise_flag
+        )
 
-        # For other operations, we just need the integer form of clreg1
-        else:
-            meas1 = sum(2**idx * meas for idx, meas in enumerate(clreg1))
-            condition_res = _expr_mapping[condition_name](meas1, clreg2)
+    return condition_res
+
+
+def _expr_eval_clregs(clbits, expr_func, bitwise=False):
+    """Helper method for Expr evaluation when two registers are present"""
+    clreg1, clreg2 = clbits
+    # Make both the bits of the same width with padding
+    # We swap the registers so that we only have to pad right one.
+    if len(clreg1) < len(clreg2):
+        clreg1, clreg2 = clreg2, clreg1
+    clreg2 = [0] * (len(clreg2) - len(clreg1)) + clreg2
+
+    # For bitwise operations we need to work with individual bits
+    # So we build an integer form 'after' performing the operation.
+    if bitwise:
+        condition_res = sum(
+            2**idx * expr_func(meas1, meas2)
+            for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
+        )
+
+    # For other operations we need to work with all bits at once,
+    # So we build an integer form 'before' performing the operation.
+    else:
+        meas1, meas2 = [
+            sum(2**idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
+        ]
+        condition_res = expr_func(meas1, meas2)
+
+    return condition_res
+
+
+def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
+    """Helper method for Expr evaluation when a clval is presented"""
+    [clreg1], [[clreg2]] = clbits, clvals
+    # For bitwise operations, we first need a binary form for clreg2
+    if bitwise:
+        # Number of bits should be max of the binary-rep of the clvals or clreg.
+        num_bits = max(len(clreg1), int(np.ceil(np.log2(clreg2))))
+        clreg2 = map(int, np.binary_repr(clreg2).zfill(num_bits))
+        clreg1 = [0] * (num_bits - len(clreg1)) + clreg1
+        condition_res = sum(
+            2**idx * expr_func(meas1, meas2)
+            for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
+        )
+
+    # For other operations, we just need the integer form of clreg1
+    else:
+        meas1 = sum(2**idx * meas for idx, meas in enumerate(clreg1))
+        condition_res = expr_func(meas1, clreg2)
 
     return condition_res
