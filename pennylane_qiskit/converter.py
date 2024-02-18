@@ -558,7 +558,7 @@ def _process_condition(cond_op, mid_circ_regs):
         if isinstance(condition[0], Clbit):
             clbits = [condition[0]]
         else:
-            clbits = [bit for bit in condition[0]]
+            clbits = list(condition[0])
 
         # Proceed only if we have access to all conditioned classical bits
         if all(clbit in mid_circ_regs for clbit in clbits):
@@ -575,7 +575,7 @@ def _process_condition(cond_op, mid_circ_regs):
             if isinstance(condition[0], Clbit):
                 clbits = [condition[0]]
             elif isinstance(condition[0], ClassicalRegister):
-                clbits = [bit for bit in condition[0]]
+                clbits = list(condition[0])
 
             # Proceed only if we have access to all conditioned classical bits
             meas_pl_op = None
@@ -651,7 +651,7 @@ def _expr_evaluation(condition, mid_circ_regs):
             if isinstance(carg.var, Clbit):
                 clbits.append([carg.var])
             elif isinstance(carg.var, ClassicalRegister):
-                clbits.append([bit for bit in carg.var])
+                clbits.append(list(carg.var))
 
     # Proceed only if we have access to all conditioned classical bits
     for idx, clreg in enumerate(clbits):
