@@ -21,7 +21,8 @@ from functools import partial, reduce
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier, ControlFlowOp
+from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
+from qiskit.circuit import Measure, Barrier, ControlFlowOp
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
@@ -104,6 +105,8 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
 
     if flag:
         return params
+
+    expected_params, param_name_string = _expected_parameters(quantum_circuit)
 
     # populate it with any parameters defined as kwargs
     for k, v in kwargs.items():
