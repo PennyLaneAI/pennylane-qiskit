@@ -459,21 +459,11 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 )
                 res_reg, res_bit = cond_op
 
-                # Check for multi-qubit register
-                if tuple(cargs) not in mid_circ_regs:
-                    # For a ControlFlow op, there can be a mismatch on the
-                    # classical bits it is conditioned on and the qubits it acts on.
-                    # We use min of them to be consistent with number of
-                    # classical bits we require and the qc_wires we have.
-                    num_cbits = min(len(cargs), len(qargs))
-                    mid_circ_regs[tuple(cargs)] = sum(
-                        2**idx * qml.measure(wires=operation_wires[idx]) for idx in range(num_cbits)
-                    )
-
                 # Check for elif branches (doesn't require qjit)
                 if elif_fns:
+                    m_val = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(res_reg))
                     for elif_bit, elif_branch in elif_fns:
-                        qml.cond(mid_circ_regs[res_reg] == elif_bit, elif_branch)(
+                        qml.cond(m_val == elif_bit, elif_branch)(
                             *operation_args, **operation_kwargs
                         )
 
@@ -485,7 +475,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                         qml.cond(
                             reduce(
                                 lambda m0, m1: m0 & m1,
-                                [(mid_circ_regs[res_reg] != elif_bit) for elif_bit in elif_bits],
+                                [(m_val != elif_bit) for elif_bit in elif_bits],
                             ),
                             true_fn,
                         )(*operation_args, **operation_kwargs)

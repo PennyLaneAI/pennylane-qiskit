@@ -1479,6 +1479,8 @@ class TestConverterIntegration:
         qreg = QuantumRegister(3)
         creg = ClassicalRegister(3)
         qc = QuantumCircuit(qreg, creg)
+        qc.measure([0, 1, 2], [0, 1, 2])
+
         with qc.switch(creg) as case:
             with case(0):
                 qc.x(0)
@@ -1493,7 +1495,7 @@ class TestConverterIntegration:
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
             meas = load(qc)()
-            return [qml.expval(m) for m in meas]
+            return [qml.expval(m) for m in meas[-3:]]
 
         dev = qml.device("default.qubit", wires=6)
 
