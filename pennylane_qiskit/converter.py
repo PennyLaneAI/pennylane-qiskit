@@ -494,13 +494,18 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     ]
 
                 # Get the functions for handling condition
+                # true fns | false fns -> true | false branches
+                # inst_cond -> qiskit's conditional expression
                 true_fns, false_fns, inst_cond = _conditional_funcs(
                     instruction, operation_class, branch_funcs, instruction_name
                 )
 
                 # Process qiskit condition to PL conditions
+                # pl_meas_conds -> PL's conditional expression with mid-circuit meas.
+                # length(pl_meas_conds) == len(true_fns) ==> True
                 pl_meas_conds = _process_condition(inst_cond, mid_circ_regs)
 
+                # Iterate over each of the conditional triplet and apply the condition via qml.cond
                 for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
                     qml.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
 
@@ -683,6 +688,8 @@ def _expr_evaluation(condition, mid_circ_regs):
     # Iterate over each and extract classical bits
     clbits, clvals = [], []
     for _, carg in enumerate([cond1, cond2]):
+        # We don't need to work with Qiskit's Cast expr op,
+        # as we'll be casting stuff manually by ourselves.
         if isinstance(carg, expr.Cast):
             carg = carg.operand
 
@@ -697,6 +704,9 @@ def _expr_evaluation(condition, mid_circ_regs):
             return None
         clbits[idx] = [mid_circ_regs[clbit] for clbit in clreg]
 
+    # Flag for tracking if it is a bitwise operation.
+    # bitwise = true -> apply on each bit of the  binary forms
+    # bitwise = false -> apply on the integer forms as whole
     bitwise_flag = False
     condition_name = condition.op.name
     if condition_name[:3] == "BIT":
@@ -744,7 +754,7 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
 
 
 def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
-    """Helper method for Expr evaluation when a clval is presented"""
+    """Helper method for Expr evaluation when one register and one integer value is present."""
     [clreg1], [[clreg2]] = clbits, clvals
     # For bitwise operations, we first need a binary form for clreg2
     if bitwise:
