@@ -499,10 +499,12 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 true_fns, false_fns, inst_cond = _conditional_funcs(
                     instruction, operation_class, branch_funcs, instruction_name
                 )
+
                 # Process qiskit condition to PL conditions
                 # pl_meas_conds -> PL's conditional expression with mid-circuit meas.
                 # length(pl_meas_conds) == len(true_fns) ==> True
                 pl_meas_conds = _process_condition(inst_cond, mid_circ_regs)
+
                 # Iterate over each of the conditional triplet and apply the condition via qml.cond
                 for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
                     qml.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
@@ -652,8 +654,6 @@ def _process_switch_condition(condition, mid_circ_regs):
         meas_pl_ops.extend([meas_pl_op == clval for clval in condition[1]])
         # If we have default case, add an additional measurement for it
         if condition[2] == "SwitchDefault":
-            # The last added meas_pl_op needs to be of default_case
-            # Pop from the one added above and add the correct one.
             meas_pl_ops.append(
                 reduce(
                     lambda m0, m1: m0 & m1,
