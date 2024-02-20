@@ -40,11 +40,7 @@ jobs:
       - name: Run Qiskit converter tests
         # Test conversion to PennyLane with Qiskit 1.0.0
         run: python -m pytest tests/test_converter.py
-        env:
-          IBMQX_TOKEN: ${{ secrets.IBMQX_TOKEN_TEST }}
 
       - name: Run temporary tests
         # tests that test intermediate functionality, will be removed when everything is fully compatible with 1.0
         run: python -m pytest tests/test_new_qiskit_temp.py
-        env:
-          IBMQX_TOKEN: ${{ secrets.IBMQX_TOKEN_TEST }}
