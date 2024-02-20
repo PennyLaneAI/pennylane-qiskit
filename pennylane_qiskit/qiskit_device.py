@@ -146,9 +146,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
         if qiskit.__version__ in ["0.46.0", "1.0.0"]:
             raise RuntimeError(
                 f"The devices in the PennyLane Qiskit plugin are currently only compatible "
-                f"with version of Qiskit below 0.46. It looks like you have {qiskit.__version__} "
-                f"installed. Please downgrade to use the devices. The devices will be updated "
-                f"in the coming weeks to be compatible with Qiskit 1.0!"
+                f"with versions of Qiskit below 0.46. You have version {qiskit.__version__} "
+                f"installed. Please downgrade Qiskit to use the devices. The devices will be "
+                f"updated in the coming weeks to be compatible with Qiskit 1.0!"
             )
 
         super().__init__(wires=wires, shots=shots)
