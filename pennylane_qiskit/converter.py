@@ -564,9 +564,9 @@ def load_qasm_from_file(file: str):
 # pylint:disable=fixme, protected-access
 def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type):
     """Builds the conditional functions for Controlled flows
-    
+
     This method returns the arguments to be used by the `qml.cond`
-    for creating a classically controlled flow. 
+    for creating a classically controlled flow.
     These are the branches (`true_fn`, `false_fn`, `elif_fns`) and
     the qiskit's classical condition, which has to be converted to
     the corresponding PennyLane mid-circuit measurement.

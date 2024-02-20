@@ -1649,4 +1649,3 @@ class TestPassingParameters:
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
-
