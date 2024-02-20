@@ -421,7 +421,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             # Define operator builders and helpers
             # _class -> PennyLane operation class object mapped from the Qiskit operation
             # _args and _kwargs -> Parameters required for instantiation of `_class`
-            # _cond -> Flag regarding if we have encountered a classical control flow op
             operation_class = None
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
             operation_kwargs = {"wires": operation_wires}
@@ -564,7 +563,14 @@ def load_qasm_from_file(file: str):
 
 # pylint:disable=fixme, protected-access
 def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type):
-    """Builds the conditional functions for Controlled flows"""
+    """Builds the conditional functions for Controlled flows
+    
+    This method returns the arguments to be used by the `qml.cond`
+    for creating a classically controlled flow. 
+    These are the branches (`true_fn`, `false_fn`, `elif_fns`) and
+    the qiskit's classical condition, which has to be converted to
+    the corresponding PennyLane mid-circuit measurement.
+    """
     true_fn, false_fn, elif_fns = operation_class, None, ()
     # Logic for using legacy c_if
     if not isinstance(ops, ControlFlowOp):
