@@ -58,12 +58,12 @@ Installation of this plugin, as well as all dependencies, can be done using ``pi
 
 .. code-block:: bash
 
-    pip install qiskit<0.46
+    pip install "qiskit<0.46"
     pip install pennylane-qiskit
 
 If you prefer to use Qiskit 1.0, you can replace the first line above with ``pip install qiskit``,
 or omit it entirely. Note that only conversion to PennyLane is supported for Qiskit 1.0; support
-for devices with 1.0 be available in a later release of the plugin. 
+for devices with 1.0 be available in a later release of the plugin.
 
 To test that the PennyLane-Qiskit plugin is working correctly you can run
 
