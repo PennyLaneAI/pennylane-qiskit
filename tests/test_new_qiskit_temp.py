@@ -11,9 +11,6 @@ from unittest.mock import Mock
         "qiskit.aer",
         "qiskit.basicaer",
         "qiskit.remote",
-        "qiskit.ibmq",
-        "qiskit.ibmq.circuit_runner",
-        "qiskit.ibmq.sampler",
     ],
 )
 def test_error_is_raised_if_initalizing_device(monkeypatch, device_name):
