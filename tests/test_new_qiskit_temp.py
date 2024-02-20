@@ -30,7 +30,9 @@ def test_error_is_raised_if_initalizing_device(monkeypatch, device_name):
         RuntimeError,
         match="The devices in the PennyLane Qiskit plugin are currently only compatible with versions of Qiskit below 0.46",
     ):
-        if device_name == "qiskit.remote":
-            qml.device(device_name, wires=2, backend=Mock())
-        else:
+        if device_name in ["qiskit.aer", "qiskit.basicaer"]:
             qml.device(device_name, wires=2)
+        else:
+            # use a Mock backend to avoid call to the remote service
+            qml.device(device_name, wires=2, backend=Mock())
+
