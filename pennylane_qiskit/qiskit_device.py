@@ -32,9 +32,9 @@ from qiskit.providers import Backend, QiskitBackendNotFoundError
 from pennylane import QubitDevice, DeviceError
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
 
-from ._version import __version__
-
 from semantic_version import Version
+
+from ._version import __version__
 
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
