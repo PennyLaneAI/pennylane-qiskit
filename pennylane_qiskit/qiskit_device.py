@@ -34,6 +34,8 @@ from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, Shadow
 
 from ._version import __version__
 
+from semantic_version import Version
+
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 
@@ -143,7 +145,9 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
 
-        if qiskit.__version__ in ["0.46.0", "1.0.0"]:
+        max_ver = Version("0.45.3")
+
+        if Version(qiskit.__version__) > max_ver:
             raise RuntimeError(
                 f"The devices in the PennyLane Qiskit plugin are currently only compatible "
                 f"with versions of Qiskit below 0.46. You have version {qiskit.__version__} "
