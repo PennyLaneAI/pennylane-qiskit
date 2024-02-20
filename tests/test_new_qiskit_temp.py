@@ -4,13 +4,18 @@ import qiskit
 
 from unittest.mock import Mock
 
-@pytest.mark.parametrize("device_name", ["qiskit.aer",
-                                         "qiskit.basicaer",
-                                         "qiskit.remote",
-                                         "qiskit.ibmq",
-                                         "qiskit.ibmq.circuit_runner",
-                                         "qiskit.ibmq.sampler"
-                                         ])
+
+@pytest.mark.parametrize(
+    "device_name",
+    [
+        "qiskit.aer",
+        "qiskit.basicaer",
+        "qiskit.remote",
+        "qiskit.ibmq",
+        "qiskit.ibmq.circuit_runner",
+        "qiskit.ibmq.sampler",
+    ],
+)
 def test_error_is_raised_if_initalizing_device(monkeypatch, device_name):
     """Test that when Qiskit 1.0 is installed, an error is raised if you try
     to initialize a device. This is a temporary test and will be removed along
