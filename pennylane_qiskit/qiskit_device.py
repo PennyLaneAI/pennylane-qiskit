@@ -359,6 +359,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 qregs = list(reversed(qregs))
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
+            print(operation)
+            print(mapped_operation)
+            print(par)
+
             gate = mapped_operation(*par)
 
             dag.apply_operation_back(gate, qargs=qregs)
