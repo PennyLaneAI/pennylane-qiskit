@@ -499,10 +499,10 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     instruction, operation_class, branch_funcs, instruction_name
                 )
 
-                # Process qiskit condition to PL conditions
+                # Process qiskit condition to PL mid-circ meas conditions
                 # pl_meas_conds -> PL's conditional expression with mid-circuit meas.
                 # length(pl_meas_conds) == len(true_fns) ==> True
-                pl_meas_conds = _process_condition(inst_cond, mid_circ_regs)
+                pl_meas_conds = _process_condition(inst_cond, mid_circ_regs, instruction_name)
 
                 # Iterate over each of the conditional triplet and apply the condition via qml.cond
                 for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
@@ -593,7 +593,7 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     return true_fns, false_fns, inst.condition
 
 
-def _process_condition(cond_op, mid_circ_regs):
+def _process_condition(cond_op, mid_circ_regs, instruction_name):
     """Process the condition to corresponding measurement value
 
     In Qiskit, the generic form of condition is of two types:
@@ -634,7 +634,7 @@ def _process_condition(cond_op, mid_circ_regs):
         return pl_meas
 
     warnings.warn(
-        f"The provided {condition} use additional classical information that cannot not be returned or processed.",
+        f"The provided {condition} for {instruction_name} uses additional classical information that cannot not be returned or processed.",
         UserWarning,
     )
     return pl_meas
