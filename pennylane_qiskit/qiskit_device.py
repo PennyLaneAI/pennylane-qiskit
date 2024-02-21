@@ -358,10 +358,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
 
+            if operation in ("Barrier",):
+                # Need to add the num_qubits for instantiating Barrier in Qiskit
+                par = [len(self._reg)]
+
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-            print(operation)
-            print(mapped_operation)
-            print(par)
 
             gate = mapped_operation(*par)
 
