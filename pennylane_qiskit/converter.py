@@ -419,8 +419,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
 
             # Define operator builders and helpers
-            # _class -> PennyLane operation class object mapped from the Qiskit operation
-            # _args and _kwargs -> Parameters required for instantiation of `_class`
+            # operation_class -> PennyLane operation class object mapped from the Qiskit operation
+            # operation_args and operation_kwargs -> Parameters required for the
+            # instantiation of `operation_class`
             operation_class = None
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
             operation_kwargs = {"wires": operation_wires}
