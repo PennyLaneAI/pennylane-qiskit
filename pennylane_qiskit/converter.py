@@ -586,9 +586,9 @@ def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type
     # Logic for handling SwitchCaseOp
     elif ctrl_flow_type == "SwitchCaseOp":
         elif_fns = []
-        for res_bit, case in ops._case_map.items():
+        for case, res_bit in ops._case_map.items():
             if not isinstance(case, _DefaultCaseType):
-                elif_fns.append((res_bit, branch_funcs[case]))
+                elif_fns.append((case, branch_funcs[res_bit]))
         ops.condition = [tuple(cargs), "SwitchCase"]
         if any((isinstance(case, _DefaultCaseType) for case in ops._case_map)):
             true_fn = branch_funcs[-1]

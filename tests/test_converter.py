@@ -1439,13 +1439,13 @@ class TestConverterIntegration:
             m1 = qml.measure(0)
 
             def ansatz_true():
+                qml.PauliX(wires=0)
+
+            def ansatz_false():
                 qml.Hadamard(wires=0)
                 qml.PauliZ(wires=2)
 
-            def ansatz_false():
-                qml.PauliX(wires=0)
-
-            qml.cond(m0, ansatz_true, ansatz_false)()
+            qml.cond(m0 == 0, ansatz_true, ansatz_false)()
 
             qml.RZ(0.24, wires=0)
             qml.CNOT([0, 1])
@@ -1454,12 +1454,26 @@ class TestConverterIntegration:
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
 
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(
+                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            )
+        )
+
     def test_control_flow_ops_circuit_switch(self):
         """Tests mid-measurements are recognized and returned correctly."""
 
         qreg = QuantumRegister(3)
         creg = ClassicalRegister(3)
         qc = QuantumCircuit(qreg, creg)
+        qc.rx(0.12, 0)
+        qc.rx(0.24, 1)
+        qc.rx(0.36, 2)
         qc.measure([0, 1, 2], [0, 1, 2])
 
         with qc.switch(creg) as case:
@@ -1471,31 +1485,40 @@ class TestConverterIntegration:
                 qc.x(2)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qml.device("default.qubit", wires=3, seed=24)
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
             meas = load(qc)()
             return [qml.expval(m) for m in meas[-3:]]
 
-        dev = qml.device("default.qubit", wires=6)
-
         @qml.qnode(dev)
         def built_pl_circuit():
-            qml.CNOT(wires=[0, 3])
-            qml.CNOT(wires=[1, 4])
-            qml.CNOT(wires=[2, 5])
-            qml.MultiControlledX(wires=[4, 3, 5, 0], control_values="000")
-            qml.MultiControlledX(wires=[4, 3, 5, 1], control_values="001")
-            qml.MultiControlledX(wires=[4, 3, 5, 1], control_values="010")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="011")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="100")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="101")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="110")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="111")
+            qml.RX(0.12, 0)
+            qml.RX(0.24, 1)
+            qml.RX(0.36, 2)
+            m0 = qml.measure(0)
+            m1 = qml.measure(1)
+            m2 = qml.measure(2)
+            m3 = m0 + 2 * m1 + 4 * m2
+            qml.cond(m3 == 0, qml.PauliX)(0)
+            qml.cond(m3 == 1, qml.PauliX)(1)
+            qml.cond(m3 == 2, qml.PauliX)(1)
+            qml.cond((m3 != 0) & (m3 != 1) & (m3 != 2), qml.PauliX)(2)
+
             return [qml.expval(m) for m in [qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(
+                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            )
+        )
 
     def test_direct_qnode_ui(self):
         """Test the UI where the loaded function is passed directly to qml.QNode
