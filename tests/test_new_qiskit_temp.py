@@ -32,4 +32,3 @@ def test_error_is_raised_if_initalizing_device(monkeypatch, device_name):
         else:
             # use a Mock backend to avoid call to the remote service
             qml.device(device_name, wires=2, backend=Mock())
-
