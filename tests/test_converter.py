@@ -3,7 +3,7 @@ import sys
 
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit import extensions as ex
+from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
@@ -212,7 +212,7 @@ class TestConverter:
 
         qc = QuantumCircuit(3, 1)
         qc.rz(theta, [0])
-        qc_1 = qc.bind_parameters({theta: 0.5})
+        qc_1 = qc.assign_parameters({theta: 0.5})
 
         quantum_circuit = load(qc_1)
 
@@ -686,7 +686,7 @@ class TestConverterGates:
 
         assert recorder.queue[0].name == "QubitUnitary"
         assert len(recorder.queue[0].parameters) == 1
-        assert np.array_equal(recorder.queue[0].parameters[0], ex.CHGate().to_matrix())
+        assert np.array_equal(recorder.queue[0].parameters[0], lib.CHGate().to_matrix())
         assert recorder.queue[0].wires == Wires([0, 1])
 
 
@@ -815,10 +815,11 @@ class TestConverterWarningsAndErrors:
         qc = DraperQFTAdder(3)
 
         quantum_circuit = load(qc)
+        params = []
 
         with pytest.warns(UserWarning) as record:
             with recorder:
-                quantum_circuit()
+                quantum_circuit(*params)
 
         # check that the message matches
         assert (
@@ -1473,6 +1474,16 @@ class TestControlOpIntegration:
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(
+                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            )
+        )
 
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
     def test_control_flow_ops_circuit_switch(self, cond_type):
@@ -1481,6 +1492,9 @@ class TestControlOpIntegration:
         qreg = QuantumRegister(3)
         creg = ClassicalRegister(3)
         qc = QuantumCircuit(qreg, creg)
+        qc.rx(0.12, 0)
+        qc.rx(0.24, 1)
+        qc.rx(0.36, 2)
         qc.measure([0, 1, 2], [0, 1, 2])
 
         qc.add_register(QuantumRegister(2))
@@ -1506,31 +1520,56 @@ class TestControlOpIntegration:
                 qc.x(2)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=5)
+        dev = qml.device("default.qubit", wires=5, seed=24)
         qiskit_circuit = load(qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))])
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
             return qiskit_circuit()
 
-        dev = qml.device("default.qubit", wires=6)
-
         @qml.qnode(dev)
         def built_pl_circuit():
-            qml.CNOT(wires=[0, 3])
-            qml.CNOT(wires=[1, 4])
-            qml.CNOT(wires=[2, 5])
-            qml.MultiControlledX(wires=[4, 3, 5, 0], control_values="000")
-            qml.MultiControlledX(wires=[4, 3, 5, 1], control_values="001")
-            qml.MultiControlledX(wires=[4, 3, 5, 1], control_values="010")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="011")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="100")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="101")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="110")
-            qml.MultiControlledX(wires=[4, 3, 5, 2], control_values="111")
+            qml.RX(0.12, 0)
+            qml.RX(0.24, 1)
+            qml.RX(0.36, 2)
+            m0 = qml.measure(0)
+            m1 = qml.measure(1)
+            m2 = qml.measure(2)
+
+            qml.Hadamard(3)
+            qml.CNOT([3, 4])
+            m3 = qml.measure(3)
+            m4 = qml.measure(4)
+
+            mint1 = m0 + 2 * m1 + 4 * m2
+            mint2 = m3 + 2 * m4
+            if cond_type in ["clbit", "expr2"]:
+                qml.cond(m0 == 0, qml.PauliX)([0])
+                qml.cond(m0 == 1, qml.PauliX)([1])
+            elif cond_type == "clreg":
+                qml.cond(mint1 == 0, qml.PauliX)([0])
+                qml.cond(mint1 == 1, qml.PauliX)([1])
+                qml.cond((mint1 != 0) & (mint1 != 1), qml.PauliX)([2])
+            elif cond_type == "expr1":
+                qml.cond(mint1 >= 2, qml.PauliX)([0])
+                qml.cond(mint1 < 2, qml.PauliX)([1])
+            elif cond_type == "expr3":
+                qml.cond(mint1 == mint2, qml.PauliX)([0])
+                qml.cond(mint1 != mint2, qml.PauliX)([1])
+
             return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(
+                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            )
+        )
 
     def test_warning_for_non_accessible_classical_info(self):
         """Tests a UserWarning is raised if we do not have access to classical info."""
