@@ -29,7 +29,7 @@ qiskit-aer==0.13.3
 qiskit-ibm-runtime==0.17.0
 qiskit-ibm-provider==0.7.3
 qiskit-ignis==0.7.1
-qiskit-terra==0.45.1
+qiskit-terra==0.45.3
 requests==2.31.0
 requests-ntlm==1.2.0
 retworkx==0.11.0
