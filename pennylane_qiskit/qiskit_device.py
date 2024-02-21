@@ -74,6 +74,13 @@ QISKIT_OPERATION_MAP = {
     "Adjoint(S)": lib.SdgGate,
     "Adjoint(T)": lib.TdgGate,
     "Adjoint(SX)": lib.SXdgGate,
+    "CY": lib.CYGate,
+    "CH": lib.CHGate,
+    "CPhase": lib.CPhaseGate,
+    "CCZ": lib.CCZGate,
+    "ECR": lib.ECRGate,
+    "Barrier": lib.Barrier,
+    "Adjoint(GlobalPhase)": lib.GlobalPhaseGate,
 }
 
 

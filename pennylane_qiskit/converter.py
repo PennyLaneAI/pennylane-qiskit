@@ -36,7 +36,12 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
-dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
+dagger_map = {
+    "SdgGate": qml.S,
+    "TdgGate": qml.T,
+    "SXdgGate": qml.SX,
+    "GlobalPhaseGate": qml.GlobalPhase,
+}
 
 referral_to_forum = (
     "\n \nIf you are experiencing any difficulties with converting circuits from Qiskit, you can reach out "
