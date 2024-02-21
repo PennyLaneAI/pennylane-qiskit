@@ -183,3 +183,16 @@ class TestBatchExecution:
         tapes = [self.tape1, self.tape2]
         res = dev.batch_execute(tapes)
         assert dev.num_executions == 1
+
+    def test_barrier_tape(self, device, tol):
+        """Tests that the barriers are accounted for during conversion."""
+        dev = device(2)
+
+        @qml.qnode(dev)
+        def barrier_func():
+            qml.Barrier([0, 1])
+            return qml.state()
+
+        res = barrier_func()
+        assert barrier_func.tape.operations[0] == qml.Barrier([0, 1])
+        assert np.allclose(res, dev.batch_execute([barrier_func.tape]), atol=0)
