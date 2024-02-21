@@ -23,6 +23,7 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, Measure, Barrier
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.exceptions import QiskitError
+from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
 
 import pennylane as qml
@@ -437,13 +438,60 @@ def load_qasm_from_file(file: str):
     """
     return load(QuantumCircuit.from_qasm_file(file))
 
-def convert_sparse_pauli_op_to_pl(sparse_op, params=None):
-    """docstring with clear examples here - remember to comment on wire ordering!"""
-    
+
+def convert_sparse_pauli_op_to_pl(
+    sparse_op: SparsePauliOp,
+    params: Any = None,
+) -> qml.operation.Operator:
+    """Converts a Qiskit SparsePauliOp into a PennyLane operator.
+
+    Args:
+        sparse_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
+        params (Any): optional assignment of coefficient values for the SparsePauliOp; see the
+            `Qiskit documentation <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp#assign_parameters>`__
+            to learn more about the expected format of these parameters
+
+    Returns:
+        pennylane.operation.Operator: The equivalent PennyLane operator.
+
+    .. note::
+
+        The order in which Pauli operations appear in each SparsePauliOp term is the reverse of how
+        they are applied in the PennyLane operator. This is consistent with the iteration order of a
+        Pauli term in Qiskit.
+
+    **Example**
+
+    Consider the following script which creates a Qiskit ``SparsePauliOp``:
+
+    .. code-block:: python
+
+        import numpy as np
+        from qiskit.circuit import Parameter
+        from qiskit.quantum_info import SparsePauliOp
+
+        a, b, c = [Parameter(var) for var in "abc"]
+        qiskit_op = SparsePauliOp(["II", "XZ", "YX"], np.array([a, b, c]))
+
+    The ``SparsePauliOp`` has three coefficients (parameters):
+
+    >>> qiskit_op
+    SparsePauliOp(['II', 'XZ', 'YX'],
+              coeffs=[ParameterExpression(1.0*a), ParameterExpression(1.0*b),
+     ParameterExpression(1.0*c)])
+
+    Now, to convert the ``SparsePauliOp`` into a PennyLane operator, run:
+
+    >>> from pennylane_qiskit.converter import convert_sparse_pauli_op_to_pl
+    >>> convert_sparse_pauli_op_to_pl(qiskit_op, {a: 2, b: 3, c: 4})
+    ((2+0j)*(Identity(wires=[0, 1])))
+    + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
+    + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
+    """
     if params:
         sparse_op = sparse_op.assign_parameters(params)
 
-    op_map = {'X': qml.PauliX, 'Y': qml.PauliY, 'Z': qml.PauliZ, 'I': qml.Identity}
+    op_map = {"X": qml.PauliX, "Y": qml.PauliY, "Z": qml.PauliZ, "I": qml.Identity}
 
     coeffs = sparse_op.coeffs
     if ParameterExpression in [type(c) for c in coeffs]:
