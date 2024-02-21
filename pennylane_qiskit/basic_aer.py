@@ -18,6 +18,8 @@ using PennyLane.
 """
 import qiskit
 
+from semantic_version import Version
+
 from .qiskit_device import QiskitDevice
 
 
@@ -51,4 +53,15 @@ class BasicAerDevice(QiskitDevice):
     short_name = "qiskit.basicaer"
 
     def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
+
+        max_ver = Version("0.45.3")
+
+        if Version(qiskit.__version__) > max_ver:
+            raise RuntimeError(
+                f"The devices in the PennyLane Qiskit plugin are currently only compatible "
+                f"with versions of Qiskit below 0.46. You have version {qiskit.__version__} "
+                f"installed. Please downgrade Qiskit to use the devices. The devices will be "
+                f"updated in the coming weeks to be compatible with Qiskit 1.0!"
+            )
+
         super().__init__(wires, provider=qiskit.BasicAer, backend=backend, shots=shots, **kwargs)
