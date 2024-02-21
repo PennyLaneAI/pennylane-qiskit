@@ -61,8 +61,10 @@ Installation of this plugin, as well as all dependencies, can be done using ``pi
     pip install "qiskit<0.46"
     pip install pennylane-qiskit
 
-If you prefer to use Qiskit 1.0, you can replace the first line above with ``pip install qiskit``,
-or omit it entirely. Note that only conversion to PennyLane is supported for Qiskit 1.0; support
+If you prefer to use Qiskit 1.0, you can omit the first line above and instead consult the
+`Qiskit installation guide <https://docs.quantum.ibm.com/start/install>`__, which includes
+details on how to migrate to 1.0 if you already have Qiskit installed.
+Note that only conversion to PennyLane is supported with Qiskit 1.0; support
 for devices with 1.0 be available in a later release of the plugin.
 
 To test that the PennyLane-Qiskit plugin is working correctly you can run
