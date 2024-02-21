@@ -1,0 +1,46 @@
+name: Tests for 1.0
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.9, '3.10', '3.11']
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci0.txt
+          pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
+
+      - name: Install Plugin
+        run: |
+          python setup.py bdist_wheel
+          pip install dist/PennyLane*.whl
+
+      - name: Run Qiskit converter tests
+        # Test conversion to PennyLane with Qiskit 1.0.0
+        run: python -m pytest tests/test_converter.py
+
+      - name: Run temporary tests
+        # tests that test intermediate functionality, will be removed when everything is fully compatible with 1.0
+        run: python -m pytest tests/test_new_qiskit_temp.py

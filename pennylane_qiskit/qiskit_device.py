@@ -22,14 +22,17 @@ import inspect
 import warnings
 
 import numpy as np
+import qiskit
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit import extensions as ex
+from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from pennylane import QubitDevice, DeviceError
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
+
+from semantic_version import Version
 
 from ._version import __version__
 
@@ -38,39 +41,39 @@ SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
-    "PauliX": ex.XGate,
-    "PauliY": ex.YGate,
-    "PauliZ": ex.ZGate,
-    "Hadamard": ex.HGate,
-    "CNOT": ex.CXGate,
-    "CZ": ex.CZGate,
-    "SWAP": ex.SwapGate,
-    "ISWAP": ex.iSwapGate,
-    "RX": ex.RXGate,
-    "RY": ex.RYGate,
-    "RZ": ex.RZGate,
-    "Identity": ex.IGate,
-    "CSWAP": ex.CSwapGate,
-    "CRX": ex.CRXGate,
-    "CRY": ex.CRYGate,
-    "CRZ": ex.CRZGate,
-    "PhaseShift": ex.PhaseGate,
-    "QubitStateVector": ex.Initialize,
-    "StatePrep": ex.Initialize,
-    "Toffoli": ex.CCXGate,
-    "QubitUnitary": ex.UnitaryGate,
-    "U1": ex.U1Gate,
-    "U2": ex.U2Gate,
-    "U3": ex.U3Gate,
-    "IsingZZ": ex.RZZGate,
-    "IsingYY": ex.RYYGate,
-    "IsingXX": ex.RXXGate,
-    "S": ex.SGate,
-    "T": ex.TGate,
-    "SX": ex.SXGate,
-    "Adjoint(S)": ex.SdgGate,
-    "Adjoint(T)": ex.TdgGate,
-    "Adjoint(SX)": ex.SXdgGate,
+    "PauliX": lib.XGate,
+    "PauliY": lib.YGate,
+    "PauliZ": lib.ZGate,
+    "Hadamard": lib.HGate,
+    "CNOT": lib.CXGate,
+    "CZ": lib.CZGate,
+    "SWAP": lib.SwapGate,
+    "ISWAP": lib.iSwapGate,
+    "RX": lib.RXGate,
+    "RY": lib.RYGate,
+    "RZ": lib.RZGate,
+    "Identity": lib.IGate,
+    "CSWAP": lib.CSwapGate,
+    "CRX": lib.CRXGate,
+    "CRY": lib.CRYGate,
+    "CRZ": lib.CRZGate,
+    "PhaseShift": lib.PhaseGate,
+    "QubitStateVector": lib.Initialize,
+    "StatePrep": lib.Initialize,
+    "Toffoli": lib.CCXGate,
+    "QubitUnitary": lib.UnitaryGate,
+    "U1": lib.U1Gate,
+    "U2": lib.U2Gate,
+    "U3": lib.U3Gate,
+    "IsingZZ": lib.RZZGate,
+    "IsingYY": lib.RYYGate,
+    "IsingXX": lib.RXXGate,
+    "S": lib.SGate,
+    "T": lib.TGate,
+    "SX": lib.SXGate,
+    "Adjoint(S)": lib.SdgGate,
+    "Adjoint(T)": lib.TdgGate,
+    "Adjoint(SX)": lib.SXdgGate,
 }
 
 
@@ -141,6 +144,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _eigs = {}
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+
+        max_ver = Version("0.45.3")
+
+        if Version(qiskit.__version__) > max_ver:
+            raise RuntimeError(
+                f"The devices in the PennyLane Qiskit plugin are currently only compatible "
+                f"with versions of Qiskit below 0.46. You have version {qiskit.__version__} "
+                f"installed. Please downgrade Qiskit to use the devices. The devices will be "
+                f"updated in the coming weeks to be compatible with Qiskit 1.0!"
+            )
+
         super().__init__(wires=wires, shots=shots)
 
         self.provider = provider
