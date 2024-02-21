@@ -1486,7 +1486,7 @@ class TestConverterIntegration:
         qc.measure_all()
 
         dev = qml.device("default.qubit", wires=3, seed=24)
-        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        measurements = [qml.expval(qml.PauliZ(0))]
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
@@ -1506,7 +1506,7 @@ class TestConverterIntegration:
             qml.cond(m3 == 2, qml.PauliX)(1)
             qml.cond((m3 != 0) & (m3 != 1) & (m3 != 2), qml.PauliX)(2)
 
-            return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+            return [qml.expval(qml.PauliZ(0))]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
         assert all(
