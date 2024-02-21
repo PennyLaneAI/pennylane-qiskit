@@ -654,6 +654,7 @@ class TestConverterGates:
         qc.sdg([0])
         qc.tdg([0])
         qc.sxdg([0])
+        qc.append(lib.GlobalPhaseGate(1.2))
 
         quantum_circuit = load(qc)
         with recorder:
@@ -671,13 +672,17 @@ class TestConverterGates:
         assert len(recorder.queue[2].parameters) == 0
         assert recorder.queue[2].wires == Wires([0])
 
+        assert recorder.queue[3].name == "Adjoint(GlobalPhase)"
+        assert recorder.queue[3].parameters == [1.2]
+        assert recorder.queue[3].wires == Wires([])
+
     def test_operation_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,
         but not natively supported by PennyLane."""
 
         qc = QuantumCircuit(3, 1)
 
-        qc.ch([0], [1])
+        qc.cs([0], [1])
 
         quantum_circuit = load(qc)
         with recorder:
@@ -685,7 +690,7 @@ class TestConverterGates:
 
         assert recorder.queue[0].name == "QubitUnitary"
         assert len(recorder.queue[0].parameters) == 1
-        assert np.array_equal(recorder.queue[0].parameters[0], lib.CHGate().to_matrix())
+        assert np.array_equal(recorder.queue[0].parameters[0], lib.CSGate().to_matrix())
         assert recorder.queue[0].wires == Wires([0, 1])
 
 
@@ -1017,7 +1022,7 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 10
+        assert len(recorder.queue) == 11
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1027,21 +1032,25 @@ class TestConverterQasm:
         assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == Wires([2])
 
-        assert recorder.queue[2].name == "Hadamard"
+        assert recorder.queue[2].name == "Barrier"
         assert recorder.queue[2].parameters == []
-        assert recorder.queue[2].wires == Wires([0])
+        assert recorder.queue[2].wires == Wires([0, 1, 2, 3])
 
         assert recorder.queue[3].name == "Hadamard"
         assert recorder.queue[3].parameters == []
-        assert recorder.queue[3].wires == Wires([1])
+        assert recorder.queue[3].wires == Wires([0])
 
         assert recorder.queue[4].name == "Hadamard"
         assert recorder.queue[4].parameters == []
-        assert recorder.queue[4].wires == Wires([2])
+        assert recorder.queue[4].wires == Wires([1])
 
         assert recorder.queue[5].name == "Hadamard"
         assert recorder.queue[5].parameters == []
-        assert recorder.queue[5].wires == Wires([3])
+        assert recorder.queue[5].wires == Wires([2])
+
+        assert recorder.queue[6].name == "Hadamard"
+        assert recorder.queue[6].parameters == []
+        assert recorder.queue[6].wires == Wires([3])
 
     def test_qasm_file_not_found_error(self):
         """Tests that an error is propagated, when a non-existing file is specified for parsing."""
@@ -1449,7 +1458,7 @@ class TestConverterIntegration:
 
             qml.RZ(0.24, wires=0)
             qml.CNOT([0, 1])
-
+            qml.Barrier([0, 1, 2])
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
