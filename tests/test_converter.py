@@ -7,11 +7,12 @@ from qiskit import extensions as ex
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import EfficientSU2
 from qiskit.exceptions import QiskitError
-from qiskit.quantum_info.operators import Operator
+from qiskit.quantum_info import SparsePauliOp
 
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
+    convert_sparse_pauli_op_to_pl,
     load,
     load_qasm,
     load_qasm_from_file,
@@ -1416,3 +1417,100 @@ class TestConverterIntegration:
 
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+
+
+class TestConvertSparsePauliOp:
+    """Tests for the :func:`convert_sparse_pauli_op_to_pl()` function."""
+
+    @pytest.mark.parametrize(
+        "sparse_pauli_op, want_op",
+        [
+            (
+                SparsePauliOp("I"),
+                qml.Identity(wires=0),
+            ),
+            (
+                SparsePauliOp("XYZ"),
+                qml.prod(qml.PauliZ(wires=0), qml.PauliY(wires=1), qml.PauliX(wires=2)),
+            ),
+            (
+                SparsePauliOp(["XY", "ZX"]),
+                qml.sum(
+                    qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0)),
+                    qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0)),
+                )
+            ),
+        ]
+    )
+    def test_convert_with_default_coefficients(self, sparse_pauli_op, want_op):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator with the default
+        coefficients.
+        """
+        have_op = convert_sparse_pauli_op_to_pl(sparse_pauli_op)
+        assert qml.equal(have_op, want_op)
+
+    @pytest.mark.parametrize(
+        "sparse_pauli_op, want_op",
+        [
+            (
+                SparsePauliOp("I", coeffs=[2]),
+                qml.s_prod(2, qml.Identity(wires=0)),
+            ),
+            (
+                SparsePauliOp(["XY", "ZX"], coeffs=[3, 7]),
+                qml.sum(
+                    qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
+                    qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+                )
+            ),
+        ]
+    )
+    def test_convert_with_literal_coefficients(self, sparse_pauli_op, want_op):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator with literal
+        coefficient values.
+        """
+        have_op = convert_sparse_pauli_op_to_pl(sparse_pauli_op)
+        assert qml.equal(have_op, want_op)
+
+
+    def test_convert_with_parameter_coefficients(self):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
+        to each parameterized coefficient.
+        """
+        a, b = [Parameter(var) for var in "ab"]
+        sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+
+        have_op = convert_sparse_pauli_op_to_pl(sparse_pauli_op, params={a: 3, b: 7})
+        want_op = qml.sum(
+            qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
+            qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+        )
+        assert qml.equal(have_op, want_op)
+
+    def test_convert_too_few_coefficients(self):
+        """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
+        a PennyLane operator without assigning values for all parameterized coefficients.
+        """
+        a, b = [Parameter(var) for var in "ab"]
+        sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+
+        match = (
+            "Not all parameter expressions are assigned in coeffs "
+            r"\[\(3\+0j\) ParameterExpression\(1\.0\*b\)\]"
+        )
+        with pytest.raises(RuntimeError, match=match):
+            convert_sparse_pauli_op_to_pl(sparse_pauli_op, params={a: 3})
+
+    def test_convert_too_many_coefficients(self):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
+        to a strict superset of the parameterized coefficients.
+        """
+        a, b, c = [Parameter(var) for var in "abc"]
+        sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+
+        have_op = convert_sparse_pauli_op_to_pl(sparse_pauli_op, params={a: 3, b: 7, c: 9})
+        want_op = qml.sum(
+            qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
+            qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+        )
+        assert qml.equal(have_op, want_op)
