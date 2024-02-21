@@ -1500,7 +1500,7 @@ class TestControlOpIntegration:
         qc.add_register(QuantumRegister(2))
         qc.add_register(ClassicalRegister(2))
         qc.h(3)
-        qc.cnot(3, 4)
+        qc.cx(3, 4)
         qc.measure([3, 4], [3, 4])
 
         condition = {
