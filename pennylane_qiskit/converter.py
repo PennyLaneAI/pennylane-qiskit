@@ -422,7 +422,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             # Define operator builders and helpers
             # _class -> PennyLane operation class object mapped from the Qiskit operation
             # _args and _kwargs -> Parameters required for instantiation of `_class`
-            # _cond -> Flag regarding if we have encountered a classical control flow op
             operation_class = None
             operation_wires = [wire_map[hash(qubit)] for qubit in qargs]
             operation_kwargs = {"wires": operation_wires}
@@ -546,14 +545,24 @@ def load_qasm_from_file(file: str):
 
 # pylint:disable=protected-access
 def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
-    """Builds the conditional functions for Controlled flows
+    """Builds the conditional functions for Controlled flows.
 
-    In Qiskit, conditions are stored in `condition` attribute for all controlled ops,
-    except for SwitchCaseOp for which it is stored in the `target` attribute. For the
-    latter operation, we set the `condition` ourselves with information from `target`
-    and the information required by us to build PL mid-circuit measurement.
+    This method returns the arguments to be used by the `qml.cond`
+    for creating the classically controlled flow. These are the
+    branches - `true_fns` and `false_fns`, that contains the quantum
+    functions to be applied based on the results of the condition.
+
+    Additionally, we also return the qiskit's classical condition,
+    which we convert to the corresponding PennyLane mid-circuit
+    measurement in the `_process_condition` method. These conditions
+    are stored in the `condition` attribute for all the controlled ops,
+    except for `SwitchCaseOp` for which it is stored in the `target`
+    attribute. For the latter operation, we set the `condition` ourselves
+    with information from `target` and the information required
+    by us for the processing of the condition.
     """
     true_fns, false_fns = [operation_class], [None]
+
     # Logic for using legacy c_if
     if not isinstance(inst, ControlFlowOp):
         return true_fns, false_fns, inst.condition

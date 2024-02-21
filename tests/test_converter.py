@@ -1549,6 +1549,33 @@ class TestControlOpIntegration:
         with pytest.warns(UserWarning):
             quantum_circuit()
 
+    def test_direct_qnode_ui(self):
+        """Test the UI where the loaded function is passed directly to qml.QNode
+        along with a device"""
+
+        dev = qml.device("default.qubit")
+        angle = Parameter("angle")
+
+        qc = QuantumCircuit(2, 2)
+        qc.rx(angle, [0])
+        qc.measure(0, 0)
+        qc.rx(angle, [1])
+        qc.cz(0, 1)
+
+        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+
+        @qml.qnode(dev)
+        def circuit_native_pennylane(angle):
+            qml.RX(angle, wires=0)
+            qml.measure(0)
+            qml.RX(angle, wires=1)
+            qml.CZ([0, 1])
+            return qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])
+
+        qnode = qml.QNode(load(qc, measurements), dev)
+
+        assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
+
 
 class TestPassingParameters:
 
