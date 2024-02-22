@@ -597,27 +597,58 @@ def convert_sparse_pauli_op(
 
     .. code-block:: python
 
-        import numpy as np
-        from qiskit.circuit import Parameter
         from qiskit.quantum_info import SparsePauliOp
 
-        a, b, c = [Parameter(var) for var in "abc"]
-        qiskit_op = SparsePauliOp(["II", "XZ", "YX"], coeffs=np.array([a, b, c]))
+        qiskit_op = SparsePauliOp(["II", "XY"])
 
-    The ``SparsePauliOp`` has three coefficients (parameters):
+    The ``SparsePauliOp`` contains two terms and acts over two qubits:
 
     >>> qiskit_op
-    SparsePauliOp(['II', 'XZ', 'YX'],
-              coeffs=[ParameterExpression(1.0*a), ParameterExpression(1.0*b),
-     ParameterExpression(1.0*c)])
+    SparsePauliOp(['II', 'XY'],
+                  coeffs=[1.+0.j, 1.+0.j])
 
-    Now, to convert the ``SparsePauliOp`` into a PennyLane operator, run:
+    To convert the ``SparsePauliOp`` into a PennyLane operator, use:
 
     >>> from pennylane_qiskit.converter import convert_sparse_pauli_op
-    >>> convert_sparse_pauli_op(qiskit_op, params={a: 2, b: 3, c: 4})
-    ((2+0j)*(Identity(wires=[0, 1])))
-    + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
-    + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
+    >>> convert_sparse_pauli_op(qiskit_op)
+    Identity(wires=[0, 1]) + (PauliX(wires=[1]) @ PauliY(wires=[0]))
+
+    .. details::
+        :title: Usage Details
+
+        You can convert a parameterized ``SparsePauliOp`` into a PennyLane operator by assigning
+        literal values to each coefficient parameter. For example, the script
+
+        .. code-block:: python
+
+            import numpy as np
+            from qiskit.circuit import Parameter
+
+            a, b, c = [Parameter(var) for var in "abc"]
+            param_qiskit_op = SparsePauliOp(["II", "XZ", "YX"], coeffs=np.array([a, b, c]))
+
+        defines a ``SparsePauliOp`` with three coefficients (parameters):
+
+        >>> param_qiskit_op
+        SparsePauliOp(['II', 'XZ', 'YX'],
+                  coeffs=[ParameterExpression(1.0*a), ParameterExpression(1.0*b),
+
+        The ``SparsePauliOp`` can be converted into a PennyLane operator by calling the conversion
+        function and specifying the value of each parameter using the ``params`` argument:
+
+        >>> convert_sparse_pauli_op(param_qiskit_op, params={a: 2, b: 3, c: 4})
+        ((2+0j)*(Identity(wires=[0, 1])))
+        + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
+        + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
+
+        Similarly, a custom wire mapping can be applied to a ``SparsePauliOp`` as follows:
+
+        >>> wired_qiskit_op = SparsePauliOp("XYZ")
+        >>> wired_qiskit_op
+        SparsePauliOp(['XYZ'],
+              coeffs=[1.+0.j])
+        >>> convert_sparse_pauli_op(wired_qiskit_op, wires=[3, 5, 7])
+        PauliY(wires=[5]) @ PauliZ(wires=[3]) @ PauliX(wires=[7])
     """
     if wires is not None and len(wires) != sparse_op.num_qubits:
         raise RuntimeError(
@@ -640,8 +671,8 @@ def convert_sparse_pauli_op(
     pl_terms = []
 
     for term in qiskit_terms:
-        # term is a special Qiskit type. Iterating over the term goes right to left 
-        # in accordance with Qiskit wire order convention, i.e. `enumerate("XZ")` will be 
+        # term is a special Qiskit type. Iterating over the term goes right to left
+        # in accordance with Qiskit wire order convention, i.e. `enumerate("XZ")` will be
         # [(0, "Z"), (1, "X")], so we don't need to reverse to match the PL convention
         operators = [op_map[str(op)](wire_map[wire]) for wire, op in enumerate(term)]
         pl_terms.append(qml.prod(*operators).simplify())
