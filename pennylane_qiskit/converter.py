@@ -611,7 +611,7 @@ def convert_sparse_pauli_op_to_pl(
     Now, to convert the ``SparsePauliOp`` into a PennyLane operator, run:
 
     >>> from pennylane_qiskit.converter import convert_sparse_pauli_op_to_pl
-    >>> convert_sparse_pauli_op_to_pl(qiskit_op, {a: 2, b: 3, c: 4})
+    >>> convert_sparse_pauli_op_to_pl(qiskit_op, params={a: 2, b: 3, c: 4})
     ((2+0j)*(Identity(wires=[0, 1])))
     + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
     + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
