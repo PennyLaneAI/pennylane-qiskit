@@ -8,6 +8,7 @@ from qiskit.circuit import Parameter, ParameterVector
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
 from qiskit.circuit.library import DraperQFTAdder
+from qiskit.circuit.classical import expr
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
@@ -1450,10 +1451,15 @@ class TestConverterIntegration:
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
 
-    def test_control_flow_ops_circuit_ifelse(self):
+
+class TestControlOpIntegration:
+    """Test the controlled flows integration with PennyLane"""
+
+    @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
+    def test_control_flow_ops_circuit_ifelse(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
 
-        qc = QuantumCircuit(3, 3)
+        qc = QuantumCircuit(3, 2)
         qc.h(0)
         qc.cx(0, 1)
         qc.measure(0, 0)
@@ -1461,7 +1467,14 @@ class TestConverterIntegration:
         qc.cx(0, 1)
         qc.measure(0, 1)
 
-        with qc.if_test((0, 0)) as else_:
+        condition = {
+            "clbit": (0, 0),
+            "clreg": (qc.cregs[0], 3),
+            "expr1": expr.equal(3, qc.cregs[0]),
+            "expr2": expr.bit_and(qc.cregs[0][0], True),
+            "expr3": expr.bit_and(qc.cregs[0][0], qc.cregs[0][1]),
+        }
+        with qc.if_test(condition[cond_type]) as else_:
             qc.x(0)
 
         with else_:
@@ -1489,6 +1502,14 @@ class TestConverterIntegration:
             qml.CNOT([0, 1])
             m1 = qml.measure(0)
 
+            condition = {
+                "clbit": m0 == 0,
+                "clreg": (m0 + 2 * m1 == 3),
+                "expr1": (m0 + 2 * m1 == 3),
+                "expr2": (m0 & True),
+                "expr3": m0 & m1,
+            }
+
             def ansatz_true():
                 qml.PauliX(wires=0)
 
@@ -1496,7 +1517,7 @@ class TestConverterIntegration:
                 qml.Hadamard(wires=0)
                 qml.PauliZ(wires=2)
 
-            qml.cond(m0 == 0, ansatz_true, ansatz_false)()
+            qml.cond(condition[cond_type], ansatz_true, ansatz_false)()
 
             qml.RZ(0.24, wires=0)
             qml.CNOT([0, 1])
@@ -1504,7 +1525,6 @@ class TestConverterIntegration:
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
-
         assert all(
             (
                 op1 == op2
@@ -1516,7 +1536,8 @@ class TestConverterIntegration:
             )
         )
 
-    def test_control_flow_ops_circuit_switch(self):
+    @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
+    def test_control_flow_ops_circuit_switch(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
 
         qreg = QuantumRegister(3)
@@ -1527,21 +1548,35 @@ class TestConverterIntegration:
         qc.rx(0.36, 2)
         qc.measure([0, 1, 2], [0, 1, 2])
 
-        with qc.switch(creg) as case:
+        qc.add_register(QuantumRegister(2))
+        qc.add_register(ClassicalRegister(2))
+        qc.h(3)
+        qc.cx(3, 4)
+        qc.measure([3, 4], [3, 4])
+
+        condition = {
+            "clbit": creg[0],
+            "clreg": qc.cregs[0],
+            "expr1": expr.greater_equal(qc.cregs[0], 2),
+            "expr2": expr.bit_and(qc.cregs[0][0], True),
+            "expr3": expr.less_equal(qc.cregs[1], qc.cregs[0]),
+        }
+
+        with qc.switch(condition[cond_type]) as case:
             with case(0):
                 qc.x(0)
-            with case(1, 2):
+            with case(1):
                 qc.x(1)
             with case(case.DEFAULT):
                 qc.x(2)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=3, seed=24)
-        measurements = [qml.expval(qml.PauliZ(0))]
+        dev = qml.device("default.qubit", wires=5, seed=24)
+        qiskit_circuit = load(qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))])
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
-            return load(qc, measurements=measurements)()
+            return qiskit_circuit()
 
         @qml.qnode(dev)
         def built_pl_circuit():
@@ -1551,13 +1586,29 @@ class TestConverterIntegration:
             m0 = qml.measure(0)
             m1 = qml.measure(1)
             m2 = qml.measure(2)
-            m3 = m0 + 2 * m1 + 4 * m2
-            qml.cond(m3 == 0, qml.PauliX)(0)
-            qml.cond(m3 == 1, qml.PauliX)(1)
-            qml.cond(m3 == 2, qml.PauliX)(1)
-            qml.cond((m3 != 0) & (m3 != 1) & (m3 != 2), qml.PauliX)(2)
 
-            return [qml.expval(qml.PauliZ(0))]
+            qml.Hadamard(3)
+            qml.CNOT([3, 4])
+            m3 = qml.measure(3)
+            m4 = qml.measure(4)
+
+            mint1 = m0 + 2 * m1 + 4 * m2
+            mint2 = m3 + 2 * m4
+            if cond_type in ["clbit", "expr2"]:
+                qml.cond(m0 == 0, qml.PauliX)([0])
+                qml.cond(m0 == 1, qml.PauliX)([1])
+            elif cond_type == "clreg":
+                qml.cond(mint1 == 0, qml.PauliX)([0])
+                qml.cond(mint1 == 1, qml.PauliX)([1])
+                qml.cond((mint1 != 0) & (mint1 != 1), qml.PauliX)([2])
+            elif cond_type == "expr1":
+                qml.cond(mint1 >= 2, qml.PauliX)([0])
+                qml.cond(mint1 < 2, qml.PauliX)([1])
+            elif cond_type == "expr3":
+                qml.cond(mint1 == mint2, qml.PauliX)([0])
+                qml.cond(mint1 != mint2, qml.PauliX)([1])
+
+            return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
         assert all(
@@ -1570,6 +1621,23 @@ class TestConverterIntegration:
                 loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
             )
         )
+
+    def test_warning_for_non_accessible_classical_info(self):
+        """Tests a UserWarning is raised if we do not have access to classical info."""
+
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        with qc.if_test(expr.bit_and(qc.cregs[0][0], qc.cregs[0][1])):
+            qc.z(0)
+        qc.rz(0.543, [0])
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        quantum_circuit = load(qc, measurements=measurements)
+
+        with pytest.warns(UserWarning):
+            quantum_circuit()
 
     def test_direct_qnode_ui(self):
         """Test the UI where the loaded function is passed directly to qml.QNode
