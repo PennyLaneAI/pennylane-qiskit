@@ -1,18 +1,19 @@
-import math
 import sys
 
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter, ParameterVector
-from qiskit.exceptions import QiskitError
-from qiskit.quantum_info.operators import Operator
-from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.classical import expr
+from qiskit.circuit.library import DraperQFTAdder
+from qiskit.exceptions import QiskitError
+from qiskit.quantum_info import SparsePauliOp
+
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
     load,
+    load_pauli_op,
     load_qasm,
     load_qasm_from_file,
     map_wires,
@@ -1791,3 +1792,145 @@ class TestPassingParameters:
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+
+class TestLoadPauliOp:
+    """Tests for the :func:`load_pauli_op()` function."""
+
+    @pytest.mark.parametrize(
+        "pauli_op, want_op",
+        [
+            (
+                SparsePauliOp("I"),
+                qml.Identity(wires=0),
+            ),
+            (
+                SparsePauliOp("XYZ"),
+                qml.prod(qml.PauliZ(wires=0), qml.PauliY(wires=1), qml.PauliX(wires=2)),
+            ),
+            (
+                SparsePauliOp(["XY", "ZX"]),
+                qml.sum(
+                    qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0)),
+                    qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0)),
+                )
+            ),
+        ]
+    )
+    def test_convert_with_default_coefficients(self, pauli_op, want_op):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator with the default
+        coefficients.
+        """
+        have_op = load_pauli_op(pauli_op)
+        assert qml.equal(have_op, want_op)
+
+    @pytest.mark.parametrize(
+        "pauli_op, want_op",
+        [
+            (
+                SparsePauliOp("I", coeffs=[2]),
+                qml.s_prod(2, qml.Identity(wires=0)),
+            ),
+            (
+                SparsePauliOp(["XY", "ZX"], coeffs=[3, 7]),
+                qml.sum(
+                    qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
+                    qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+                )
+            ),
+        ]
+    )
+    def test_convert_with_literal_coefficients(self, pauli_op, want_op):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator with literal
+        coefficient values.
+        """
+        have_op = load_pauli_op(pauli_op)
+        assert qml.equal(have_op, want_op)
+
+
+    def test_convert_with_parameter_coefficients(self):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
+        to each parameterized coefficient.
+        """
+        a, b = [Parameter(var) for var in "ab"]
+        pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+
+        have_op = load_pauli_op(pauli_op, params={a: 3, b: 7})
+        want_op = qml.sum(
+            qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
+            qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+        )
+        assert qml.equal(have_op, want_op)
+
+    def test_convert_too_few_coefficients(self):
+        """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
+        a PennyLane operator without assigning values for all parameterized coefficients.
+        """
+        a, b = [Parameter(var) for var in "ab"]
+        pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+
+        match = (
+            "Not all parameter expressions are assigned in coeffs "
+            r"\[\(3\+0j\) ParameterExpression\(1\.0\*b\)\]"
+        )
+        with pytest.raises(RuntimeError, match=match):
+            load_pauli_op(pauli_op, params={a: 3})
+
+    def test_convert_too_many_coefficients(self):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
+        to a strict superset of the parameterized coefficients.
+        """
+        a, b, c = [Parameter(var) for var in "abc"]
+        pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+
+        have_op = load_pauli_op(pauli_op, params={a: 3, b: 7, c: 9})
+        want_op = qml.sum(
+            qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
+            qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+        )
+        assert qml.equal(have_op, want_op)
+
+    @pytest.mark.parametrize(
+        "pauli_op, wires, want_op",
+        [
+            (
+                SparsePauliOp("XYZ"),
+                "ABC",
+                qml.prod(qml.PauliZ(wires="A"), qml.PauliY(wires="B"), qml.PauliX(wires="C")),
+            ),
+            (
+                SparsePauliOp(["XY", "ZX"]),
+                [1, 0],
+                qml.sum(
+                    qml.prod(qml.PauliX(wires=0), qml.PauliY(wires=1)),
+                    qml.prod(qml.PauliZ(wires=0), qml.PauliX(wires=1)),
+                )
+            ),
+        ]
+    )
+    def test_convert_with_wires(self, pauli_op, wires, want_op):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
+        have_op = load_pauli_op(pauli_op, wires=wires)
+        assert qml.equal(have_op, want_op)
+
+    def test_convert_with_too_few_wires(self):
+        """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
+        a PennyLane operator with too few custom wires.
+        """
+        match = (
+            r"The specified number of wires - 1 - does not match "
+            f"the number of qubits the SparsePauliOp acts on."
+        )
+        with pytest.raises(RuntimeError, match=match):
+            load_pauli_op(SparsePauliOp("II"), wires=[0])
+
+    def test_convert_with_too_many_wires(self):
+        """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
+        a PennyLane operator with too many custom wires.
+        """
+        match = (
+            r"The specified number of wires - 3 - does not match "
+            f"the number of qubits the SparsePauliOp acts on."
+        )
+        with pytest.raises(RuntimeError, match=match):
+            load_pauli_op(SparsePauliOp("II"), wires=[0, 1, 2])
