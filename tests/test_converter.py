@@ -676,6 +676,48 @@ class TestConverterGates:
         assert recorder.queue[3].parameters == [1.2]
         assert recorder.queue[3].wires == Wires([])
 
+    def test_controlled_gates(self, recorder):
+        """Tests loading a circuit with controlled gates."""
+
+        qc = QuantumCircuit(3)
+        qc.cy(0, 1)
+        qc.ch(1, 2)
+        qc.cp(1.2, 2, 1)
+        qc.ccz(0, 2, 1)
+        qc.barrier()
+        qc.ecr(1, 0)
+
+        quantum_circuit = load(qc)
+
+        with recorder:
+            quantum_circuit()
+
+        assert len(recorder.queue) == 6
+
+        assert recorder.queue[0].name == "CY"
+        assert len(recorder.queue[0].parameters) == 0
+        assert recorder.queue[0].wires == Wires([0, 1])
+
+        assert recorder.queue[1].name == "CH"
+        assert len(recorder.queue[1].parameters) == 0
+        assert recorder.queue[1].wires == Wires([1, 2])
+
+        assert recorder.queue[2].name == "ControlledPhaseShift"
+        assert recorder.queue[2].parameters == [1.2]
+        assert recorder.queue[2].wires == Wires([2, 1])
+
+        assert recorder.queue[3].name == "CCZ"
+        assert len(recorder.queue[3].parameters) == 0
+        assert recorder.queue[3].wires == Wires([0, 2, 1])
+
+        assert recorder.queue[4].name == "Barrier"
+        assert len(recorder.queue[4].parameters) == 0
+        assert recorder.queue[4].wires == Wires([0, 1, 2])
+
+        assert recorder.queue[5].name == "ECR"
+        assert len(recorder.queue[5].parameters) == 0
+        assert recorder.queue[5].wires == Wires([1, 0])
+
     def test_operation_transformed_into_qubit_unitary(self, recorder):
         """Tests loading a circuit with operations that can be converted,
         but not natively supported by PennyLane."""
