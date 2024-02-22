@@ -10,11 +10,16 @@
   [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
   [(#428)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/428)
 
-* Measurement operations are now added to the PennyLane template when a `QuantumCircuit`
+* Measurement operations are now added to the PennyLane template when a ``QuantumCircuit``
   is converted using `load`. Additionally, one can override any existing terminal
   measurements by providing a list of PennyLane 
   `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
   [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
+
+* Added support for coverting conditional operations based on mid-circuit measurements and
+  two of the ``ControlFlowOp`` operations - ``IfElseOp`` and ``SwitchCaseOp`` when converting
+  a ``QuantumCircuit`` using `load`.
+  [(#417)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/417)
 
 ### Breaking changes 💔
 

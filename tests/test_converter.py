@@ -5,10 +5,9 @@ import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter, ParameterVector
-from qiskit.circuit.library import EfficientSU2
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info.operators import Operator
-
+from qiskit.circuit.library import DraperQFTAdder
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
@@ -812,13 +811,14 @@ class TestConverterWarningsAndErrors:
 
     def test_template_not_supported(self, recorder):
         """Tests that a warning is raised if an unsupported instruction was reached."""
-        qc = EfficientSU2(3, reps=1)
+        qc = DraperQFTAdder(3)
 
         quantum_circuit = load(qc)
-        params = np.arange(12)
+        params = []
+
         with pytest.warns(UserWarning) as record:
             with recorder:
-                quantum_circuit(params)
+                quantum_circuit(*params)
 
         # check that the message matches
         assert (
@@ -1334,6 +1334,7 @@ class TestConverterIntegration:
         qc = QuantumCircuit(2, 2)
         qc.h(0)
         qc.measure(0, 0)
+        qc.z(0).c_if(0, 1)
         qc.rz(angle, [0])
         qc.cx(0, 1)
         qc.measure_all()
@@ -1348,7 +1349,8 @@ class TestConverterIntegration:
         @qml.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
             qml.Hadamard(0)
-            qml.measure(0)
+            m0 = qml.measure(0)
+            qml.cond(m0, qml.PauliZ)(0)
             qml.RZ(angle, wires=0)
             qml.CNOT([0, 1])
             return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
@@ -1396,6 +1398,127 @@ class TestConverterIntegration:
 
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+
+    def test_control_flow_ops_circuit_ifelse(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        qc = QuantumCircuit(3, 3)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure(0, 0)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure(0, 1)
+
+        with qc.if_test((0, 0)) as else_:
+            qc.x(0)
+
+        with else_:
+            qc.h(0)
+            qc.z(2)
+
+        qc.rz(0.24, [0])
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        dev = qml.device("default.qubit", wires=3)
+
+        @qml.qnode(dev)
+        def loaded_qiskit_circuit():
+            meas = load(qc)()
+            return [qml.expval(m) for m in meas]
+
+        @qml.qnode(dev)
+        def built_pl_circuit():
+
+            qml.Hadamard(0)
+            qml.CNOT([0, 1])
+            m0 = qml.measure(0)
+            qml.Hadamard(0)
+            qml.CNOT([0, 1])
+            m1 = qml.measure(0)
+
+            def ansatz_true():
+                qml.PauliX(wires=0)
+
+            def ansatz_false():
+                qml.Hadamard(wires=0)
+                qml.PauliZ(wires=2)
+
+            qml.cond(m0 == 0, ansatz_true, ansatz_false)()
+
+            qml.RZ(0.24, wires=0)
+            qml.CNOT([0, 1])
+
+            return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
+
+        assert loaded_qiskit_circuit() == built_pl_circuit()
+
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(
+                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            )
+        )
+
+    def test_control_flow_ops_circuit_switch(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        qreg = QuantumRegister(3)
+        creg = ClassicalRegister(3)
+        qc = QuantumCircuit(qreg, creg)
+        qc.rx(0.12, 0)
+        qc.rx(0.24, 1)
+        qc.rx(0.36, 2)
+        qc.measure([0, 1, 2], [0, 1, 2])
+
+        with qc.switch(creg) as case:
+            with case(0):
+                qc.x(0)
+            with case(1, 2):
+                qc.x(1)
+            with case(case.DEFAULT):
+                qc.x(2)
+        qc.measure_all()
+
+        dev = qml.device("default.qubit", wires=3, seed=24)
+        measurements = [qml.expval(qml.PauliZ(0))]
+
+        @qml.qnode(dev)
+        def loaded_qiskit_circuit():
+            return load(qc, measurements=measurements)()
+
+        @qml.qnode(dev)
+        def built_pl_circuit():
+            qml.RX(0.12, 0)
+            qml.RX(0.24, 1)
+            qml.RX(0.36, 2)
+            m0 = qml.measure(0)
+            m1 = qml.measure(1)
+            m2 = qml.measure(2)
+            m3 = m0 + 2 * m1 + 4 * m2
+            qml.cond(m3 == 0, qml.PauliX)(0)
+            qml.cond(m3 == 1, qml.PauliX)(1)
+            qml.cond(m3 == 2, qml.PauliX)(1)
+            qml.cond((m3 != 0) & (m3 != 1) & (m3 != 2), qml.PauliX)(2)
+
+            return [qml.expval(qml.PauliZ(0))]
+
+        assert loaded_qiskit_circuit() == built_pl_circuit()
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(
+                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            )
+        )
 
     def test_direct_qnode_ui(self):
         """Test the UI where the loaded function is passed directly to qml.QNode
@@ -1549,4 +1672,3 @@ class TestPassingParameters:
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
-
