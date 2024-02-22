@@ -11,7 +11,7 @@ from qiskit.quantum_info import SparsePauliOp
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
-    convert_sparse_pauli_op,
+    load_pauli_op,
     load,
     load_qasm,
     load_qasm_from_file,
@@ -1675,8 +1675,8 @@ class TestPassingParameters:
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
 
-class TestConvertSparsePauliOp:
-    """Tests for the :func:`convert_sparse_pauli_op()` function."""
+class TestLoadPauliOp:
+    """Tests for the :func:`load_pauli_op()` function."""
 
     @pytest.mark.parametrize(
         "sparse_pauli_op, want_op",
@@ -1702,7 +1702,7 @@ class TestConvertSparsePauliOp:
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with the default
         coefficients.
         """
-        have_op = convert_sparse_pauli_op(sparse_pauli_op)
+        have_op = load_pauli_op(sparse_pauli_op)
         assert qml.equal(have_op, want_op)
 
     @pytest.mark.parametrize(
@@ -1725,7 +1725,7 @@ class TestConvertSparsePauliOp:
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with literal
         coefficient values.
         """
-        have_op = convert_sparse_pauli_op(sparse_pauli_op)
+        have_op = load_pauli_op(sparse_pauli_op)
         assert qml.equal(have_op, want_op)
 
 
@@ -1736,7 +1736,7 @@ class TestConvertSparsePauliOp:
         a, b = [Parameter(var) for var in "ab"]
         sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
-        have_op = convert_sparse_pauli_op(sparse_pauli_op, params={a: 3, b: 7})
+        have_op = load_pauli_op(sparse_pauli_op, params={a: 3, b: 7})
         want_op = qml.sum(
             qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
             qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
@@ -1755,7 +1755,7 @@ class TestConvertSparsePauliOp:
             r"\[\(3\+0j\) ParameterExpression\(1\.0\*b\)\]"
         )
         with pytest.raises(RuntimeError, match=match):
-            convert_sparse_pauli_op(sparse_pauli_op, params={a: 3})
+            load_pauli_op(sparse_pauli_op, params={a: 3})
 
     def test_convert_too_many_coefficients(self):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
@@ -1764,7 +1764,7 @@ class TestConvertSparsePauliOp:
         a, b, c = [Parameter(var) for var in "abc"]
         sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
-        have_op = convert_sparse_pauli_op(sparse_pauli_op, params={a: 3, b: 7, c: 9})
+        have_op = load_pauli_op(sparse_pauli_op, params={a: 3, b: 7, c: 9})
         want_op = qml.sum(
             qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
             qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
@@ -1791,7 +1791,7 @@ class TestConvertSparsePauliOp:
     )
     def test_convert_with_wires(self, sparse_pauli_op, wires, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
-        have_op = convert_sparse_pauli_op(sparse_pauli_op, wires=wires)
+        have_op = load_pauli_op(sparse_pauli_op, wires=wires)
         assert qml.equal(have_op, want_op)
 
     def test_convert_with_too_few_wires(self):
@@ -1803,7 +1803,7 @@ class TestConvertSparsePauliOp:
             f"the number of qubits the SparsePauliOp acts on."
         )
         with pytest.raises(RuntimeError, match=match):
-            convert_sparse_pauli_op(SparsePauliOp("II"), wires=[0])
+            load_pauli_op(SparsePauliOp("II"), wires=[0])
 
     def test_convert_with_too_many_wires(self):
         """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
@@ -1814,4 +1814,4 @@ class TestConvertSparsePauliOp:
             f"the number of qubits the SparsePauliOp acts on."
         )
         with pytest.raises(RuntimeError, match=match):
-            convert_sparse_pauli_op(SparsePauliOp("II"), wires=[0, 1, 2])
+            load_pauli_op(SparsePauliOp("II"), wires=[0, 1, 2])
