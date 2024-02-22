@@ -574,7 +574,7 @@ def load_pauli_op(
 
         The wire ordering convention differs between PennyLane and Qiskit: PennyLane wires are
         enumerated from left to right, while the Qiskit convention is to enumerate from right to
-        left. A ``SparsePauliOp`` term defined by the string ``"XYZ"`` applies ``Z`` on wire 0
+        left. A ``SparsePauliOp`` term defined by the string ``"XYZ"`` applies ``Z`` on wire 0,
         ``Y`` on wire 1, and ``X`` on wire 2.
 
     **Example**
