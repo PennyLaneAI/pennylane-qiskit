@@ -74,6 +74,13 @@ QISKIT_OPERATION_MAP = {
     "Adjoint(S)": lib.SdgGate,
     "Adjoint(T)": lib.TdgGate,
     "Adjoint(SX)": lib.SXdgGate,
+    "CY": lib.CYGate,
+    "CH": lib.CHGate,
+    "CPhase": lib.CPhaseGate,
+    "CCZ": lib.CCZGate,
+    "ECR": lib.ECRGate,
+    "Barrier": lib.Barrier,
+    "Adjoint(GlobalPhase)": lib.GlobalPhaseGate,
 }
 
 
@@ -351,7 +358,12 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
 
+            if operation in ("Barrier",):
+                # Need to add the num_qubits for instantiating Barrier in Qiskit
+                par = [len(self._reg)]
+
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
+
             gate = mapped_operation(*par)
 
             dag.apply_operation_back(gate, qargs=qregs)

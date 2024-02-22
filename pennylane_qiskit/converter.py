@@ -22,9 +22,10 @@ from functools import partial, reduce
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
-from qiskit.circuit import Measure, Barrier, ControlFlowOp
+from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
+from qiskit.circuit.classical import expr
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
@@ -37,7 +38,12 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
-dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
+dagger_map = {
+    "SdgGate": qml.S,
+    "TdgGate": qml.T,
+    "SXdgGate": qml.SX,
+    "GlobalPhaseGate": qml.GlobalPhase,
+}
 
 referral_to_forum = (
     "\n \nIf you are experiencing any difficulties with converting circuits from Qiskit, you can reach out "
@@ -435,6 +441,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
             if instruction_name in dagger_map:
                 operation_class = qml.adjoint(dagger_map[instruction_name])
+                operation_args.extend(operation_params)
 
             elif instruction_name in inv_map:
                 operation_class = getattr(pennylane_ops, inv_map[instruction_name])
@@ -484,9 +491,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     )
 
             # Check if it is a conditional operation or conditional instruction
-            instruction_cond = instruction.condition and instruction.condition[0] in mid_circ_regs
-            if instruction_cond or isinstance(instruction, ControlFlowOp):
-                # Iteratively recurse over to build different branches
+            if instruction.condition or isinstance(instruction, ControlFlowOp):
+                # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
                         partial(load(branch_inst, measurements=None), params=params, wires=wires)
@@ -495,40 +501,20 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     ]
 
                 # Get the functions for handling condition
-                true_fn, false_fn, elif_fns, cond_op = _conditional_funcs(
-                    instruction, cargs, operation_class, branch_funcs, instruction_name
+                # true fns | false fns -> true | false branches
+                # inst_cond -> qiskit's conditional expression
+                true_fns, false_fns, inst_cond = _conditional_funcs(
+                    instruction, operation_class, branch_funcs, instruction_name
                 )
-                res_reg, res_bit = cond_op
 
-                # Check for elif branches (doesn't require qjit)
-                if elif_fns:
-                    m_val = sum(
-                        2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(res_reg)
-                    )
-                    for elif_bit, elif_branch in elif_fns:
-                        qml.cond(m_val == elif_bit, elif_branch)(
-                            *operation_args, **operation_kwargs
-                        )
+                # Process qiskit condition to PL mid-circ meas conditions
+                # pl_meas_conds -> PL's conditional expression with mid-circuit meas.
+                # length(pl_meas_conds) == len(true_fns) ==> True
+                pl_meas_conds = _process_condition(inst_cond, mid_circ_regs, instruction_name)
 
-                # Check if just conditional requires some extra work
-                if isinstance(res_bit, str):
-                    # Handles the default case in the SwitchCaseOp
-                    if res_bit == "SwitchDefault":
-                        elif_bits = [elif_bit for (elif_bit, _) in elif_fns]
-                        qml.cond(
-                            reduce(
-                                lambda m0, m1: m0 & m1,
-                                [(m_val != elif_bit) for elif_bit in elif_bits],
-                            ),
-                            true_fn,
-                        )(*operation_args, **operation_kwargs)
-                # Just do the routine conditional
-                else:
-                    qml.cond(
-                        mid_circ_regs[res_reg] == res_bit,
-                        true_fn,
-                        false_fn,
-                    )(*operation_args, **operation_kwargs)
+                # Iterate over each of the conditional triplet and apply the condition via qml.cond
+                for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
+                    qml.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
 
             # Check if it is not a mid-circuit measurement
             elif operation_class and not isinstance(instruction, Measure):
@@ -680,36 +666,304 @@ def load_pauli_op(
     return qml.dot(coeffs, pl_terms)
 
 
-# pylint:disable=fixme, protected-access
-def _conditional_funcs(ops, cargs, operation_class, branch_funcs, ctrl_flow_type):
-    """Builds the conditional functions for Controlled flows
+# pylint:disable=protected-access
+def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
+    """Builds the conditional functions for Controlled flows.
 
     This method returns the arguments to be used by the `qml.cond`
-    for creating a classically controlled flow.
-    These are the branches (`true_fn`, `false_fn`, `elif_fns`) and
-    the qiskit's classical condition, which has to be converted to
-    the corresponding PennyLane mid-circuit measurement.
+    for creating the classically controlled flow. These are the
+    branches - `true_fns` and `false_fns`, that contains the quantum
+    functions to be applied based on the results of the condition.
+
+    Additionally, we also return the qiskit's classical condition,
+    which we convert to the corresponding PennyLane mid-circuit
+    measurement in the `_process_condition` method. These conditions
+    are stored in the `condition` attribute for all the controlled ops,
+    except for `SwitchCaseOp` for which it is stored in the `target`
+    attribute. For the latter operation, we set the `condition` ourselves
+    with information from `target` and the information required
+    by us for the processing of the condition.
+
+    Args:
+        inst (Instruction): Qiskit's `Instruction` object
+        operation_class (Operation): PennyLane `Operation` for legacy controlled functionality
+        branch_funcs (List[partial]): Iterable of possible branching circuits for the condition.
+        ctrl_flow_type (str): represents the type of `ControlledFlowOp`
+
+    Returns:
+        (true_fns, false_fns, condition): the condition and the corresponding branches
     """
-    true_fn, false_fn, elif_fns = operation_class, None, ()
+    true_fns, false_fns = [operation_class], [None]
+
     # Logic for using legacy c_if
-    if not isinstance(ops, ControlFlowOp):
-        return true_fn, false_fn, elif_fns, ops.condition
+    if not isinstance(inst, ControlFlowOp):
+        return true_fns, false_fns, inst.condition
 
     # Logic for handling IfElseOp
     if ctrl_flow_type == "IfElseOp":
-        true_fn = branch_funcs[0]
+        true_fns[0] = branch_funcs[0]
         if len(branch_funcs) == 2:
-            false_fn = branch_funcs[1]
+            false_fns[0] = branch_funcs[1]
 
     # Logic for handling SwitchCaseOp
     elif ctrl_flow_type == "SwitchCaseOp":
-        elif_fns = []
-        for case, res_bit in ops._case_map.items():
+        true_fns, res_bits = [], []
+        for case, b_idx in inst._case_map.items():
             if not isinstance(case, _DefaultCaseType):
-                elif_fns.append((case, branch_funcs[res_bit]))
-        ops.condition = [tuple(cargs), "SwitchCase"]
-        if any((isinstance(case, _DefaultCaseType) for case in ops._case_map)):
-            true_fn = branch_funcs[-1]
-            ops.condition = [tuple(cargs), "SwitchDefault"]
+                true_fns.append(branch_funcs[b_idx])
+                res_bits.append(case)
 
-    return true_fn, false_fn, elif_fns, ops.condition
+        # Switch ops condition is None by default
+        # So we make up a custom one for it ourselves
+        inst.condition = [inst.target, res_bits, "SwitchCase"]
+        if any((isinstance(case, _DefaultCaseType) for case in inst._case_map)):
+            true_fns.append(branch_funcs[-1])
+            # Marker for we have a default case scenario
+            inst.condition[-1] = "SwitchDefault"
+        false_fns = [None] * len(true_fns)
+
+    return true_fns, false_fns, inst.condition
+
+
+def _process_condition(cond_op, mid_circ_regs, instruction_name):
+    """Process the condition to corresponding measurement value.
+
+    In Qiskit, the generic form of condition is of two types:
+    1. tuple[ClassicalRegister, int] or tuple[Clbit, int]
+    2. expr.Expr
+    In addition for this, we have another custom type:
+    3. List(Target: Condition, Vals: List[Int], Type: str)
+
+    Args:
+        cond_op (condition): condition as described above
+        mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
+            to the performed PennyLane's mid-circuit measurements
+        instruction_name (str): represents the name of the instruction. Used in raising
+            an informative warning in case processing of the condition fails.
+
+    Returns:
+        pl_meas: list of corresponding mid-circuit measurements to be used in `qml.cond`
+    """
+    # container for PL measurements operators
+    pl_meas = []
+    condition = cond_op
+
+    # Check if the condition is as a tuple -> (Clbit/Clreg, Val)
+    if isinstance(condition, tuple):
+        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+
+        # Proceed only if we have access to all conditioned classical bits
+        if all(clbit in mid_circ_regs for clbit in clbits):
+            pl_meas.append(
+                sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+                == condition[1]
+            )
+
+    # Check if the condition is coming form a SwitchCase -> (Target, Vals, Type)
+    if isinstance(condition, list):
+        meas_pl_ops = _process_switch_condition(condition, mid_circ_regs)
+        pl_meas.extend(meas_pl_ops)
+
+    # Check if the condition is an Expr
+    if isinstance(condition, expr.Expr):
+        meas_pl_op = _expr_evaluation(condition, mid_circ_regs)
+        if meas_pl_op is not None:
+            pl_meas.append(meas_pl_op)
+
+    # Check if were able to add the meas values
+    # Else raise a warning before returning
+    if pl_meas:
+        return pl_meas
+
+    warnings.warn(
+        f"The provided {condition} for {instruction_name} uses additional classical information that cannot not be returned or processed.",
+        UserWarning,
+    )
+    return pl_meas
+
+
+def _process_switch_condition(condition, mid_circ_regs):
+    """Helper method for processesing condition for SwtichCaseOp.
+
+    Args:
+        condition (condition): condition as described in `_process_condition` of the
+            third type - `List(Target: Condition, Vals: List[Int], Type: str)`
+        mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
+            to the performed PennyLane's mid-circuit measurements
+
+    Returns:
+        meas_pl_ops: list of corresponding mid-circuit measurements to be used in `qml.cond`
+    """
+    # if the target is not an Expr
+    if not isinstance(condition[0], expr.Expr):
+        # Prepare the classical bits used for the condition
+        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+
+        # Proceed only if we have access to all conditioned classical bits
+        meas_pl_op = None
+        if all(clbit in mid_circ_regs for clbit in clbits):
+            # Build an integer representation for each switch case
+            meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+
+    # if the target is an Expr
+    else:
+        meas_pl_op = _expr_evaluation(condition[0], mid_circ_regs)
+
+    meas_pl_ops = []
+    if meas_pl_op is not None:
+        # Add a measurement for each of the switch cases
+        meas_pl_ops.extend([meas_pl_op == clval for clval in condition[1]])
+        # If we have default case, add an additional measurement for it
+        if condition[2] == "SwitchDefault":
+            meas_pl_ops.append(
+                reduce(
+                    lambda m0, m1: m0 & m1,
+                    [(meas_pl_op != clval) for clval in condition[1]],
+                )
+            )
+    return meas_pl_ops
+
+
+# pylint:disable = unbalanced-tuple-unpacking
+def _expr_evaluation(condition, mid_circ_regs):
+    """Evaluates the Expr condition
+
+    Args:
+        condition (condition): condition as described in `_process_condition`
+            of the second type - `Expr`
+        mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
+            to the performed PennyLane's mid-circuit measurements
+
+    Returns:
+        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+    """
+
+    # Maps qiskit `expr` names to their mathematical logic
+    _expr_mapping = {
+        "BIT_AND": lambda meas1, meas2: meas1 & meas2,
+        "BIT_OR": lambda meas1, meas2: meas1 | meas2,
+        "BIT_XOR": lambda meas1, meas2: meas1 ^ meas2,
+        "LOGIC_AND": lambda meas1, meas2: meas1 and meas2,
+        "LOGIC_OR": lambda meas1, meas2: meas1 or meas2,
+        "EQUAL": lambda meas1, meas2: meas1 == meas2,
+        "NOT_EQUAL": lambda meas1, meas2: meas1 != meas2,
+        "LESS": lambda meas1, meas2: meas1 < meas2,
+        "LESS_EQUAL": lambda meas1, meas2: meas1 <= meas2,
+        "GREATER": lambda meas1, meas2: meas1 > meas2,
+        "GREATER_EQUAL": lambda meas1, meas2: meas1 >= meas2,
+    }
+
+    # Get the left and right classical controls
+    cond1, cond2 = condition.left, condition.right
+
+    # Iterate over each and extract classical bits
+    clbits, clvals = [], []
+    for _, carg in enumerate([cond1, cond2]):
+        # We don't need to work with Qiskit's Cast expr op,
+        # as we'll be casting stuff manually by ourselves.
+        if isinstance(carg, expr.Cast):
+            carg = carg.operand
+
+        if isinstance(carg, expr.Value):
+            clvals.append([carg.value])
+        elif isinstance(carg, expr.Var):
+            clbits.append([carg.var] if isinstance(carg.var, Clbit) else list(carg.var))
+
+    # Proceed only if we have access to all conditioned classical bits
+    for idx, clreg in enumerate(clbits):
+        if not all(clbit in mid_circ_regs for clbit in clreg):
+            return None
+        clbits[idx] = [mid_circ_regs[clbit] for clbit in clreg]
+
+    # Flag for tracking if it is a bitwise operation.
+    # bitwise = true -> apply on each bit of the binary forms
+    # bitwise = false -> apply on the integer forms as whole
+    bitwise_flag = False
+    condition_name = condition.op.name
+    if condition_name[:3] == "BIT":
+        bitwise_flag = True
+
+    # divide the bits among left and right cbit registers
+    if len(clbits) == 2:
+        condition_res = _expr_eval_clregs(clbits, _expr_mapping[condition_name], bitwise_flag)
+
+    # divide the bits into a cbit register and integer
+    else:
+        condition_res = _expr_eval_clvals(
+            clbits, clvals, _expr_mapping[condition_name], bitwise_flag
+        )
+
+    return condition_res
+
+
+def _expr_eval_clregs(clbits, expr_func, bitwise=False):
+    """Helper method for Expr evaluation when two registers are present.
+
+    Args:
+        clbits (List[List[int], List[int]]): list of two registers represented by the
+            corresponding mid-circuit measurements mapped from their classical bits.
+        expr_func (lambda): mapped lambda func from `_expr_mapping` in the `_expr_evaluation`
+            method that performs the corresponding mathematical logic.
+        bitwise (bool): flag that specifies if the `expr_func` is performed on individual bits.
+
+    Returns:
+        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+    """
+    clreg1, clreg2 = clbits
+    # Make both the bits of the same width with padding
+    # We swap the registers so that we only have to pad right one.
+    if len(clreg1) < len(clreg2):
+        clreg1, clreg2 = clreg2, clreg1
+    clreg2 = [0] * (len(clreg2) - len(clreg1)) + clreg2
+
+    # For bitwise operations we need to work with individual bits
+    # So we build an integer form 'after' performing the operation.
+    if bitwise:
+        condition_res = sum(
+            2**idx * expr_func(meas1, meas2)
+            for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
+        )
+
+    # For other operations we need to work with all bits at once,
+    # So we build an integer form 'before' performing the operation.
+    else:
+        meas1, meas2 = [
+            sum(2**idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
+        ]
+        condition_res = expr_func(meas1, meas2)
+
+    return condition_res
+
+
+def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
+    """Helper method for Expr evaluation when one register and one integer value is present.
+
+    Args:
+        clbits (List[List[int]]): list of two registers represented by the
+            corresponding mid-circuit measurements mapped from their classical bits.
+        clvals (List[List[int]])
+        expr_func (lambda): mapped lambda func from `_expr_mapping` in the `_expr_evaluation`
+            method that performs the corresponding mathematical logic.
+        bitwise (bool): flag that specifies if the `expr_func` is performed on individual bits.
+
+    Returns:
+        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+    """
+    [clreg1], [[clreg2]] = clbits, clvals
+    # For bitwise operations, we first need a binary form for clreg2
+    if bitwise:
+        # Number of bits should be max of the binary-rep of the clvals or clreg.
+        num_bits = max(len(clreg1), int(np.ceil(np.log2(clreg2))))
+        clreg2 = map(int, np.binary_repr(clreg2, width=num_bits))
+        clreg1 = [0] * (num_bits - len(clreg1)) + clreg1
+        condition_res = sum(
+            2**idx * expr_func(meas1, meas2)
+            for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
+        )
+
+    # For other operations, we just need the integer form of clreg1
+    else:
+        meas1 = sum(2**idx * meas for idx, meas in enumerate(clreg1))
+        condition_res = expr_func(meas1, clreg2)
+
+    return condition_res
