@@ -25,6 +25,10 @@
   ``ControlFlowOp`` operations.
   [(#432)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/432)
 
+* Added conversion support for more Qiskit gates to native PennyLane operations -
+  ``Barrier``, ``CYGate``, ``CHGate``, ``CPhase``, ``CCZGate``, ``ECRGate``, and ``GlobalPhaseGate``.
+  [(#449)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/449)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
