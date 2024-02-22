@@ -12,8 +12,8 @@ from qiskit.quantum_info import SparsePauliOp
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
-    load_pauli_op,
     load,
+    load_pauli_op,
     load_qasm,
     load_qasm_from_file,
     map_wires,
