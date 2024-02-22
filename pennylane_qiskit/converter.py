@@ -36,7 +36,12 @@ from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
-dagger_map = {"SdgGate": qml.S, "TdgGate": qml.T, "SXdgGate": qml.SX}
+dagger_map = {
+    "SdgGate": qml.S,
+    "TdgGate": qml.T,
+    "SXdgGate": qml.SX,
+    "GlobalPhaseGate": qml.GlobalPhase,
+}
 
 referral_to_forum = (
     "\n \nIf you are experiencing any difficulties with converting circuits from Qiskit, you can reach out "
@@ -434,6 +439,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
             if instruction_name in dagger_map:
                 operation_class = qml.adjoint(dagger_map[instruction_name])
+                operation_args.extend(operation_params)
 
             elif instruction_name in inv_map:
                 operation_class = getattr(pennylane_ops, inv_map[instruction_name])

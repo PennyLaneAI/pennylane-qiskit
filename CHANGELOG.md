@@ -21,6 +21,10 @@
   a ``QuantumCircuit`` using `load`.
   [(#417)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/417)
 
+* Added conversion support for more Qiskit gates to native PennyLane operations -
+  ``Barrier``, ``CYGate``, ``CHGate``, ``CPhase``, ``CCZGate``, ``ECRGate``, and ``GlobalPhaseGate``.
+  [(#449)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/449)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
