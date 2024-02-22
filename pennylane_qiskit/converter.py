@@ -565,19 +565,19 @@ def load_qasm_from_file(file: str):
 
 def convert_sparse_pauli_op_to_pl(
     sparse_op: SparsePauliOp,
-    wires: Union[Sequence, None] = None,
     params: Any = None,
+    wires: Union[Sequence, None] = None,
 ) -> qml.operation.Operator:
     """Converts a Qiskit SparsePauliOp into a PennyLane operator.
 
     Args:
         sparse_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
-        wires (Sequence | None): optional assignment of wires for the converted SparsePauliOp; if
-            the original SparsePauliOp acted on :math:`N` qubits, then this must be a sequence of
-            length :math:`N`
         params (Any): optional assignment of coefficient values for the SparsePauliOp; see the
             `Qiskit documentation <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp#assign_parameters>`__
             to learn more about the expected format of these parameters
+        wires (Sequence | None): optional assignment of wires for the converted SparsePauliOp; if
+            the original SparsePauliOp acted on :math:`N` qubits, then this must be a sequence of
+            length :math:`N`
 
     Returns:
         pennylane.operation.Operator: The equivalent PennyLane operator.
