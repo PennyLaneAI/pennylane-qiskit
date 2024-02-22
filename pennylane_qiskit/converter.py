@@ -710,10 +710,11 @@ def _process_switch_condition(condition, mid_circ_regs):
 
 # pylint:disable = unbalanced-tuple-unpacking
 def _expr_evaluation(condition, mid_circ_regs):
-    """Evaluates the expr condition
+    """Evaluates the Expr condition
 
     Args:
-        condition (condition): condition as described above of the second type - `Expr`
+        condition (condition): condition as described in `_process_condition`
+            of the second type - `Expr`
         mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
             to the performed PennyLane's mid-circuit measurements
 
@@ -759,7 +760,7 @@ def _expr_evaluation(condition, mid_circ_regs):
         clbits[idx] = [mid_circ_regs[clbit] for clbit in clreg]
 
     # Flag for tracking if it is a bitwise operation.
-    # bitwise = true -> apply on each bit of the  binary forms
+    # bitwise = true -> apply on each bit of the binary forms
     # bitwise = false -> apply on the integer forms as whole
     bitwise_flag = False
     condition_name = condition.op.name
