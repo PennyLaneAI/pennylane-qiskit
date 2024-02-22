@@ -52,6 +52,7 @@ info = {
             ],
         'pennylane.io': [
             'qiskit = pennylane_qiskit:load',
+            'qiskit_op = pennylane_qiskit:load_pauli_op',
             'qasm = pennylane_qiskit:load_qasm',
             'qasm_file = pennylane_qiskit:load_qasm_from_file',
             ],
