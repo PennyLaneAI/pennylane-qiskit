@@ -586,9 +586,10 @@ def convert_sparse_pauli_op(
 
     .. note::
 
-        The order in which Pauli operations appear in each SparsePauliOp term is the reverse of how
-        they are applied in the PennyLane operator. This is consistent with the iteration order of a
-        Pauli term in Qiskit.
+        The wire ordering convention differs between PennyLane and Qiskit: PennyLane wires are
+        enumerated from left to right, while the Qiskit convention is to enumerate from right to
+        left. A ``SparsePauliOp`` term defined by the string ``"XYZ"`` applies ``Z`` on wire 0
+        ``Y`` on wire 1, and ``X`` on wire 2.
 
     **Example**
 
