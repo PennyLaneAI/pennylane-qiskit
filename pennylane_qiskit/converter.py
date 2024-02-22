@@ -502,7 +502,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
                 # Check for elif branches (doesn't require qjit)
                 if elif_fns:
-                    m_val = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(res_reg))
+                    m_val = sum(
+                        2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(res_reg)
+                    )
                     for elif_bit, elif_branch in elif_fns:
                         qml.cond(m_val == elif_bit, elif_branch)(
                             *operation_args, **operation_kwargs
@@ -563,7 +565,7 @@ def load_qasm_from_file(file: str):
     return load(QuantumCircuit.from_qasm_file(file))
 
 
-def convert_sparse_pauli_op_to_pl(
+def convert_sparse_pauli_op(
     sparse_op: SparsePauliOp,
     params: Any = None,
     wires: Union[Sequence, None] = None,
@@ -610,8 +612,8 @@ def convert_sparse_pauli_op_to_pl(
 
     Now, to convert the ``SparsePauliOp`` into a PennyLane operator, run:
 
-    >>> from pennylane_qiskit.converter import convert_sparse_pauli_op_to_pl
-    >>> convert_sparse_pauli_op_to_pl(qiskit_op, params={a: 2, b: 3, c: 4})
+    >>> from pennylane_qiskit.converter import convert_sparse_pauli_op
+    >>> convert_sparse_pauli_op(qiskit_op, params={a: 2, b: 3, c: 4})
     ((2+0j)*(Identity(wires=[0, 1])))
     + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
     + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
