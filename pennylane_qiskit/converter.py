@@ -15,7 +15,7 @@ r"""
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
-from typing import Dict, Any
+from typing import Dict, Any, Sequence, Union
 import warnings
 from functools import partial, reduce
 
@@ -565,12 +565,16 @@ def load_qasm_from_file(file: str):
 
 def convert_sparse_pauli_op_to_pl(
     sparse_op: SparsePauliOp,
+    wires: Union[Sequence, None] = None,
     params: Any = None,
 ) -> qml.operation.Operator:
     """Converts a Qiskit SparsePauliOp into a PennyLane operator.
 
     Args:
         sparse_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
+        wires (Sequence | None): optional assignment of wires for the converted SparsePauliOp; if
+            the original SparsePauliOp acted on :math:`N` qubits, then this must be a sequence of
+            length :math:`N`
         params (Any): optional assignment of coefficient values for the SparsePauliOp; see the
             `Qiskit documentation <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp#assign_parameters>`__
             to learn more about the expected format of these parameters
@@ -612,6 +616,14 @@ def convert_sparse_pauli_op_to_pl(
     + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
     + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
     """
+    if wires is not None and len(wires) != sparse_op.num_qubits:
+        raise RuntimeError(
+            f"The specified number of wires - {len(wires)} - does not match the "
+            f"number of qubits the SparsePauliOp acts on."
+        )
+
+    wire_map = map_wires(range(sparse_op.num_qubits), wires)
+
     if params:
         sparse_op = sparse_op.assign_parameters(params)
 
@@ -625,7 +637,7 @@ def convert_sparse_pauli_op_to_pl(
     pl_terms = []
 
     for term in qiskit_terms:
-        operators = [op_map[str(op)](wire) for wire, op in enumerate(term)]
+        operators = [op_map[str(op)](wire_map[wire]) for wire, op in enumerate(term)]
         pl_terms.append(qml.prod(*operators).simplify())
 
     return qml.dot(coeffs, pl_terms)

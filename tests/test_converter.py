@@ -1770,3 +1770,48 @@ class TestConvertSparsePauliOp:
             qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
         )
         assert qml.equal(have_op, want_op)
+
+    @pytest.mark.parametrize(
+        "sparse_pauli_op, wires, want_op",
+        [
+            (
+                SparsePauliOp("XYZ"),
+                "ABC",
+                qml.prod(qml.PauliZ(wires="A"), qml.PauliY(wires="B"), qml.PauliX(wires="C")),
+            ),
+            (
+                SparsePauliOp(["XY", "ZX"]),
+                [1, 0],
+                qml.sum(
+                    qml.prod(qml.PauliX(wires=0), qml.PauliY(wires=1)),
+                    qml.prod(qml.PauliZ(wires=0), qml.PauliX(wires=1)),
+                )
+            ),
+        ]
+    )
+    def test_convert_with_wires(self, sparse_pauli_op, wires, want_op):
+        """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
+        have_op = convert_sparse_pauli_op_to_pl(sparse_pauli_op, wires=wires)
+        assert qml.equal(have_op, want_op)
+
+    def test_convert_with_too_few_wires(self):
+        """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
+        a PennyLane operator with too few custom wires.
+        """
+        match = (
+            r"The specified number of wires - 1 - does not match "
+            f"the number of qubits the SparsePauliOp acts on."
+        )
+        with pytest.raises(RuntimeError, match=match):
+            convert_sparse_pauli_op_to_pl(SparsePauliOp("II"), wires=[0])
+
+    def test_convert_with_too_many_wires(self):
+        """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
+        a PennyLane operator with too many custom wires.
+        """
+        match = (
+            r"The specified number of wires - 3 - does not match "
+            f"the number of qubits the SparsePauliOp acts on."
+        )
+        with pytest.raises(RuntimeError, match=match):
+            convert_sparse_pauli_op_to_pl(SparsePauliOp("II"), wires=[0, 1, 2])
