@@ -595,9 +595,9 @@ def load_pauli_op(
 
     To convert the ``SparsePauliOp`` into a PennyLane operator, use:
 
-    >>> from pennylane_qiskit.converter import load_pauli_op
+    >>> from pennylane_qiskit import load_pauli_op
     >>> load_pauli_op(qiskit_op)
-    Identity(wires=[0, 1]) + (PauliX(wires=[1]) @ PauliY(wires=[0]))
+    I(0) + X(1) @ Y(0)
 
     .. details::
         :title: Usage Details
@@ -617,15 +617,18 @@ def load_pauli_op(
 
         >>> param_qiskit_op
         SparsePauliOp(['II', 'XZ', 'YX'],
-                  coeffs=[ParameterExpression(1.0*a), ParameterExpression(1.0*b),
+              coeffs=[ParameterExpression(1.0*a), ParameterExpression(1.0*b),
+         ParameterExpression(1.0*c)])
 
         The ``SparsePauliOp`` can be converted into a PennyLane operator by calling the conversion
         function and specifying the value of each parameter using the ``params`` argument:
 
         >>> load_pauli_op(param_qiskit_op, params={a: 2, b: 3, c: 4})
-        ((2+0j)*(Identity(wires=[0, 1])))
-        + ((3+0j)*(PauliX(wires=[1]) @ PauliZ(wires=[0])))
-        + ((4+0j)*(PauliY(wires=[1]) @ PauliX(wires=[0])))
+        (
+            (2+0j) * I(0)
+          + (3+0j) * (X(1) @ Z(0))
+          + (4+0j) * (Y(1) @ X(0))
+        )
 
         Similarly, a custom wire mapping can be applied to a ``SparsePauliOp`` as follows:
 
@@ -634,7 +637,7 @@ def load_pauli_op(
         SparsePauliOp(['XYZ'],
               coeffs=[1.+0.j])
         >>> load_pauli_op(wired_qiskit_op, wires=[3, 5, 7])
-        PauliY(wires=[5]) @ PauliZ(wires=[3]) @ PauliX(wires=[7])
+        Y(5) @ Z(3) @ X(7)
     """
     if wires is not None and len(wires) != pauli_op.num_qubits:
         raise RuntimeError(
