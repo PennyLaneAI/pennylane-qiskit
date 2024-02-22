@@ -556,7 +556,7 @@ def load_pauli_op(
     params: Any = None,
     wires: Union[Sequence, None] = None,
 ) -> qml.operation.Operator:
-    """Converts a Qiskit SparsePauliOp into a PennyLane operator.
+    """Loads a PennyLane operator from a Qiskit SparsePauliOp.
 
     Args:
         pauli_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
