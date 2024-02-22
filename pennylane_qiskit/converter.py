@@ -637,6 +637,9 @@ def convert_sparse_pauli_op_to_pl(
     pl_terms = []
 
     for term in qiskit_terms:
+        # term is a special Qiskit type. Iterating over the term goes right to left 
+        # in accordance with Qiskit wire order convention, i.e. `enumerate("XZ")` will be 
+        # [(0, "Z"), (1, "X")], so we don't need to reverse to match the PL convention
         operators = [op_map[str(op)](wire_map[wire]) for wire, op in enumerate(term)]
         pl_terms.append(qml.prod(*operators).simplify())
 
