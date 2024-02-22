@@ -566,14 +566,14 @@ def load_qasm_from_file(file: str):
 
 
 def load_pauli_op(
-    sparse_op: SparsePauliOp,
+    pauli_op: SparsePauliOp,
     params: Any = None,
     wires: Union[Sequence, None] = None,
 ) -> qml.operation.Operator:
     """Converts a Qiskit SparsePauliOp into a PennyLane operator.
 
     Args:
-        sparse_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
+        pauli_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
         params (Any): optional assignment of coefficient values for the SparsePauliOp; see the
             `Qiskit documentation <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp#assign_parameters>`__
             to learn more about the expected format of these parameters
@@ -650,30 +650,30 @@ def load_pauli_op(
         >>> load_pauli_op(wired_qiskit_op, wires=[3, 5, 7])
         PauliY(wires=[5]) @ PauliZ(wires=[3]) @ PauliX(wires=[7])
     """
-    if wires is not None and len(wires) != sparse_op.num_qubits:
+    if wires is not None and len(wires) != pauli_op.num_qubits:
         raise RuntimeError(
             f"The specified number of wires - {len(wires)} - does not match the "
             f"number of qubits the SparsePauliOp acts on."
         )
 
-    wire_map = map_wires(range(sparse_op.num_qubits), wires)
+    wire_map = map_wires(range(pauli_op.num_qubits), wires)
 
     if params:
-        sparse_op = sparse_op.assign_parameters(params)
+        pauli_op = pauli_op.assign_parameters(params)
 
     op_map = {"X": qml.PauliX, "Y": qml.PauliY, "Z": qml.PauliZ, "I": qml.Identity}
 
-    coeffs = sparse_op.coeffs
+    coeffs = pauli_op.coeffs
     if ParameterExpression in [type(c) for c in coeffs]:
         raise RuntimeError(f"Not all parameter expressions are assigned in coeffs {coeffs}")
 
-    qiskit_terms = sparse_op.paulis
+    qiskit_terms = pauli_op.paulis
     pl_terms = []
 
     for term in qiskit_terms:
         # term is a special Qiskit type. Iterating over the term goes right to left
         # in accordance with Qiskit wire order convention, i.e. `enumerate("XZ")` will be
-        # [(0, "Z"), (1, "X")], so we don't need to reverse to match the PL convention
+        # [(0, "Z"), (1, "X")], so we don't need to reverse to match the PL convention.
         operators = [op_map[str(op)](wire_map[wire]) for wire, op in enumerate(term)]
         pl_terms.append(qml.prod(*operators).simplify())
 

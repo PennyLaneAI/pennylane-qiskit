@@ -1679,7 +1679,7 @@ class TestLoadPauliOp:
     """Tests for the :func:`load_pauli_op()` function."""
 
     @pytest.mark.parametrize(
-        "sparse_pauli_op, want_op",
+        "pauli_op, want_op",
         [
             (
                 SparsePauliOp("I"),
@@ -1698,15 +1698,15 @@ class TestLoadPauliOp:
             ),
         ]
     )
-    def test_convert_with_default_coefficients(self, sparse_pauli_op, want_op):
+    def test_convert_with_default_coefficients(self, pauli_op, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with the default
         coefficients.
         """
-        have_op = load_pauli_op(sparse_pauli_op)
+        have_op = load_pauli_op(pauli_op)
         assert qml.equal(have_op, want_op)
 
     @pytest.mark.parametrize(
-        "sparse_pauli_op, want_op",
+        "pauli_op, want_op",
         [
             (
                 SparsePauliOp("I", coeffs=[2]),
@@ -1721,11 +1721,11 @@ class TestLoadPauliOp:
             ),
         ]
     )
-    def test_convert_with_literal_coefficients(self, sparse_pauli_op, want_op):
+    def test_convert_with_literal_coefficients(self, pauli_op, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with literal
         coefficient values.
         """
-        have_op = load_pauli_op(sparse_pauli_op)
+        have_op = load_pauli_op(pauli_op)
         assert qml.equal(have_op, want_op)
 
 
@@ -1734,9 +1734,9 @@ class TestLoadPauliOp:
         to each parameterized coefficient.
         """
         a, b = [Parameter(var) for var in "ab"]
-        sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+        pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
-        have_op = load_pauli_op(sparse_pauli_op, params={a: 3, b: 7})
+        have_op = load_pauli_op(pauli_op, params={a: 3, b: 7})
         want_op = qml.sum(
             qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
             qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
@@ -1748,23 +1748,23 @@ class TestLoadPauliOp:
         a PennyLane operator without assigning values for all parameterized coefficients.
         """
         a, b = [Parameter(var) for var in "ab"]
-        sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+        pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
         match = (
             "Not all parameter expressions are assigned in coeffs "
             r"\[\(3\+0j\) ParameterExpression\(1\.0\*b\)\]"
         )
         with pytest.raises(RuntimeError, match=match):
-            load_pauli_op(sparse_pauli_op, params={a: 3})
+            load_pauli_op(pauli_op, params={a: 3})
 
     def test_convert_too_many_coefficients(self):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
         to a strict superset of the parameterized coefficients.
         """
         a, b, c = [Parameter(var) for var in "abc"]
-        sparse_pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
+        pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
-        have_op = load_pauli_op(sparse_pauli_op, params={a: 3, b: 7, c: 9})
+        have_op = load_pauli_op(pauli_op, params={a: 3, b: 7, c: 9})
         want_op = qml.sum(
             qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
             qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
@@ -1772,7 +1772,7 @@ class TestLoadPauliOp:
         assert qml.equal(have_op, want_op)
 
     @pytest.mark.parametrize(
-        "sparse_pauli_op, wires, want_op",
+        "pauli_op, wires, want_op",
         [
             (
                 SparsePauliOp("XYZ"),
@@ -1789,9 +1789,9 @@ class TestLoadPauliOp:
             ),
         ]
     )
-    def test_convert_with_wires(self, sparse_pauli_op, wires, want_op):
+    def test_convert_with_wires(self, pauli_op, wires, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
-        have_op = load_pauli_op(sparse_pauli_op, wires=wires)
+        have_op = load_pauli_op(pauli_op, wires=wires)
         assert qml.equal(have_op, want_op)
 
     def test_convert_with_too_few_wires(self):
