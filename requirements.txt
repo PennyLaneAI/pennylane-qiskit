@@ -24,7 +24,7 @@ psutil==5.9.8
 pycparser==2.21
 python-constraint==1.4.0
 python-dateutil==2.8.2
-qiskit==0.45.3
+qiskit==1.0.0
 qiskit-aer==0.13.3
 qiskit-ibm-runtime==0.20.0
 qiskit-ibm-provider==0.10.0
