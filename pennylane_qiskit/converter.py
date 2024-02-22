@@ -561,6 +561,15 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     attribute. For the latter operation, we set the `condition` ourselves
     with information from `target` and the information required
     by us for the processing of the condition.
+
+    Args:
+        inst (Instruction): Qiskit's `Instruction` object
+        operation_class (Operation): PennyLane `Operation` for legacy controlled functionality
+        branch_funcs (List[partial]): Iterable of possible branching circuits for the condition.
+        ctrl_flow_type (str): represents the type of `ControlledFlowOp`
+
+    Returns:
+        (true_fns, false_fns, condition): the condition and the corresponding branches
     """
     true_fns, false_fns = [operation_class], [None]
 
@@ -577,9 +586,9 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     # Logic for handling SwitchCaseOp
     elif ctrl_flow_type == "SwitchCaseOp":
         true_fns, res_bits = [], []
-        for case, res_bit in inst._case_map.items():
+        for case, b_idx in inst._case_map.items():
             if not isinstance(case, _DefaultCaseType):
-                true_fns.append(branch_funcs[res_bit])
+                true_fns.append(branch_funcs[b_idx])
                 res_bits.append(case)
 
         # Switch ops condition is None by default
@@ -595,13 +604,23 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
 
 
 def _process_condition(cond_op, mid_circ_regs, instruction_name):
-    """Process the condition to corresponding measurement value
+    """Process the condition to corresponding measurement value.
 
     In Qiskit, the generic form of condition is of two types:
     1. tuple[ClassicalRegister, int] or tuple[Clbit, int]
     2. expr.Expr
     In addition for this, we have another custom type:
     3. List(Target: Condition, Vals: List[Int], Type: str)
+
+    Args:
+        cond_op (condition): condition as described above
+        mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
+            to the performed PennyLane's mid-circuit measurements
+        instruction_name (str): represents the name of the instruction. Used in raising
+            an informative warning in case processing of the condition fails.
+
+    Returns:
+        pl_meas: list of corresponding mid-circuit measurements to be used in `qml.cond`
     """
     # container for PL measurements operators
     pl_meas = []
@@ -642,7 +661,17 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
 
 
 def _process_switch_condition(condition, mid_circ_regs):
-    """Helper method for processesing condition for SwtichCaseOp"""
+    """Helper method for processesing condition for SwtichCaseOp.
+
+    Args:
+        condition (condition): condition as described in `_process_condition` of the
+            third type - `List(Target: Condition, Vals: List[Int], Type: str)`
+        mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
+            to the performed PennyLane's mid-circuit measurements
+
+    Returns:
+        meas_pl_ops: list of corresponding mid-circuit measurements to be used in `qml.cond`
+    """
     # if the target is not an Expr
     if not isinstance(condition[0], expr.Expr):
         # Prepare the classical bits used for the condition
@@ -675,7 +704,16 @@ def _process_switch_condition(condition, mid_circ_regs):
 
 # pylint:disable = unbalanced-tuple-unpacking
 def _expr_evaluation(condition, mid_circ_regs):
-    """Evaluates the expr condition"""
+    """Evaluates the expr condition
+
+    Args:
+        condition (condition): condition as described above of the second type - `Expr`
+        mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
+            to the performed PennyLane's mid-circuit measurements
+
+    Returns:
+        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+    """
 
     # Maps qiskit `expr` names to their mathematical logic
     _expr_mapping = {
@@ -736,7 +774,18 @@ def _expr_evaluation(condition, mid_circ_regs):
 
 
 def _expr_eval_clregs(clbits, expr_func, bitwise=False):
-    """Helper method for Expr evaluation when two registers are present"""
+    """Helper method for Expr evaluation when two registers are present.
+
+    Args:
+        clbits (List[List[int], List[int]]): list of two registers represented by the
+            corresponding mid-circuit measurements mapped from their classical bits.
+        expr_func (lambda): mapped lambda func from `_expr_mapping` in the `_expr_evaluation`
+            method that performs the corresponding mathematical logic.
+        bitwise (bool): flag that specifies if the `expr_func` is performed on individual bits.
+
+    Returns:
+        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+    """
     clreg1, clreg2 = clbits
     # Make both the bits of the same width with padding
     # We swap the registers so that we only have to pad right one.
@@ -764,13 +813,25 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
 
 
 def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
-    """Helper method for Expr evaluation when one register and one integer value is present."""
+    """Helper method for Expr evaluation when one register and one integer value is present.
+
+    Args:
+        clbits (List[List[int]]): list of two registers represented by the
+            corresponding mid-circuit measurements mapped from their classical bits.
+        clvals (List[List[int]])
+        expr_func (lambda): mapped lambda func from `_expr_mapping` in the `_expr_evaluation`
+            method that performs the corresponding mathematical logic.
+        bitwise (bool): flag that specifies if the `expr_func` is performed on individual bits.
+
+    Returns:
+        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+    """
     [clreg1], [[clreg2]] = clbits, clvals
     # For bitwise operations, we first need a binary form for clreg2
     if bitwise:
         # Number of bits should be max of the binary-rep of the clvals or clreg.
         num_bits = max(len(clreg1), int(np.ceil(np.log2(clreg2))))
-        clreg2 = map(int, np.binary_repr(clreg2).zfill(num_bits))
+        clreg2 = map(int, np.binary_repr(clreg2, width=num_bits))
         clreg1 = [0] * (num_bits - len(clreg1)) + clreg1
         condition_res = sum(
             2**idx * expr_func(meas1, meas2)
