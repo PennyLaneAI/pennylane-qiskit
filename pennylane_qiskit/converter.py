@@ -599,7 +599,7 @@ def convert_sparse_pauli_op_to_pl(
         from qiskit.quantum_info import SparsePauliOp
 
         a, b, c = [Parameter(var) for var in "abc"]
-        qiskit_op = SparsePauliOp(["II", "XZ", "YX"], np.array([a, b, c]))
+        qiskit_op = SparsePauliOp(["II", "XZ", "YX"], coeffs=np.array([a, b, c]))
 
     The ``SparsePauliOp`` has three coefficients (parameters):
 
