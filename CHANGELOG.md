@@ -47,6 +47,9 @@
 
 ### Bug fixes 🐛
 
+* Resolved issues that prevented `ParameterVector` instances from being differentiated.
+  [(#458)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/458)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
