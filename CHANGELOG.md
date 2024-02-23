@@ -35,6 +35,8 @@
 * Added a `pennylane.io` entry point for converting Qiskit operators.
   [(#453)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/453)
 
+* Unused parameters are now ignored when a `QuantumCircuit` is converted using `load`.
+  [(#454)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/454)
 
 ### Breaking changes 💔
 
