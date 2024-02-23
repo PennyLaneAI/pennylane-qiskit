@@ -4,15 +4,15 @@
 
 ### Improvements 🛠
 
-* The UI for passing parameters to a ``qfunc`` generated when loading a Qiskit ``QuantumCircuit`` 
-  into PennyLane is updated to allow passing parameters as args or kwargs, rather than as 
+* The UI for passing parameters to a ``qfunc`` generated when loading a Qiskit ``QuantumCircuit``
+  into PennyLane is updated to allow passing parameters as args or kwargs, rather than as
   a dictionary. The old dictionary UI continues to be supported.
   [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
   [(#428)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/428)
 
 * Measurement operations are now added to the PennyLane template when a ``QuantumCircuit``
   is converted using `load`. Additionally, one can override any existing terminal
-  measurements by providing a list of PennyLane 
+  measurements by providing a list of PennyLane
   `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
   [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
 
@@ -29,6 +29,13 @@
   ``Barrier``, ``CYGate``, ``CHGate``, ``CPhase``, ``CCZGate``, ``ECRGate``, and ``GlobalPhaseGate``.
   [(#449)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/449)
 
+* Added the ability to convert a Qiskit `SparsePauliOp` instance into a PennyLane `Operator`.
+  [(#401)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/401)
+
+* Added a `pennylane.io` entry point for converting Qiskit operators.
+  [(#453)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/453)
+
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -41,6 +48,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Mikhail Andrenkov
 Utkarsh Azad
 Lillian Frederiksen
 
@@ -49,18 +57,18 @@ Lillian Frederiksen
 
 ### Bug fixes 🐛
 
-* The kwargs `job_tags` and `session_id` are passed to the correct arguments in the 
-  `circuit_runner` device so that they will be used in the Qiskit backend; these 
+* The kwargs `job_tags` and `session_id` are passed to the correct arguments in the
+  `circuit_runner` device so that they will be used in the Qiskit backend; these
   were previously ignored.
   [(#358)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/358)
 
-* The `generate_samples` method for the `IBMQSamplerDevice` is updated to get counts 
-  from the nearest probability distribution rather than the quasi-distribution (which 
-  may contain negative probabilities and therefore raise errors). 
+* The `generate_samples` method for the `IBMQSamplerDevice` is updated to get counts
+  from the nearest probability distribution rather than the quasi-distribution (which
+  may contain negative probabilities and therefore raise errors).
   [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
-  
-* The `generate_samples` method for the `IBMQSamplerDevice` now avoids raising an 
-  indexing error when some states are not populated, and labels states according to 
+
+* The `generate_samples` method for the `IBMQSamplerDevice` now avoids raising an
+  indexing error when some states are not populated, and labels states according to
   the Pennylane convention instead of Qiskit convention.
   [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
 
@@ -83,7 +91,7 @@ Francesco Scala
 
 ### Bug fixes 🐛
 
-* Update conversion of PennyLane to Qiskit operators to accommodate 
+* Update conversion of PennyLane to Qiskit operators to accommodate
   the addition of Singleton classes in the newest version of Qiskit.
   [(#347)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/347)
 
@@ -315,10 +323,10 @@ Mikhail Andrenkov, Christina Lee, Romain Moyard, Antal Száva
 
 * Fix runtime sampler due to changes on Qiskit side.
   [(#201)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/201)
-  
+
 * Pin `jinja2` to 3.0.3 because of sphinx incompatibility.
   [(#207)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/207)
-  
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
@@ -326,7 +334,7 @@ This release contains contributions from (in alphabetical order):
 Samuel Banning, Romain Moyard
 
 ---
- 
+
 # Release 0.22.0
 
 ### Improvements
@@ -334,7 +342,7 @@ Samuel Banning, Romain Moyard
 * Changed a validation check such that it handles qubit numbers represented as
   strings.
   [(#184)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/184)
-  
+
 * Changed the VQE callback function for SciPy optimizers.
   [(#187)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/187)
 
@@ -346,7 +354,7 @@ Samuel Banning, Romain Moyard
 
 * Changed the access to Hamiltonian terms `hamiltonian.terms()` as a method.
   [(#190)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/190)
-  
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
