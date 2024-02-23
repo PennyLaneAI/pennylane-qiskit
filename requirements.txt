@@ -36,7 +36,7 @@ retworkx==0.14.0
 scipy==1.12.0
 semantic-version==2.10.0
 six==1.16.0
-stevedore==5.1.0
+stevedore==5.2.0
 symengine==0.11.0
 sympy==1.12
 toml==0.10.2
