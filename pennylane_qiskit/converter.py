@@ -640,6 +640,9 @@ def load_pauli_op(
         >>> load_pauli_op(wired_qiskit_op, wires=[3, 5, 7])
         Y(5) @ Z(3) @ X(7)
     """
+    if not isinstance(pauli_op, SparsePauliOp):
+        raise ValueError(f"The operator {pauli_op} is not a valid Qiskit SparsePauliOp.")
+
     if wires is not None and len(wires) != pauli_op.num_qubits:
         raise RuntimeError(
             f"The specified number of wires - {len(wires)} - does not match the "
