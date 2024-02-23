@@ -250,7 +250,8 @@ def _check_circuit_and_assign_parameters(
         # we must remove them from the binding dictionary before binding.
         del params[k]
 
-    return quantum_circuit.assign_parameters(params)
+    # Disabling "strict" assignment allows extra parameters to be ignored.
+    return quantum_circuit.assign_parameters(params, strict=False)
 
 
 def _get_operation_params(instruction, unbound_params) -> list:

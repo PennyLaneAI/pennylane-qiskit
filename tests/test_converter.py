@@ -254,38 +254,41 @@ class TestConverter:
         ):
             _check_parameter_bound(theta, unbound_params)
 
-    def test_extra_parameters_were_passed(self, recorder):
-        """Tests that loading raises an error when extra parameters were
-        passed."""
+    def test_unused_parameters_are_ignored(self, recorder):
+        """Tests that unused parameters are ignored during assignment."""
+        a, b, c = [Parameter(var) for var in "abc"]
+        v = ParameterVector("v", 2)
 
-        theta = Parameter("θ")
-        phi = Parameter("φ")
-        x = np.tensor(0.5, requires_grad=False)
-        y = np.tensor(0.3, requires_grad=False)
-
-        qc = QuantumCircuit(3, 1)
+        qc = QuantumCircuit(1)
+        qc.rz(a, [0])
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(QiskitError):
-            with recorder:
-                quantum_circuit(params={theta: x, phi: y})
+        with recorder:
+            quantum_circuit(params={a: 0.1, b: 0.2, c: 0.3, v: [0.4, 0.5]})
 
-    def test_quantum_circuit_error_passing_parameters_not_required(self, recorder):
-        """Tests the load method raises a QiskitError if arguments
-        that are not required were passed."""
+        assert len(recorder.queue) == 1
+        assert recorder.queue[0].name == "RZ"
+        assert recorder.queue[0].parameters == [0.1]
+        assert recorder.queue[0].wires == Wires([0])
 
-        theta = Parameter("θ")
-        angle = np.tensor(0.5, requires_grad=False)
+    def test_unused_parameter_vector_items_are_ignored(self, recorder):
+        """Tests that unused parameter vector items are ignored during assignment."""
+        a, b = [Parameter(var) for var in "ab"]
+        v = ParameterVector("v", 3)
 
-        qc = QuantumCircuit(3, 1)
-        qc.z([0])
+        qc = QuantumCircuit(1)
+        qc.rz(v[1], [0])
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(QiskitError):
-            with recorder:
-                quantum_circuit(params={theta: angle})
+        with recorder:
+            quantum_circuit(params={a: 0.1, b: 0.2, v: [0.3, 0.4, 0.5]})
+
+        assert len(recorder.queue) == 1
+        assert recorder.queue[0].name == "RZ"
+        assert recorder.queue[0].parameters == [0.4]
+        assert recorder.queue[0].wires == Wires([0])
 
     def test_quantum_circuit_error_not_qiskit_circuit_passed(self, recorder):
         """Tests the load method raises a ValueError, if something
