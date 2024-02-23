@@ -61,11 +61,13 @@ def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any
         unbound_params (dict[qiskit.circuit.Parameter, Any]):
             a dictionary mapping qiskit parameters to trainable parameter values
     """
-    if isinstance(param, ParameterVectorElement) and param.vector not in unbound_params:
-        raise ValueError(f"The vector of parameter {param} was not bound correctly.".format(param))
+    if isinstance(param, ParameterVectorElement):
+        if param.vector not in unbound_params:
+            raise ValueError(f"The vector of parameter {param} was not bound correctly.".format(param))
 
-    if isinstance(param, Parameter) and param not in unbound_params:
-        raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
+    elif isinstance(param, Parameter):
+        if param not in unbound_params:
+            raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
 
 
 def _process_basic_param_args(params, *args, **kwargs):
@@ -278,10 +280,12 @@ def _get_operation_params(instruction, unbound_params) -> list:
 
         if isinstance(p, ParameterExpression):
             if p.parameters:  # non-empty set = has unbound parameters
-                # Use a set of names to ensure duplicate subparameters are only passed once.
-                f_names = set()
-                f_params = []
                 f_args = []
+                f_params = []
+
+                # Use a set of names to ensure duplicate subparameters are only passed once.
+                f_param_names = set()
+
                 for subparam in p.parameters:
                     if isinstance(subparam, ParameterVectorElement):
                         # Unfortunately, parameter vector elements are named using square brackets.
@@ -294,8 +298,8 @@ def _get_operation_params(instruction, unbound_params) -> list:
                         parameter = subparam
                         argument = unbound_params.get(subparam)
 
-                    if parameter.name not in f_names:
-                        f_names.add(parameter.name)
+                    if parameter.name not in f_param_names:
+                        f_param_names.add(parameter.name)
                         f_params.append(parameter)
                         f_args.append(argument)
 
