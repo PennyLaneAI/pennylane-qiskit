@@ -557,16 +557,17 @@ def load_pauli_op(
     params: Any = None,
     wires: Union[Sequence, None] = None,
 ) -> qml.operation.Operator:
-    """Loads a PennyLane operator from a Qiskit SparsePauliOp.
+    """Loads a PennyLane ``Operator`` from a Qiskit `SparsePauliOp
+    <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp>`_.
 
     Args:
-        pauli_op (qiskit.quantum_info.SparsePauliOp): the SparsePauliOp to be converted
-        params (Any): optional assignment of coefficient values for the SparsePauliOp; see the
+        pauli_op (qiskit.quantum_info.SparsePauliOp): the ``SparsePauliOp`` to be converted
+        params (Any): optional assignment of coefficient values for the ``SparsePauliOp``; see the
             `Qiskit documentation <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp#assign_parameters>`__
             to learn more about the expected format of these parameters
-        wires (Sequence | None): optional assignment of wires for the converted SparsePauliOp; if
-            the original SparsePauliOp acted on :math:`N` qubits, then this must be a sequence of
-            length :math:`N`
+        wires (Sequence | None): optional assignment of wires for the converted ``SparsePauliOp``;
+            if the original ``SparsePauliOp`` acted on :math:`N` qubits, then this must be a
+            sequence of length :math:`N`
 
     Returns:
         pennylane.operation.Operator: The equivalent PennyLane operator.
@@ -575,8 +576,10 @@ def load_pauli_op(
 
         The wire ordering convention differs between PennyLane and Qiskit: PennyLane wires are
         enumerated from left to right, while the Qiskit convention is to enumerate from right to
-        left. A ``SparsePauliOp`` term defined by the string ``"XYZ"`` applies ``Z`` on wire 0,
-        ``Y`` on wire 1, and ``X`` on wire 2.
+        left. This means a ``SparsePauliOp`` term defined by the string ``"XYZ"`` applies ``Z`` on
+        wire 0, ``Y`` on wire 1, and ``X`` on wire 2. For more details, see the
+        `String representation <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.Pauli>`_
+        section of the Qiskit documentation for the ``Pauli`` class.
 
     **Example**
 
@@ -594,7 +597,7 @@ def load_pauli_op(
     SparsePauliOp(['II', 'XY'],
                   coeffs=[1.+0.j, 1.+0.j])
 
-    To convert the ``SparsePauliOp`` into a PennyLane operator, use:
+    To convert the ``SparsePauliOp`` into a PennyLane ``Operator``, use:
 
     >>> from pennylane_qiskit import load_pauli_op
     >>> load_pauli_op(qiskit_op)
@@ -640,6 +643,9 @@ def load_pauli_op(
         >>> load_pauli_op(wired_qiskit_op, wires=[3, 5, 7])
         Y(5) @ Z(3) @ X(7)
     """
+    if not isinstance(pauli_op, SparsePauliOp):
+        raise ValueError(f"The operator {pauli_op} is not a valid Qiskit SparsePauliOp.")
+
     if wires is not None and len(wires) != pauli_op.num_qubits:
         raise RuntimeError(
             f"The specified number of wires - {len(wires)} - does not match the "

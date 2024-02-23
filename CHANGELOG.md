@@ -29,6 +29,13 @@
   ``Barrier``, ``CYGate``, ``CHGate``, ``CPhase``, ``CCZGate``, ``ECRGate``, and ``GlobalPhaseGate``.
   [(#449)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/449)
 
+* Added the ability to convert a Qiskit `SparsePauliOp` instance into a PennyLane `Operator`.
+  [(#401)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/401)
+  [(#453)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/453)
+
+* Added a `pennylane.io` entry point for converting Qiskit operators.
+  [(#453)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/453)
+
 * Unused parameters are now ignored when a `QuantumCircuit` is converted using `load`.
   [(#454)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/454)
 

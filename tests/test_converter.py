@@ -1937,3 +1937,11 @@ class TestLoadPauliOp:
         )
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(SparsePauliOp("II"), wires=[0, 1, 2])
+
+    def test_convert_with_invalid_operator(self):
+        """Tests that a ValueError is raised if an attempt is made to convert an object which is not
+        a SparsePauliOp into a PennyLane operator.
+        """
+        match = r"The operator 123 is not a valid Qiskit SparsePauliOp\."
+        with pytest.raises(ValueError, match=match):
+            load_pauli_op(123)
