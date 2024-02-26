@@ -52,22 +52,25 @@ referral_to_forum = (
 )
 
 
-def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any]):
+def _check_parameter_bound(
+    param: Parameter,
+    unbound_params: Dict[Union[Parameter, ParameterVector], Any],
+):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
         param (qiskit.circuit.Parameter): the parameter to be checked
-        unbound_params (dict[qiskit.circuit.Parameter, Any]):
-            a dictionary mapping qiskit parameters to trainable parameter values
+        unbound_params (dict[qiskit.circuit.Parameter | qiskit.circuit.ParameterVector, Any]):
+            a dictionary mapping qiskit parameters (or vectors) to trainable parameter values
     """
     if isinstance(param, ParameterVectorElement):
         if param.vector not in unbound_params:
-            raise ValueError(f"The vector of parameter {param} was not bound correctly.".format(param))
+            raise ValueError(f"The vector of parameter {param} was not bound correctly.")
 
     elif isinstance(param, Parameter):
         if param not in unbound_params:
-            raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
+            raise ValueError(f"The parameter {param} was not bound correctly.")
 
 
 def _process_basic_param_args(params, *args, **kwargs):

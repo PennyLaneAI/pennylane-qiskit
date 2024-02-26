@@ -1,4 +1,5 @@
 import sys
+from typing import cast
 
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -6,6 +7,7 @@ from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
+from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 
@@ -242,17 +244,6 @@ class TestConverter:
         assert recorder.queue[0].name == "RZ"
         assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == Wires([0])
-
-    def test_parameter_was_not_bound(self, recorder):
-        """Tests that an error is raised when parameters were not bound."""
-
-        theta = Parameter("θ")
-        unbound_params = {}
-
-        with pytest.raises(
-            ValueError, match="The parameter {} was not bound correctly.".format(theta)
-        ):
-            _check_parameter_bound(theta, unbound_params)
 
     def test_unused_parameters_are_ignored(self, recorder):
         """Tests that unused parameters are ignored during assignment."""
@@ -741,6 +732,44 @@ class TestConverterGates:
         assert recorder.queue[0].wires == Wires([0, 1])
 
 
+class TestCheckParameterBound:
+    """Tests for the :func:`_check_parameter_bound()` function."""
+
+    def test_parameter_vector_element_is_unbound(self):
+        """Tests that no exception is raised if the vector associated with a parameter vector
+        element exists in the dictionary of unbound parameters.
+        """
+        param_vec = ParameterVector("θ", 2)
+        param = cast(ParameterVectorElement, param_vec[1])
+        _check_parameter_bound(param=param, unbound_params={param_vec: [0.1, 0.2]})
+
+    def test_parameter_vector_element_is_not_unbound(self):
+        """Tests that a ValueError is raised if the vector associated with a parameter vector
+        element is missing from the dictionary of unbound parameters.
+        """
+        param_vec = ParameterVector("θ", 2)
+        param = cast(ParameterVectorElement, param_vec[1])
+
+        match = r"The vector of parameter θ\[1\] was not bound correctly\."
+        with pytest.raises(ValueError, match=match):
+            _check_parameter_bound(param=param, unbound_params={})
+
+    def test_parameter_is_unbound(self):
+        """Tests that no exception is raised if the checked parameter exists in the dictionary of
+        unbound parameters.
+        """
+        param = Parameter("θ")
+        _check_parameter_bound(param=param, unbound_params={param: 0.1})
+
+    def test_parameter_is_not_unbound(self):
+        """Tests that a ValueError is raised if the checked parameter is missing in the dictionary
+        of unbound parameters.
+        """
+        param = Parameter("θ")
+        with pytest.raises(ValueError, match=r"The parameter θ was not bound correctly\."):
+            _check_parameter_bound(param=param, unbound_params={})
+
+
 class TestConverterUtils:
     """Tests the utility functions used by the converter function."""
 
@@ -1134,7 +1163,6 @@ class TestConverterQasm:
 
 
 class TestConverterIntegration:
-
     def test_use_loaded_circuit_in_qnode(self, qubit_device_2_wires):
         """Tests loading a converted template in a QNode."""
 
@@ -1672,7 +1700,6 @@ class TestControlOpIntegration:
 
 
 class TestPassingParameters:
-
     def _get_parameter_vector_test_circuit(self, qubit_device_2_wires):
         """A test circuit for testing"""
         theta = ParameterVector("v", 3)
@@ -1816,9 +1843,9 @@ class TestLoadPauliOp:
                 qml.sum(
                     qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0)),
                     qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0)),
-                )
+                ),
             ),
-        ]
+        ],
     )
     def test_convert_with_default_coefficients(self, pauli_op, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with the default
@@ -1839,9 +1866,9 @@ class TestLoadPauliOp:
                 qml.sum(
                     qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
                     qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
-                )
+                ),
             ),
-        ]
+        ],
     )
     def test_convert_with_literal_coefficients(self, pauli_op, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with literal
@@ -1849,7 +1876,6 @@ class TestLoadPauliOp:
         """
         have_op = load_pauli_op(pauli_op)
         assert qml.equal(have_op, want_op)
-
 
     def test_convert_with_parameter_coefficients(self):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
@@ -1907,9 +1933,9 @@ class TestLoadPauliOp:
                 qml.sum(
                     qml.prod(qml.PauliX(wires=0), qml.PauliY(wires=1)),
                     qml.prod(qml.PauliZ(wires=0), qml.PauliX(wires=1)),
-                )
+                ),
             ),
-        ]
+        ],
     )
     def test_convert_with_wires(self, pauli_op, wires, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
