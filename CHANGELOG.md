@@ -47,7 +47,7 @@
 
 ### Bug fixes 🐛
 
-* Resolved issues that prevented `ParameterVector` instances from being differentiated.
+* It is now possible to take the gradient of a circuit with `ParameterVector` elements.
   [(#458)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/458)
 
 ### Contributors ✍️
