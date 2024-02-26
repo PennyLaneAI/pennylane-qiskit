@@ -4,29 +4,29 @@
 
 ### Improvements 🛠
 
-* The UI for passing parameters to a ``qfunc`` generated when loading a Qiskit ``QuantumCircuit``
+* The UI for passing parameters to a `qfunc` generated when loading a Qiskit `QuantumCircuit`
   into PennyLane is updated to allow passing parameters as args or kwargs, rather than as
   a dictionary. The old dictionary UI continues to be supported.
   [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
   [(#428)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/428)
 
-* Measurement operations are now added to the PennyLane template when a ``QuantumCircuit``
+* Measurement operations are now added to the PennyLane template when a `QuantumCircuit`
   is converted using `load`. Additionally, one can override any existing terminal
   measurements by providing a list of PennyLane
   `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
   [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
 
 * Added the support for converting conditional operations based on mid-circuit measurements and
-  two of the ``ControlFlowOp`` operations - ``IfElseOp`` and ``SwitchCaseOp`` when converting
-  a ``QuantumCircuit`` using `load`.
+  two of the `ControlFlowOp` operations - `IfElseOp` and `SwitchCaseOp` when converting
+  a `QuantumCircuit` using `load`.
   [(#417)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/417)
 
-* Qiskit's classical ``Expr`` conditionals can also be used with the supported
-  ``ControlFlowOp`` operations.
+* Qiskit's classical `Expr` conditionals can also be used with the supported
+  `ControlFlowOp` operations.
   [(#432)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/432)
 
 * Added conversion support for more Qiskit gates to native PennyLane operations -
-  ``Barrier``, ``CYGate``, ``CHGate``, ``CPhase``, ``CCZGate``, ``ECRGate``, and ``GlobalPhaseGate``.
+  `Barrier`, `CYGate`, `CHGate`, `CPhase`, `CCZGate`, `ECRGate`, and `GlobalPhaseGate`.
   [(#449)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/449)
 
 * Added the ability to convert a Qiskit `SparsePauliOp` instance into a PennyLane `Operator`.
@@ -475,7 +475,7 @@ Christina Lee, Antal Száva
 
 ### Improvements
 
-* The plugin can now load Qiskit circuits with more complicated ``ParameterExpression`` variables.
+* The plugin can now load Qiskit circuits with more complicated `ParameterExpression` variables.
   [(#139)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/139)
 
 ### Contributors
@@ -627,7 +627,7 @@ Maria Schuld, Antal Száva
 
 ### Improvements
 
-* Ported the ``QiskitDevice`` class to inherit from the ``QubitDevice`` class
+* Ported the `QiskitDevice` class to inherit from the `QubitDevice` class
   defined in PennyLane to use unified qubit operations and ease development.
   [(#83)](https://github.com/XanaduAI/pennylane-qiskit/pull/83)
 
