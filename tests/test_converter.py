@@ -1302,7 +1302,7 @@ class TestConverterIntegration:
     @pytest.mark.parametrize("shots", [None])
     @pytest.mark.parametrize("theta,phi,varphi", list(zip(THETA, PHI, VARPHI)))
     def test_gradient(self, theta, phi, varphi, shots, tol):
-        """Test that the gradient works correctly"""
+        """Tests that the gradient of a circuit is calculated correctly."""
         qc = QuantumCircuit(3)
         qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
 
@@ -1332,6 +1332,64 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("shots", [None])
+    def test_gradient_with_parameter_vector(self, shots, tol):
+        """Tests that the gradient of a circuit with a parameter vector is calculated correctly."""
+        qiskit_circuit = QuantumCircuit(1)
+
+        theta_param = ParameterVector("θ", 2)
+        theta_val = np.array([np.pi / 4, np.pi / 16])
+
+        qiskit_circuit.rx(theta_param[0], 0)
+        qiskit_circuit.rx(theta_param[1] * 4, 0)
+
+        pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
+
+        dev = qml.device("default.qubit", wires=1, shots=shots)
+
+        @qml.qnode(dev)
+        def circuit(theta):
+            pl_circuit_loader(params={theta_param: theta})
+            return qml.expval(qml.PauliZ(0))
+
+        have_gradient = qml.grad(circuit)(theta_val)
+        want_gradient = [-1, -4]
+        assert np.allclose(have_gradient, want_gradient, **tol)
+
+    @pytest.mark.parametrize("shots", [None])
+    def test_gradient_with_parameter_expressions(self, shots, tol):
+        """Tests that the gradient of a circuit with parameter expressions is calculated correctly."""
+        qiskit_circuit = QuantumCircuit(1)
+
+        theta_param = ParameterVector("θ", 3)
+        theta_val = np.array([3 * np.pi / 16, np.pi / 64, np.pi / 32])
+
+        phi_param = Parameter("φ")
+        phi_val = np.array(np.pi / 8)
+
+        # Apply an instruction with a regular parameter.
+        qiskit_circuit.rx(phi_param, 0)
+        # Apply an instruction with a parameter vector element.
+        qiskit_circuit.rx(theta_param[0], 0)
+        # Apply an instruction with a parameter expression involving one parameter.
+        qiskit_circuit.rx(2 * theta_param[1], 0)
+        # Apply an instruction with a parameter expression involving two parameters.
+        qiskit_circuit.rx(theta_param[2] + phi_param, 0)
+
+        pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
+
+        dev = qml.device("default.qubit", wires=1, shots=shots)
+
+        @qml.qnode(dev)
+        def circuit(phi, theta):
+            pl_circuit_loader(params={phi_param: phi, theta_param: theta})
+            return qml.expval(qml.PauliZ(0))
+
+        have_phi_gradient, have_theta_gradient = qml.grad(circuit)(phi_val, theta_val)
+        want_phi_gradient, want_theta_gradient = [-2], [-1, -2, -1]
+        assert np.allclose(have_phi_gradient, want_phi_gradient, **tol)
+        assert np.allclose(have_theta_gradient, want_theta_gradient, **tol)
 
     @pytest.mark.parametrize("shots", [None])
     def test_differentiable_param_is_array(self, shots, tol):
