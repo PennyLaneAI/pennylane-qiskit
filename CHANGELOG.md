@@ -47,6 +47,9 @@
 
 ### Bug fixes 🐛
 
+* `QiskitDevice.batch_execute()` now gracefully handles empty lists of circuits.
+  [(#459)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/459)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
