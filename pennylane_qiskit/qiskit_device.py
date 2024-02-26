@@ -496,6 +496,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         compiled_circuits = self.compile_circuits(circuits)
 
+        if not compiled_circuits:
+            # At least one circuit must always be provided to the backend.
+            return []
+
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
 

@@ -162,6 +162,16 @@ class TestBatchExecution:
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
 
+    def test_result_no_tapes(self, device):
+        """Tests that the result is correct when there are no tapes to execute."""
+        dev = device(2)
+        res = dev.batch_execute([])
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        assert not res
+
     def test_result_empty_tape(self, device, tol):
         """Tests that the result has the correct shape and entry types for
         empty tapes."""
