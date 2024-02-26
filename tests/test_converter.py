@@ -1363,7 +1363,7 @@ class TestConverterIntegration:
         qiskit_circuit = QuantumCircuit(1)
 
         theta_param = ParameterVector("θ", 3)
-        theta_val = np.array([3 * np.pi / 16, np.pi / 64, np.pi / 32])
+        theta_val = np.array([3 * np.pi / 16, np.pi / 64, np.pi / 96])
 
         phi_param = Parameter("φ")
         phi_val = np.array(np.pi / 8)
@@ -1373,9 +1373,9 @@ class TestConverterIntegration:
         # Apply an instruction with a parameter vector element.
         qiskit_circuit.rx(theta_param[0], 0)
         # Apply an instruction with a parameter expression involving one parameter.
-        qiskit_circuit.rx(2 * theta_param[1], 0)
+        qiskit_circuit.rx(theta_param[1] + theta_param[1], 0)
         # Apply an instruction with a parameter expression involving two parameters.
-        qiskit_circuit.rx(theta_param[2] + phi_param, 0)
+        qiskit_circuit.rx(3 * theta_param[2] + phi_param, 0)
 
         pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
 
@@ -1387,7 +1387,7 @@ class TestConverterIntegration:
             return qml.expval(qml.PauliZ(0))
 
         have_phi_gradient, have_theta_gradient = qml.grad(circuit)(phi_val, theta_val)
-        want_phi_gradient, want_theta_gradient = [-2], [-1, -2, -1]
+        want_phi_gradient, want_theta_gradient = [-2], [-1, -2, -3]
         assert np.allclose(have_phi_gradient, want_phi_gradient, **tol)
         assert np.allclose(have_theta_gradient, want_theta_gradient, **tol)
 

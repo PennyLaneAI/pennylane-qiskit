@@ -286,7 +286,7 @@ def _get_operation_params(instruction, unbound_params) -> list:
                 f_args = []
                 f_params = []
 
-                # Use a set of names to ensure duplicate subparameters are only passed once.
+                # Ensure duplicate subparameters are only appended once.
                 f_param_names = set()
 
                 for subparam in p.parameters:
