@@ -488,21 +488,21 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 for next_op, next_qargs, next_cargs in qc.data[idx + 1 :]:
                     # Check if the subsequent conditional is measurement needing
                     if isinstance(next_op, ControlFlowOp):
-                        if set(next_cargs).intersection(op_cregs):
+                        if set(next_cargs) & op_cregs:
                             meas_terminal = False
                             break
                     elif next_op.condition:  # For legacy c_if
                         next_op_reg = next_op.condition[0]
                         if isinstance(next_op_reg, Clbit):
                             next_op_reg = [next_op_reg]
-                        if set(next_op_reg).intersection(op_cregs):
+                        if set(next_op_reg) & op_cregs:
                             meas_terminal = False
                             break
                     # Check if the subsequent next_op is measurement interfering
                     if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
                         next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
                         # Check if there's any overlapping wires
-                        if next_op_wires.intersection(op_wires):
+                        if next_op_wires & op_wires:
                             meas_terminal = False
                             break
 
