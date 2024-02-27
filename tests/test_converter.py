@@ -1472,6 +1472,7 @@ class TestConverterIntegration:
         """Tests loading a converted template in a QNode with a single measurement."""
         qc = QuantumCircuit(1)
         qc.h(0)
+        qc.measure_all()
 
         measurement = qml.expval(qml.PauliZ(0))
         quantum_circuit = load(qc, measurements=measurement)
@@ -1483,7 +1484,7 @@ class TestConverterIntegration:
         @qml.qnode(qubit_device_single_wire)
         def circuit_native_pennylane():
             qml.Hadamard(0)
-            return measurement
+            return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 

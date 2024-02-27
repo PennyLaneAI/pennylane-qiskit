@@ -553,9 +553,13 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         # Use the user-provided measurements
         if measurements:
-            if isinstance(measurements, Iterable) and qml.queuing.QueuingManager.active_context():
+            if not qml.queuing.QueuingManager.active_context():
+                return measurements
+
+            if isinstance(measurements, Iterable):
                 return [qml.apply(meas) for meas in measurements]
-            return measurements
+
+            return qml.apply(measurements)
 
         return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
 
