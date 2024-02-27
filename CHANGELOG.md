@@ -50,6 +50,9 @@
 * `QiskitDevice.batch_execute()` now gracefully handles empty lists of circuits.
   [(#459)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/459)
 
+* It is now possible to compute the gradient of a circuit with `ParameterVector` elements.
+  [(#458)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/458)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):

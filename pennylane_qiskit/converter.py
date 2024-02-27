@@ -23,9 +23,10 @@ import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
+from qiskit.circuit.classical import expr
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
-from qiskit.circuit.classical import expr
+from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
@@ -51,17 +52,25 @@ referral_to_forum = (
 )
 
 
-def _check_parameter_bound(param: Parameter, unbound_params: Dict[Parameter, Any]):
+def _check_parameter_bound(
+    param: Parameter,
+    unbound_params: Dict[Union[Parameter, ParameterVector], Any],
+):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
 
     Args:
         param (qiskit.circuit.Parameter): the parameter to be checked
-        unbound_params (dict[qiskit.circuit.Parameter, Any]):
-            a dictionary mapping qiskit parameters to trainable parameter values
+        unbound_params (dict[qiskit.circuit.Parameter | qiskit.circuit.ParameterVector, Any]):
+            a dictionary mapping qiskit parameters (or vectors) to trainable parameter values
     """
-    if isinstance(param, Parameter) and param not in unbound_params:
-        raise ValueError(f"The parameter {param} was not bound correctly.".format(param))
+    if isinstance(param, ParameterVectorElement):
+        if param.vector not in unbound_params:
+            raise ValueError(f"The vector of parameter {param} was not bound correctly.")
+
+    elif isinstance(param, Parameter):
+        if param not in unbound_params:
+            raise ValueError(f"The parameter {param} was not bound correctly.")
 
 
 def _process_basic_param_args(params, *args, **kwargs):
@@ -274,11 +283,32 @@ def _get_operation_params(instruction, unbound_params) -> list:
 
         if isinstance(p, ParameterExpression):
             if p.parameters:  # non-empty set = has unbound parameters
-                ordered_params = tuple(p.parameters)
-                f = lambdify(ordered_params, getattr(p, "_symbol_expr"), modules=qml.numpy)
                 f_args = []
-                for i_ordered_params in ordered_params:
-                    f_args.append(unbound_params.get(i_ordered_params))
+                f_params = []
+
+                # Ensure duplicate subparameters are only appended once.
+                f_param_names = set()
+
+                for subparam in p.parameters:
+                    if isinstance(subparam, ParameterVectorElement):
+                        # Unfortunately, parameter vector elements are named using square brackets.
+                        # As a result, element names are not a valid Python identifier which causes
+                        # issues with SymPy. To get around this, we create a temporary parameter
+                        # representing the entire vector and pass that into the SymPy function.
+                        parameter = Parameter(subparam.vector.name)
+                        argument = unbound_params.get(subparam.vector)
+                    else:
+                        parameter = subparam
+                        argument = unbound_params.get(subparam)
+
+                    if parameter.name not in f_param_names:
+                        f_param_names.add(parameter.name)
+                        f_params.append(parameter)
+                        f_args.append(argument)
+
+                f_expr = getattr(p, "_symbol_expr")
+                f = lambdify(f_params, f_expr, modules=qml.numpy)
+
                 operation_params.append(f(*f_args))
             else:  # needed for qiskit<0.43.1
                 operation_params.append(float(p))  # pragma: no cover
