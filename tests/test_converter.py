@@ -1776,6 +1776,53 @@ class TestControlOpIntegration:
 
         assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
 
+    def test_mid_circuit_as_terminal(self):
+        """Test the control workflows where mid-circuit measurements disguise as terminal ones"""
+
+        qc = QuantumCircuit(3, 2)
+
+        qc.rx(0.9, 0)  # Prepare input state on qubit 0
+
+        qc.h(1)  # Prepare Bell state on qubits 1 and 2
+        qc.cx(1, 2)
+
+        qc.cx(0, 1)  # Perform teleportation
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.measure(1, 1)
+
+        with qc.if_test((0, 1)):
+            qc.x(2)
+
+        dev = qml.device("default.qubit", wires=3)
+
+        @qml.qnode(dev)
+        def qk_circuit():
+            qml.from_qiskit(qc)()
+            return qml.expval(qml.PauliZ(0))
+
+        @qml.qnode(dev)
+        def pl_circuit():
+            qml.RX(0.9, [0])
+            qml.Hadamard([1])
+            qml.CNOT([1, 2])
+            qml.CNOT([0, 1])
+            qml.Hadamard([0])
+            m0 = qml.measure(0)
+            qml.cond(m0 == 1, qml.PauliX)(wires=[2])
+            m1 = qml.measure(1)
+            return qml.expval(qml.PauliZ(0))
+
+        assert qk_circuit() == pl_circuit()
+        assert all(
+            (
+                op1 == op2
+                if not isinstance(op1, qml.measurements.MidMeasureMP)
+                else op1.wires == op2.wires
+            )
+            for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations)
+        )
+
 
 class TestPassingParameters:
     def _get_parameter_vector_test_circuit(self, qubit_device_2_wires):
