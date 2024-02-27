@@ -351,7 +351,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
         measurements (None | pennylane.measurements.MeasurementProcess | list[pennylane.measurements.MeasurementProcess]):
             the PennyLane `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
-            that override the terminal measurements that may be present in the input circuit.
+            that override the terminal measurements that may be present in the input circuit
 
     Returns:
         function: The resulting PennyLane template.
