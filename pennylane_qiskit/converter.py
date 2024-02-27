@@ -481,21 +481,21 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     operation_args = [np.array(operation_params)]
 
             elif isinstance(instruction, Measure):
-                # Store the current operation wires
-                op_wires = set(operation_wires)
+                # Store the current operation wires and registers
+                op_wires, op_cregs = set(operation_wires), set(cargs)
                 # Look-ahead for more gate(s) on its wire(s)
                 meas_terminal = True
                 for next_op, next_qargs, next_cargs in qc.data[idx + 1 :]:
                     # Check if the subsequent conditional is measurement needing
                     if isinstance(next_op, ControlFlowOp):
-                        if set(next_cargs).intersection(set(cargs)):
+                        if set(next_cargs).intersection(op_cregs):
                             meas_terminal = False
                             break
                     elif next_op.condition:  # For legacy c_if
                         next_op_reg = next_op.condition[0]
                         if isinstance(next_op_reg, Clbit):
                             next_op_reg = [next_op_reg]
-                        if set(next_op_reg).intersection(set(cargs)):
+                        if set(next_op_reg).intersection(op_cregs):
                             meas_terminal = False
                             break
                     # Check if the subsequent next_op is measurement interfering
