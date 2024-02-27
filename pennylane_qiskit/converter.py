@@ -499,7 +499,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                             meas_terminal = False
                             break
                     # Check if the subsequent next_op is measurement interfering
-                    elif not isinstance(next_op, (Barrier, GlobalPhaseGate)):
+                    if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
                         next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
                         # Check if there's any overlapping wires
                         if next_op_wires.intersection(op_wires):
