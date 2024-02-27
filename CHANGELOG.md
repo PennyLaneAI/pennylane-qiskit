@@ -15,11 +15,13 @@
   measurements by providing a list of PennyLane
   `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
   [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
+  [(#466)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/466)
 
 * Added the support for converting conditional operations based on mid-circuit measurements and
   two of the `ControlFlowOp` operations - `IfElseOp` and `SwitchCaseOp` when converting
   a `QuantumCircuit` using `load`.
   [(#417)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/417)
+  [(#465)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/465)
 
 * Qiskit's classical `Expr` conditionals can also be used with the supported
   `ControlFlowOp` operations.

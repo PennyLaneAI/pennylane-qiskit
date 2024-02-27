@@ -15,7 +15,7 @@ r"""
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
-from typing import Dict, Any, Sequence, Union
+from typing import Dict, Any, Iterable, Sequence, Union
 import warnings
 from functools import partial, reduce
 
@@ -349,12 +349,12 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
     Args:
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
-        measurements (list[pennylane.measurements.MeasurementProcess]): the list of PennyLane
-            `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
-            that overrides the terminal measurements that may be present in the input circuit.
+        measurements (None | pennylane.measurements.MeasurementProcess | list[pennylane.measurements.MeasurementProcess]):
+            the PennyLane `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
+            that override the terminal measurements that may be present in the input circuit
 
     Returns:
-        function: the resulting PennyLane template
+        function: The resulting PennyLane template.
     """
 
     # pylint:disable=too-many-branches, fixme, protected-access
@@ -481,16 +481,28 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     operation_args = [np.array(operation_params)]
 
             elif isinstance(instruction, Measure):
-                # Store the current operation wires
-                op_wires = set(operation_wires)
+                # Store the current operation wires and registers
+                op_wires, op_cregs = set(operation_wires), set(cargs)
                 # Look-ahead for more gate(s) on its wire(s)
                 meas_terminal = True
-                for next_op, next_qargs, __ in qc.data[idx + 1 :]:
-                    # Check if the subsequent whether next_op is measurement interfering
+                for next_op, next_qargs, next_cargs in qc.data[idx + 1 :]:
+                    # Check if the subsequent conditional is measurement needing
+                    if isinstance(next_op, ControlFlowOp):
+                        if set(next_cargs) & op_cregs:
+                            meas_terminal = False
+                            break
+                    elif next_op.condition:  # For legacy c_if
+                        next_op_reg = next_op.condition[0]
+                        if isinstance(next_op_reg, Clbit):
+                            next_op_reg = [next_op_reg]
+                        if set(next_op_reg) & op_cregs:
+                            meas_terminal = False
+                            break
+                    # Check if the subsequent next_op is measurement interfering
                     if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
                         next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
                         # Check if there's any overlapping wires
-                        if next_op_wires.intersection(op_wires):
+                        if next_op_wires & op_wires:
                             meas_terminal = False
                             break
 
@@ -553,9 +565,13 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         # Use the user-provided measurements
         if measurements:
-            if qml.queuing.QueuingManager.active_context():
+            if not qml.queuing.QueuingManager.active_context():
+                return measurements
+
+            if isinstance(measurements, Iterable):
                 return [qml.apply(meas) for meas in measurements]
-            return measurements
+
+            return qml.apply(measurements)
 
         return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
 
