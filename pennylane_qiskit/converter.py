@@ -15,7 +15,7 @@ r"""
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
-from typing import Dict, Any, Sequence, Union
+from typing import Dict, Any, Iterable, Sequence, Union
 import warnings
 from functools import partial, reduce
 
@@ -553,7 +553,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         # Use the user-provided measurements
         if measurements:
-            if qml.queuing.QueuingManager.active_context():
+            if isinstance(measurements, Iterable) and qml.queuing.QueuingManager.active_context():
                 return [qml.apply(meas) for meas in measurements]
             return measurements
 

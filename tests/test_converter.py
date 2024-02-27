@@ -1468,8 +1468,27 @@ class TestConverterIntegration:
 
         assert np.allclose(jac, jac_expected)
 
-    def test_meas_circuit_in_qnode(self, qubit_device_2_wires):
-        """Tests loading a converted template in a QNode with measurements."""
+    def test_quantum_circuit_with_single_measurement(self, qubit_device_single_wire):
+        """Tests loading a converted template in a QNode with a single measurement."""
+        qc = QuantumCircuit(1)
+        qc.h(0)
+
+        measurement = qml.expval(qml.PauliZ(0))
+        quantum_circuit = load(qc, measurements=measurement)
+
+        @qml.qnode(qubit_device_single_wire)
+        def circuit_loaded_qiskit_circuit():
+            return quantum_circuit()
+
+        @qml.qnode(qubit_device_single_wire)
+        def circuit_native_pennylane():
+            qml.Hadamard(0)
+            return measurement
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_quantum_circuit_with_multiple_measurements(self, qubit_device_2_wires):
+        """Tests loading a converted template in a QNode with multiple measurements."""
 
         angle = 0.543
 
