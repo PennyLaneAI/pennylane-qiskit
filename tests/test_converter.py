@@ -1836,12 +1836,12 @@ class TestControlOpIntegration:
         with qc.if_test((1, 1)):
             qc.x(2)
 
-        m0, m1 = qml.from_qiskit(qc)()
+        m0, m1 = load(qc)()
         w0, w1 = qml.wires.Wires([0]), qml.wires.Wires([1])
         assert isinstance(m0, qml.measurements.MeasurementValue) and m0.wires == w0
         assert isinstance(m1, qml.measurements.MeasurementValue) and m1.wires == w1
 
-        m2 = qml.from_qiskit(qc, measurements=qml.expval(qml.PauliZ(2)))()
+        m2 = load(qc, measurements=qml.expval(qml.PauliZ(2)))()
         w2 = qml.wires.Wires([2])
         assert isinstance(m2, qml.measurements.ExpectationMP) and m2.wires == w2
 
