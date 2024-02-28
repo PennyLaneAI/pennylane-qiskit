@@ -1791,7 +1791,7 @@ class TestControlOpIntegration:
         qc.measure(0, 0)
         qc.measure(1, 1)
 
-        with qc.if_test((0, 1)):
+        with qc.if_test((1, 1)):
             qc.x(2)
 
         dev = qml.device("default.qubit", wires=3)
@@ -1809,8 +1809,8 @@ class TestControlOpIntegration:
             qml.CNOT([0, 1])
             qml.Hadamard([0])
             m0 = qml.measure(0)
-            qml.cond(m0 == 1, qml.PauliX)(wires=[2])
             m1 = qml.measure(1)
+            qml.cond(m1 == 1, qml.PauliX)(wires=[2])
             return qml.expval(qml.PauliZ(0))
 
         assert qk_circuit() == pl_circuit()
@@ -1822,6 +1822,28 @@ class TestControlOpIntegration:
             )
             for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations)
         )
+
+    def test_measurement_are_not_discriminated(self):
+        """Test the all measurements are considered mid-circuit measurements when no terminal measurements are given"""
+
+        qc = QuantumCircuit(3, 2)
+
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.measure(0, 0)
+        qc.measure(1, 1)
+
+        with qc.if_test((1, 1)):
+            qc.x(2)
+
+        m0, m1 = load(qc)()
+        w0, w1 = qml.wires.Wires([0]), qml.wires.Wires([1])
+        assert isinstance(m0, qml.measurements.MeasurementValue) and m0.wires == w0
+        assert isinstance(m1, qml.measurements.MeasurementValue) and m1.wires == w1
+
+        m2 = load(qc, measurements=qml.expval(qml.PauliZ(2)))()
+        w2 = qml.wires.Wires([2])
+        assert isinstance(m2, qml.measurements.ExpectationMP) and m2.wires == w2
 
 
 class TestPassingParameters:

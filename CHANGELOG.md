@@ -16,6 +16,7 @@
   `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
   [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
   [(#466)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/466)
+  [(#467)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/467)
 
 * Added the support for converting conditional operations based on mid-circuit measurements and
   two of the `ControlFlowOp` operations - `IfElseOp` and `SwitchCaseOp` when converting
