@@ -47,6 +47,9 @@
 
 ### Bug fixes 🐛
 
+* It is now possible to compute the gradient of a circuit with `ParameterVector` elements.
+  [(#458)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/458)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):

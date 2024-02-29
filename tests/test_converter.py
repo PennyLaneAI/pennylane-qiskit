@@ -1,4 +1,5 @@
 import sys
+from typing import cast
 
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -6,6 +7,7 @@ from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
+from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 
@@ -242,17 +244,6 @@ class TestConverter:
         assert recorder.queue[0].name == "RZ"
         assert recorder.queue[0].parameters == [0.5]
         assert recorder.queue[0].wires == Wires([0])
-
-    def test_parameter_was_not_bound(self, recorder):
-        """Tests that an error is raised when parameters were not bound."""
-
-        theta = Parameter("θ")
-        unbound_params = {}
-
-        with pytest.raises(
-            ValueError, match="The parameter {} was not bound correctly.".format(theta)
-        ):
-            _check_parameter_bound(theta, unbound_params)
 
     def test_unused_parameters_are_ignored(self, recorder):
         """Tests that unused parameters are ignored during assignment."""
@@ -741,6 +732,44 @@ class TestConverterGates:
         assert recorder.queue[0].wires == Wires([0, 1])
 
 
+class TestCheckParameterBound:
+    """Tests for the :func:`_check_parameter_bound()` function."""
+
+    def test_parameter_vector_element_is_unbound(self):
+        """Tests that no exception is raised if the vector associated with a parameter vector
+        element exists in the dictionary of unbound parameters.
+        """
+        param_vec = ParameterVector("θ", 2)
+        param = cast(ParameterVectorElement, param_vec[1])
+        _check_parameter_bound(param=param, unbound_params={param_vec: [0.1, 0.2]})
+
+    def test_parameter_vector_element_is_not_unbound(self):
+        """Tests that a ValueError is raised if the vector associated with a parameter vector
+        element is missing from the dictionary of unbound parameters.
+        """
+        param_vec = ParameterVector("θ", 2)
+        param = cast(ParameterVectorElement, param_vec[1])
+
+        match = r"The vector of parameter θ\[1\] was not bound correctly\."
+        with pytest.raises(ValueError, match=match):
+            _check_parameter_bound(param=param, unbound_params={})
+
+    def test_parameter_is_unbound(self):
+        """Tests that no exception is raised if the checked parameter exists in the dictionary of
+        unbound parameters.
+        """
+        param = Parameter("θ")
+        _check_parameter_bound(param=param, unbound_params={param: 0.1})
+
+    def test_parameter_is_not_unbound(self):
+        """Tests that a ValueError is raised if the checked parameter is missing in the dictionary
+        of unbound parameters.
+        """
+        param = Parameter("θ")
+        with pytest.raises(ValueError, match=r"The parameter θ was not bound correctly\."):
+            _check_parameter_bound(param=param, unbound_params={})
+
+
 class TestConverterUtils:
     """Tests the utility functions used by the converter function."""
 
@@ -1134,7 +1163,6 @@ class TestConverterQasm:
 
 
 class TestConverterIntegration:
-
     def test_use_loaded_circuit_in_qnode(self, qubit_device_2_wires):
         """Tests loading a converted template in a QNode."""
 
@@ -1274,7 +1302,7 @@ class TestConverterIntegration:
     @pytest.mark.parametrize("shots", [None])
     @pytest.mark.parametrize("theta,phi,varphi", list(zip(THETA, PHI, VARPHI)))
     def test_gradient(self, theta, phi, varphi, shots, tol):
-        """Test that the gradient works correctly"""
+        """Tests that the gradient of a circuit is calculated correctly."""
         qc = QuantumCircuit(3)
         qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
 
@@ -1304,6 +1332,64 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(res, expected, **tol)
+
+    @pytest.mark.parametrize("shots", [None])
+    def test_gradient_with_parameter_vector(self, shots, tol):
+        """Tests that the gradient of a circuit with a parameter vector is calculated correctly."""
+        qiskit_circuit = QuantumCircuit(1)
+
+        theta_param = ParameterVector("θ", 2)
+        theta_val = np.array([np.pi / 4, np.pi / 16])
+
+        qiskit_circuit.rx(theta_param[0], 0)
+        qiskit_circuit.rx(theta_param[1] * 4, 0)
+
+        pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
+
+        dev = qml.device("default.qubit", wires=1, shots=shots)
+
+        @qml.qnode(dev)
+        def circuit(theta):
+            pl_circuit_loader(params={theta_param: theta})
+            return qml.expval(qml.PauliZ(0))
+
+        have_gradient = qml.grad(circuit)(theta_val)
+        want_gradient = [-1, -4]
+        assert np.allclose(have_gradient, want_gradient, **tol)
+
+    @pytest.mark.parametrize("shots", [None])
+    def test_gradient_with_parameter_expressions(self, shots, tol):
+        """Tests that the gradient of a circuit with parameter expressions is calculated correctly."""
+        qiskit_circuit = QuantumCircuit(1)
+
+        theta_param = ParameterVector("θ", 3)
+        theta_val = np.array([3 * np.pi / 16, np.pi / 64, np.pi / 96])
+
+        phi_param = Parameter("φ")
+        phi_val = np.array(np.pi / 8)
+
+        # Apply an instruction with a regular parameter.
+        qiskit_circuit.rx(phi_param, 0)
+        # Apply an instruction with a parameter vector element.
+        qiskit_circuit.rx(theta_param[0], 0)
+        # Apply an instruction with a parameter expression involving one parameter.
+        qiskit_circuit.rx(theta_param[1] + theta_param[1], 0)
+        # Apply an instruction with a parameter expression involving two parameters.
+        qiskit_circuit.rx(3 * theta_param[2] + phi_param, 0)
+
+        pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
+
+        dev = qml.device("default.qubit", wires=1, shots=shots)
+
+        @qml.qnode(dev)
+        def circuit(phi, theta):
+            pl_circuit_loader(params={phi_param: phi, theta_param: theta})
+            return qml.expval(qml.PauliZ(0))
+
+        have_phi_gradient, have_theta_gradient = qml.grad(circuit)(phi_val, theta_val)
+        want_phi_gradient, want_theta_gradient = [-2], [-1, -2, -3]
+        assert np.allclose(have_phi_gradient, want_phi_gradient, **tol)
+        assert np.allclose(have_theta_gradient, want_theta_gradient, **tol)
 
     @pytest.mark.parametrize("shots", [None])
     def test_differentiable_param_is_array(self, shots, tol):
@@ -1672,7 +1758,6 @@ class TestControlOpIntegration:
 
 
 class TestPassingParameters:
-
     def _get_parameter_vector_test_circuit(self, qubit_device_2_wires):
         """A test circuit for testing"""
         theta = ParameterVector("v", 3)
@@ -1816,9 +1901,9 @@ class TestLoadPauliOp:
                 qml.sum(
                     qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0)),
                     qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0)),
-                )
+                ),
             ),
-        ]
+        ],
     )
     def test_convert_with_default_coefficients(self, pauli_op, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with the default
@@ -1839,9 +1924,9 @@ class TestLoadPauliOp:
                 qml.sum(
                     qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
                     qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
-                )
+                ),
             ),
-        ]
+        ],
     )
     def test_convert_with_literal_coefficients(self, pauli_op, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with literal
@@ -1849,7 +1934,6 @@ class TestLoadPauliOp:
         """
         have_op = load_pauli_op(pauli_op)
         assert qml.equal(have_op, want_op)
-
 
     def test_convert_with_parameter_coefficients(self):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
@@ -1907,9 +1991,9 @@ class TestLoadPauliOp:
                 qml.sum(
                     qml.prod(qml.PauliX(wires=0), qml.PauliY(wires=1)),
                     qml.prod(qml.PauliZ(wires=0), qml.PauliX(wires=1)),
-                )
+                ),
             ),
-        ]
+        ],
     )
     def test_convert_with_wires(self, pauli_op, wires, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
