@@ -23,7 +23,7 @@ ply==3.11
 psutil==5.9.8
 pycparser==2.21
 python-constraint==1.4.0
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 qiskit==0.45.3
 qiskit-aer==0.13.3
 qiskit-ibm-runtime==0.20.0
