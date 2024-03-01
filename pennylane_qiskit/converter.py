@@ -15,7 +15,7 @@ r"""
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
-from typing import Dict, Any, Sequence, Union
+from typing import Dict, Any, Iterable, Sequence, Union
 import warnings
 from functools import partial, reduce
 
@@ -349,12 +349,12 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
     Args:
         quantum_circuit (qiskit.QuantumCircuit): the QuantumCircuit to be converted
-        measurements (list[pennylane.measurements.MeasurementProcess]): the list of PennyLane
-            `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
-            that overrides the terminal measurements that may be present in the input circuit.
+        measurements (None | pennylane.measurements.MeasurementProcess | list[pennylane.measurements.MeasurementProcess]):
+            the PennyLane `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
+            that override the terminal measurements that may be present in the input circuit
 
     Returns:
-        function: the resulting PennyLane template
+        function: The resulting PennyLane template.
     """
 
     # pylint:disable=too-many-branches, fixme, protected-access
@@ -481,18 +481,34 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     operation_args = [np.array(operation_params)]
 
             elif isinstance(instruction, Measure):
-                # Store the current operation wires
-                op_wires = set(operation_wires)
-                # Look-ahead for more gate(s) on its wire(s)
-                meas_terminal = True
-                for next_op, next_qargs, __ in qc.data[idx + 1 :]:
-                    # Check if the subsequent whether next_op is measurement interfering
-                    if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
-                        next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
-                        # Check if there's any overlapping wires
-                        if next_op_wires.intersection(op_wires):
-                            meas_terminal = False
-                            break
+                # Store the current operation wires and registers
+                op_wires, op_cregs = set(operation_wires), set(cargs)
+                # If final measurements are given then discriminate
+                # between the types of measurement encountered.
+                meas_terminal = False
+                if measurements:
+                    # Look-ahead for more gate(s) on its wire(s)
+                    meas_terminal = True
+                    for next_op, next_qargs, next_cargs in qc.data[idx + 1 :]:
+                        # Check if the subsequent conditional is measurement needing
+                        if isinstance(next_op, ControlFlowOp):
+                            if set(next_cargs) & op_cregs:
+                                meas_terminal = False
+                                break
+                        elif next_op.condition:  # For legacy c_if
+                            next_op_reg = next_op.condition[0]
+                            if isinstance(next_op_reg, Clbit):
+                                next_op_reg = [next_op_reg]
+                            if set(next_op_reg) & op_cregs:
+                                meas_terminal = False
+                                break
+                        # Check if the subsequent next_op is measurement interfering
+                        if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
+                            next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                            # Check if there's any overlapping wires
+                            if next_op_wires & op_wires:
+                                meas_terminal = False
+                                break
 
                 # Allows for adding terminal measurements
                 if meas_terminal:
@@ -553,9 +569,13 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
         # Use the user-provided measurements
         if measurements:
-            if qml.queuing.QueuingManager.active_context():
+            if not qml.queuing.QueuingManager.active_context():
+                return measurements
+
+            if isinstance(measurements, Iterable):
                 return [qml.apply(meas) for meas in measurements]
-            return measurements
+
+            return qml.apply(measurements)
 
         return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
 
@@ -710,28 +730,28 @@ def load_pauli_op(
 def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     """Builds the conditional functions for Controlled flows.
 
-    This method returns the arguments to be used by the `qml.cond`
+    This method returns the arguments to be used by the ``qml.cond``
     for creating the classically controlled flow. These are the
-    branches - `true_fns` and `false_fns`, that contains the quantum
+    branches - ``true_fns`` and ``false_fns``, that contains the quantum
     functions to be applied based on the results of the condition.
 
-    Additionally, we also return the qiskit's classical condition,
+    Additionally, we also return qiskit's classical condition,
     which we convert to the corresponding PennyLane mid-circuit
-    measurement in the `_process_condition` method. These conditions
-    are stored in the `condition` attribute for all the controlled ops,
-    except for `SwitchCaseOp` for which it is stored in the `target`
-    attribute. For the latter operation, we set the `condition` ourselves
-    with information from `target` and the information required
+    measurement in the ``_process_condition`` method. These conditions
+    are stored in the ``condition`` attribute for all the controlled ops,
+    except for ``SwitchCaseOp`` for which it is stored in the ``target``
+    attribute. For the latter operation, we set the ``condition`` ourselves
+    with information from ``target`` and the information required
     by us for the processing of the condition.
 
     Args:
-        inst (Instruction): Qiskit's `Instruction` object
-        operation_class (Operation): PennyLane `Operation` for legacy controlled functionality
+        inst (Instruction): Qiskit's ``Instruction`` object
+        operation_class (Operation): PennyLane ``Operation`` for legacy controlled functionality
         branch_funcs (List[partial]): Iterable of possible branching circuits for the condition.
-        ctrl_flow_type (str): represents the type of `ControlledFlowOp`
+        ctrl_flow_type (str): represents the type of ``ControlledFlowOp``
 
     Returns:
-        (true_fns, false_fns, condition): the condition and the corresponding branches
+        Tuple[true_fns, false_fns, condition]: the condition and the corresponding branches
     """
     true_fns, false_fns = [operation_class], [None]
 
@@ -769,10 +789,10 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
     """Process the condition to corresponding measurement value.
 
     In Qiskit, the generic form of condition is of two types:
-    1. tuple[ClassicalRegister, int] or tuple[Clbit, int]
-    2. expr.Expr
+    1. ``tuple[ClassicalRegister, int] or tuple[Clbit, int]``
+    2. ``expr.Expr``
     In addition for this, we have another custom type:
-    3. List(Target: Condition, Vals: List[Int], Type: str)
+    3. ``List(Target: Condition, Vals: List[Int], Type: str)``
 
     Args:
         cond_op (condition): condition as described above
@@ -782,7 +802,7 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
             an informative warning in case processing of the condition fails.
 
     Returns:
-        pl_meas: list of corresponding mid-circuit measurements to be used in `qml.cond`
+        pl_meas: list of corresponding mid-circuit measurements to be used in ``qml.cond``
     """
     # container for PL measurements operators
     pl_meas = []
@@ -816,23 +836,23 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
         return pl_meas
 
     warnings.warn(
-        f"The provided {condition} for {instruction_name} uses additional classical information that cannot not be returned or processed.",
+        f"The provided {condition} for {instruction_name} uses additional classical information that cannot be returned or processed.",
         UserWarning,
     )
     return pl_meas
 
 
 def _process_switch_condition(condition, mid_circ_regs):
-    """Helper method for processesing condition for SwtichCaseOp.
+    """Helper method for processing condition for SwtichCaseOp.
 
     Args:
-        condition (condition): condition as described in `_process_condition` of the
-            third type - `List(Target: Condition, Vals: List[Int], Type: str)`
+        condition (condition): condition as described in ``_process_condition`` of the
+            third type - ``List(Target: Condition, Vals: List[Int], Type: str)``
         mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
             to the performed PennyLane's mid-circuit measurements
 
     Returns:
-        meas_pl_ops: list of corresponding mid-circuit measurements to be used in `qml.cond`
+        meas_pl_ops: list of corresponding mid-circuit measurements to be used in ``qml.cond``
     """
     # if the target is not an Expr
     if not isinstance(condition[0], expr.Expr):
@@ -866,16 +886,16 @@ def _process_switch_condition(condition, mid_circ_regs):
 
 # pylint:disable = unbalanced-tuple-unpacking
 def _expr_evaluation(condition, mid_circ_regs):
-    """Evaluates the Expr condition
+    """Evaluates the ``Expr`` condition
 
     Args:
-        condition (condition): condition as described in `_process_condition`
-            of the second type - `Expr`
+        condition (condition): condition as described in ``_process_condition``
+            of the second type - ``Expr``
         mid_circ_regs (dict): dictionary that maps the utilized qiskit's classical bits
             to the performed PennyLane's mid-circuit measurements
 
     Returns:
-        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+        condition_res: corresponding mid-circuit measurements to be used in ``qml.cond``
     """
 
     # Maps qiskit `expr` names to their mathematical logic
@@ -937,17 +957,17 @@ def _expr_evaluation(condition, mid_circ_regs):
 
 
 def _expr_eval_clregs(clbits, expr_func, bitwise=False):
-    """Helper method for Expr evaluation when two registers are present.
+    """Helper method for ``Expr`` evaluation when two registers are present.
 
     Args:
         clbits (List[List[int], List[int]]): list of two registers represented by the
             corresponding mid-circuit measurements mapped from their classical bits.
-        expr_func (lambda): mapped lambda func from `_expr_mapping` in the `_expr_evaluation`
+        expr_func (lambda): mapped lambda func from ``_expr_mapping`` in the ``_expr_evaluation``
             method that performs the corresponding mathematical logic.
-        bitwise (bool): flag that specifies if the `expr_func` is performed on individual bits.
+        bitwise (bool): flag that specifies if the ``expr_func`` is performed on individual bits.
 
     Returns:
-        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+        condition_res: corresponding mid-circuit measurements to be used in ``qml.cond``
     """
     clreg1, clreg2 = clbits
     # Make both the bits of the same width with padding
@@ -976,18 +996,18 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
 
 
 def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
-    """Helper method for Expr evaluation when one register and one integer value is present.
+    """Helper method for ``Expr`` evaluation when one register and one integer value is present.
 
     Args:
         clbits (List[List[int]]): list of two registers represented by the
             corresponding mid-circuit measurements mapped from their classical bits.
         clvals (List[List[int]])
-        expr_func (lambda): mapped lambda func from `_expr_mapping` in the `_expr_evaluation`
+        expr_func (lambda): mapped lambda func from ``_expr_mapping`` in the ``_expr_evaluation``
             method that performs the corresponding mathematical logic.
-        bitwise (bool): flag that specifies if the `expr_func` is performed on individual bits.
+        bitwise (bool): flag that specifies if the ``expr_func`` is performed on individual bits.
 
     Returns:
-        condition_res: corresponding mid-circuit measurements to be used in `qml.cond`
+        condition_res: corresponding mid-circuit measurements to be used in ``qml.cond``
     """
     [clreg1], [[clreg2]] = clbits, clvals
     # For bitwise operations, we first need a binary form for clreg2
