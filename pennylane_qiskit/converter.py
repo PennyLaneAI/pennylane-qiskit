@@ -486,7 +486,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # If final measurements are given then discriminate
                 # between the types of measurement encountered.
                 meas_terminal = False
-                if measurements:
+                if measurements is not None:
                     # Look-ahead for more gate(s) on its wire(s)
                     meas_terminal = True
                     for next_op, next_qargs, next_cargs in qc.data[idx + 1 :]:
@@ -568,7 +568,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 operation_class(*operation_args, **operation_kwargs)
 
         # Use the user-provided measurements
-        if measurements:
+        # an empty iterable is treated as a user-provided measurement with no measurements to queue
+        if measurements is not None:
             if not qml.queuing.QueuingManager.active_context():
                 return measurements
 
@@ -589,7 +590,7 @@ def load_qasm(qasm_string: str):
     Returns:
         function: the new PennyLane template
     """
-    return load(QuantumCircuit.from_qasm_str(qasm_string))
+    return load(QuantumCircuit.from_qasm_str(qasm_string), measurements=[])
 
 
 def load_qasm_from_file(file: str):
@@ -599,7 +600,7 @@ def load_qasm_from_file(file: str):
     Returns:
         function: the new PennyLane template
     """
-    return load(QuantumCircuit.from_qasm_file(file))
+    return load(QuantumCircuit.from_qasm_file(file), measurements=[])
 
 
 def load_pauli_op(

@@ -57,7 +57,7 @@ info = {
             'qasm_file = pennylane_qiskit:load_qasm_from_file',
             ],
         },
-    'description': 'PennyLane plugin for qiskit-terra',
+    'description': 'PennyLane plugin for Qiskit',
     'long_description': open('README.rst').read(),
     'provides': ["pennylane_qiskit"],
     'install_requires': requirements,
