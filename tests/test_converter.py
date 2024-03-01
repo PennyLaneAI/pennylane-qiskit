@@ -1098,7 +1098,8 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit()
 
-        assert len(recorder.queue) == 11
+        # only 2 x X, a Barrier, and 4 x H queued (not 4 x qml.measure)
+        assert len(recorder.queue) == 7
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1151,7 +1152,8 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit(params={})
 
-        assert len(recorder.queue) == 6
+        # only X and CNOT queued (not 4 x qml.measure)
+        assert len(recorder.queue) == 2
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
