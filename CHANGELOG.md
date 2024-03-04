@@ -1,6 +1,4 @@
-# Release 0.35.0-dev
-
-### New features since last release
+# Release 0.35.0
 
 ### Improvements 🛠
 
@@ -41,12 +39,6 @@
 
 * Unused parameters are now ignored when a `QuantumCircuit` is converted using `load`.
   [(#454)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/454)
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
 
 ### Bug fixes 🐛
 
