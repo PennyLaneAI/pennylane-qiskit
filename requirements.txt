@@ -17,7 +17,7 @@ ntlm-auth==1.5.0
 numpy==1.26.4
 orjson==3.9.15
 pbr==6.0.0
-pennylane==0.34
+pennylane==0.35.0
 PennyLane-Lightning==0.35.0
 ply==3.11
 psutil==5.9.8
