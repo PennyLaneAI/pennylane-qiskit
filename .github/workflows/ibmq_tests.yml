@@ -33,7 +33,8 @@ jobs:
 
       - name: Install Plugin
         run: |
-          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git
+          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ env.PLUGIN_BRANCH }}
+
           pip freeze
 
       - name: Run tests
