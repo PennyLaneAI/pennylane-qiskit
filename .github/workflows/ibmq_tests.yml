@@ -33,8 +33,9 @@ jobs:
 
       - name: Install Plugin
         run: |
-          python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
+          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ env.PLUGIN_BRANCH }}
+
+          pip freeze
 
       - name: Run tests
         # Only run IBMQ and Runtime tests (skipped otherwise)
