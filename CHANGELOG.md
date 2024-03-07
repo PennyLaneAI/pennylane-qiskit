@@ -1,18 +1,14 @@
-# Release 0.36.0-dev
-
-### New features since last release
-
-### Improvements 🛠
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
+# Release 0.35.1
 
 ### Bug fixes 🐛
 
+* Following the 0.21 release of `qiskit-ibm-runtime`, which requires Qiskit 1.0, the PennyLane-Qiskit plugin pins to 
+  `qiskit-ibm-runtime<0.21`. This prevents `pip install pennylane-qiskit` from installing Qiskit 1.0 (via the requirements 
+  of `qiskit-ibm-runtime`), which will break any environments that already have a 0.X.X version of Qiskit installed.
+  [(#486)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/486)
+
 ### Contributors ✍️
+Lillian Frederiksen
 
 This release contains contributions from (in alphabetical order):
 
