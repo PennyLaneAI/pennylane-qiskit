@@ -10,6 +10,8 @@
 
 ### Documentation 📝
 
+### Bug fixes 🐛
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
