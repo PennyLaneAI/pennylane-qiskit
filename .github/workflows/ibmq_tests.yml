@@ -30,11 +30,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
+          pip freeze
 
       - name: Install Plugin
         run: |
-          python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
+          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@v0.35.1-rc
+          pip freeze
 
       - name: Run tests
         # Only run IBMQ and Runtime tests (skipped otherwise)
