@@ -1,3 +1,18 @@
+# Release 0.36.0-dev
+
+### New features since last release
+
+### Improvements 🛠
+
+### Breaking changes 💔
+
+### Deprecations 👋
+
+### Documentation 📝
+
+### Contributors ✍️
+
+---
 # Release 0.35.1
 
 ### Bug fixes 🐛
