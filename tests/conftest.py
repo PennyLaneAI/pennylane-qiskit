@@ -23,7 +23,7 @@ import qiskit
 import pennylane as qml
 from semantic_version import Version
 from qiskit_ibm_provider import IBMProvider
-from pennylane_qiskit import AerDevice, BasicAerDevice
+from pennylane_qiskit import AerDevice, BasicAerDevice, BasicSimulatorDevice
 
 np.random.seed(42)
 
@@ -38,19 +38,19 @@ U2 = np.array([[0, 1, 1, 1], [1, 0, 1, -1], [1, -1, 0, 1], [1, 1, -1, 0]]) / np.
 A = np.array([[1.02789352, 1.61296440 - 0.3498192j], [1.61296440 + 0.3498192j, 1.23920938 + 0j]])
 
 
+if Version(qiskit.__version__) < Version("1.0.0"):
+    test_devices = [AerDevice, BasicAerDevice]
+    hw_backends = ["qasm_simulator", "aer_simulator"]
+else:
+    test_devices = [AerDevice, BasicSimulatorDevice]
+    hw_backends = ["ibmq_qasm_simulator", "aer_simulator", "basic_simulator"]
+
 state_backends = [
     "statevector_simulator",
     "unitary_simulator",
     "aer_simulator_statevector",
     "aer_simulator_unitary",
 ]
-hw_backends = ["qasm_simulator", "aer_simulator"]
-
-if Version(qiskit.__version__) < Version("1.0.0"):
-    test_devices = [AerDevice, BasicAerDevice]
-else:
-    test_devices = [AerDevice]
-
 
 @pytest.fixture
 def skip_if_no_account():
@@ -115,13 +115,17 @@ def hardware_backend(request):
 
 @pytest.fixture(params=test_devices)
 def device(request, backend, shots):
-    if backend not in state_backends and shots is None:
-        pytest.skip("Hardware simulators do not support analytic mode")
+    if backend not in state_backends:
+        if shots is None:
+            pytest.skip("Hardware simulators do not support analytic mode")
 
-    if (issubclass(request.param, AerDevice) and "aer" not in backend) or (
-        issubclass(request.param, BasicAerDevice) and "aer" in backend
-    ):
-        pytest.skip("Only the AerSimulator is supported on AerDevice")
+        if (issubclass(request.param, AerDevice) and "aer" not in backend) or (
+            issubclass(request.param, BasicAerDevice) and "aer" in backend
+        ):
+            pytest.skip("Of the backends we test with, the AerSimulator is the only supported hardware simulator for Aer devices")
+
+    if issubclass(request.param, BasicSimulatorDevice) and backend!="basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n, device_options=None):
         if device_options is None:
