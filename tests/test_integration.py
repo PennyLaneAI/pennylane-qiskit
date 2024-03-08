@@ -228,7 +228,7 @@ class TestLoadIntegration:
         qc = qiskit.QuantumCircuit(2)
         qc.rx(theta, 0)
 
-        my_template = qml.load(qc, format="qiskit")
+        my_template = qml.from_qiskit(qc)
 
         dev = qml.device("default.qubit", wires=2)
 
