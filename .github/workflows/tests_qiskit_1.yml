@@ -31,11 +31,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-ci0.txt
           pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
+          pip freeze
 
       - name: Install Plugin
         run: |
-          python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
+          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ github.ref }}
+          pip freeze
 
       - name: Run Qiskit converter tests
         # Test conversion to PennyLane with Qiskit 1.0.0
