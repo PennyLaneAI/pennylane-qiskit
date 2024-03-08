@@ -4,17 +4,23 @@ from functools import partial
 import numpy as np
 import pennylane as qml
 from pennylane.numpy import tensor
+from semantic_version import Version
 import pytest
 import qiskit
-import qiskit_aer as aer
+import qiskit_aer
 
 from pennylane_qiskit.qiskit_device import QiskitDevice
 from qiskit.providers import QiskitBackendNotFoundError
 
 from conftest import state_backends
 
-pldevices = [("qiskit.aer", aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
-
+if Version(qiskit.__version__) < Version("1.0.0"):
+    pldevices = [("qiskit.aer", qiskit_aer.Aer),
+                 ("qiskit.basicaer", qiskit.BasicAer)]
+else:
+    from qiskit.providers.basic_provider import BasicProvider
+    pldevices = [("qiskit.aer", qiskit_aer.Aer),
+                 ("qiskit.basicsim", BasicProvider)]
 
 class TestDeviceIntegration:
     """Test the devices work correctly from the PennyLane frontend."""
@@ -42,7 +48,7 @@ class TestDeviceIntegration:
         try:
             backend_instance = provider.get_backend(backend)
         except QiskitBackendNotFoundError:
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+            pytest.skip("Backend is not compatible with specified device")
 
         dev = qml.device("qiskit.remote", wires=2, backend=backend_instance, shots=1024)
         assert dev.num_wires == 2
@@ -205,8 +211,9 @@ class TestKeywordArguments:
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
         if the backend does not support it"""
+        dev_name = pldevices[1][0]
         with pytest.raises(AttributeError, match="field noise_model is not valid for this backend"):
-            dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
+            dev = qml.device(dev_name, wires=2, noise_model="test value")
 
     def test_overflow_kwargs(self):
         """Test all overflow kwargs are extracted for the AerDevice"""
