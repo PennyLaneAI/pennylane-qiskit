@@ -58,10 +58,9 @@ class BasicAerDevice(QiskitDevice):
 
         if Version(qiskit.__version__) > max_ver:
             raise RuntimeError(
-                f"The devices in the PennyLane Qiskit plugin are currently only compatible "
-                f"with versions of Qiskit below 0.46. You have version {qiskit.__version__} "
-                f"installed. Please downgrade Qiskit to use the devices. The devices will be "
-                f"updated in the coming weeks to be compatible with Qiskit 1.0!"
+                f"Qiskit has discontinued the BasicAer device, so it can only be used in"
+                f"versions of Qiskit below 0.46. You have version {qiskit.__version__} "
+                f"installed. Please downgrade Qiskit to use the 'qiskit.basicaer' device."
             )
 
         super().__init__(wires, provider=qiskit.BasicAer, backend=backend, shots=shots, **kwargs)
