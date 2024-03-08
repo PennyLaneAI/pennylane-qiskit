@@ -38,10 +38,10 @@ jobs:
           pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ github.ref }}
           pip freeze
 
-      - name: Run Qiskit converter tests
-        # Test conversion to PennyLane with Qiskit 1.0.0
-        run: python -m pytest tests/test_converter.py
+      - name: Run standard Qiskit plugin tests
+        # Run the standard tests with the most recent version of Qiskit
+        run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
 
-      - name: Run temporary tests
-        # tests that test intermediate functionality, will be removed when everything is fully compatible with 1.0
-        run: python -m pytest tests/test_new_qiskit_temp.py
+      - name: Run IBMQ tests
+        # seperated because they noramlly only run twice a week, but not clear that's necessary anymore
+        run: python -m pytest tests -k 'test_ibmq.py or test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
