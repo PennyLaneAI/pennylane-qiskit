@@ -2,6 +2,7 @@ import pytest
 import pennylane as qml
 import qiskit
 
+from semantic_version import Version
 from unittest.mock import Mock
 
 
