@@ -22,7 +22,6 @@ import inspect
 import warnings
 
 import numpy as np
-import qiskit
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
