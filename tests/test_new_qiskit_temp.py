@@ -5,7 +5,7 @@ import qiskit
 from semantic_version import Version
 from unittest.mock import Mock
 
-from .basic_aer import BasicSimulatorDevice
+from pennylane_qiskit import BasicSimulatorDevice
 
 @pytest.mark.skipif(Version(qiskit.__version__) < Version("1.0.0"),
                     reason="versions below 1.0 are compatible with BasicAer")
