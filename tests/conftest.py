@@ -18,8 +18,10 @@ This module contains tests for PennyLane runtime programs.
 import os
 import pytest
 import numpy as np
+import qiskit
 
 import pennylane as qml
+from semantic_version import Version
 from qiskit_ibm_provider import IBMProvider
 from pennylane_qiskit import AerDevice, BasicAerDevice
 
@@ -43,6 +45,11 @@ state_backends = [
     "aer_simulator_unitary",
 ]
 hw_backends = ["qasm_simulator", "aer_simulator"]
+
+if Version(qiskit.__version__) < Version("1.0.0"):
+    test_devices = [AerDevice, BasicAerDevice]
+else:
+    test_devices = [AerDevice]
 
 
 @pytest.fixture
@@ -106,7 +113,7 @@ def hardware_backend(request):
     return request.param
 
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
+@pytest.fixture(params=test_devices)
 def device(request, backend, shots):
     if backend not in state_backends and shots is None:
         pytest.skip("Hardware simulators do not support analytic mode")
@@ -124,7 +131,7 @@ def device(request, backend, shots):
     return _device
 
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
+@pytest.fixture(params=test_devices)
 def state_vector_device(request, statevector_backend, shots):
     if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) or (
         issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend
