@@ -272,7 +272,8 @@ class TestLoadIntegration:
         with open(apply_hadamard, "w") as f:
             f.write(TestLoadIntegration.hadamard_qasm)
 
-        hadamard = qml.from_qasm_file(apply_hadamard)
+        with open(apply_hadamard, "r") as f:
+            hadamard = qml.from_qasm(f.read())
 
         dev = qml.device("default.qubit", wires=2)
 
