@@ -47,13 +47,14 @@ if Version(qiskit.__version__) < Version("1.0.0"):
     ]
 else:
     test_devices = [AerDevice, BasicSimulatorDevice]
-    hw_backends = ["ibmq_qasm_simulator", "aer_simulator", "basic_simulator"]
+    hw_backends = ["qasm_simulator", "aer_simulator", "basic_simulator"]
     state_backends = [
         "statevector_simulator",
         "unitary_simulator",
         "aer_simulator_statevector",
         "aer_simulator_unitary",
     ]
+
 
 @pytest.fixture
 def skip_if_no_account():
@@ -126,7 +127,7 @@ def device(request, backend, shots):
     if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
         pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
-    if issubclass(request.param, BasicSimulatorDevice) and backend!="basic_simulator":
+    if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
         pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n, device_options=None):
@@ -139,11 +140,11 @@ def device(request, backend, shots):
 
 @pytest.fixture(params=test_devices)
 def state_vector_device(request, statevector_backend, shots):
-        
+
     if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
         pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
-    if issubclass(request.param, BasicSimulatorDevice) and backend!="basic_simulator":
+    if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
         pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n):

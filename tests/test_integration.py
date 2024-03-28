@@ -15,12 +15,12 @@ from qiskit.providers import QiskitBackendNotFoundError
 from conftest import state_backends
 
 if Version(qiskit.__version__) < Version("1.0.0"):
-    pldevices = [("qiskit.aer", qiskit_aer.Aer),
-                 ("qiskit.basicaer", qiskit.BasicAer)]
+    pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
 else:
     from qiskit.providers.basic_provider import BasicProvider
-    pldevices = [("qiskit.aer", qiskit_aer.Aer),
-                 ("qiskit.basicsim", BasicProvider)]
+
+    pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider)]
+
 
 class TestDeviceIntegration:
     """Test the devices work correctly from the PennyLane frontend."""

@@ -110,4 +110,5 @@ class BasicSimulatorDevice(QiskitDevice):
             )
 
         from qiskit.providers.basic_provider import BasicProvider
+
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
