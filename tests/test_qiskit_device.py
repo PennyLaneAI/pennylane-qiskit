@@ -56,7 +56,7 @@ class TestAnalyticWarningHWSimulator:
             pytest.skip("Not supported on basicaer")
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, shots=None)
+            dev = qml.device("qiskit.ibmq", backend=hardware_backend, wires=2, shots=None)
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -65,7 +65,7 @@ class TestAnalyticWarningHWSimulator:
             record[0].message.args[0] == "The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             "statevector backends, not on the {}. Such statistics obtained from this "
-            "device are estimates based on samples.".format(dev.backend)
+            "device are estimates based on samples.".format(dev.backend.name)
         )
 
     def test_no_warning_raised_for_software_backend_analytic_expval(
@@ -76,7 +76,7 @@ class TestAnalyticWarningHWSimulator:
         if "aer" in statevector_backend:
             pytest.skip("Not supported on basicaer")
 
-        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, shots=None)
+        dev = qml.device("qiskit.ibmq", backend=statevector_backend, wires=2, shots=None)
 
         # check that no warnings were raised
         assert len(recwarn) == 0
