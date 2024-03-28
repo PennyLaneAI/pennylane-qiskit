@@ -41,16 +41,19 @@ A = np.array([[1.02789352, 1.61296440 - 0.3498192j], [1.61296440 + 0.3498192j, 1
 if Version(qiskit.__version__) < Version("1.0.0"):
     test_devices = [AerDevice, BasicAerDevice]
     hw_backends = ["qasm_simulator", "aer_simulator"]
+    state_backends = [
+        "statevector_simulator",
+        "unitary_simulator",
+    ]
 else:
     test_devices = [AerDevice, BasicSimulatorDevice]
     hw_backends = ["ibmq_qasm_simulator", "aer_simulator", "basic_simulator"]
-
-state_backends = [
-    "statevector_simulator",
-    "unitary_simulator",
-    "aer_simulator_statevector",
-    "aer_simulator_unitary",
-]
+    state_backends = [
+        "statevector_simulator",
+        "unitary_simulator",
+        "aer_simulator_statevector",
+        "aer_simulator_unitary",
+    ]
 
 @pytest.fixture
 def skip_if_no_account():
@@ -115,14 +118,13 @@ def hardware_backend(request):
 
 @pytest.fixture(params=test_devices)
 def device(request, backend, shots):
+    print("getting a device")
     if backend not in state_backends:
         if shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        if (issubclass(request.param, AerDevice) and "aer" not in backend) or (
-            issubclass(request.param, BasicAerDevice) and "aer" in backend
-        ):
-            pytest.skip("Of the backends we test with, the AerSimulator is the only supported hardware simulator for Aer devices")
+    if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
     if issubclass(request.param, BasicSimulatorDevice) and backend!="basic_simulator":
         pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
@@ -137,10 +139,12 @@ def device(request, backend, shots):
 
 @pytest.fixture(params=test_devices)
 def state_vector_device(request, statevector_backend, shots):
-    if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) or (
-        issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend
-    ):
-        pytest.skip("Only the AerSimulator is supported on AerDevice")
+        
+    if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        pytest.skip("Only the AerDevice can use the aer_simulator backend")
+
+    if issubclass(request.param, BasicSimulatorDevice) and backend!="basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n):
         return request.param(wires=n, backend=statevector_backend, shots=shots)
