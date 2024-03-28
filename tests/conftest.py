@@ -125,9 +125,13 @@ def device(request, backend, shots):
             pytest.skip("Hardware simulators do not support analytic mode")
 
     if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        print("I should be skipping this test")
         pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
     if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
+
+    if backend == "basic_simulator" and not issubclass(request.param, BasicSimulatorDevice):
         pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n, device_options=None):
@@ -145,6 +149,9 @@ def state_vector_device(request, statevector_backend, shots):
         pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
     if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
+
+    if backend == "basic_simulator" and not issubclass(request.param, BasicSimulatorDevice):
         pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n):
