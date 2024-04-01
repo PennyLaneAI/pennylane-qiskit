@@ -49,14 +49,12 @@ class TestTranspilationOptionInitialization:
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    def test_warning_raised_for_hardware_backend_analytic_expval(self, hardware_backend, recorder):
+    def test_warning_raised_for_hardware_backend_analytic_expval(self, recorder):
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
-        if "aer" in hardware_backend:
-            pytest.skip("Not supported on basicaer")
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.ibmq", backend=hardware_backend, wires=2, shots=None)
+            dev = qml.device("qiskit.ibmq", backend="ibmq_qasm_simulator", wires=2, shots=None)
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -69,14 +67,12 @@ class TestAnalyticWarningHWSimulator:
         )
 
     def test_no_warning_raised_for_software_backend_analytic_expval(
-        self, statevector_backend, recorder, recwarn
+        self, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
-        if "aer" in statevector_backend:
-            pytest.skip("Not supported on basicaer")
 
-        dev = qml.device("qiskit.ibmq", backend=statevector_backend, wires=2, shots=None)
+        dev = qml.device("qiskit.ibmq", backend="simulator_statevector", wires=2, shots=None)
 
         # check that no warnings were raised
         assert len(recwarn) == 0
