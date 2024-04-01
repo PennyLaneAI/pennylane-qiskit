@@ -35,6 +35,6 @@ def test_error_is_raised_if_initalizing_basic_simulator_device(monkeypatch):
     # test that the correct error is actually raised in Qiskit 1.0 (rather than fx an import error)
     with pytest.raises(
         RuntimeError,
-        match="Qiskit has discontinued the BasicAer device",
+        match="device is not compatible with version of Qiskit prior to 1.0",
     ):
         BasicSimulatorDevice(wires=2)
