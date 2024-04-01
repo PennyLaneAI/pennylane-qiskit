@@ -54,7 +54,7 @@ class TestAnalyticWarningHWSimulator:
         hardware simulators when calculating the expectation"""
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.ibmq", backend="ibmq_qasm_simulator", wires=2, shots=None)
+            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -66,16 +66,18 @@ class TestAnalyticWarningHWSimulator:
             "device are estimates based on samples.".format(dev.backend.name)
         )
 
+    @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
-        self, recorder, recwarn
+        self, method, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
 
-        dev = qml.device("qiskit.ibmq", backend="simulator_statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
 
         # check that no warnings were raised
         assert len(recwarn) == 0
+
 
 
 class TestAerBackendOptions:
