@@ -22,6 +22,9 @@ from semantic_version import Version
 
 from .qiskit_device import QiskitDevice
 
+if Version(qiskit.__version__) >= Version("1.0.0"):
+    from qiskit.providers.basic_provider import BasicProvider
+
 
 class BasicAerDevice(QiskitDevice):
     """A PennyLane device for the native Python Qiskit simulator BasicAer.
@@ -108,7 +111,5 @@ class BasicSimulatorDevice(QiskitDevice):
                 f"use the 'qiskit.basicaer' device instead. Alternatively, upgrade Qiskit "
                 f"to use the 'qiskit.basicsim' device."
             )
-
-        from qiskit.providers.basic_provider import BasicProvider
 
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
