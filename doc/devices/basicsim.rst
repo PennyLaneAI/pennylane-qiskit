@@ -1,20 +1,15 @@
-The BasicAer device
+The BasicSim device
 ===================
-
-..note::
-    Qiskit discontinued their BasicAer device in the 1.0 release, so this device
-    is only available for lower versions of Qiskit. For a simple Python simulator
-    compatible with Qiskit 1.0, use the ``'qiskit.basicsim'`` device instead.
 
 While the ``'qiskit.aer'`` device is the standard go-to simulator that is provided along
 the Qiskit main package installation, there exists a natively included python simulator
 that is slower but will work usually without the need to install other dependencies
-(C++, BLAS, and so on). This simulator can be used through the device ``'qiskit.basicaer'``:
+(C++, BLAS, and so on). This simulator can be used through the device ``'qiskit.basicsim'``:
 
 .. code-block:: python
 
     import pennylane as qml
-    dev = qml.device('qiskit.basicaer', wires=2)
+    dev = qml.device('qiskit.basicsim', wires=2)
 
 As with the ``'qiskit.aer'`` device, there are different backends available, which you can find
 by calling

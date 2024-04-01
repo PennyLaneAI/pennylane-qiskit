@@ -14,7 +14,7 @@ can be accessed straightaway in PennyLane, without the need to import new packag
 Devices
 ~~~~~~~
 
-Currently, there are three different devices available:
+Currently, there are seven different devices available:
 
 .. title-card::
     :name: 'qiskit.aer'
@@ -25,6 +25,11 @@ Currently, there are three different devices available:
     :name: 'qiskit.basicaer'
     :description: A simplified version of the Aer device, which requires fewer dependencies.
     :link: devices/basicaer.html
+
+.. title-card::
+    :name: 'qiskit.basicsim'
+    :description: A simple local Python simulator running the Qiskit ``BasicSimulator``.
+    :link: devices/basicsim.html
 
 .. title-card::
     :name: 'qiskit.ibmq'
@@ -133,6 +138,7 @@ hardware access.
 
    devices/aer
    devices/basicaer
+   devices/basicsim
    devices/ibmq
    devices/runtime
    devices/remote
