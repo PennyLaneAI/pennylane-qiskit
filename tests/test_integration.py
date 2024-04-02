@@ -16,6 +16,7 @@ from conftest import state_backends
 
 if Version(qiskit.__version__) < Version("1.0.0"):
     pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+
     def check_provider_backend_compatibility(pldevice, backend_name):
         dev_name, _ = pldevice
         if (dev_name == "qiskit.aer" and "aer" not in backend_name) or (
@@ -23,6 +24,7 @@ if Version(qiskit.__version__) < Version("1.0.0"):
         ):
             return (False, "Only the AerSimulator is supported on AerDevice")
         return True, None
+
 else:
     from qiskit.providers.basic_provider import BasicProvider
 
@@ -223,7 +225,9 @@ class TestKeywordArguments:
 
         cache = []
         with monkeypatch.context() as m:
-            m.setattr(qiskit_aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs))
+            m.setattr(
+                qiskit_aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
+            )
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
         assert cache[-1] == {"noise_model": "test value"}
 
