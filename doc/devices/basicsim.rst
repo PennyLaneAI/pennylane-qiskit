@@ -11,16 +11,4 @@ that is slower but will work usually without the need to install other dependenc
     import pennylane as qml
     dev = qml.device('qiskit.basicsim', wires=2)
 
-As with the ``'qiskit.aer'`` device, there are different backends available, which you can find
-by calling
-
-.. code-block:: python
-
-    dev.capabilities()['backend']
-
-.. note::
-
-    Currently, PennyLane does not support the ``'pulse_simulator'`` backend.
-
-The backends are used in the same manner as specified for the ``'qiskit.aer'`` device.
-The ``'qiskit.basicaer'`` device, however, does not support the simulation of noise models.
+This device uses the Qiskit ``BasicSimulator`` backend.
