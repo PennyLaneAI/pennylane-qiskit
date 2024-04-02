@@ -57,12 +57,12 @@ class BasicAerDevice(QiskitDevice):
 
     def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
 
-        max_ver = Version("0.45.3")
+        max_ver = Version("0.46")
 
         if Version(qiskit.__version__) > max_ver:
             raise RuntimeError(
                 f"Qiskit has discontinued the BasicAer device, so it can only be used in"
-                f"versions of Qiskit below 0.46. You have version {qiskit.__version__} "
+                f"versions of Qiskit below 1.0. You have version {qiskit.__version__} "
                 f"installed. For a Python simulator, use the 'qiskit.basicsim' device "
                 f"instead. Alternatively, you can downgrade Qiskit to use the "
                 f"'qiskit.basicaer' device."
