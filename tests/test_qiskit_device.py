@@ -79,7 +79,6 @@ class TestAnalyticWarningHWSimulator:
         assert len(recwarn) == 0
 
 
-
 class TestAerBackendOptions:
     """Test the backend options of Aer backends."""
 
