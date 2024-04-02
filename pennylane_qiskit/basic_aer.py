@@ -72,16 +72,13 @@ class BasicAerDevice(QiskitDevice):
 
 
 class BasicSimulatorDevice(QiskitDevice):
-    """A PennyLane device for the native Python Qiskit simulator BasicSimulator.
+    """A PennyLane device for the native Python Qiskit simulator from BasicProvider.
 
-    Please see the `Qiskit documentations <https://qiskit.org/documentation/>`_
-    further information on the backend options and transpile options.
+    For more information on the BasicSimulator backend options and transpile options, please visit the
+    `BasicProvider documentation <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_.
 
     A range of :code:`backend_options` that will be passed to the simulator and
     a range of transpile options can be given as kwargs.
-
-    For more information on backends, please visit the
-    `BasicProvider documentation <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
@@ -109,7 +106,7 @@ class BasicSimulatorDevice(QiskitDevice):
                 f"The 'qiskit.simulator' device is not compatible with version of Qiskit prior "
                 f"to 1.0. You have version {qiskit.__version__} installed. For a Python simulator, "
                 f"use the 'qiskit.basicaer' device instead. Alternatively, upgrade Qiskit "
-                f"to use the 'qiskit.basicsim' device."
+                f"(see https://docs.quantum.ibm.com/start/install) to use the 'qiskit.basicsim' device."
             )
 
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
