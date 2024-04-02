@@ -2,6 +2,12 @@
 
 ### New features since last release
 
+* Support is added for using the plugin devices with Qiskit 1.0. As the backend provider ``qiskit.BasicAer`` 
+  is no longer supported by Qiskit in 1.0, this added support does not extend to the ``"qiskit.aer"`` device. 
+  Instead, a ``"qiskit.basicsim"`` device is added, with the new Qiskit implementation of a Python simulator 
+  device, ``BasicSimulator``, as the backend.
+  [(#493)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/493)
+
 ### Improvements 🛠
 
 ### Breaking changes 💔
@@ -15,6 +21,7 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+Lillian M. A. Frederiksen
 
 ---
 # Release 0.35.1
