@@ -11,4 +11,5 @@ that is slower but will work usually without the need to install other dependenc
     import pennylane as qml
     dev = qml.device('qiskit.basicsim', wires=2)
 
-This device uses the Qiskit ``BasicSimulator`` backend.
+This device uses the Qiskit ``BasicSimulator`` backend from the
+`basic_provider <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_ module in Qiskit.
