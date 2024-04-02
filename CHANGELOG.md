@@ -10,6 +10,14 @@
 
 ### Improvements 🛠
 
+* Following updates to allow device compatibility with Qiskit 1.0, the version of `qiskit-ibm-runtime` is 
+  no longer capped.
+  [(#508)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/508)
+
+* The test suite now runs with the most recent `qiskit` and `qiskit-ibm-runtime`, and well as with 
+  `'qiskit==0.45'` and `qiskit-ibm-runtime<0.21` to monitor backward-compatibility.
+  [(#508)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/508)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
