@@ -57,7 +57,7 @@ class BasicAerDevice(QiskitDevice):
 
     def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
 
-        max_ver = Version("0.46")
+        max_ver = Version("0.46", partial=True)
 
         if Version(qiskit.__version__) > max_ver:
             raise RuntimeError(
