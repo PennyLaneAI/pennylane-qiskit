@@ -188,7 +188,7 @@ def qiskit_options_to_flat_dict(options):
 
 
 class QiskitDevice2(Device):
-    r"""Hardware/hardware simulator Qiskit device for PennyLane.
+    r"""Hardware/simulator Qiskit device for PennyLane.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
