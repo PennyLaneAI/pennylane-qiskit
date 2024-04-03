@@ -33,22 +33,22 @@ The following devices are available:
 
 .. title-card::
     :name: 'qiskit.ibmq.circuit_runner'
-    :description: Allows integration with qiskit's circuit runner runtime program.
+    :description: Allows integration with Qiskit's circuit runner runtime program.
     :link: devices/runtime.html
 
 .. title-card::
     :name: 'qiskit.ibmq.sampler'
-    :description: Allows integration with qiskit's sampler runtime program.
+    :description: Allows integration with Qiskit's sampler runtime program.
     :link: devices/runtime.html
 
 .. title-card::
     :name: 'qiskit.remote'
-    :description: Allows integration with any qiskit backend.
+    :description: Allows integration with any Qiskit backend.
     :link: devices/remote.html
 
 .. title-card::
     :name: 'qiskit.ibmq'
-    :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
+    :description: Allows integration with Qiskit's hardware backends, and hardware-specific simulators.
     :link: devices/ibmq.html
 
 
