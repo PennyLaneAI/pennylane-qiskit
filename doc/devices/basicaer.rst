@@ -1,9 +1,9 @@
 The BasicAer device
 ===================
 
-..note::
+.. note::
 
-    Qiskit discontinued their BasicAer device in the 1.0 release, so this device
+    Qiskit discontinued their ``BasicAer`` device in the 1.0 release, so this device
     is only available for lower versions of Qiskit. For a simple Python simulator
     compatible with Qiskit 1.0, use the ``'qiskit.basicsim'`` device instead.
 

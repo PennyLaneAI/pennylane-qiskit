@@ -1,10 +1,9 @@
 The BasicSim device
 ===================
 
-While the ``'qiskit.aer'`` device is the standard go-to simulator that is provided along
-the Qiskit main package installation, there exists a natively included python simulator
-that is slower but will work usually without the need to install other dependencies
-(C++, BLAS, and so on). This simulator can be used through the device ``'qiskit.basicsim'``:
+Qiskit comes packed with a
+`basic pure-Python simulator <https://docs.quantum.ibm.com/api/qiskit/qiskit.providers.basic_provider.BasicSimulator>`_
+that can be accessed in this plugin through:
 
 .. code-block:: python
 

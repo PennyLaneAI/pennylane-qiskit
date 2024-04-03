@@ -14,7 +14,7 @@ can be accessed straightaway in PennyLane, without the need to import new packag
 Devices
 ~~~~~~~
 
-Currently, there are seven different devices available:
+The following devices are available:
 
 .. title-card::
     :name: 'qiskit.aer'

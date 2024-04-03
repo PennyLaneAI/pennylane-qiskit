@@ -72,13 +72,11 @@ class BasicAerDevice(QiskitDevice):
 
 
 class BasicSimulatorDevice(QiskitDevice):
-    """A PennyLane device for the native Python Qiskit simulator from BasicProvider.
+    """A PennyLane device for the native Python Qiskit simulator.
 
-    For more information on the BasicSimulator backend options and transpile options, please visit the
+    For more information on the ``BasicSimulator`` backend options and transpile options, please visit the
     `BasicProvider documentation <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_.
-
-    A range of :code:`backend_options` that will be passed to the simulator and
-    a range of transpile options can be given as kwargs.
+    These options can be passed to this plugin device as keyword arguments.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,

@@ -80,7 +80,7 @@ in the source folder.
     `new IBMProvider <https://qiskit.org/ecosystem/ibm-provider/stubs/qiskit_ibm_provider.IBMProvider.html>`_
 
     If this is the case, running ``make test`` also executes tests on the ``ibmq`` device.
-    By default tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend. At
+    By default, tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend. At
     the time of writing this means that the test are "free".
     Please verify that this is also the case for your account.
 
