@@ -12,3 +12,11 @@ that can be accessed in this plugin through:
 
 This device uses the Qiskit ``BasicSimulator`` backend from the
 `basic_provider <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_ module in Qiskit.
+
+.. note::
+
+    The `Qiskit Aer <https://qiskit.github.io/qiskit-aer/>`_ device
+    provides a fast simulator that is also capable of simulating
+    noise. It is available :ref:`here <TODO>` but must be
+    installed separately with ``pip install qiskit-aer``.
+    
