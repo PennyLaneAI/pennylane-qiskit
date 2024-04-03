@@ -1,4 +1,4 @@
-.. _aer_device_page:
+.. _aer device page:
 
 The Aer device
 ==============
