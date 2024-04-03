@@ -1,3 +1,5 @@
+.. _aer_device_page:
+
 The Aer device
 ==============
 The ``qiskit.aer`` device provided by the PennyLane-Qiskit plugin allows you to use PennyLane
