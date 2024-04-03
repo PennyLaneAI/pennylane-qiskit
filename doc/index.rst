@@ -32,11 +32,6 @@ The following devices are available:
     :link: devices/basicsim.html
 
 .. title-card::
-    :name: 'qiskit.ibmq'
-    :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
-    :link: devices/ibmq.html
-
-.. title-card::
     :name: 'qiskit.ibmq.circuit_runner'
     :description: Allows integration with qiskit's circuit runner runtime program.
     :link: devices/runtime.html
@@ -50,6 +45,12 @@ The following devices are available:
     :name: 'qiskit.remote'
     :description: Allows integration with any qiskit backend.
     :link: devices/remote.html
+
+.. title-card::
+    :name: 'qiskit.ibmq'
+    :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
+    :link: devices/ibmq.html
+
 
 .. raw:: html
 
