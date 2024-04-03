@@ -140,7 +140,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "Projector",
     }
 
-    hw_analytic_warning_message = (
+    analytic_warning_message = (
         "The analytic calculation of expectations, variances and "
         "probabilities is only supported on statevector backends, not on the {}. "
         "Such statistics obtained from this device are estimates based on samples."
@@ -174,7 +174,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Keep track if the user specified analytic to be True
         if shots is None and not self._is_state_backend:
             # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
+            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
 
             self.shots = 1024
 
