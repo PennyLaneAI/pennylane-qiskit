@@ -107,4 +107,16 @@ class BasicSimulatorDevice(QiskitDevice):
                 f"(see https://docs.quantum.ibm.com/start/install) to use the 'qiskit.basicsim' device."
             )
 
+        analytic_warning_message = (
+            "The plugin does not currently support analytic calculation of expectations, variances "
+            "and probabilities with the BasicProvider backend(s). Such statistics obtained from this "
+            "device are estimates based on samples."
+        )
+
+        # Raise a warning if no shots were specified
+        if not shots:
+            warnings.warn(self.analytic_warning_message, UserWarning)
+            shots = 1024
+
+
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
