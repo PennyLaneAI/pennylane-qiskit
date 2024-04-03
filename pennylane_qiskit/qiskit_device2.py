@@ -596,5 +596,6 @@ class QiskitDevice2(Device):
 
         samples = []
         for key, value in counts.items():
-            samples.extend([key] * value)
+            for _ in range(0, value):
+                samples.append(key)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
