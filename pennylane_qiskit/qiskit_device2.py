@@ -375,7 +375,6 @@ class QiskitDevice2(Device):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
         option_kwargs = qiskit_options_to_flat_dict(self.options)
-        print(option_kwargs)
 
         overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
         if overlapping_kwargs:
