@@ -245,15 +245,10 @@ class QiskitDevice2(Device):
 
             shots = 1024
 
-        # use device shots, even if shots are defined on the Options - to do this, we update the Options
-        # shots is a required field in the Options object, and Primitive based measurements *will* use it
-        if options and options.execution.shots != 4000:  # 4000 is the default value on Options
-            warnings.warn(
-                "Setting shots via the Options is not supported on PennyLane devices. The shots "
-                f"value passed to the device ({shots}) will be used."
-            )
         self.options = options or Options()
-        self.options.execution.shots = shots
+        if self.options.execution.shots == 4000: ## 4000 is default value in Qiskit.
+            self.options.execution.shots = shots
+
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
@@ -380,6 +375,7 @@ class QiskitDevice2(Device):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
         option_kwargs = qiskit_options_to_flat_dict(self.options)
+        print(option_kwargs)
 
         overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
         if overlapping_kwargs:
@@ -388,8 +384,8 @@ class QiskitDevice2(Device):
                 f"defined in the device Options. The definition in Options will be used."
             )
         if (
-            option_kwargs["shots"] != 4000 and option_kwargs["shots"] != self.shots.total_shots
-        ):  # 4000 is the default value on Options
+            option_kwargs["shots"] != self.shots.total_shots
+        ):  
             warnings.warn(
                 f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
                 f"passed to the device will be used."
@@ -596,6 +592,5 @@ class QiskitDevice2(Device):
 
         samples = []
         for key, value in counts.items():
-            for _ in range(0, value):
-                samples.append(key)
+            samples.extend([key] * value)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
