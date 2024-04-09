@@ -568,7 +568,7 @@ class TestOptionsHandling:
 class TestDeviceProperties:
     def test_name_property(self):
         """Test the backend property"""
-        assert test_dev.name == "qiskit.remote2"
+        assert test_dev.name == "QiskitDevice2"
 
     def test_backend_property(self):
         """Test the backend property"""

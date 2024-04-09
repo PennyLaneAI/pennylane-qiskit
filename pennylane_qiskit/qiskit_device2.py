@@ -243,11 +243,6 @@ class QiskitDevice2(Device):
         "Projector",
     }
 
-    @property
-    def name(self):
-        """The name of the device."""
-        return "qiskit.remote2"
-
     # pylint:disable = too-many-arguments
     def __init__(
         self,
