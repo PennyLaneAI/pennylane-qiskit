@@ -149,15 +149,33 @@ def split_measurement_types(
     tapes = []
     if estimator:
         tapes.extend(
-            [qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in estimator])]
+            [
+                qml.tape.QuantumScript(
+                    tape.operations,
+                    measurements=[mp for mp, i in estimator],
+                    shots=tape.shots,
+                )
+            ]
         )
     if sampler:
         tapes.extend(
-            [qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in sampler])]
+            [
+                qml.tape.QuantumScript(
+                    tape.operations,
+                    measurements=[mp for mp, i in sampler],
+                    shots=tape.shots,
+                )
+            ]
         )
     if no_prim:
         tapes.extend(
-            [qml.tape.QuantumScript(tape.operations, measurements=[mp for mp, i in no_prim])]
+            [
+                qml.tape.QuantumScript(
+                    tape.operations,
+                    measurements=[mp for mp, i in no_prim],
+                    shots=tape.shots,
+                )
+            ]
         )
 
     def reorder_fn(res):
@@ -232,7 +250,14 @@ class QiskitDevice2(Device):
 
     # pylint:disable = too-many-arguments
     def __init__(
-        self, wires, backend, shots=1024, use_primitives=False, options=None, session=None, **kwargs
+        self,
+        wires,
+        backend,
+        shots=1024,
+        use_primitives=False,
+        options=None,
+        session=None,
+        **kwargs,
     ):
         if shots is None:
             warnings.warn(
@@ -246,7 +271,7 @@ class QiskitDevice2(Device):
             shots = 1024
 
         self.options = options or Options()
-        if self.options.execution.shots == 4000: ## 4000 is default value in Qiskit.
+        if self.options.execution.shots == 4000:  ## 4000 is default value in Qiskit.
             self.options.execution.shots = shots
 
         super().__init__(wires=wires, shots=shots)
@@ -347,7 +372,9 @@ class QiskitDevice2(Device):
 
         transform_program = TransformProgram()
 
-        transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
+        transform_program.add_transform(
+            validate_device_wires, self.wires, name=self.name
+        )
         transform_program.add_transform(
             decompose,
             stopping_condition=self.stopping_condition,
@@ -355,7 +382,9 @@ class QiskitDevice2(Device):
             skip_initial_state_prep=False,
         )
         transform_program.add_transform(
-            validate_measurements, sample_measurements=accepted_sample_measurement, name=self.name
+            validate_measurements,
+            sample_measurements=accepted_sample_measurement,
+            name=self.name,
         )
         transform_program.add_transform(
             validate_observables,
@@ -382,9 +411,7 @@ class QiskitDevice2(Device):
                 f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
                 f"defined in the device Options. The definition in Options will be used."
             )
-        if (
-            option_kwargs["shots"] != self.shots.total_shots
-        ):  
+        if option_kwargs["shots"] != self.shots.total_shots:
             warnings.warn(
                 f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
                 f"passed to the device will be used."
@@ -452,6 +479,8 @@ class QiskitDevice2(Device):
             circuits = [circuits]
 
         for circ in circuits:
+            if circ.shots:
+                self.options.execution.shots = circ.shots.total_shots
             if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
                 execute_fn = self._execute_estimator
             elif isinstance(circ.measurements[0], ProbabilityMP):
@@ -482,7 +511,10 @@ class QiskitDevice2(Device):
         ]
         compiled_circuits = self.compile_circuits(qcirc)
 
-        program_inputs = {"circuits": compiled_circuits, "shots": self.shots.total_shots}
+        program_inputs = {
+            "circuits": compiled_circuits,
+            "shots": self.shots.total_shots,
+        }
 
         for kwarg in self._kwargs:
             program_inputs[kwarg] = self._kwargs.get(kwarg)
@@ -520,7 +552,9 @@ class QiskitDevice2(Device):
     def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
 
-        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
+        qcirc = circuit_to_qiskit(
+            circuit, self.num_wires, diagonalize=True, measure=True
+        )
 
         sampler = Sampler(session=session, options=self.options)
 
@@ -536,7 +570,9 @@ class QiskitDevice2(Device):
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
-        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
+        qcirc = circuit_to_qiskit(
+            circuit, self.num_wires, diagonalize=False, measure=False
+        )
 
         estimator = Estimator(session=session, options=self.options)
 
@@ -544,8 +580,12 @@ class QiskitDevice2(Device):
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
+        pauli_observables = [
+            mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements
+        ]
+        result = estimator.run(
+            [qcirc] * len(pauli_observables), pauli_observables
+        ).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 

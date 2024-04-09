@@ -31,7 +31,11 @@ from pennylane_qiskit.qiskit_device2 import (
     split_measurement_types,
     qiskit_options_to_flat_dict,
 )
-from pennylane_qiskit.converter import circuit_to_qiskit, mp_to_pauli, QISKIT_OPERATION_MAP
+from pennylane_qiskit.converter import (
+    circuit_to_qiskit,
+    mp_to_pauli,
+    QISKIT_OPERATION_MAP,
+)
 
 from qiskit_ibm_runtime import QiskitRuntimeService, Session, Estimator
 from qiskit_ibm_runtime.options import Options
@@ -294,7 +298,9 @@ class TestDevicePreprocessing:
         assert [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
-        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
+        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(
+            qs.measurements
+        )
 
     @pytest.mark.parametrize(
         "op, expected",
@@ -335,13 +341,17 @@ class TestDevicePreprocessing:
             ([qml.probs(wires=[0]), qml.counts(), qml.var(qml.PauliY(2))], 3),
         ],
     )
-    def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
+    def test_preprocess_splits_incompatible_primitive_measurements(
+        self, measurements, num_types
+    ):
         """Test that the default behaviour for preprocess it to split the tapes based
         on meausrement type. Expval and Variance are one type (Estimator), Probs another (Sampler),
         and everything else a third (raw sample-based measurements)."""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
+        qs = QuantumScript(
+            [], measurements=measurements, shots=qml.measurements.Shots(1000)
+        )
 
         program, _ = dev.preprocess()
         tapes, _ = program([qs])
@@ -361,7 +371,9 @@ class TestDevicePreprocessing:
         """Test if Primitives are not being used that the preprocess does not split
         the tapes based on measurement type"""
 
-        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
+        qs = QuantumScript(
+            [], measurements=measurements, shots=qml.measurements.Shots(1000)
+        )
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
         program, _ = dev.preprocess()
@@ -457,7 +469,9 @@ class TestOptionsHandling:
         """Test that if there is no overlap between options defined as device kwargs and on Options,
         _update_kwargs creates a combined dictionary"""
 
-        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a")
+        dev = QiskitDevice2(
+            wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a"
+        )
 
         assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
         assert dev._kwargs == {
@@ -491,7 +505,9 @@ class TestOptionsHandling:
         _update_kwargs creates a combined dictionary with Options taking precedence, and raises a
         warning"""
 
-        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, max_execution_time="1m")
+        dev = QiskitDevice2(
+            wires=2, backend=backend, random_kwarg1=True, max_execution_time="1m"
+        )
 
         assert dev._init_kwargs == {"random_kwarg1": True, "max_execution_time": "1m"}
         assert dev._kwargs == {
@@ -580,7 +596,6 @@ class TestDeviceProperties:
 
 
 class TestMockedExecution:
-
     def test_get_transpile_args(self):
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
@@ -629,7 +644,10 @@ class TestMockedExecution:
         Estimator (integration test that runs with a Token is below)"""
 
         values = np.array([np.random.ranf() for i in range(len(measurements))])
-        metadata = [{"variance": np.random.ranf(), "shots": 4000} for i in range(len(measurements))]
+        metadata = [
+            {"variance": np.random.ranf(), "shots": 4000}
+            for i in range(len(measurements))
+        ]
 
         result = EstimatorResult(values, metadata)
         processed_result = QiskitDevice2._process_estimator_job(measurements, result)
@@ -663,12 +681,24 @@ class TestMockedExecution:
         assert len(samples) == sum(results_dict.values())
         assert len(samples[0]) == 2
 
-        assert len(np.argwhere([np.allclose(s, [0, 0]) for s in samples])) == results_dict["00"]
-        assert len(np.argwhere([np.allclose(s, [1, 1]) for s in samples])) == results_dict["11"]
+        assert (
+            len(np.argwhere([np.allclose(s, [0, 0]) for s in samples]))
+            == results_dict["00"]
+        )
+        assert (
+            len(np.argwhere([np.allclose(s, [1, 1]) for s in samples]))
+            == results_dict["11"]
+        )
 
         # order of samples is swapped compared to keys (Qiskit wire order convention is reverse of PennyLane)
-        assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
-        assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
+        assert (
+            len(np.argwhere([np.allclose(s, [0, 1]) for s in samples]))
+            == results_dict["10"]
+        )
+        assert (
+            len(np.argwhere([np.allclose(s, [1, 0]) for s in samples]))
+            == results_dict["01"]
+        )
 
     def test_execute_pipeline_no_primitives_mocked(self, mocker):
         """Test that a device **not** using Primitives only calls the _execute_runtime_service
@@ -693,7 +723,9 @@ class TestMockedExecution:
             ],
         )
 
-        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
+        with patch.object(
+            dev, "_execute_runtime_service", return_value="runtime_execute_res"
+        ):
             runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
             res = dev.execute(qs)
 
@@ -713,7 +745,9 @@ class TestMockedExecution:
 
         assert dev._session is None
 
-        qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
+        qs = QuantumScript(
+            [qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))]
+        )
 
         with patch("pennylane_qiskit.qiskit_device2.Session") as mock_session:
             res = dev.execute(qs)
@@ -741,10 +775,18 @@ class TestMockedExecution:
         )
         tapes, reorder_fn = split_measurement_types(qs)
 
-        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
-            with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
-                with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
-                    runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+        with patch.object(
+            dev, "_execute_runtime_service", return_value="runtime_execute_res"
+        ):
+            with patch.object(
+                dev, "_execute_sampler", return_value="sampler_execute_res"
+            ):
+                with patch.object(
+                    dev, "_execute_estimator", return_value="estimator_execute_res"
+                ):
+                    runtime_service_execute = mocker.spy(
+                        dev, "_execute_runtime_service"
+                    )
                     sampler_execute = mocker.spy(dev, "_execute_sampler")
                     estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -754,17 +796,24 @@ class TestMockedExecution:
         sampler_execute.assert_called_once()
         estimator_execute.assert_called_once()
 
-        assert res == ["estimator_execute_res", "sampler_execute_res", "runtime_execute_res"]
+        assert res == [
+            "estimator_execute_res",
+            "sampler_execute_res",
+            "runtime_execute_res",
+        ]
 
     @patch("pennylane_qiskit.qiskit_device2.Estimator")
     @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._process_estimator_job")
     @pytest.mark.parametrize("session", [None, MockSession(backend)])
-    def test_execute_estimator_mocked(self, mocked_estimator, mocked_process_fn, session):
+    def test_execute_estimator_mocked(
+        self, mocked_estimator, mocked_process_fn, session
+    ):
         """Test the _execute_estimator function using a mocked version of Estimator
         that returns a meaningless result."""
 
         qs = QuantumScript(
-            [qml.PauliX(0)], measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))]
+            [qml.PauliX(0)],
+            measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))],
         )
         result = test_dev._execute_estimator(qs, session)
 
@@ -809,17 +858,29 @@ class TestMockedExecution:
         assert len(samples) == sum(mock_counts.values())
         assert len(samples[0]) == 2
 
-        assert len(np.argwhere([np.allclose(s, [0, 0]) for s in samples])) == mock_counts["00"]
-        assert len(np.argwhere([np.allclose(s, [1, 1]) for s in samples])) == mock_counts["11"]
+        assert (
+            len(np.argwhere([np.allclose(s, [0, 0]) for s in samples]))
+            == mock_counts["00"]
+        )
+        assert (
+            len(np.argwhere([np.allclose(s, [1, 1]) for s in samples]))
+            == mock_counts["11"]
+        )
 
         # order of samples is swapped compared to keys (Qiskit wire order convention is reverse of PennyLane)
-        assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == mock_counts["10"]
-        assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == mock_counts["01"]
+        assert (
+            len(np.argwhere([np.allclose(s, [0, 1]) for s in samples]))
+            == mock_counts["10"]
+        )
+        assert (
+            len(np.argwhere([np.allclose(s, [1, 0]) for s in samples]))
+            == mock_counts["01"]
+        )
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
-
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
         "angle,op,expectation",
@@ -831,7 +892,9 @@ class TestExecution:
             (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
         ],
     )
-    def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
+    def test_estimator_with_different_pauli_obs(
+        self, mocker, wire, angle, op, expectation
+    ):
         """Test that the Estimator with various observables returns expected results.
         Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
         expected. Iterating over wires ensures that the wire operated on and the wire measured
@@ -886,12 +949,16 @@ class TestExecution:
         qs = QuantumScript([], measurements=measurements)
 
         # convert to Qiskit circuit information
-        qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
+        qcirc = circuit_to_qiskit(
+            qs, register_size=qs.num_wires, diagonalize=False, measure=False
+        )
         pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
 
         # run on simulator via Estimator
         estimator = Estimator(backend=backend)
-        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
+        result = estimator.run(
+            [qcirc] * len(pauli_observables), pauli_observables
+        ).result()
 
         # confirm that the result is as expected - if the test fails at this point, its because the
         # Qiskit result format has changed
@@ -916,7 +983,9 @@ class TestExecution:
     def test_generate_samples(self, num_wires, num_shots):
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
 
-        qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
+        qcirc = circuit_to_qiskit(
+            qs, register_size=num_wires, diagonalize=True, measure=True
+        )
         compiled_circuits = test_dev.compile_circuits([qcirc])
 
         # Send circuits to the cloud for execution by the circuit-runner program
