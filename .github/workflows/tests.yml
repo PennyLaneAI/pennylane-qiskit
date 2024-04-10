@@ -46,8 +46,9 @@ jobs:
           IBMQX_TOKEN: ${{ secrets.IBMQX_TOKEN_TEST }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.codecov_token }}
           file: ./coverage.xml
 
   integration-tests:
@@ -85,6 +86,7 @@ jobs:
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=unitary_simulator
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.codecov_token }}
           file: ./coverage.xml
