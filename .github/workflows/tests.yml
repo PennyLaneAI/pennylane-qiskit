@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
     strategy:
       matrix:
