@@ -86,11 +86,6 @@ class BasicSimulatorDevice(QiskitDevice):
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. For statevector backends,
             setting to ``None`` results in computing statistics like expectation values and variances analytically.
-
-    Keyword Args:
-        name (str): The name of the circuit. Default ``'circuit'``.
-        compile_backend (BaseBackend): The backend used for compilation. If you wish
-            to simulate a device compliant circuit, you can specify a backend here.
     """
 
     short_name = "qiskit.basicsim"
