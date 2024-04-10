@@ -4,17 +4,10 @@ on:
     branches:
       - master
   pull_request:
-    secrets:
-      codecov_token:
-        description: The codecov token to use when uploading coverage files
-        required: true
 
 jobs:
   tests:
     runs-on: ubuntu-latest
-
-    secrets:
-      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
     strategy:
       matrix:
