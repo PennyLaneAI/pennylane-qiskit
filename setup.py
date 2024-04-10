@@ -24,8 +24,8 @@ with open("README.rst", "r") as fh:
 requirements = [
     "qiskit>=0.32",
     "qiskit-aer",
-    "qiskit-ibm-runtime<0.21",
     "qiskit-ibm-provider",
+    "qiskit-ibm-runtime",
     "pennylane>=0.30",
     "numpy",
     "networkx>=2.2",
