@@ -49,14 +49,12 @@ class TestTranspilationOptionInitialization:
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    def test_warning_raised_for_hardware_backend_analytic_expval(self, hardware_backend, recorder):
+    def test_warning_raised_for_hardware_backend_analytic_expval(self, recorder):
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
-        if "aer" in hardware_backend:
-            pytest.skip("Not supported on basicaer")
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, shots=None)
+            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -65,18 +63,17 @@ class TestAnalyticWarningHWSimulator:
             record[0].message.args[0] == "The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             "statevector backends, not on the {}. Such statistics obtained from this "
-            "device are estimates based on samples.".format(dev.backend)
+            "device are estimates based on samples.".format(dev.backend.name)
         )
 
+    @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
-        self, statevector_backend, recorder, recwarn
+        self, method, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
-        if "aer" in statevector_backend:
-            pytest.skip("Not supported on basicaer")
 
-        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, shots=None)
+        dev = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
 
         # check that no warnings were raised
         assert len(recwarn) == 0

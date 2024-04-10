@@ -22,7 +22,6 @@ import inspect
 import warnings
 
 import numpy as np
-import qiskit
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
@@ -31,8 +30,6 @@ from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from pennylane import QubitDevice, DeviceError
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
-
-from semantic_version import Version
 
 from ._version import __version__
 
@@ -124,6 +121,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {
         "statevector_simulator",
+        "simulator_statevector",
         "unitary_simulator",
         "aer_simulator_statevector",
         "aer_simulator_unitary",
@@ -142,7 +140,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "Projector",
     }
 
-    hw_analytic_warning_message = (
+    analytic_warning_message = (
         "The analytic calculation of expectations, variances and "
         "probabilities is only supported on statevector backends, not on the {}. "
         "Such statistics obtained from this device are estimates based on samples."
@@ -151,16 +149,6 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _eigs = {}
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
-
-        max_ver = Version("0.45.3")
-
-        if Version(qiskit.__version__) > max_ver:
-            raise RuntimeError(
-                f"The devices in the PennyLane Qiskit plugin are currently only compatible "
-                f"with versions of Qiskit below 0.46. You have version {qiskit.__version__} "
-                f"installed. Please downgrade Qiskit to use the devices. The devices will be "
-                f"updated in the coming weeks to be compatible with Qiskit 1.0!"
-            )
 
         super().__init__(wires=wires, shots=shots)
 
@@ -186,18 +174,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Keep track if the user specified analytic to be True
         if shots is None and not self._is_state_backend:
             # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
+            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
 
             self.shots = 1024
 
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
-        b = self.backend
-        if len(self.wires) > int(b.configuration().n_qubits):
-            raise ValueError(
-                f"Backend '{backend}' supports maximum {b.configuration().n_qubits} wires"
-            )
+        backend_qubits = self.backend.configuration().n_qubits
+        # if the backend has a set number of qubits, ensure wires doesn't exceed (some simulators have n_qubits=None)
+        if backend_qubits and len(self.wires) > int(backend_qubits):
+            raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
 
         # Initialize inner state
         self.reset()

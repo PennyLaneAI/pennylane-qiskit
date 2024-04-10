@@ -29,18 +29,61 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-ci0.txt
+          pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
+          pip freeze
+
+      - name: Install Plugin
+        run: |
+          pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ github.ref }}
+          pip freeze
+
+      - name: Run standard Qiskit plugin tests
+        # Run the standard tests with the most recent version of Qiskit
+        run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.codecov_token }}
+          file: ./coverage.xml
+
+  integration-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+          pip install wheel pytest pytest-cov pytest-mock pytest-benchmark flaky --upgrade
 
       - name: Install Plugin
         run: |
           python setup.py bdist_wheel
           pip install dist/PennyLane*.whl
 
-      - name: Run Qiskit converter tests
-        # Test conversion to PennyLane with Qiskit 1.0.0
-        run: python -m pytest tests/test_converter.py
+      - name: Run tests
+        run: |
+          pl-device-test --device=qiskit.basicsim --tb=short --skip-ops --shots=20000 --device-kwargs backend=basic_simulator
+          pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=20000 --device-kwargs backend=qasm_simulator
+          pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=statevector_simulator
+          pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=unitary_simulator
 
-      - name: Run temporary tests
-        # tests that test intermediate functionality, will be removed when everything is fully compatible with 1.0
-        run: python -m pytest tests/test_new_qiskit_temp.py
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.codecov_token }}
+          file: ./coverage.xml

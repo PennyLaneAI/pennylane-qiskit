@@ -1,4 +1,0 @@
-pennylane>=0.32
-qiskit
-numpy
-sympy
