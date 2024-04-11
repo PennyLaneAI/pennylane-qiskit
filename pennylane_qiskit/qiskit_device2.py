@@ -367,9 +367,7 @@ class QiskitDevice2(Device):
 
         transform_program = TransformProgram()
 
-        transform_program.add_transform(
-            validate_device_wires, self.wires, name=self.name
-        )
+        transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
             decompose,
             stopping_condition=self.stopping_condition,
@@ -455,8 +453,6 @@ class QiskitDevice2(Device):
             compiled_circuits.append(compiled_circ)
 
         return compiled_circuits
-    
-
 
     # pylint: disable=unused-argument
     def execute(
@@ -474,7 +470,7 @@ class QiskitDevice2(Device):
 
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
-        
+
         @contextmanager
         def execute_circuits(session):
             try:
@@ -491,7 +487,7 @@ class QiskitDevice2(Device):
                 yield results
             finally:
                 session.close()
-        
+
         with execute_circuits(session) as results:
             return results
 
@@ -552,9 +548,7 @@ class QiskitDevice2(Device):
     def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
 
-        qcirc = circuit_to_qiskit(
-            circuit, self.num_wires, diagonalize=True, measure=True
-        )
+        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
 
         sampler = Sampler(session=session, options=self.options)
 
@@ -570,9 +564,7 @@ class QiskitDevice2(Device):
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
-        qcirc = circuit_to_qiskit(
-            circuit, self.num_wires, diagonalize=False, measure=False
-        )
+        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
 
         estimator = Estimator(session=session, options=self.options)
 
@@ -581,14 +573,10 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
 
-        # ToDo: need to sort differently for cases where the observable is not 
+        # ToDo: need to sort differently for cases where the observable is not
         # compatible with a SparsePauliOp representation
-        pauli_observables = [
-            mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements
-        ]
-        result = estimator.run(
-            [qcirc] * len(pauli_observables), pauli_observables
-        ).result()
+        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
+        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
