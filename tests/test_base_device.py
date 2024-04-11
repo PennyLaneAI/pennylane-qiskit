@@ -77,6 +77,8 @@ class MockSession:
         self.backend = backend
         self.max_time = max_time
         self.session_id = "123"
+    def close(self): # This is just to appease a test
+        pass
 
 
 try:

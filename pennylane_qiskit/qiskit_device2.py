@@ -455,6 +455,8 @@ class QiskitDevice2(Device):
             compiled_circuits.append(compiled_circ)
 
         return compiled_circuits
+    
+
 
     # pylint: disable=unused-argument
     def execute(
@@ -472,23 +474,26 @@ class QiskitDevice2(Device):
 
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
-
-        for circ in circuits:
-            if circ.shots:
-                self.options.execution.shots = circ.shots.total_shots
-            if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
-                execute_fn = self._execute_estimator
-            elif isinstance(circ.measurements[0], ProbabilityMP):
-                execute_fn = self._execute_sampler
-            else:
-                execute_fn = self._execute_runtime_service
-            results.append(execute_fn(circ, session))
-
-        if self._session is None:
-            # if this was not a session set on the device, but just one created for this execution, close
-            session.close()
-
-        return results
+        
+        @contextmanager
+        def execute_circuits(session):
+            try:
+                for circ in circuits:
+                    if circ.shots:
+                        self.options.execution.shots = circ.shots.total_shots
+                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
+                        execute_fn = self._execute_estimator
+                    elif isinstance(circ.measurements[0], ProbabilityMP):
+                        execute_fn = self._execute_sampler
+                    else:
+                        execute_fn = self._execute_runtime_service
+                    results.append(execute_fn(circ, session))
+                yield results
+            finally:
+                session.close()
+        
+        with execute_circuits(session) as results:
+            return results
 
     def _execute_runtime_service(self, circuits, session):
         """Execution using old runtime_service (can't use runtime sessions)"""
