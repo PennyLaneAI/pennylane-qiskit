@@ -522,8 +522,8 @@ class QiskitDevice2(Device):
             "shots": self.shots.total_shots,
         }
 
-        for kwarg in self._kwargs:
-            program_inputs[kwarg] = self._kwargs.get(kwarg)
+        for kwarg, value in self._kwargs.items():
+            program_inputs[kwarg] = value
 
         options = {
             "backend": self.backend.name,
