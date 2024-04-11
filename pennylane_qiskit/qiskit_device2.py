@@ -457,6 +457,7 @@ class QiskitDevice2(Device):
         return compiled_circuits
 
     # pylint: disable=unused-argument
+    @contextmanager
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
@@ -484,6 +485,16 @@ class QiskitDevice2(Device):
                 execute_fn = self._execute_runtime_service
             results.append(execute_fn(circ, session))
 
+
+        existing_session = device._session
+        session = Session(backend=device.backend)
+        device._session = session
+        try:
+            yield session
+        finally:
+            # Code to release session:
+            session.close()
+            device._session = existing_session
         if self._session is None:
             # if this was not a session set on the device, but just one created for this execution, close
             session.close()
