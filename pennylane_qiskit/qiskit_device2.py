@@ -334,11 +334,11 @@ class QiskitDevice2(Device):
         self._current_job = None
 
     def stopping_condition(self, op: qml.operation.Operator) -> bool:
-        """Specifies whether or not an observable is accepted by DefaultQubit."""
+        """Specifies whether or not an Operator is accepted by QiskitDevice2."""
         return op.name in self.operations
 
     def observable_stopping_condition(self, obs: qml.operation.Operator) -> bool:
-        """Specifies whether or not an observable is accepted by DefaultQubit."""
+        """Specifies whether or not an observable is accepted by QiskitDevice2."""
         return obs.name in self.observables
 
     def preprocess(
@@ -457,7 +457,6 @@ class QiskitDevice2(Device):
         return compiled_circuits
 
     # pylint: disable=unused-argument
-    @contextmanager
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
@@ -485,16 +484,6 @@ class QiskitDevice2(Device):
                 execute_fn = self._execute_runtime_service
             results.append(execute_fn(circ, session))
 
-
-        existing_session = device._session
-        session = Session(backend=device.backend)
-        device._session = session
-        try:
-            yield session
-        finally:
-            # Code to release session:
-            session.close()
-            device._session = existing_session
         if self._session is None:
             # if this was not a session set on the device, but just one created for this execution, close
             session.close()
@@ -586,6 +575,9 @@ class QiskitDevice2(Device):
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
+
+        # ToDo: need to sort differently for cases where the observable is not 
+        # compatible with a SparsePauliOp representation
         pauli_observables = [
             mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements
         ]
