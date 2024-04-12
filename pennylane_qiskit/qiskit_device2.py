@@ -55,8 +55,6 @@ QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 # pylint: disable=protected-access
-
-
 @contextmanager
 def qiskit_session(device):
     """A context manager that creates a Qiskit Session and sets it as a session
@@ -241,6 +239,7 @@ class QiskitDevice2(Device):
         "Hadamard",
         "Hermitian",
         "Projector",
+        "Sum"
     }
 
     # pylint:disable = too-many-arguments
