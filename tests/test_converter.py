@@ -676,7 +676,6 @@ class TestConverterGatesQiskitToPennyLane:
         assert recorder.queue[3].parameters == [1.2]
         assert recorder.queue[3].wires == Wires([])
 
-    @pytest.mark.skip(reason="barrier not implemented (i think) - Austin")
     def test_controlled_gates(self, recorder):
         """Tests loading a circuit with controlled gates."""
 
@@ -1090,7 +1089,6 @@ class TestConverterQasm:
         "measure q -> c;"
     )
 
-    @pytest.mark.skip(reason="barrier not implemented (i think) - Austin")
     @pytest.mark.skipif(sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6")
     def test_qasm_from_file(self, tmpdir, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm file."""
