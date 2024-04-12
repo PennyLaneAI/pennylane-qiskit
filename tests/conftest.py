@@ -18,10 +18,12 @@ This module contains tests for PennyLane runtime programs.
 import os
 import pytest
 import numpy as np
+import qiskit
 
 import pennylane as qml
+from semantic_version import Version
 from qiskit_ibm_provider import IBMProvider
-from pennylane_qiskit import AerDevice, BasicAerDevice
+from pennylane_qiskit import AerDevice, BasicAerDevice, BasicSimulatorDevice
 
 np.random.seed(42)
 
@@ -36,13 +38,22 @@ U2 = np.array([[0, 1, 1, 1], [1, 0, 1, -1], [1, -1, 0, 1], [1, 1, -1, 0]]) / np.
 A = np.array([[1.02789352, 1.61296440 - 0.3498192j], [1.61296440 + 0.3498192j, 1.23920938 + 0j]])
 
 
-state_backends = [
-    "statevector_simulator",
-    "unitary_simulator",
-    "aer_simulator_statevector",
-    "aer_simulator_unitary",
-]
-hw_backends = ["qasm_simulator", "aer_simulator"]
+if Version(qiskit.__version__) < Version("1.0.0"):
+    test_devices = [AerDevice, BasicAerDevice]
+    hw_backends = ["qasm_simulator", "aer_simulator"]
+    state_backends = [
+        "statevector_simulator",
+        "unitary_simulator",
+    ]
+else:
+    test_devices = [AerDevice, BasicSimulatorDevice]
+    hw_backends = ["qasm_simulator", "aer_simulator", "basic_simulator"]
+    state_backends = [
+        "statevector_simulator",
+        "unitary_simulator",
+        "aer_simulator_statevector",
+        "aer_simulator_unitary",
+    ]
 
 
 @pytest.fixture
@@ -106,15 +117,22 @@ def hardware_backend(request):
     return request.param
 
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
+@pytest.fixture(params=test_devices)
 def device(request, backend, shots):
-    if backend not in state_backends and shots is None:
-        pytest.skip("Hardware simulators do not support analytic mode")
+    print("getting a device")
+    if backend not in state_backends:
+        if shots is None:
+            pytest.skip("Hardware simulators do not support analytic mode")
 
-    if (issubclass(request.param, AerDevice) and "aer" not in backend) or (
-        issubclass(request.param, BasicAerDevice) and "aer" in backend
-    ):
-        pytest.skip("Only the AerSimulator is supported on AerDevice")
+    if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        print("I should be skipping this test")
+        pytest.skip("Only the AerDevice can use the aer_simulator backend")
+
+    if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
+
+    if backend == "basic_simulator" and not issubclass(request.param, BasicSimulatorDevice):
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n, device_options=None):
         if device_options is None:
@@ -124,12 +142,17 @@ def device(request, backend, shots):
     return _device
 
 
-@pytest.fixture(params=[AerDevice, BasicAerDevice])
+@pytest.fixture(params=test_devices)
 def state_vector_device(request, statevector_backend, shots):
-    if (issubclass(request.param, AerDevice) and "aer" not in statevector_backend) or (
-        issubclass(request.param, BasicAerDevice) and "aer" in statevector_backend
-    ):
-        pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+    if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
+        pytest.skip("Only the AerDevice can use the aer_simulator backend")
+
+    if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
+
+    if backend == "basic_simulator" and not issubclass(request.param, BasicSimulatorDevice):
+        pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n):
         return request.param(wires=n, backend=statevector_backend, shots=shots)

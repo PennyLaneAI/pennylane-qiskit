@@ -1,6 +1,12 @@
 The BasicAer device
 ===================
 
+.. note::
+
+    Qiskit discontinued their ``BasicAer`` device in the 1.0 release, so this device
+    is only available for lower versions of Qiskit. For a simple Python simulator
+    compatible with Qiskit 1.0, use the :ref:`BasicSim device <basicsim device page>` instead.
+
 While the ``'qiskit.aer'`` device is the standard go-to simulator that is provided along
 the Qiskit main package installation, there exists a natively included python simulator
 that is slower but will work usually without the need to install other dependencies

@@ -22,7 +22,7 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=0.32,<0.46",
+    "qiskit>=0.32",
     "qiskit-aer",
     "qiskit-ibm-runtime<0.21",
     "qiskit-ibm-provider",
@@ -46,17 +46,19 @@ info = {
             'qiskit.remote = pennylane_qiskit:RemoteDevice',
             'qiskit.aer = pennylane_qiskit:AerDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
+            'qiskit.basicsim = pennylane_qiskit:BasicSimulatorDevice',
             'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
             'qiskit.ibmq.circuit_runner = pennylane_qiskit:IBMQCircuitRunnerDevice',
             'qiskit.ibmq.sampler = pennylane_qiskit:IBMQSamplerDevice'
             ],
         'pennylane.io': [
             'qiskit = pennylane_qiskit:load',
+            'qiskit_op = pennylane_qiskit:load_pauli_op',
             'qasm = pennylane_qiskit:load_qasm',
             'qasm_file = pennylane_qiskit:load_qasm_from_file',
             ],
         },
-    'description': 'PennyLane plugin for qiskit-terra',
+    'description': 'PennyLane plugin for Qiskit',
     'long_description': open('README.rst').read(),
     'provides': ["pennylane_qiskit"],
     'install_requires': requirements,
