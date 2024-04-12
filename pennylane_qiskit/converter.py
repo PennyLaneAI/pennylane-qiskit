@@ -640,7 +640,7 @@ def load_qasm_from_file(file: str):
     Returns:
         function: the new PennyLane template
     """
-    
+
     return load(QuantumCircuit.from_qasm_file(file))
 
 
