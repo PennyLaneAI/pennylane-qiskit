@@ -36,46 +36,9 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
+from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 # pylint: disable=too-many-instance-attributes
-
-QISKIT_OPERATION_MAP = {
-    # native PennyLane operations also native to qiskit
-    "PauliX": ex.XGate,
-    "PauliY": ex.YGate,
-    "PauliZ": ex.ZGate,
-    "Hadamard": ex.HGate,
-    "CNOT": ex.CXGate,
-    "CZ": ex.CZGate,
-    "SWAP": ex.SwapGate,
-    "ISWAP": ex.iSwapGate,
-    "RX": ex.RXGate,
-    "RY": ex.RYGate,
-    "RZ": ex.RZGate,
-    "Identity": ex.IGate,
-    "CSWAP": ex.CSwapGate,
-    "CRX": ex.CRXGate,
-    "CRY": ex.CRYGate,
-    "CRZ": ex.CRZGate,
-    "PhaseShift": ex.PhaseGate,
-    "QubitStateVector": ex.Initialize,
-    "StatePrep": ex.Initialize,
-    "Toffoli": ex.CCXGate,
-    "QubitUnitary": ex.UnitaryGate,
-    "U1": ex.U1Gate,
-    "U2": ex.U2Gate,
-    "U3": ex.U3Gate,
-    "IsingZZ": ex.RZZGate,
-    "IsingYY": ex.RYYGate,
-    "IsingXX": ex.RXXGate,
-    "S": ex.SGate,
-    "T": ex.TGate,
-    "SX": ex.SXGate,
-    "Adjoint(S)": ex.SdgGate,
-    "Adjoint(T)": ex.TdgGate,
-    "Adjoint(SX)": ex.SXdgGate,
-}
-
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
@@ -641,7 +604,7 @@ def load_qasm_from_file(file: str):
         function: the new PennyLane template
     """
 
-    return load(QuantumCircuit.from_qasm_file(file))
+    return load(QuantumCircuit.from_qasm_file(file), measurements=[])
 
 
 # diagonalize is currently only used if measuring
