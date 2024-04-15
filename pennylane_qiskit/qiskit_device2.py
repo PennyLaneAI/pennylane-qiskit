@@ -54,6 +54,7 @@ QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
+
 # pylint: disable=protected-access
 @contextmanager
 def qiskit_session(device):
