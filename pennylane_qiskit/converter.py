@@ -23,7 +23,6 @@ import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
 from qiskit import extensions as ex
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit.classical import expr
