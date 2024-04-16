@@ -97,7 +97,7 @@ def options_for_testing():
     options.resilience.noise_amplifier = "LocalFoldingAmplifier"
     options.optimization_level = 2
     options.resilience_level = 1
-    options.simulator.noise_model = "placeholder"
+    options.simulator.noise_model = {"placeholder":1}
     return options
 
 
