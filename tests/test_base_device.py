@@ -905,7 +905,7 @@ class TestExecution:
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
 
         qs = QuantumScript(
             [op(angle, wire)],
