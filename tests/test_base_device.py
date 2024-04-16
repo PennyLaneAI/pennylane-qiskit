@@ -879,8 +879,6 @@ class TestMockedExecution:
             == mock_counts["01"]
         )
 
-
-@pytest.mark.skip(reason="no way of currently testing this")
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
     @pytest.mark.parametrize("wire", [0, 1])
