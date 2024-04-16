@@ -94,7 +94,7 @@ def options_for_testing():
     """Creates an Options object with defined values in multiple sub-categories"""
     options = Options()
     options.environment.job_tags = ["getting angle"]
-    options.resilience.noise_amplifier = "placeholder"
+    options.resilience.noise_amplifier = "LocalFoldingAmplifier"
     options.optimization_level = 2
     options.resilience_level = 1
     options.simulator.noise_model = "placeholder"
