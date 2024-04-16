@@ -1,0 +1,2 @@
+[qiskit.transpiler.translation]
+aer_backend_plugin = qiskit_aer.backends.plugin.aer_backend_plugin:AerBackendPlugin

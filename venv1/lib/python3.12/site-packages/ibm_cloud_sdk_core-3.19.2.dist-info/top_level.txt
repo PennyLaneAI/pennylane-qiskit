@@ -1,0 +1,3 @@
+ibm_cloud_sdk_core
+test
+test_integration

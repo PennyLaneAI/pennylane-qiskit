@@ -1,0 +1,2 @@
+lightning_qubit_ops
+pennylane_lightning

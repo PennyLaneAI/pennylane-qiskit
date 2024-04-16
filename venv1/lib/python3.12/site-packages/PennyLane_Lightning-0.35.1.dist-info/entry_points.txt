@@ -1,0 +1,2 @@
+[pennylane.plugins]
+lightning.qubit = pennylane_lightning.lightning_qubit:LightningQubit

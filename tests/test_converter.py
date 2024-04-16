@@ -1567,6 +1567,7 @@ class TestConverterIntegration:
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
 
+
 class TestConverterPennyLaneCircuitToQiskit:
 
     def test_circuit_to_qiskit(self):
@@ -1773,6 +1774,7 @@ class TestConverterUtilsPennyLaneToQiskit:
 
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
+
 
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""

@@ -25,9 +25,7 @@ from contextlib import contextmanager
 
 import numpy as np
 import pennylane as qml
-
 from qiskit.compiler import transpile
-
 from qiskit_ibm_runtime import Session, Sampler, Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
