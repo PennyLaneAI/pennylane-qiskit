@@ -993,13 +993,13 @@ class TestExecution:
 
     def test_tape_shots_used_for_estimator(self, mocker):
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
-        
+
         estimator_execute = mocker.spy(dev, "_execute_estimator")
-        
+
         @qml.qnode(dev)
         def circuit():
             return qml.expval(qml.PauliX(0))
-        
+
         circuit(shots=[5])
 
         estimator_execute.assert_called_once()
@@ -1007,14 +1007,14 @@ class TestExecution:
 
     def test_tape_shots_used_for_sampler(self, mocker):
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
-        
+
         sampler_execute = mocker.spy(dev, "_execute_sampler")
-        
+
         @qml.qnode(dev)
         def circuit():
             qml.PauliX(0)
             return qml.probs(wires=[0, 1])
-        
+
         circuit(shots=[5])
 
         sampler_execute.assert_called_once()
@@ -1022,7 +1022,7 @@ class TestExecution:
 
     def test_warning_for_shot_vector(self):
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
-        
+
         @qml.qnode(dev)
         def circuit():
             return qml.expval(qml.PauliX(0))
