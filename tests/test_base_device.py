@@ -848,10 +848,12 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == mock_counts["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == mock_counts["01"]
 
-    def test_shot_vector_warning_mocked(self, mocker):
+    def test_shot_vector_warning_mocked(self):
         """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
+        )
         qs = QuantumScript(
             measurements=[
                 qml.expval(qml.PauliX(0)),
@@ -859,11 +861,12 @@ class TestMockedExecution:
             shots=[5, 10, 2],
         )
 
-        with pytest.warns(
-            UserWarning,
-            match="Setting multiple shots in circuit initialization is not supported ",
-        ):
-            dev.execute(qs)
+        with patch.object(dev, "_execute_estimator"):
+            with pytest.warns(
+                UserWarning,
+                match="Setting multiple shots in circuit initialization is not supported ",
+            ):
+                dev.execute(qs)
 
 
 @pytest.mark.usefixtures("skip_if_no_account")
