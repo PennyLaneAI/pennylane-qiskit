@@ -664,7 +664,8 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     Args:
         operation (List[pennylane.Operation]): operation to be converted
-        reg (int): the total number of qubits on the device
+        reg (Quantum Register): the total number of qubits on the device
+        creg (Classical Register): classical register
 
     Returns:
         QuantumCircuit: a quantum circuit objects containing the translated operation
