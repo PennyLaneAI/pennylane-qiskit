@@ -472,8 +472,11 @@ class QiskitDevice2(Device):
         def execute_circuits(session):
             try:
                 for circ in circuits:
-                    if circ.shots:
-                        self.options.execution.shots = circ.shots.total_shots
+                    if circ.shots and len(circ.shots.shot_vector) > 1:
+                        warnings.warn(
+                        "Setting multiple shots in circuit initialization is not supported for the Qiskit-Pennylane Plugin." 
+                        f"The circuit will be run once with {circ.shots.total_shots} instead."
+                    )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
@@ -490,7 +493,6 @@ class QiskitDevice2(Device):
 
     def _execute_runtime_service(self, circuits, session):
         """Execution using old runtime_service (can't use runtime sessions)"""
-
         # update kwargs in case Options has been modified since last execution
         self._update_kwargs()
 
@@ -506,7 +508,7 @@ class QiskitDevice2(Device):
 
         program_inputs = {
             "circuits": compiled_circuits,
-            "shots": self.shots.total_shots,
+            "shots": circuits[0].shots.total_shots or self.shots.total_shots,
         }
 
         for kwarg, value in self._kwargs.items():
@@ -546,10 +548,12 @@ class QiskitDevice2(Device):
         """Execution for the Sampler primitive"""
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
-
+        if circuit.shots:
+            self.options.execution.shots = circuit.shots.total_shots
         sampler = Sampler(session=session, options=self.options)
 
         result = sampler.run(qcirc).result()
+        self._current_job = result
 
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
@@ -562,7 +566,8 @@ class QiskitDevice2(Device):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
-
+        if circuit.shots:
+            self.options.execution.shots = circuit.shots.total_shots
         estimator = Estimator(session=session, options=self.options)
 
         # split into one call per measurement
