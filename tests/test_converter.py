@@ -9,7 +9,7 @@ from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 
 import pennylane as qml
 from pennylane import numpy as np
@@ -19,10 +19,14 @@ from pennylane_qiskit.converter import (
     load_qasm,
     load_qasm_from_file,
     map_wires,
+    circuit_to_qiskit,
+    operation_to_qiskit,
+    mp_to_pauli,
     _format_params_dict,
     _check_parameter_bound,
 )
 from pennylane.wires import Wires
+from pennylane.tape.qscript import QuantumScript
 
 
 THETA = np.linspace(0.11, 3, 5)
@@ -30,7 +34,7 @@ PHI = np.linspace(0.32, 3, 5)
 VARPHI = np.linspace(0.02, 3, 5)
 
 
-class TestConverter:
+class TestConverterQiskitToPennyLane:
     """Tests the converter function that allows converting QuantumCircuit objects
     to Pennylane templates."""
 
@@ -403,7 +407,7 @@ class TestConverter:
         assert recorder.queue[0].wires == Wires(three_wires)
 
 
-class TestConverterGates:
+class TestConverterGatesQiskitToPennyLane:
     """Tests over specific gate related tests"""
 
     @pytest.mark.parametrize(
@@ -1562,6 +1566,214 @@ class TestConverterIntegration:
 
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+
+
+class TestConverterPennyLaneCircuitToQiskit:
+
+    def test_circuit_to_qiskit(self):
+        """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
+
+        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0])])
+        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+
+        operation_names = [instruction.operation.name for instruction in qc.data]
+
+        assert operation_names == ["h", "cx"]
+
+    def test_circuit_to_qiskit_with_parameterized_gate(self):
+        """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
+        angle = 1.2
+
+        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0]), qml.RX(angle, 2)])
+        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+
+        operation_names = [instruction.operation.name for instruction in qc.data]
+        operation_params = [instruction.operation.params for instruction in qc.data]
+
+        assert operation_names == ["h", "cx", "rx"]
+        assert operation_params == [[], [], [angle]]
+
+    @pytest.mark.parametrize("operations", [[], [qml.PauliX(0), qml.PauliY(1)], [qml.Hadamard(0)]])
+    @pytest.mark.parametrize("register_size", [2, 5])
+    def test_circuit_to_qiskit_register_size(self, operations, register_size):
+        """Test that the regsiter_size determines the shape of the Qiskit
+        QuantumCircuit register"""
+
+        qc = circuit_to_qiskit(QuantumScript(operations), register_size)
+
+        # there is a single classical and a single quantum register
+        assert len(qc.cregs) == len(qc.qregs) == 1
+
+        # the register contains qubits equal to the register size
+        assert len(qc.qubits) == register_size
+
+    @pytest.mark.parametrize(
+        "operations, final_op_name",
+        [([qml.PauliX(0), qml.PauliY(1)], "y"), ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"])],
+    )
+    @pytest.mark.parametrize("measure", [True, False])
+    def test_circuit_to_qiskit_measure_kwarg(self, operations, final_op_name, measure):
+        """Test that measurements are added to the circuit if and only if measure=True"""
+
+        qc = circuit_to_qiskit(QuantumScript(operations), 2, measure=measure)
+        final_instruction = qc.data[-1]
+
+        if measure:
+            assert final_instruction.operation.name == "measure"
+        else:
+            final_instruction.operation.name == final_op_name
+
+    @pytest.mark.parametrize("diagonalize", [True, False])
+    def test_circuit_to_qiskit_diagonalize_kwarg(self, diagonalize):
+        """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
+
+        qscript = QuantumScript(
+            [qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))]
+        )
+        assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
+
+        qc = circuit_to_qiskit(qscript, 2, diagonalize=diagonalize, measure=True)
+
+        # get list of instruction names up to the barrier (played right before measurements)
+        instructions = []
+        for instruction in qc.data:
+            if instruction.operation.name == "barrier":
+                break
+            instructions.append(instruction.operation.name)
+
+        # check length of instructions matches length of expected gates
+        expected_gates = qscript.operations
+        if diagonalize:
+            expected_gates += qscript.diagonalizing_gates
+
+        assert len(instructions) == len(expected_gates)
+
+
+class TestConverterGatePennyLaneToQiskit:
+
+    def test_non_parameteric_operation_to_qiskit(self):
+        """Test that a non-parameteric operation is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.PauliX(0)
+
+        qc = operation_to_qiskit(op, QuantumRegister(1))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        wires = [qc.find_bit(q).index for q in qubits]
+
+        assert ops == ["x"]
+        assert wires == [0]
+
+    def test_parameteric_operation_to_qiskit(self):
+        """Test that a parameteric operation is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.RX(1.23, 2)
+
+        qc = operation_to_qiskit(op, QuantumRegister(3))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        wires = [qc.find_bit(q).index for q in qubits]
+        params = [instruction.operation.params for instruction in qc.data]
+
+        assert ops == ["rx"]
+        assert wires == [2]
+        assert params == [[1.23]]
+
+    # ToDo: add custom wire label support? Or have we already mapped to integers here? Story #55168
+    @pytest.mark.parametrize("op_wires", ([0, 1], [2, 4]))
+    def test_multi_wire_operation_to_qiskit(self, op_wires):
+        """Test that an operation with multiple wires is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.CNOT(op_wires)
+
+        qc = operation_to_qiskit(op, QuantumRegister(5))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        qc_wires = [qc.find_bit(q).index for q in qubits]
+
+        assert ops == ["cx"]
+        assert qc_wires == op_wires
+
+    @pytest.mark.parametrize(
+        "op",
+        [
+            qml.QubitUnitary(
+                [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], wires=[0, 1]
+            ),
+            qml.StatePrep(np.array([1, 0, 0, 0]), wires=[0, 1]),
+            qml.QubitStateVector(np.array([1, 0, 0, 0]), wires=[0, 1]),
+        ],
+    )
+    def test_state_prep_ops_have_reversed_register(self, op):
+        """Tests that the wire order is reversed when applying matrix-based operators from PennyLane,
+        because the Qiskit convention for inferring wire order for matrices is the reverse of the
+        PennyLane convention"""
+
+        qc = operation_to_qiskit(op, reg=QuantumRegister(3))
+        qubits = qc[0].qubits
+        wires = [qc.find_bit(q).index for q in qubits]
+
+        # wires on the qiskit circuit are the PL wires reversed
+        assert Wires(wires) == op.wires[::-1]
+
+    def test_with_predefined_creg(self):
+        """Test that it also works if passing in an already existing classical register"""
+
+        creg = ClassicalRegister(3)
+
+        op = qml.RX(1.23, 2)
+
+        qc1 = operation_to_qiskit(op, QuantumRegister(3), creg=creg)
+        qc2 = operation_to_qiskit(op, QuantumRegister(3), creg=None)
+
+        ops1 = [instruction.operation.name for instruction in qc1.data]
+        params1 = [instruction.operation.params for instruction in qc1.data]
+        ops2 = [instruction.operation.name for instruction in qc2.data]
+        params2 = [instruction.operation.params for instruction in qc2.data]
+
+        qubits1 = [instruction.qubits for instruction in qc1.data][0]
+        wires1 = [qc1.find_bit(q).index for q in qubits1]
+        qubits2 = [instruction.qubits for instruction in qc2.data][0]
+        wires2 = [qc2.find_bit(q).index for q in qubits2]
+
+        assert ops1 == ops2 == ["rx"]
+        assert wires1 == wires2 == [2]
+        assert params1 == params2 == [[1.23]]
+
+
+class TestConverterUtilsPennyLaneToQiskit:
+
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize(
+        "observable, obs_string",
+        [(qml.PauliX, "X"), (qml.PauliY, "Y"), (qml.PauliZ, "Z"), (qml.Identity, "I")],
+    )
+    @pytest.mark.parametrize("wire", [0, 1, 2])
+    @pytest.mark.parametrize("register_size", [3, 5])
+    def test_mp_to_pauli(self, measurement_type, observable, obs_string, wire, register_size):
+        """Tests that a SparsePauliOp is created from a Pauli observable, and that
+        it has the expected format"""
+
+        obs = measurement_type(observable(wire))
+
+        pauli_op = mp_to_pauli(obs, register_size)
+        assert isinstance(pauli_op, SparsePauliOp)
+
+        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
+
+        # all qubits in register are accounted for
+        assert len(pauli_op_list) == register_size
+
+        # the wire the observable acts on is correctly labelled
+        # wire order reversed in Qiskit, so we put it back to use PL wire as an index
+        pauli_op_list.reverse()
+        assert pauli_op_list.pop(wire) == obs_string
+
+        # remaining wires are all Identity
+        assert np.all([op == "I" for op in pauli_op_list])
 
 
 class TestControlOpIntegration:
