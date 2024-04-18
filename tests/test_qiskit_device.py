@@ -49,14 +49,12 @@ class TestTranspilationOptionInitialization:
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    def test_warning_raised_for_hardware_backend_analytic_expval(self, hardware_backend, recorder):
+    def test_warning_raised_for_hardware_backend_analytic_expval(self, recorder):
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
-        if "aer" in hardware_backend:
-            pytest.skip("Not supported on basicaer")
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.basicaer", backend=hardware_backend, wires=2, shots=None)
+            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -65,18 +63,17 @@ class TestAnalyticWarningHWSimulator:
             record[0].message.args[0] == "The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             "statevector backends, not on the {}. Such statistics obtained from this "
-            "device are estimates based on samples.".format(dev.backend)
+            "device are estimates based on samples.".format(dev.backend.name)
         )
 
+    @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
-        self, statevector_backend, recorder, recwarn
+        self, method, recorder, recwarn
     ):
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
-        if "aer" in statevector_backend:
-            pytest.skip("Not supported on basicaer")
 
-        dev = qml.device("qiskit.basicaer", backend=statevector_backend, wires=2, shots=None)
+        dev = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
 
         # check that no warnings were raised
         assert len(recwarn) == 0
@@ -162,6 +159,16 @@ class TestBatchExecution:
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
 
+    def test_result_no_tapes(self, device):
+        """Tests that the result is correct when there are no tapes to execute."""
+        dev = device(2)
+        res = dev.batch_execute([])
+
+        # We're calling device methods directly, need to reset before the next
+        # execution
+        dev.reset()
+        assert not res
+
     def test_result_empty_tape(self, device, tol):
         """Tests that the result has the correct shape and entry types for
         empty tapes."""
@@ -183,3 +190,16 @@ class TestBatchExecution:
         tapes = [self.tape1, self.tape2]
         res = dev.batch_execute(tapes)
         assert dev.num_executions == 1
+
+    def test_barrier_tape(self, device, tol):
+        """Tests that the barriers are accounted for during conversion."""
+        dev = device(2)
+
+        @qml.qnode(dev)
+        def barrier_func():
+            qml.Barrier([0, 1])
+            return qml.state()
+
+        res = barrier_func()
+        assert barrier_func.tape.operations[0] == qml.Barrier([0, 1])
+        assert np.allclose(res, dev.batch_execute([barrier_func.tape]), atol=0)

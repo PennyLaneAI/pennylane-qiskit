@@ -23,7 +23,7 @@ import warnings
 
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit import extensions as ex
+from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
@@ -36,57 +36,48 @@ from ._version import __version__
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
 
-QISKIT_OPERATION_MAP_SELF_ADJOINT = {
-    # native PennyLane operations also native to qiskit
-    "PauliX": ex.XGate,
-    "PauliY": ex.YGate,
-    "PauliZ": ex.ZGate,
-    "Hadamard": ex.HGate,
-    "CNOT": ex.CXGate,
-    "CZ": ex.CZGate,
-    "SWAP": ex.SwapGate,
-    "ISWAP": ex.iSwapGate,
-    "RX": ex.RXGate,
-    "RY": ex.RYGate,
-    "RZ": ex.RZGate,
-    "Identity": ex.IGate,
-    "CSWAP": ex.CSwapGate,
-    "CRX": ex.CRXGate,
-    "CRY": ex.CRYGate,
-    "CRZ": ex.CRZGate,
-    "PhaseShift": ex.PhaseGate,
-    "QubitStateVector": ex.Initialize,
-    "StatePrep": ex.Initialize,
-    "Toffoli": ex.CCXGate,
-    "QubitUnitary": ex.UnitaryGate,
-    "U1": ex.U1Gate,
-    "U2": ex.U2Gate,
-    "U3": ex.U3Gate,
-    "IsingZZ": ex.RZZGate,
-    "IsingYY": ex.RYYGate,
-    "IsingXX": ex.RXXGate,
-}
-
-QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT = {
-    "Adjoint(" + k + ")": v for k, v in QISKIT_OPERATION_MAP_SELF_ADJOINT.items()
-}
-
-# Separate dictionary for the inverses as the operations dictionary needs
-# to be invertible for the conversion functionality to work
-QISKIT_OPERATION_MAP_NON_SELF_ADJOINT = {"S": ex.SGate, "T": ex.TGate, "SX": ex.SXGate}
-QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT = {
-    "Adjoint(S)": ex.SdgGate,
-    "Adjoint(T)": ex.TdgGate,
-    "Adjoint(SX)": ex.SXdgGate,
-}
-
 QISKIT_OPERATION_MAP = {
-    **QISKIT_OPERATION_MAP_SELF_ADJOINT,
-    **QISKIT_OPERATION_MAP_NON_SELF_ADJOINT,
-}
-QISKIT_OPERATION_INVERSES_MAP = {
-    **QISKIT_OPERATION_INVERSES_MAP_SELF_ADJOINT,
-    **QISKIT_OPERATION_INVERSES_MAP_NON_SELF_ADJOINT,
+    # native PennyLane operations also native to qiskit
+    "PauliX": lib.XGate,
+    "PauliY": lib.YGate,
+    "PauliZ": lib.ZGate,
+    "Hadamard": lib.HGate,
+    "CNOT": lib.CXGate,
+    "CZ": lib.CZGate,
+    "SWAP": lib.SwapGate,
+    "ISWAP": lib.iSwapGate,
+    "RX": lib.RXGate,
+    "RY": lib.RYGate,
+    "RZ": lib.RZGate,
+    "Identity": lib.IGate,
+    "CSWAP": lib.CSwapGate,
+    "CRX": lib.CRXGate,
+    "CRY": lib.CRYGate,
+    "CRZ": lib.CRZGate,
+    "PhaseShift": lib.PhaseGate,
+    "QubitStateVector": lib.Initialize,
+    "StatePrep": lib.Initialize,
+    "Toffoli": lib.CCXGate,
+    "QubitUnitary": lib.UnitaryGate,
+    "U1": lib.U1Gate,
+    "U2": lib.U2Gate,
+    "U3": lib.U3Gate,
+    "IsingZZ": lib.RZZGate,
+    "IsingYY": lib.RYYGate,
+    "IsingXX": lib.RXXGate,
+    "S": lib.SGate,
+    "T": lib.TGate,
+    "SX": lib.SXGate,
+    "Adjoint(S)": lib.SdgGate,
+    "Adjoint(T)": lib.TdgGate,
+    "Adjoint(SX)": lib.SXdgGate,
+    "CY": lib.CYGate,
+    "CH": lib.CHGate,
+    "CPhase": lib.CPhaseGate,
+    "CCZ": lib.CCZGate,
+    "ECR": lib.ECRGate,
+    "Barrier": lib.Barrier,
+    "Adjoint(GlobalPhase)": lib.GlobalPhaseGate,
 }
 
 
@@ -127,9 +118,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "tensor_observables": True,
         "inverse_operations": True,
     }
-    _operation_map = {**QISKIT_OPERATION_MAP, **QISKIT_OPERATION_INVERSES_MAP}
+    _operation_map = QISKIT_OPERATION_MAP
     _state_backends = {
         "statevector_simulator",
+        "simulator_statevector",
         "unitary_simulator",
         "aer_simulator_statevector",
         "aer_simulator_unitary",
@@ -148,7 +140,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "Projector",
     }
 
-    hw_analytic_warning_message = (
+    analytic_warning_message = (
         "The analytic calculation of expectations, variances and "
         "probabilities is only supported on statevector backends, not on the {}. "
         "Such statistics obtained from this device are estimates based on samples."
@@ -157,6 +149,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     _eigs = {}
 
     def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+
         super().__init__(wires=wires, shots=shots)
 
         self.provider = provider
@@ -181,18 +174,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # Keep track if the user specified analytic to be True
         if shots is None and not self._is_state_backend:
             # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.hw_analytic_warning_message.format(backend), UserWarning)
+            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
 
             self.shots = 1024
 
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
-        b = self.backend
-        if len(self.wires) > int(b.configuration().n_qubits):
-            raise ValueError(
-                f"Backend '{backend}' supports maximum {b.configuration().n_qubits} wires"
-            )
+        backend_qubits = self.backend.configuration().n_qubits
+        # if the backend has a set number of qubits, ensure wires doesn't exceed (some simulators have n_qubits=None)
+        if backend_qubits and len(self.wires) > int(backend_qubits):
+            raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
 
         # Initialize inner state
         self.reset()
@@ -348,21 +340,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
-            adjoint = operation.startswith("Adjoint(")
-            split_op = operation.split("Adjoint(")
+            if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+                # Need to revert the order of the quantum registers used in
+                # Qiskit such that it matches the PennyLane ordering
+                qregs = list(reversed(qregs))
 
-            if adjoint:
-                if split_op[1] in ("QubitUnitary)", "QubitStateVector)", "StatePrep)"):
-                    # Need to revert the order of the quantum registers used in
-                    # Qiskit such that it matches the PennyLane ordering
-                    qregs = list(reversed(qregs))
-            else:
-                if split_op[0] in ("QubitUnitary", "QubitStateVector", "StatePrep"):
-                    # Need to revert the order of the quantum registers used in
-                    # Qiskit such that it matches the PennyLane ordering
-                    qregs = list(reversed(qregs))
+            if operation in ("Barrier",):
+                # Need to add the num_qubits for instantiating Barrier in Qiskit
+                par = [len(self._reg)]
 
             dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
+
             gate = mapped_operation(*par)
 
             dag.apply_operation_back(gate, qargs=qregs)
@@ -494,6 +482,10 @@ class QiskitDevice(QubitDevice, abc.ABC):
         # pylint: disable=missing-function-docstring
 
         compiled_circuits = self.compile_circuits(circuits)
+
+        if not compiled_circuits:
+            # At least one circuit must always be provided to the backend.
+            return []
 
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)

@@ -1,8 +1,22 @@
-# Release 0.35.0-dev
+# Release 0.36.0-dev
 
 ### New features since last release
 
+* Support is added for using the plugin devices with Qiskit 1.0. As the backend provider ``qiskit.BasicAer`` 
+  is no longer supported by Qiskit in 1.0, this added support does not extend to the ``"qiskit.aer"`` device. 
+  Instead, a ``"qiskit.basicsim"`` device is added, with the new Qiskit implementation of a Python simulator 
+  device, ``BasicSimulator``, as the backend.
+  [(#493)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/493)
+
 ### Improvements 🛠
+
+* Following updates to allow device compatibility with Qiskit 1.0, the version of `qiskit-ibm-runtime` is 
+  no longer capped.
+  [(#508)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/508)
+
+* The test suite now runs with the most recent `qiskit` and `qiskit-ibm-runtime`, and well as with 
+  `'qiskit==0.45'` and `qiskit-ibm-runtime<0.21` to monitor backward-compatibility.
+  [(#508)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/508)
 
 ### Breaking changes 💔
 
@@ -15,24 +29,97 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+Lillian M. A. Frederiksen
+
+---
+# Release 0.35.1
+
+### Bug fixes 🐛
+
+* Following the 0.21 release of `qiskit-ibm-runtime`, which requires Qiskit 1.0, the PennyLane-Qiskit plugin pins to 
+  `qiskit-ibm-runtime<0.21`. This prevents `pip install pennylane-qiskit` from installing Qiskit 1.0 (via the requirements 
+  of `qiskit-ibm-runtime`), which will break any environments that already have a 0.X.X version of Qiskit installed.
+  [(#486)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/486)
+
+### Contributors ✍️
+Lillian Frederiksen
+
+---
+# Release 0.35.0
+
+### Improvements 🛠
+
+* The UI for passing parameters to a `qfunc` generated when loading a Qiskit `QuantumCircuit`
+  into PennyLane is updated to allow passing parameters as args or kwargs, rather than as
+  a dictionary. The old dictionary UI continues to be supported.
+  [(#406)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/406)
+  [(#428)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/428)
+
+* Measurement operations are now added to the PennyLane template when a `QuantumCircuit`
+  is converted using `load`. Additionally, one can override any existing terminal
+  measurements by providing a list of PennyLane
+  `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_ themselves.
+  [(#405)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/405)
+  [(#466)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/466)
+  [(#467)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/467)
+
+* Added the support for converting conditional operations based on mid-circuit measurements and
+  two of the `ControlFlowOp` operations - `IfElseOp` and `SwitchCaseOp` when converting
+  a `QuantumCircuit` using `load`.
+  [(#417)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/417)
+  [(#465)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/465)
+
+* Qiskit's classical `Expr` conditionals can also be used with the supported
+  `ControlFlowOp` operations.
+  [(#432)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/432)
+
+* Added conversion support for more Qiskit gates to native PennyLane operations -
+  `Barrier`, `CYGate`, `CHGate`, `CPhase`, `CCZGate`, `ECRGate`, and `GlobalPhaseGate`.
+  [(#449)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/449)
+
+* Added the ability to convert a Qiskit `SparsePauliOp` instance into a PennyLane `Operator`.
+  [(#401)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/401)
+  [(#453)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/453)
+
+* Added a `pennylane.io` entry point for converting Qiskit operators.
+  [(#453)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/453)
+
+* Unused parameters are now ignored when a `QuantumCircuit` is converted using `load`.
+  [(#454)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/454)
+
+### Bug fixes 🐛
+
+* `QiskitDevice.batch_execute()` now gracefully handles empty lists of circuits.
+  [(#459)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/459)
+
+* It is now possible to compute the gradient of a circuit with `ParameterVector` elements.
+  [(#458)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/458)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Mikhail Andrenkov
+Utkarsh Azad
+Lillian Frederiksen
 
 ---
 # Release 0.34.0
 
 ### Bug fixes 🐛
 
-* The kwargs `job_tags` and `session_id` are passed to the correct arguments in the 
-  `circuit_runner` device so that they will be used in the Qiskit backend; these 
+* The kwargs `job_tags` and `session_id` are passed to the correct arguments in the
+  `circuit_runner` device so that they will be used in the Qiskit backend; these
   were previously ignored.
   [(#358)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/358)
 
-* The `generate_samples` method for the `IBMQSamplerDevice` is updated to get counts 
-  from the nearest probability distribution rather than the quasi-distribution (which 
-  may contain negative probabilities and therefore raise errors). 
+* The `generate_samples` method for the `IBMQSamplerDevice` is updated to get counts
+  from the nearest probability distribution rather than the quasi-distribution (which
+  may contain negative probabilities and therefore raise errors).
   [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
-  
-* The `generate_samples` method for the `IBMQSamplerDevice` now avoids raising an 
-  indexing error when some states are not populated, and labels states according to 
+
+* The `generate_samples` method for the `IBMQSamplerDevice` now avoids raising an
+  indexing error when some states are not populated, and labels states according to
   the Pennylane convention instead of Qiskit convention.
   [(#357)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/357)
 
@@ -55,7 +142,7 @@ Francesco Scala
 
 ### Bug fixes 🐛
 
-* Update conversion of PennyLane to Qiskit operators to accommodate 
+* Update conversion of PennyLane to Qiskit operators to accommodate
   the addition of Singleton classes in the newest version of Qiskit.
   [(#347)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/347)
 
@@ -287,10 +374,10 @@ Mikhail Andrenkov, Christina Lee, Romain Moyard, Antal Száva
 
 * Fix runtime sampler due to changes on Qiskit side.
   [(#201)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/201)
-  
+
 * Pin `jinja2` to 3.0.3 because of sphinx incompatibility.
   [(#207)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/207)
-  
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
@@ -298,7 +385,7 @@ This release contains contributions from (in alphabetical order):
 Samuel Banning, Romain Moyard
 
 ---
- 
+
 # Release 0.22.0
 
 ### Improvements
@@ -306,7 +393,7 @@ Samuel Banning, Romain Moyard
 * Changed a validation check such that it handles qubit numbers represented as
   strings.
   [(#184)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/184)
-  
+
 * Changed the VQE callback function for SciPy optimizers.
   [(#187)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/187)
 
@@ -318,7 +405,7 @@ Samuel Banning, Romain Moyard
 
 * Changed the access to Hamiltonian terms `hamiltonian.terms()` as a method.
   [(#190)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/190)
-  
+
 ### Contributors
 
 This release contains contributions from (in alphabetical order):
@@ -433,7 +520,7 @@ Christina Lee, Antal Száva
 
 ### Improvements
 
-* The plugin can now load Qiskit circuits with more complicated ``ParameterExpression`` variables.
+* The plugin can now load Qiskit circuits with more complicated `ParameterExpression` variables.
   [(#139)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/139)
 
 ### Contributors
@@ -585,7 +672,7 @@ Maria Schuld, Antal Száva
 
 ### Improvements
 
-* Ported the ``QiskitDevice`` class to inherit from the ``QubitDevice`` class
+* Ported the `QiskitDevice` class to inherit from the `QubitDevice` class
   defined in PennyLane to use unified qubit operations and ease development.
   [(#83)](https://github.com/XanaduAI/pennylane-qiskit/pull/83)
 
