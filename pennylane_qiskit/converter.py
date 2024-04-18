@@ -715,8 +715,6 @@ def mp_to_pauli(mp, register_size):
 
     pauli_string = ["I"] * register_size
     pauli_string[mp.wires[0]] = observables[mp.obs.name]
-    # for observable in mp.obs:
-    #     pauli_string[observable.wires[0]] = observables[observable.name]
 
     # Qiskit orders wires in the opposite direction compared to PL
     pauli_string.reverse()
