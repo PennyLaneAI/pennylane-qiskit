@@ -599,9 +599,7 @@ def load_qasm_from_file(file: str):
     Returns:
         function: the new PennyLane template
     """
-
     return load(QuantumCircuit.from_qasm_file(file), measurements=[])
-
 
 def load_pauli_op(
     pauli_op: SparsePauliOp,
@@ -1038,7 +1036,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     specified to apply.
 
     Args:
-        circuit (Union[~.QuantumScript, ~.QuantumTape]): the circuit applied
+        circuit (QuantumTape): the circuit applied
             to the device
         register_size (int): the total number of qubits on the device the circuit is
             executed on; this must include any qubits not used in the given
@@ -1070,6 +1068,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
         qc &= operation_to_qiskit(op, reg, creg)
 
     # rotate the state for measurement in the computational basis
+    # ToDo: check this in cases with multiple different bases
     if diagonalize:
         rotations = circuit.diagonalizing_gates
         for rot in rotations:
@@ -1088,7 +1087,8 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     Args:
         operation (List[pennylane.Operation]): operation to be converted
-        num_qubits (int): the total number of qubits on the device
+        reg (Quantum Register): the total number of qubits on the device
+        creg (Classical Register): classical register
 
     Returns:
         QuantumCircuit: a quantum circuit objects containing the translated operation

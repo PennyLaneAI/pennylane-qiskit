@@ -15,14 +15,13 @@ import pennylane as qml
 from pennylane import numpy as np
 from pennylane_qiskit.converter import (
     load,
+    load_pauli_op,
     load_qasm,
     load_qasm_from_file,
     map_wires,
     circuit_to_qiskit,
     operation_to_qiskit,
     mp_to_pauli,
-    load_pauli_op,
-    map_wires,
     _format_params_dict,
     _check_parameter_bound,
 )
@@ -1474,6 +1473,99 @@ class TestConverterIntegration:
         ]
 
         assert np.allclose(jac, jac_expected)
+
+    def test_quantum_circuit_with_single_measurement(self, qubit_device_single_wire):
+        """Tests loading a converted template in a QNode with a single measurement."""
+        qc = QuantumCircuit(1)
+        qc.h(0)
+        qc.measure_all()
+
+        measurement = qml.expval(qml.PauliZ(0))
+        quantum_circuit = load(qc, measurements=measurement)
+
+        @qml.qnode(qubit_device_single_wire)
+        def circuit_loaded_qiskit_circuit():
+            return quantum_circuit()
+
+        @qml.qnode(qubit_device_single_wire)
+        def circuit_native_pennylane():
+            qml.Hadamard(0)
+            return qml.expval(qml.PauliZ(0))
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+    def test_quantum_circuit_with_multiple_measurements(self, qubit_device_2_wires):
+        """Tests loading a converted template in a QNode with multiple measurements."""
+
+        angle = 0.543
+
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.z(0).c_if(0, 1)
+        qc.rz(angle, [0])
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        quantum_circuit = load(qc, measurements=measurements)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit():
+            return quantum_circuit()
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane():
+            qml.Hadamard(0)
+            m0 = qml.measure(0)
+            qml.cond(m0, qml.PauliZ)(0)
+            qml.RZ(angle, wires=0)
+            qml.CNOT([0, 1])
+            return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+
+        assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
+
+        quantum_circuit = load(qc, measurements=None)
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_loaded_qiskit_circuit2():
+            meas = quantum_circuit()
+            return [qml.expval(m) for m in meas]
+
+        @qml.qnode(qubit_device_2_wires)
+        def circuit_native_pennylane2():
+            qml.Hadamard(0)
+            m0 = qml.measure(0)
+            qml.RZ(angle, wires=0)
+            qml.CNOT([0, 1])
+            return [qml.expval(m) for m in [m0, qml.measure(0), qml.measure(1)]]
+
+        assert circuit_loaded_qiskit_circuit2() == circuit_native_pennylane2()
+
+    def test_diff_meas_circuit(self):
+        """Tests mid-measurements are recognized and returned correctly."""
+
+        angle = 0.543
+
+        qc = QuantumCircuit(3, 3)
+        qc.h(0)
+        qc.measure(0, 0)
+        qc.rx(angle, [0])
+        qc.cx(0, 1)
+        qc.measure(1, 1)
+
+        qc1 = QuantumCircuit(3, 3)
+        qc1.h(0)
+        qc1.measure(2, 2)
+        qc1.rx(angle, [0])
+        qc1.cx(0, 1)
+        qc1.measure(1, 1)
+
+        qtemp, qtemp1 = load(qc), load(qc1)
+        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
+
+        qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
+        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
 
 
 class TestConverterPennyLaneCircuitToQiskit:
