@@ -1,5 +1,4 @@
 venv/
-venv1/
 doc/_build/
 pennylane_qiskit.egg-info/
 build/
