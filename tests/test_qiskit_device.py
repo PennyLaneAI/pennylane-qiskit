@@ -7,12 +7,19 @@ from pennylane_qiskit.qiskit_device import QiskitDevice
 from qiskit_aer import noise
 from qiskit.providers import BackendV1, BackendV2
 from unittest.mock import Mock
+from qiskit_ibm_runtime.options import Options
+
 
 class Configuration:
     def __init__(self, n_qubits, backend_name):
         self.n_qubits = n_qubits
         self.backend_name = backend_name
         self.noise_model = None
+        self.method = "placeholder"
+
+    def get(self, attribute, default=None):
+        return getattr(self, attribute, default)
+
 
 class MockedBackend(BackendV2):
     def __init__(self, num_qubits=10, name="mocked_backend"):
@@ -38,6 +45,7 @@ class MockedBackend(BackendV2):
     def target(self):
         return self._target
 
+
 class MockedBackendLegacy(BackendV1):
     def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
         self._configuration = Configuration(num_qubits, backend_name=name)
@@ -52,11 +60,11 @@ class MockedBackendLegacy(BackendV1):
 
     def run(self, *args, **kwargs):
         return None
-    
+
     @property
     def options(self):
         return self._options
-    
+
 
 test_transpile_options = [
     {},
@@ -68,12 +76,20 @@ test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
 backend = MockedBackend()
 legacy_backend = MockedBackendLegacy()
 
+
 class TestSupportForV1andV2:
     """Tests compatibility with BackendV1 and BackendV2"""
-    @pytest.mark.parametrize("backend", [legacy_backend, backend,])
+
+    @pytest.mark.parametrize(
+        "backend",
+        [
+            legacy_backend,
+            backend,
+        ],
+    )
     def test_v1_and_v2(self, backend):
         """Test that device initializes with no error"""
-        dev = qml.device('qiskit.remote', wires=10, backend=backend, use_primitives=True)
+        dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
 
 
 class TestProbabilities:
@@ -84,6 +100,7 @@ class TestProbabilities:
         None if no job has yet been run."""
         dev = AerDevice(backend="aer_simulator_statevector", wires=1, shots=None)
         assert dev.probability() is None
+
 
 @pytest.mark.parametrize("wires", [1, 2, 3])
 @pytest.mark.parametrize("shots", [None])
