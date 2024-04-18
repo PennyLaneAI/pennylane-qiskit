@@ -87,8 +87,8 @@ class TestSupportForV1andV2:
             backend,
         ],
     )
-    def test_v1_and_v2(self, backend):
-        """Test that device initializes with no error"""
+    def test_v1_and_v2_mocked(self, backend):
+        """Test that device initializes with no error mocked"""
         dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
 
 
