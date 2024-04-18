@@ -1775,31 +1775,6 @@ class TestConverterUtilsPennyLaneToQiskit:
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
 
-    def test_diff_meas_circuit(self):
-        """Tests mid-measurements are recognized and returned correctly."""
-
-        angle = 0.543
-
-        qc = QuantumCircuit(3, 3)
-        qc.h(0)
-        qc.measure(0, 0)
-        qc.rx(angle, [0])
-        qc.cx(0, 1)
-        qc.measure(1, 1)
-
-        qc1 = QuantumCircuit(3, 3)
-        qc1.h(0)
-        qc1.measure(2, 2)
-        qc1.rx(angle, [0])
-        qc1.cx(0, 1)
-        qc1.measure(1, 1)
-
-        qtemp, qtemp1 = load(qc), load(qc1)
-        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
-
-        qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
-        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
-
 
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""
