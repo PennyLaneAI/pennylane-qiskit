@@ -864,7 +864,7 @@ class TestMockedExecution:
         with patch.object(dev, "_execute_estimator"):
             with pytest.warns(
                 UserWarning,
-                match="Setting multiple shots in circuit initialization is not supported ",
+                match="Setting shot vector",
             ):
                 dev.execute(qs)
 
@@ -997,7 +997,8 @@ class TestExecution:
         # nothing else is in samples
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
-    def test_tape_shots_used(self, mocker):
+    def test_tape_shots_used_runtime_service(self, mocker):
+        """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
@@ -1012,7 +1013,12 @@ class TestExecution:
 
         assert len(res[0]) == 5
 
+        # Should reset to device shots if circuit ran again without shots defined
+        res = circuit()
+        assert len(res[0]) == 2
+
     def test_tape_shots_used_for_estimator(self, mocker):
+        """Tests that device uses tape shots rather than device shots for estimator"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
@@ -1026,7 +1032,12 @@ class TestExecution:
         estimator_execute.assert_called_once()
         assert dev._current_job.metadata[0]["shots"] == 5
 
+        # Should reset to device shots if circuit ran again without shots defined
+        circuit()
+        assert dev._current_job.metadata[0]["shots"] == 2
+
     def test_tape_shots_used_for_sampler(self, mocker):
+        """Tests that device uses tape shots rather than device shots for sampler"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
@@ -1041,7 +1052,12 @@ class TestExecution:
         sampler_execute.assert_called_once()
         assert dev._current_job.metadata[0]["shots"] == 5
 
+        # Should reset to device shots if circuit ran again without shots defined
+        circuit()
+        assert dev._current_job.metadata[0]["shots"] == 2
+
     def test_warning_for_shot_vector(self):
+        """Tests that a warning is raised if a shot vector is passed and total shots of tape is used instead."""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
 
         @qml.qnode(dev)
@@ -1050,7 +1066,11 @@ class TestExecution:
 
         with pytest.warns(
             UserWarning,
-            match="Setting multiple shots in circuit initialization is not supported ",
+            match="Setting shot vector",
         ):
             circuit(shots=[5, 10, 2])
         assert dev._current_job.metadata[0]["shots"] == 17
+
+        # Should reset to device shots if circuit ran again without shots defined
+        circuit()
+        assert dev._current_job.metadata[0]["shots"] == 2

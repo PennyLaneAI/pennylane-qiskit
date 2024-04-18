@@ -474,8 +474,8 @@ class QiskitDevice2(Device):
                 for circ in circuits:
                     if circ.shots and len(circ.shots.shot_vector) > 1:
                         warnings.warn(
-                            "Setting multiple shots in circuit initialization is not supported for the Qiskit-Pennylane Plugin."
-                            f"The circuit will be run once with {circ.shots.total_shots} instead."
+                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
+                            f"The circuit will be run once with {circ.shots.total_shots} shots instead."
                         )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
                         execute_fn = self._execute_estimator
