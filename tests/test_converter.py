@@ -1475,8 +1475,6 @@ class TestConverterIntegration:
 
         assert np.allclose(jac, jac_expected)
 
-<<<<<<< HEAD
-
 class TestConverterPennyLaneCircuitToQiskit:
 
     def test_circuit_to_qiskit(self):
@@ -1683,7 +1681,7 @@ class TestConverterUtilsPennyLaneToQiskit:
 
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
-=======
+
     def test_quantum_circuit_with_single_measurement(self, qubit_device_single_wire):
         """Tests loading a converted template in a QNode with a single measurement."""
         qc = QuantumCircuit(1)
@@ -2334,4 +2332,3 @@ class TestLoadPauliOp:
         match = r"The operator 123 is not a valid Qiskit SparsePauliOp\."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)
->>>>>>> new_device_feature_branch
