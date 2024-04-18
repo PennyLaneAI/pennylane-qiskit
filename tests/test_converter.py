@@ -1475,6 +1475,7 @@ class TestConverterIntegration:
 
         assert np.allclose(jac, jac_expected)
 
+
 class TestConverterPennyLaneCircuitToQiskit:
 
     def test_circuit_to_qiskit(self):

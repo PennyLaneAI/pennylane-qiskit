@@ -1029,6 +1029,7 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
 
     return condition_res
 
+
 # diagonalize is currently only used if measuring
 # maybe always diagonalize when measuring, and never when not?
 # will this be used for a user-facing function to convert from PL to Qiskit as well?
