@@ -601,6 +601,7 @@ def load_qasm_from_file(file: str):
     """
     return load(QuantumCircuit.from_qasm_file(file), measurements=[])
 
+
 def load_pauli_op(
     pauli_op: SparsePauliOp,
     params: Any = None,
