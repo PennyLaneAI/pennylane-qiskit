@@ -306,7 +306,7 @@ class QiskitDevice2(Device):
             qiskit.providers.Backend: Qiskit backend object.
         """
         return self._backend
-    
+
     @property
     def compile_backend(self):
         """The compile_backend is a Qiskit backend object to be used for transpilation.

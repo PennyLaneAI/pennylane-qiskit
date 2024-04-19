@@ -610,7 +610,6 @@ class TestDeviceProperties:
         assert dev.compile_backend == dev._compile_backend
         assert dev.compile_backend == compile_backend
 
-
     def test_service_property(self):
         """Test the service property"""
         assert test_dev.service == test_dev._service
@@ -641,23 +640,32 @@ class TestMockedExecution:
         assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
 
         # on a device
-        transpile_args = {"random_kwarg": 3,
-                          "seed_transpiler": 42,
-                          "optimization_level": 3,
-                          "circuits": []}
+        transpile_args = {
+            "random_kwarg": 3,
+            "seed_transpiler": 42,
+            "optimization_level": 3,
+            "circuits": [],
+        }
         compile_backend = MockedBackend(name="compile_backend")
-        dev = QiskitDevice2(wires=5, backend=backend, compile_backend=compile_backend, **transpile_args)
-        assert dev.get_transpile_args(dev._kwargs) == {"optimization_level": 3, "seed_transpiler": 42}
+        dev = QiskitDevice2(
+            wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
+        )
+        assert dev.get_transpile_args(dev._kwargs) == {
+            "optimization_level": 3,
+            "seed_transpiler": 42,
+        }
 
     @patch("pennylane_qiskit.qiskit_device2.transpile")
     @pytest.mark.parametrize("compile_backend", [None, MockedBackend(name="compile_backend")])
     def test_compile_circuits(self, transpile_mock, compile_backend):
         """Tests compile_circuits with a mocked transpile function to avoid calling
-        a remote backend. This renders it fairly useless as a test, a remote backend. 
+        a remote backend. This renders it fairly useless as a test, a remote backend.
         Confirm compile_backend and transpile_args are used."""
 
         transpile_args = {"seed_transpiler": 42, "optimization_level": 2}
-        dev = QiskitDevice2(wires=5, backend=backend, compile_backend=compile_backend, **transpile_args)
+        dev = QiskitDevice2(
+            wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
+        )
 
         transpile_mock.return_value = QuantumCircuit(2)
 
@@ -672,9 +680,9 @@ class TestMockedExecution:
         with patch.object(dev, "get_transpile_args", return_value=transpile_args):
             compiled_circuits = dev.compile_circuits(input_circuits)
 
-        transpile_mock.assert_called_with(input_circuits[2],
-                                          backend=dev.compile_backend,
-                                          **transpile_args)
+        transpile_mock.assert_called_with(
+            input_circuits[2], backend=dev.compile_backend, **transpile_args
+        )
 
         assert len(compiled_circuits) == len(input_circuits)
         for i, circuit in enumerate(compiled_circuits):
