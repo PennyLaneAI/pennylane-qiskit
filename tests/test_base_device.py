@@ -659,8 +659,7 @@ class TestMockedExecution:
     @pytest.mark.parametrize("compile_backend", [None, MockedBackend(name="compile_backend")])
     def test_compile_circuits(self, transpile_mock, compile_backend):
         """Tests compile_circuits with a mocked transpile function to avoid calling
-        a remote backend. This renders it fairly useless as a test, a remote backend.
-        Confirm compile_backend and transpile_args are used."""
+        a remote backend. Confirm compile_backend and transpile_args are used."""
 
         transpile_args = {"seed_transpiler": 42, "optimization_level": 2}
         dev = QiskitDevice2(
