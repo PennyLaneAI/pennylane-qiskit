@@ -1,4 +1,4 @@
-name: Tests
+name: Tests for 1.0
 on:
   push:
     branches:
@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-ci-legacy.txt
+          pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
           pip freeze
 
@@ -38,12 +38,9 @@ jobs:
           pip install git+https://github.com/PennyLaneAI/pennylane-qiskit.git@${{ github.ref }}
           pip freeze
 
-      - name: Run tests
-        # Skip IBMQ and Runtime tests as they depend on IBMQ's availability and
-        # easily result in timeouts
+      - name: Run standard Qiskit plugin tests
+        # Run the standard tests with the most recent version of Qiskit
         run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
-        env:
-          IBMQX_TOKEN: ${{ secrets.IBMQX_TOKEN_TEST }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -70,7 +67,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-ci-legacy.txt
+          pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock pytest-benchmark flaky --upgrade
 
       - name: Install Plugin
@@ -80,7 +77,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pl-device-test --device=qiskit.basicaer --tb=short --skip-ops --shots=20000 --device-kwargs backend=qasm_simulator
+          pl-device-test --device=qiskit.basicsim --tb=short --skip-ops --shots=20000 --device-kwargs backend=basic_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=20000 --device-kwargs backend=qasm_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=statevector_simulator
           pl-device-test --device=qiskit.aer --tb=short --skip-ops --shots=None --device-kwargs backend=unitary_simulator

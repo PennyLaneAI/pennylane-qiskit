@@ -19,6 +19,8 @@ import numpy as np
 import pytest
 import inspect
 from unittest.mock import patch, Mock
+from semantic_version import Version
+import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
@@ -31,7 +33,11 @@ from pennylane_qiskit.qiskit_device2 import (
     split_measurement_types,
     qiskit_options_to_flat_dict,
 )
-from pennylane_qiskit.converter import circuit_to_qiskit, mp_to_pauli, QISKIT_OPERATION_MAP
+from pennylane_qiskit.converter import (
+    circuit_to_qiskit,
+    mp_to_pauli,
+    QISKIT_OPERATION_MAP,
+)
 
 from qiskit_ibm_runtime import QiskitRuntimeService, Session, Estimator
 from qiskit_ibm_runtime.options import Options
@@ -74,6 +80,9 @@ class MockSession:
         self.max_time = max_time
         self.session_id = "123"
 
+    def close(self):  # This is just to appease a test
+        pass
+
 
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
@@ -88,15 +97,14 @@ def options_for_testing():
     """Creates an Options object with defined values in multiple sub-categories"""
     options = Options()
     options.environment.job_tags = ["getting angle"]
-    options.resilience.noise_amplifier = "placeholder"
+    options.resilience.noise_amplifier = "LocalFoldingAmplifier"
     options.optimization_level = 2
     options.resilience_level = 1
-    options.simulator.noise_model = "placeholder"
+    # options.simulator.noise_model = None
     return options
 
 
 class TestDeviceInitialization:
-
     def test_compile_backend_kwarg(self):
         """Test that the compile_backend is set correctly if passed, and the main
         backend is used otherwise"""
@@ -175,14 +183,14 @@ class TestDeviceInitialization:
         object is used to set the backend noise model"""
 
         options = Options()
-        options.simulator.noise_model = "PlaceholderForNoiseModel"
+        options.simulator.noise_model = {"placeholder": 1}
 
         new_backend = MockedBackend()
         dev1 = QiskitDevice2(wires=3, backend=backend)
         dev2 = QiskitDevice2(wires=3, backend=new_backend, options=options)
 
         assert dev1.backend.options.noise_model == None
-        assert dev2.backend.options.noise_model == "PlaceholderForNoiseModel"
+        assert dev2.backend.options.noise_model == {"placeholder": 1}
 
 
 class TestQiskitSessionManagement:
@@ -307,7 +315,7 @@ class TestDevicePreprocessing:
         assert np.all([tape.operations == operations for tape in tapes])
 
         # measurements split as expected
-        [tape.measurements for tape in tapes] == expectation
+        assert [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
         assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
@@ -476,14 +484,23 @@ class TestOptionsHandling:
         dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a")
 
         assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
-        assert dev._kwargs == {
-            "random_kwarg1": True,
-            "random_kwarg2": "a",
-            "skip_transpilation": False,
-            "init_qubits": True,
-            "log_level": "WARNING",
-            "job_tags": [],
-        }
+        if Version(qiskit_ibm_runtime.__version__) < Version("0.21.0"):
+            assert dev._kwargs == {
+                "random_kwarg1": True,
+                "random_kwarg2": "a",
+                "skip_transpilation": False,
+                "init_qubits": True,
+                "log_level": "WARNING",
+                "job_tags": [],
+            }
+        else:
+            assert dev._kwargs == {
+                "random_kwarg1": True,
+                "random_kwarg2": "a",
+                "skip_transpilation": False,
+                "init_qubits": True,
+                "log_level": "WARNING",
+            }
 
         dev.options.environment.job_tags = ["my_tag"]
         dev.options.max_execution_time = "1m"
@@ -510,14 +527,23 @@ class TestOptionsHandling:
         dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, max_execution_time="1m")
 
         assert dev._init_kwargs == {"random_kwarg1": True, "max_execution_time": "1m"}
-        assert dev._kwargs == {
-            "random_kwarg1": True,
-            "max_execution_time": "1m",
-            "skip_transpilation": False,
-            "init_qubits": True,
-            "log_level": "WARNING",
-            "job_tags": [],
-        }
+        if Version(qiskit_ibm_runtime.__version__) < Version("0.21.0"):
+            assert dev._kwargs == {
+                "random_kwarg1": True,
+                "max_execution_time": "1m",
+                "skip_transpilation": False,
+                "init_qubits": True,
+                "log_level": "WARNING",
+                "job_tags": [],
+            }
+        else:
+            assert dev._kwargs == {
+                "random_kwarg1": True,
+                "max_execution_time": "1m",
+                "skip_transpilation": False,
+                "init_qubits": True,
+                "log_level": "WARNING",
+            }
 
         dev.options.environment.job_tags = ["my_tag"]
         dev.options.max_execution_time = "30m"
@@ -568,7 +594,7 @@ class TestOptionsHandling:
 class TestDeviceProperties:
     def test_name_property(self):
         """Test the backend property"""
-        assert test_dev.name == "qiskit.remote2"
+        assert test_dev.name == "QiskitDevice2"
 
     def test_backend_property(self):
         """Test the backend property"""
@@ -583,6 +609,7 @@ class TestDeviceProperties:
 
         assert dev.compile_backend == dev._compile_backend
         assert dev.compile_backend == compile_backend
+
 
     def test_service_property(self):
         """Test the service property"""
@@ -605,7 +632,6 @@ class TestDeviceProperties:
 
 
 class TestMockedExecution:
-
     def test_get_transpile_args(self):
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
@@ -615,31 +641,23 @@ class TestMockedExecution:
         assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
 
         # on a device
-        transpile_args = {
-            "random_kwarg": 3,
-            "seed_transpiler": 42,
-            "optimization_level": 3,
-            "circuits": [],
-        }
+        transpile_args = {"random_kwarg": 3,
+                          "seed_transpiler": 42,
+                          "optimization_level": 3,
+                          "circuits": []}
         compile_backend = MockedBackend(name="compile_backend")
-        dev = QiskitDevice2(
-            wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
-        )
-        assert dev.get_transpile_args(dev._kwargs) == {
-            "optimization_level": 3,
-            "seed_transpiler": 42,
-        }
+        dev = QiskitDevice2(wires=5, backend=backend, compile_backend=compile_backend, **transpile_args)
+        assert dev.get_transpile_args(dev._kwargs) == {"optimization_level": 3, "seed_transpiler": 42}
 
     @patch("pennylane_qiskit.qiskit_device2.transpile")
     @pytest.mark.parametrize("compile_backend", [None, MockedBackend(name="compile_backend")])
     def test_compile_circuits(self, transpile_mock, compile_backend):
         """Tests compile_circuits with a mocked transpile function to avoid calling
-        a remote backend. Confirm compile_backend and transpile_args are used."""
+        a remote backend. This renders it fairly useless as a test, a remote backend. 
+        Confirm compile_backend and transpile_args are used."""
 
         transpile_args = {"seed_transpiler": 42, "optimization_level": 2}
-        dev = QiskitDevice2(
-            wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
-        )
+        dev = QiskitDevice2(wires=5, backend=backend, compile_backend=compile_backend, **transpile_args)
 
         transpile_mock.return_value = QuantumCircuit(2)
 
@@ -654,9 +672,9 @@ class TestMockedExecution:
         with patch.object(dev, "get_transpile_args", return_value=transpile_args):
             compiled_circuits = dev.compile_circuits(input_circuits)
 
-        transpile_mock.assert_called_with(
-            input_circuits[2], backend=dev.compile_backend, **transpile_args
-        )
+        transpile_mock.assert_called_with(input_circuits[2],
+                                          backend=dev.compile_backend,
+                                          **transpile_args)
 
         assert len(compiled_circuits) == len(input_circuits)
         for i, circuit in enumerate(compiled_circuits):
@@ -807,7 +825,11 @@ class TestMockedExecution:
         sampler_execute.assert_called_once()
         estimator_execute.assert_called_once()
 
-        assert res == ["estimator_execute_res", "sampler_execute_res", "runtime_execute_res"]
+        assert res == [
+            "estimator_execute_res",
+            "sampler_execute_res",
+            "runtime_execute_res",
+        ]
 
     @patch("pennylane_qiskit.qiskit_device2.Estimator")
     @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._process_estimator_job")
@@ -817,7 +839,9 @@ class TestMockedExecution:
         that returns a meaningless result."""
 
         qs = QuantumScript(
-            [qml.PauliX(0)], measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))]
+            [qml.PauliX(0)],
+            measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))],
+            shots=100,
         )
         result = test_dev._execute_estimator(qs, session)
 
@@ -830,7 +854,7 @@ class TestMockedExecution:
         """Test the _execute_sampler function using a mocked version of Sampler
         that returns a meaningless result."""
 
-        qs = QuantumScript([qml.PauliX(0)], measurements=[qml.counts()])
+        qs = QuantumScript([qml.PauliX(0)], measurements=[qml.counts()], shots=100)
         result = test_dev._execute_sampler(qs, session)
 
         # to emphasize, this did nothing except appease CodeCov
@@ -869,10 +893,29 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == mock_counts["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == mock_counts["01"]
 
+    def test_shot_vector_warning_mocked(self):
+        """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
+
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
+        )
+        qs = QuantumScript(
+            measurements=[
+                qml.expval(qml.PauliX(0)),
+            ],
+            shots=[5, 10, 2],
+        )
+
+        with patch.object(dev, "_execute_estimator"):
+            with pytest.warns(
+                UserWarning,
+                match="Setting shot vector",
+            ):
+                dev.execute(qs)
+
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
-
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
         "angle,op,expectation",
@@ -895,7 +938,7 @@ class TestExecution:
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_sampler")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
 
         qs = QuantumScript(
             [op(angle, wire)],
@@ -998,3 +1041,81 @@ class TestExecution:
 
         # nothing else is in samples
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
+
+    def test_tape_shots_used_runtime_service(self, mocker):
+        """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+
+        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.sample()
+
+        res = circuit(shots=[5])
+
+        runtime_service_execute.assert_called_once()
+
+        assert len(res[0]) == 5
+
+        # Should reset to device shots if circuit ran again without shots defined
+        res = circuit()
+        assert len(res[0]) == 2
+
+    def test_tape_shots_used_for_estimator(self, mocker):
+        """Tests that device uses tape shots rather than device shots for estimator"""
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
+
+        circuit(shots=[5])
+
+        estimator_execute.assert_called_once()
+        assert dev._current_job.metadata[0]["shots"] == 5
+
+        # Should reset to device shots if circuit ran again without shots defined
+        circuit()
+        assert dev._current_job.metadata[0]["shots"] == 2
+
+    def test_tape_shots_used_for_sampler(self, mocker):
+        """Tests that device uses tape shots rather than device shots for sampler"""
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+
+        sampler_execute = mocker.spy(dev, "_execute_sampler")
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(0)
+            return qml.probs(wires=[0, 1])
+
+        circuit(shots=[5])
+
+        sampler_execute.assert_called_once()
+        assert dev._current_job.metadata[0]["shots"] == 5
+
+        # Should reset to device shots if circuit ran again without shots defined
+        circuit()
+        assert dev._current_job.metadata[0]["shots"] == 2
+
+    def test_warning_for_shot_vector(self):
+        """Tests that a warning is raised if a shot vector is passed and total shots of tape is used instead."""
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
+
+        with pytest.warns(
+            UserWarning,
+            match="Setting shot vector",
+        ):
+            circuit(shots=[5, 10, 2])
+        assert dev._current_job.metadata[0]["shots"] == 17
+
+        # Should reset to device shots if circuit ran again without shots defined
+        circuit()
+        assert dev._current_job.metadata[0]["shots"] == 2

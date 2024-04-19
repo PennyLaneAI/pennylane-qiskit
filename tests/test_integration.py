@@ -4,16 +4,40 @@ from functools import partial
 import numpy as np
 import pennylane as qml
 from pennylane.numpy import tensor
+from semantic_version import Version
 import pytest
 import qiskit
-import qiskit_aer as aer
+import qiskit_aer
 
 from pennylane_qiskit.qiskit_device import QiskitDevice
 from qiskit.providers import QiskitBackendNotFoundError
 
 from conftest import state_backends
 
-pldevices = [("qiskit.aer", aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+if Version(qiskit.__version__) < Version("1.0.0"):
+    pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+
+    def check_provider_backend_compatibility(pldevice, backend_name):
+        dev_name, _ = pldevice
+        if (dev_name == "qiskit.aer" and "aer" not in backend_name) or (
+            dev_name == "qiskit.basicaer" and "aer" in backend_name
+        ):
+            return (False, "Only the AerSimulator is supported on AerDevice")
+        return True, None
+
+else:
+    from qiskit.providers.basic_provider import BasicProvider
+
+    pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider())]
+
+    def check_provider_backend_compatibility(pldevice, backend_name):
+        dev_name, _ = pldevice
+        if dev_name == "qiskit.aer" and backend_name == "basic_simulator":
+            return (False, "basic_simulator is not supported on the AerDevice")
+
+        if dev_name == "qiskit.basicsim" and backend_name != "basic_simulator":
+            return (False, "Only the basic_simulator backend works with the BasicSimulatorDevice")
+        return True, None
 
 
 class TestDeviceIntegration:
@@ -22,10 +46,11 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("d", pldevices)
     def test_load_device(self, d, backend):
         """Test that the qiskit device loads correctly"""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
-            d[0] == "qiskit.basicaer" and "aer" in backend
-        ):
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        # check compatibility between provider and backend, and skip if incompatible
+        is_compatible, failure_msg = check_provider_backend_compatibility(d, backend)
+        if not is_compatible:
+            pytest.skip(failure_msg)
 
         dev = qml.device(d[0], wires=2, backend=backend, shots=1024)
         assert dev.num_wires == 2
@@ -42,7 +67,7 @@ class TestDeviceIntegration:
         try:
             backend_instance = provider.get_backend(backend)
         except QiskitBackendNotFoundError:
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+            pytest.skip("Backend is not compatible with specified device")
 
         dev = qml.device("qiskit.remote", wires=2, backend=backend_instance, shots=1024)
         assert dev.num_wires == 2
@@ -56,12 +81,13 @@ class TestDeviceIntegration:
         """Test that the qiskit.remote device loads correctly when passed a provider and a backend
         name. This test is equivalent to `test_load_device` but on the qiskit.remote device instead
         of specialized devices that expose more configuration options."""
-        _, provider = d
 
-        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
-            d[0] == "qiskit.basicaer" and "aer" in backend
-        ):
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+        # check compatibility between provider and backend, and skip if incompatible
+        is_compatible, failure_msg = check_provider_backend_compatibility(d, backend)
+        if not is_compatible:
+            pytest.skip(failure_msg)
+
+        _, provider = d
 
         dev = qml.device("qiskit.remote", wires=2, provider=provider, backend=backend, shots=1024)
         assert dev.num_wires == 2
@@ -102,10 +128,11 @@ class TestDeviceIntegration:
     @pytest.mark.parametrize("shots", [None, 8192])
     def test_one_qubit_circuit(self, shots, d, backend, tol):
         """Test that devices provide correct result for a simple circuit"""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
-            d[0] == "qiskit.basicaer" and "aer" in backend
-        ):
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        # check compatibility between provider and backend, and skip if incompatible
+        is_compatible, failure_msg = check_provider_backend_compatibility(d, backend)
+        if not is_compatible:
+            pytest.skip(failure_msg)
 
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
@@ -131,10 +158,10 @@ class TestDeviceIntegration:
     def test_basis_state_and_rot(self, shots, d, backend, tol):
         """Integration test for the BasisState and Rot operations for non-analytic mode."""
 
-        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
-            d[0] == "qiskit.basicaer" and "aer" in backend
-        ):
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+        # check compatibility between provider and backend, and skip if incompatible
+        is_compatible, failure_msg = check_provider_backend_compatibility(d, backend)
+        if not is_compatible:
+            pytest.skip(failure_msg)
 
         dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
 
@@ -198,15 +225,18 @@ class TestKeywordArguments:
 
         cache = []
         with monkeypatch.context() as m:
-            m.setattr(aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs))
+            m.setattr(
+                qiskit_aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
+            )
             dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
         assert cache[-1] == {"noise_model": "test value"}
 
     def test_invalid_noise_model(self):
         """Test that the noise model argument causes an exception to be raised
         if the backend does not support it"""
+        dev_name = pldevices[1][0]
         with pytest.raises(AttributeError, match="field noise_model is not valid for this backend"):
-            dev = qml.device("qiskit.basicaer", wires=2, noise_model="test value")
+            dev = qml.device(dev_name, wires=2, noise_model="test value")
 
     def test_overflow_kwargs(self):
         """Test all overflow kwargs are extracted for the AerDevice"""
@@ -228,7 +258,7 @@ class TestLoadIntegration:
         qc = qiskit.QuantumCircuit(2)
         qc.rx(theta, 0)
 
-        my_template = qml.load(qc, format="qiskit")
+        my_template = qml.from_qiskit(qc)
 
         dev = qml.device("default.qubit", wires=2)
 
@@ -272,7 +302,8 @@ class TestLoadIntegration:
         with open(apply_hadamard, "w") as f:
             f.write(TestLoadIntegration.hadamard_qasm)
 
-        hadamard = qml.from_qasm_file(apply_hadamard)
+        with open(apply_hadamard, "r") as f:
+            hadamard = qml.from_qasm(f.read())
 
         dev = qml.device("default.qubit", wires=2)
 
@@ -369,6 +400,26 @@ class TestPLOperations:
         expected_state[0] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
+
+    @pytest.mark.parametrize("shots", [None, 1000])
+    def test_adjoint(self, state_vector_device, shots, tol):
+
+        dev = state_vector_device(1)
+
+        if dev._is_unitary_backend:
+            pytest.skip("Test only runs for backends that are not the unitary simulator.")
+
+        x = 1.23
+
+        @qml.qnode(dev)
+        def rotate_back_and_forth():
+            qml.RX(x, 0)
+            qml.adjoint(qml.RX(x, 0))
+            return qml.expval(qml.PauliZ(0))
+
+        res = rotate_back_and_forth()
+
+        assert np.allclose(res, 1)
 
 
 class TestPLTemplates:
@@ -477,8 +528,8 @@ class TestNoise:
 
     def test_noise_applied(self):
         """Test that the qiskit noise model is applied correctly"""
-        noise_model = aer.noise.NoiseModel()
-        bit_flip = aer.noise.pauli_error([("X", 1), ("I", 0)])
+        noise_model = qiskit_aer.noise.NoiseModel()
+        bit_flip = qiskit_aer.noise.pauli_error([("X", 1), ("I", 0)])
 
         # Create a noise model where the RX operation always flips the bit
         noise_model.add_all_qubit_quantum_error(bit_flip, ["z", "rz"])
@@ -501,10 +552,11 @@ class TestBatchExecution:
     def test_one_qubit_circuit_batch_params(self, shots, d, backend, tol, mocker):
         """Test that devices provide correct result for a simple circuit using
         the batch_params transform."""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
-            d[0] == "qiskit.basicaer" and "aer" in backend
-        ):
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        # check compatibility between provider and backend, and skip if incompatible
+        is_compatible, failure_msg = check_provider_backend_compatibility(d, backend)
+        if not is_compatible:
+            pytest.skip(failure_msg)
 
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
@@ -540,10 +592,11 @@ class TestBatchExecution:
     def test_batch_execute_parameter_shift(self, shots, d, backend, tol, mocker):
         """Test that devices provide correct result computing the gradient of a
         circuit using the parameter-shift rule and the batch execution pipeline."""
-        if (d[0] == "qiskit.aer" and "aer" not in backend) or (
-            d[0] == "qiskit.basicaer" and "aer" in backend
-        ):
-            pytest.skip("Only the AerSimulator is supported on AerDevice")
+
+        # check compatibility between provider and backend, and skip if incompatible
+        is_compatible, failure_msg = check_provider_backend_compatibility(d, backend)
+        if not is_compatible:
+            pytest.skip(failure_msg)
 
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")

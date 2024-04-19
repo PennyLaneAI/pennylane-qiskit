@@ -14,7 +14,7 @@ can be accessed straightaway in PennyLane, without the need to import new packag
 Devices
 ~~~~~~~
 
-Currently, there are three different devices available:
+The following devices are available:
 
 .. title-card::
     :name: 'qiskit.aer'
@@ -27,24 +27,30 @@ Currently, there are three different devices available:
     :link: devices/basicaer.html
 
 .. title-card::
-    :name: 'qiskit.ibmq'
-    :description: Allows integration with qiskit's hardware backends, and hardware-specific simulators.
-    :link: devices/ibmq.html
+    :name: 'qiskit.basicsim'
+    :description: A simple local Python simulator running the Qiskit ``BasicSimulator``.
+    :link: devices/basicsim.html
 
 .. title-card::
     :name: 'qiskit.ibmq.circuit_runner'
-    :description: Allows integration with qiskit's circuit runner runtime program.
+    :description: Allows integration with Qiskit's circuit runner runtime program.
     :link: devices/runtime.html
 
 .. title-card::
     :name: 'qiskit.ibmq.sampler'
-    :description: Allows integration with qiskit's sampler runtime program.
+    :description: Allows integration with Qiskit's sampler runtime program.
     :link: devices/runtime.html
 
 .. title-card::
     :name: 'qiskit.remote'
-    :description: Allows integration with any qiskit backend.
+    :description: Allows integration with any Qiskit backend.
     :link: devices/remote.html
+
+.. title-card::
+    :name: 'qiskit.ibmq'
+    :description: Allows integration with Qiskit's hardware backends, and hardware-specific simulators.
+    :link: devices/ibmq.html
+
 
 .. raw:: html
 
@@ -133,6 +139,7 @@ hardware access.
 
    devices/aer
    devices/basicaer
+   devices/basicsim
    devices/ibmq
    devices/runtime
    devices/remote
