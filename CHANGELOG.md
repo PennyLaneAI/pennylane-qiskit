@@ -8,7 +8,8 @@
   device, ``BasicSimulator``, as the backend.
   [(#493)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/493)
 
-* Backwards compatibility with Qiskit BackendV1 has now been implemented. Previously, only backends of type BackendV2 were supported but now users can choose to use BackendV1 as well.
+* Backwards compatibility with Qiskit BackendV2 has now been implemented. Previously, only backends of type
+  BackendV1 were supported but now users can choose to use BackendV2 as well.
   [(#493)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/514)
 
 ### Improvements 🛠
