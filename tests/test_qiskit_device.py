@@ -5,7 +5,8 @@ import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
 from qiskit_aer import noise
-from qiskit.providers import BackendV1, BackendV2
+from qiskit.providers import BackendV1, BackendV2 
+from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from unittest.mock import Mock
 from qiskit_ibm_runtime.options import Options
 
@@ -90,6 +91,26 @@ class TestSupportForV1andV2:
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
         dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
+
+
+    @pytest.mark.parametrize(
+            "backend",
+            [
+                FakeManila(),
+                FakeManilaV2(),
+            ]
+    )
+    def test_v1_and_v2_manila(self, backend):
+        """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
+        dev = qml.device("qiskit.remote", wires=5, backend=backend, use_primitives=True)
+        
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(0))
+        
+        circuit(np.pi/2)
 
 
 class TestProbabilities:
