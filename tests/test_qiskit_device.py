@@ -91,8 +91,8 @@ class TestSupportForV1andV2:
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
         dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
-
-
+        assert dev._backend == backend
+        
     @pytest.mark.parametrize(
             "backend",
             [
@@ -108,9 +108,11 @@ class TestSupportForV1andV2:
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
-            return qml.expval(qml.PauliZ(0))
+            return qml.sample(qml.PauliZ(0))
         
-        circuit(np.pi/2)
+        res = circuit(np.pi/2)
+        assert(isinstance(res, np.ndarray))
+        assert(np.shape(res) == (1024,))
 
 
 class TestProbabilities:
