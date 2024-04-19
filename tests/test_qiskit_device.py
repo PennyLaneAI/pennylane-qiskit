@@ -5,6 +5,66 @@ import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
 from qiskit_aer import noise
+from qiskit.providers import BackendV1, BackendV2
+from unittest.mock import Mock
+from qiskit_ibm_runtime.options import Options
+
+
+class Configuration:
+    def __init__(self, n_qubits, backend_name):
+        self.n_qubits = n_qubits
+        self.backend_name = backend_name
+        self.noise_model = None
+        self.method = "placeholder"
+
+    def get(self, attribute, default=None):
+        return getattr(self, attribute, default)
+
+
+class MockedBackend(BackendV2):
+    def __init__(self, num_qubits=10, name="mocked_backend"):
+        self._options = Configuration(num_qubits, name)
+        self._service = "SomeServiceProvider"
+        self.name = name
+        self._target = Mock()
+        self._target.num_qubits = num_qubits
+
+    def set_options(self, noise_model):
+        self.options.noise_model = noise_model
+
+    def _default_options(self):
+        return {}
+
+    def max_circuits(self):
+        return 10
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def target(self):
+        return self._target
+
+
+class MockedBackendLegacy(BackendV1):
+    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
+        self._configuration = Configuration(num_qubits, backend_name=name)
+        self._service = "SomeServiceProvider"
+        self._options = self._default_options()
+
+    def configuration(self):
+        return self._configuration
+
+    def _default_options(self):
+        return {}
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def options(self):
+        return self._options
+
 
 test_transpile_options = [
     {},
@@ -13,6 +73,23 @@ test_transpile_options = [
 ]
 
 test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
+backend = MockedBackend()
+legacy_backend = MockedBackendLegacy()
+
+
+class TestSupportForV1andV2:
+    """Tests compatibility with BackendV1 and BackendV2"""
+
+    @pytest.mark.parametrize(
+        "backend",
+        [
+            legacy_backend,
+            backend,
+        ],
+    )
+    def test_v1_and_v2_mocked(self, backend):
+        """Test that device initializes with no error mocked"""
+        dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
 
 
 class TestProbabilities:
