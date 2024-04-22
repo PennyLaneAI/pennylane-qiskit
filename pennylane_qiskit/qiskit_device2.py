@@ -225,7 +225,7 @@ class QiskitDevice2(Device):
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
             sent to the backend device, to be set if the backend desired for compliation differs from the
-            backend used for execution. Defaults to None. If None, the primary backend will be used.
+            backend used for execution. Defaults to ``None``, which means the primary backend will be used.
         **kwargs: transpilation and runtime kwargs to be used for measurements without Qiskit Primitives.
             If any values are defined both in ``options`` and in the remaining ``kwargs``, the value
             provided in ``options`` will take precedence. These kwargs will be ignored for all Primitive-based
