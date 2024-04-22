@@ -61,11 +61,11 @@ class Configuration:
 
 
 class MockedBackend:
-    def __init__(self, num_qubits=10):
+    def __init__(self, num_qubits=10, name="mocked_backend"):
         self._configuration = Configuration(num_qubits)
         self.options = self._configuration
         self._service = "SomeServiceProvider"
-        self.name = "mocked_backend"
+        self.name = name
 
     def configuration(self):
         return self._configuration
@@ -105,6 +105,21 @@ def options_for_testing():
 
 
 class TestDeviceInitialization:
+    def test_compile_backend_kwarg(self):
+        """Test that the compile_backend is set correctly if passed, and the main
+        backend is used otherwise"""
+
+        compile_backend = MockedBackend(name="compile_backend")
+        main_backend = MockedBackend(name="main_backend")
+
+        dev1 = QiskitDevice2(wires=5, backend=main_backend)
+        dev2 = QiskitDevice2(wires=5, backend=main_backend, compile_backend=compile_backend)
+
+        assert dev1._compile_backend == dev1._backend == main_backend
+
+        assert dev2._compile_backend != dev2._backend
+        assert dev2._compile_backend == compile_backend
+
     @pytest.mark.parametrize("use_primitives", [True, False])
     def test_use_primitives_kwarg(self, use_primitives):
         """Test the _use_primitives attribute is set on initialization"""
@@ -586,6 +601,15 @@ class TestDeviceProperties:
         assert test_dev.backend == test_dev._backend
         assert test_dev.backend == backend
 
+    def test_compile_backend_property(self):
+        """Test the compile_backend property"""
+
+        compile_backend = MockedBackend(name="compile_backend")
+        dev = QiskitDevice2(wires=5, backend=backend, compile_backend=compile_backend)
+
+        assert dev.compile_backend == dev._compile_backend
+        assert dev.compile_backend == compile_backend
+
     def test_service_property(self):
         """Test the service property"""
         assert test_dev.service == test_dev._service
@@ -610,14 +634,37 @@ class TestMockedExecution:
     def test_get_transpile_args(self):
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
+
+        # independently
         kwargs = {"random_kwarg": 3, "optimization_level": 3, "circuits": []}
         assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
 
+        # on a device
+        transpile_args = {
+            "random_kwarg": 3,
+            "seed_transpiler": 42,
+            "optimization_level": 3,
+            "circuits": [],
+        }
+        compile_backend = MockedBackend(name="compile_backend")
+        dev = QiskitDevice2(
+            wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
+        )
+        assert dev.get_transpile_args(dev._kwargs) == {
+            "optimization_level": 3,
+            "seed_transpiler": 42,
+        }
+
     @patch("pennylane_qiskit.qiskit_device2.transpile")
-    def test_compile_circuits(self, transpile_mock):
+    @pytest.mark.parametrize("compile_backend", [None, MockedBackend(name="compile_backend")])
+    def test_compile_circuits(self, transpile_mock, compile_backend):
         """Tests compile_circuits with a mocked transpile function to avoid calling
-        a remote backend. This renders it fairly useless as a test, but makes CodeCov
-        pass."""
+        a remote backend. Confirm compile_backend and transpile_args are used."""
+
+        transpile_args = {"seed_transpiler": 42, "optimization_level": 2}
+        dev = QiskitDevice2(
+            wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
+        )
 
         transpile_mock.return_value = QuantumCircuit(2)
 
@@ -629,7 +676,12 @@ class TestMockedExecution:
         ]
         input_circuits = [circuit_to_qiskit(c, register_size=2) for c in circuits]
 
-        compiled_circuits = test_dev.compile_circuits(input_circuits)
+        with patch.object(dev, "get_transpile_args", return_value=transpile_args):
+            compiled_circuits = dev.compile_circuits(input_circuits)
+
+        transpile_mock.assert_called_with(
+            input_circuits[2], backend=dev.compile_backend, **transpile_args
+        )
 
         assert len(compiled_circuits) == len(input_circuits)
         for i, circuit in enumerate(compiled_circuits):
