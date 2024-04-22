@@ -86,6 +86,25 @@ class MockedBackend(BackendV2):
     @property
     def target(self):
         return self._target
+    
+class MockedBackendLegacy(BackendV1):
+    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
+        self._configuration = Configuration(num_qubits, backend_name=name)
+        self._service = "SomeServiceProvider"
+        self._options = self._default_options()
+
+    def configuration(self):
+        return self._configuration
+
+    def _default_options(self):
+        return {}
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def options(self):
+        return self._options
 
 class MockSession:
     def __init__(self, backend, max_time=None):
