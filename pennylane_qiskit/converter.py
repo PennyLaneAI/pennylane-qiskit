@@ -709,52 +709,22 @@ def mp_to_pauli(mp, register_size):
 
     # ToDo: I believe this could be extended to cover expectation values of Hamiltonians
 
-    observables = {"PauliX": "X", "PauliY": "Y", "PauliZ": "Z", "Identity": "I"}
     pauli_strings = []
-    coeffs = None
+    coeffs = []
+    op = mp.obs
 
-    if hasattr(mp.obs, "coeffs"):
-        coeffs = mp.obs.coeffs
+    pauli_strings = []
 
-    if isinstance(mp.obs, qml.Hamiltonian):
-        mp.obs = mp.obs.ops
-
-    if not isinstance(mp.obs, list):
-        mp.obs = [mp.obs]
-
-    for obs in mp.obs:
+    for pauli_term, coeff in op.pauli_rep.items():
         pauli_string = ["I"] * register_size
-        for i in range(len(obs.wires)):
-            if isinstance(obs.name, str):
-                pauli_string[obs.wires[i]] = observables[obs.name]
-            else:
-                pauli_string[obs.wires[i]] = observables[obs.name[i]]
-
+        coeffs.append(coeff)
+        if len(pauli_term.wires) == 1:
+            pauli_string[pauli_term.wires[0]] = pauli_term[pauli_term.wires[0]]
         pauli_string.reverse()
         pauli_string = ("").join(pauli_string)
         pauli_strings.append(pauli_string)
 
     return SparsePauliOp(data = pauli_strings, coeffs = coeffs)
-
-    # if len(mp.wires) == 1:
-    #     pauli_string[mp.wires[0]] = observables[mp.obs.name]   
-    # elif isinstance(mp.obs, qml.Hamiltonian):
-    #     for observable in mp.obs.ops:
-    #         print(observable)
-    #         for i in range(len(observable.wires)):
-    #             if isinstance(observable.name, str):
-    #                 pauli_string[observable.wires[i]] = observables[observable.name]
-    #             else:
-    #                 pauli_string[observable.wires[i]] = observables[observable.name[i]]
-        
-
-    # for observable in mp.obs:
-    #     pauli_string[observable.wires[0]] = observables[observable.name]
-
-    # Qiskit orders wires in the opposite direction compared to PL
-    #pauli_string.reverse()
-
-    #pauli_string = ("").join(pauli_string)
 
 
 
