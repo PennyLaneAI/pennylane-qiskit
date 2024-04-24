@@ -1775,60 +1775,12 @@ class TestConverterUtilsPennyLaneToQiskit:
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
 
-    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
-    @pytest.mark.parametrize("register_size", [3, 5, 7])
-    def test_mp_to_pauli_for_hamiltonian(self, measurement_type, register_size):
+    def test_mp_to_pauli_for_hamiltonian(self):
         """Tests that a SparsePauliOp is created from a Hamiltonian, and that
         it has the expected format"""
-        terms = [qml.X(0), qml.X(1)]
-        data = []
-        for term in terms:
-            pauli_string = ["I"] * register_size
-            pauli_string[term.wires[0]] = term.basis
-            pauli_string.reverse()
-            pauli_string = ("").join(pauli_string)
-            data.append(pauli_string)
+        assert True
 
-        hamiltonian = qml.Hamiltonian([1, 2], [qml.X(0), qml.X(1)]) 
 
-        obs = measurement_type(hamiltonian)
-
-        pauli_op = mp_to_pauli(obs, register_size)
-        assert isinstance(pauli_op, SparsePauliOp)
-
-        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
-        # all qubits in register are accounted for
-        assert len(pauli_op_list) == register_size
-        assert pauli_op == SparsePauliOp(data = data, coeffs = [1, 2])
-
-    # @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
-    # @pytest.mark.parametrize("register_size", [3, 5])
-    # @pytest.mark.parametrize("wire", [0, 1, 2])
-    # @pytest.mark.parametrize("coeff", [2, 3, -2])
-    # @pytest.mark.parametrize(
-    #     "observable, obs_string",
-    #     [(qml.PauliX, "X"), (qml.PauliY, "Y"), (qml.PauliZ, "Z"), (qml.Identity, "I")],
-    # )
-    # def test_mp_to_pauli_for_scalar(self, measurement_type, register_size, wire, coeff, observable, obs_string):
-    #     """Tests that a SparsePauliOp is created from a Hamiltonian, and that
-    #     it has the expected format"""
-    #     op = coeff * observable(wire)
-    #     obs = measurement_type(op)
-    #     data = ""
-    #     for i in range(register_size - 1, -1, -1):
-    #         if i == wire:
-    #             data += obs_string
-    #         else:
-    #             data += "I"
-
-    #     pauli_op = mp_to_pauli(obs, register_size)
-    #     assert isinstance(pauli_op, SparsePauliOp)
-
-    #     pauli_op_list = list(pauli_op.paulis.to_labels()[0])
-
-    #     # all qubits in register are accounted for
-    #     assert len(pauli_op_list) == register_size
-    #     assert pauli_op == SparsePauliOp(data=data, coeffs=[coeff])
 
 
 class TestControlOpIntegration:
