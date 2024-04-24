@@ -21,6 +21,7 @@ from functools import partial, reduce
 
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
+from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
@@ -34,9 +35,6 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
-
-# pylint: disable=too-many-instance-attributes
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
@@ -711,17 +709,23 @@ def mp_to_pauli(mp, register_size):
 
     # ToDo: I believe this could be extended to cover expectation values of Hamiltonians
 
-    observables = {"PauliX": "X", "PauliY": "Y", "PauliZ": "Z", "Identity": "I"}
+    pauli_strings = []
+    coeffs = []
+    op = mp.obs
 
-    pauli_string = ["I"] * register_size
-    pauli_string[mp.wires[0]] = observables[mp.obs.name]
+    pauli_strings = []
 
-    # Qiskit orders wires in the opposite direction compared to PL
-    pauli_string.reverse()
+    for pauli_term, coeff in op.pauli_rep.items():
+        pauli_string = ["I"] * register_size
+        coeffs.append(coeff)
+        if len(pauli_term.wires) == 1:
+            pauli_string[pauli_term.wires[0]] = pauli_term[pauli_term.wires[0]]
+        pauli_string.reverse()
+        pauli_string = ("").join(pauli_string)
+        pauli_strings.append(pauli_string)
 
-    pauli_string = ("").join(pauli_string)
+    return SparsePauliOp(data = pauli_strings, coeffs = coeffs)
 
-    return SparsePauliOp(pauli_string)
 
 
 def load_pauli_op(
