@@ -10,7 +10,6 @@ from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import Operator, SparsePauliOp
-from semantic_version import Version
 
 import pennylane as qml
 from pennylane import numpy as np
@@ -1775,12 +1774,51 @@ class TestConverterUtilsPennyLaneToQiskit:
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
 
-    def test_mp_to_pauli_for_hamiltonian(self):
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize("register_size", [3, 5])
+    @pytest.mark.parametrize("wire", [0, 1, 2])
+    @pytest.mark.parametrize("coeff", [2, 3, -2])
+    @pytest.mark.parametrize(
+        "observable, obs_string",
+        [(qml.PauliX, "X"), (qml.PauliY, "Y"), (qml.PauliZ, "Z"), (qml.Identity, "I")],
+    )
+    def test_mp_to_pauli_for_scalar(self, measurement_type, register_size, wire, coeff, observable, obs_string):
         """Tests that a SparsePauliOp is created from a Hamiltonian, and that
         it has the expected format"""
-        assert True
+        op = coeff * observable(wire)
+        obs = measurement_type(op)
+        data = ""
+        for i in range(register_size - 1, -1, -1):
+            if i == wire:
+                data += obs_string
+            else:
+                data += "I"
+
+        pauli_op = mp_to_pauli(obs, register_size)
+        assert isinstance(pauli_op, SparsePauliOp)
+
+        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
+
+        # all qubits in register are accounted for
+        assert len(pauli_op_list) == register_size
+        assert pauli_op == SparsePauliOp(data=data, coeffs=[coeff])
 
 
+    @pytest.mark.parametrize("measurement_type", [qml.expval])
+    @pytest.mark.parametrize("register_size", [3])
+    def test_mp_to_pauli_for_hamiltonian(self, measurement_type, register_size):
+        """Tests that a SparsePauliOp is created from a Hamiltonian, and that
+        it has the expected format"""
+        hamiltonian = qml.Hamiltonian([1, 2], [qml.X(0) @ qml.Z(1), qml.Z(2) @ qml.Y(1)]) ## 1 * X(0) @ Z (1) + 2 * Z(2) @ Y (1)
+        obs = measurement_type(hamiltonian)
+
+        pauli_op = mp_to_pauli(obs, register_size)
+        assert isinstance(pauli_op, SparsePauliOp)
+
+        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
+
+        # all qubits in register are accounted for
+        assert len(pauli_op_list) == register_size
 
 
 class TestControlOpIntegration:
