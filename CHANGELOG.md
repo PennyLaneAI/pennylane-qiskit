@@ -8,6 +8,10 @@
   device, ``BasicSimulator``, as the backend.
   [(#493)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/493)
 
+* Backwards compatibility with Qiskit BackendV2 has now been implemented. Previously, only backends of type
+  BackendV1 were supported but now users can choose to use BackendV2 as well.
+  [(#514)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/514)
+
 ### Improvements 🛠
 
 * Following updates to allow device compatibility with Qiskit 1.0, the version of `qiskit-ibm-runtime` is 
@@ -30,6 +34,7 @@
 
 This release contains contributions from (in alphabetical order):
 Lillian M. A. Frederiksen
+Austin Huang
 
 ---
 # Release 0.35.1

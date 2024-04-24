@@ -26,7 +26,7 @@ from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.providers import Backend, QiskitBackendNotFoundError
+from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 
 from pennylane import QubitDevice, DeviceError
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
@@ -181,8 +181,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
-        backend_qubits = self.backend.configuration().n_qubits
-        # if the backend has a set number of qubits, ensure wires doesn't exceed (some simulators have n_qubits=None)
+        backend_qubits = (
+            backend.num_qubits
+            if isinstance(backend, BackendV2)
+            else self.backend.configuration().n_qubits
+        )
         if backend_qubits and len(self.wires) > int(backend_qubits):
             raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
 
