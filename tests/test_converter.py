@@ -1777,8 +1777,8 @@ class TestConverterUtilsPennyLaneToQiskit:
 
     @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
     @pytest.mark.parametrize("register_size", [3, 5, 7])
-    @pytest.mark.parametrize("observables", [[qml.X(0), qml.X(1)],[qml.X(1), qml.Y(2)]])
-    def test_mp_to_pauli_for_hamiltonian(self, measurement_type, register_size, observables):
+    @pytest.mark.parametrize("observables, coeffs", [([qml.X(0), qml.X(1)], [1, 2]), ([qml.X(0), qml.X(0)],[3, -2])])
+    def test_mp_to_pauli_for_hamiltonian(self, measurement_type, register_size, observables, coeffs):
         """Tests that a SparsePauliOp is created from a Hamiltonian, and that
         it has the expected format"""
         data = []
@@ -1789,7 +1789,7 @@ class TestConverterUtilsPennyLaneToQiskit:
             pauli_string = ("").join(pauli_string)
             data.append(pauli_string)
 
-        hamiltonian = qml.Hamiltonian([1, 2], observables) 
+        hamiltonian = qml.Hamiltonian(coeffs, observables) 
 
         obs = measurement_type(hamiltonian)
 
@@ -1799,7 +1799,7 @@ class TestConverterUtilsPennyLaneToQiskit:
         pauli_op_list = list(pauli_op.paulis.to_labels()[0])
         # all qubits in register are accounted for
         assert len(pauli_op_list) == register_size
-        assert pauli_op == SparsePauliOp(data = data, coeffs = [1, 2])
+        assert pauli_op == SparsePauliOp(data = data, coeffs = coeffs).simplify()
 
     # @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
     # @pytest.mark.parametrize("register_size", [3, 5])
