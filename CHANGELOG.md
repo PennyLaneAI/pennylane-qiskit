@@ -1,4 +1,4 @@
-# Release 0.36.0-dev
+# Release 0.36.0
 
 ### New features since last release
 
@@ -21,14 +21,6 @@
 * The test suite now runs with the most recent `qiskit` and `qiskit-ibm-runtime`, and well as with 
   `'qiskit==0.45'` and `qiskit-ibm-runtime<0.21` to monitor backward-compatibility.
   [(#508)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/508)
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 
