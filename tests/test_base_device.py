@@ -86,7 +86,8 @@ class MockedBackend(BackendV2):
     @property
     def target(self):
         return self._target
-    
+
+
 class MockedBackendLegacy(BackendV1):
     def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
         self._configuration = Configuration(num_qubits, backend_name=name)
@@ -105,6 +106,7 @@ class MockedBackendLegacy(BackendV1):
     @property
     def options(self):
         return self._options
+
 
 class MockSession:
     def __init__(self, backend, max_time=None):
@@ -135,6 +137,7 @@ def options_for_testing():
     options.resilience_level = 1
     return options
 
+
 class TestSupportForV1andV2:
     """Tests compatibility with BackendV1 and BackendV2"""
 
@@ -149,29 +152,31 @@ class TestSupportForV1andV2:
         """Test that device initializes with no error mocked"""
         dev = QiskitDevice2(wires=10, backend=backend, use_primitives=True)
         assert dev._backend == backend
-        
 
-    @pytest.mark.skip(reason="Fake backends do not have attribute _service, should address in (SC 55725)")
+    @pytest.mark.skip(
+        reason="Fake backends do not have attribute _service, should address in (SC 55725)"
+    )
     @pytest.mark.parametrize(
-            "backend",
-            [
-                FakeManila(),
-                FakeManilaV2(),
-            ]
+        "backend",
+        [
+            FakeManila(),
+            FakeManilaV2(),
+        ],
     )
     def test_v1_and_v2_manila(self, backend):
         """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-        
+
         @qml.qnode(dev)
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
             return qml.sample(qml.PauliZ(0))
-        
-        res = circuit(np.pi/2)
+
+        res = circuit(np.pi / 2)
         assert isinstance(res, np.ndarray)
         assert np.shape(res) == (1024,)
+
 
 class TestDeviceInitialization:
     def test_compile_backend_kwarg(self):
