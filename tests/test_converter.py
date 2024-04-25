@@ -1925,6 +1925,10 @@ class TestConverterUtilsPennyLaneToQiskit:
                 + 0.7 * (SparsePauliOp("IXI") @ SparsePauliOp("XII"))
                 + 0.8 * (SparsePauliOp("XII") @ SparsePauliOp("IXI")),
             ),
+            (
+                qml.Hamiltonian([1.0], [qml.X(0)]) + 2 * qml.Z(0) @ qml.Z(1),
+                SparsePauliOp("IIX") + 2 * SparsePauliOp("IIZ") @ SparsePauliOp("IZI"),
+            ),
         ],
     )
     def test_mp_to_pauli_tensor_products(self, measurement_type, operator, expected):
