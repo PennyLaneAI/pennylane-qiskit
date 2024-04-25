@@ -111,8 +111,8 @@ class TestSupportForV1andV2:
             return qml.sample(qml.PauliZ(0))
         
         res = circuit(np.pi/2)
-        assert(isinstance(res, np.ndarray))
-        assert(np.shape(res) == (1024,))
+        assert isinstance(res, np.ndarray)
+        assert np.shape(res) == (1024,)
 
 
 class TestProbabilities:
