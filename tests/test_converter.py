@@ -1926,7 +1926,7 @@ class TestConverterUtilsPennyLaneToQiskit:
                 + 0.8 * (SparsePauliOp("XII") @ SparsePauliOp("IXI")),
             ),
             (
-                qml.Hamiltonian([1.0], [qml.X(0)]) + 2 * qml.Z(0) @ qml.Z(1),
+                qml.Hamiltonian([1], [qml.X(0)]) + 2 * qml.Z(0) @ qml.Z(1),
                 SparsePauliOp("IIX") + 2 * SparsePauliOp("IIZ") @ SparsePauliOp("IZI"),
             ),
         ],
