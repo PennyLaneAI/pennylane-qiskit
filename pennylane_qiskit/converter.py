@@ -21,7 +21,6 @@ from functools import partial, reduce
 
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
@@ -35,6 +34,7 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
+from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
