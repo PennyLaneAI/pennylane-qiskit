@@ -21,7 +21,6 @@ from functools import partial, reduce
 
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
@@ -35,6 +34,8 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
+
+from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
@@ -65,7 +66,9 @@ def _check_parameter_bound(
     """
     if isinstance(param, ParameterVectorElement):
         if param.vector not in unbound_params:
-            raise ValueError(f"The vector of parameter {param} was not bound correctly.")
+            raise ValueError(
+                f"The vector of parameter {param} was not bound correctly."
+            )
 
     elif isinstance(param, Parameter):
         if param not in unbound_params:
@@ -164,8 +167,12 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params[expected_params[k]] = v
 
     # get any parameters not defined in kwargs (may be all of them) and match to args in order
-    expected_arg_params = [param for name, param in expected_params.items() if name not in kwargs]
-    has_param_vectors = np.any([isinstance(p, ParameterVector) for p in expected_arg_params])
+    expected_arg_params = [
+        param for name, param in expected_params.items() if name not in kwargs
+    ]
+    has_param_vectors = np.any(
+        [isinstance(p, ParameterVector) for p in expected_arg_params]
+    )
 
     # if too many args were passed to the function call, raise an error
     # all other checks regarding correct arguments will be processed in _check_circuit_and_assign_parameters
@@ -224,7 +231,9 @@ def _check_circuit_and_assign_parameters(
         QuantumCircuit: quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
-        raise ValueError(f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit.")
+        raise ValueError(
+            f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit."
+        )
 
     # confirm parameter names are valid for conversion to PennyLane
     for name in ["wires", "params"]:
@@ -245,7 +254,9 @@ def _check_circuit_and_assign_parameters(
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
-    undefined_params = [name for name, param in expected_params.items() if param not in params]
+    undefined_params = [
+        name for name, param in expected_params.items() if param not in params
+    ]
     if undefined_params:
         s = "s" if len(undefined_params) > 1 else ""
         param_names = ", ".join(undefined_params)
@@ -356,7 +367,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: The resulting PennyLane template.
     """
 
-    # pylint:disable=too-many-branches, fixme, protected-access
+    # pylint:disable=too-many-branches, fixme, protected-access, too-many-nested-blocks
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -431,7 +442,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # and then bind the parameters to the circuit
         params = _format_params_dict(quantum_circuit, params, *args, **kwargs)
         unbound_params = _extract_variable_refs(params)
-        qc = _check_circuit_and_assign_parameters(quantum_circuit, params, unbound_params)
+        qc = _check_circuit_and_assign_parameters(
+            quantum_circuit, params, unbound_params
+        )
 
         # Wires from a qiskit circuit have unique IDs, so their hashes are unique too
         qc_wires = [hash(q) for q in qc.qubits]
@@ -449,11 +462,15 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             (instruction, qargs, cargs) = circuit_instruction
             # the new Singleton classes have different names than the objects they represent,
             # but base_class.__name__ still matches
-            instruction_name = getattr(instruction, "base_class", instruction.__class__).__name__
+            instruction_name = getattr(
+                instruction, "base_class", instruction.__class__
+            ).__name__
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
             # TODO: remove the following when gates have been renamed in PennyLane
-            instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
+            instruction_name = (
+                "U3Gate" if instruction_name == "UGate" else instruction_name
+            )
 
             # Define operator builders and helpers
             # operation_class -> PennyLane operation class object mapped from the Qiskit operation
@@ -503,7 +520,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                                 break
                         # Check if the subsequent next_op is measurement interfering
                         if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
-                            next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                            next_op_wires = set(
+                                wire_map[hash(qubit)] for qubit in next_qargs
+                            )
                             # Check if there's any overlapping wires
                             if next_op_wires & op_wires:
                                 meas_terminal = False
@@ -541,7 +560,11 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
-                        partial(load(branch_inst, measurements=None), params=params, wires=wires)
+                        partial(
+                            load(branch_inst, measurements=None),
+                            params=params,
+                            wires=wires,
+                        )
                         for branch_inst in operation_params
                         if isinstance(branch_inst, QuantumCircuit)
                     ]
@@ -556,11 +579,17 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Process qiskit condition to PL mid-circ meas conditions
                 # pl_meas_conds -> PL's conditional expression with mid-circuit meas.
                 # length(pl_meas_conds) == len(true_fns) ==> True
-                pl_meas_conds = _process_condition(inst_cond, mid_circ_regs, instruction_name)
+                pl_meas_conds = _process_condition(
+                    inst_cond, mid_circ_regs, instruction_name
+                )
 
                 # Iterate over each of the conditional triplet and apply the condition via qml.cond
-                for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
-                    qml.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
+                for pl_meas_cond, true_fn, false_fn in zip(
+                    pl_meas_conds, true_fns, false_fns
+                ):
+                    qml.cond(pl_meas_cond, true_fn, false_fn)(
+                        *operation_args, **operation_kwargs
+                    )
 
             # Check if it is not a mid-circuit measurement
             elif operation_class and not isinstance(instruction, Measure):
@@ -606,6 +635,7 @@ def load_qasm_from_file(file: str):
 # diagonalize is currently only used if measuring
 # maybe always diagonalize when measuring, and never when not?
 # will this be used for a user-facing function to convert from PL to Qiskit as well?
+# pylint:disable=fixme
 def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     """Builds the circuit objects based on the operations and measurements
     specified to apply.
@@ -706,26 +736,20 @@ def mp_to_pauli(mp, register_size):
         mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
         register_size(int): total size of the qubit register being measured
     """
-
-    # ToDo: I believe this could be extended to cover expectation values of Hamiltonians
-
     pauli_strings = []
     coeffs = []
     op = mp.obs
 
-    pauli_strings = []
-
     for pauli_term, coeff in op.pauli_rep.items():
         pauli_string = ["I"] * register_size
         coeffs.append(coeff)
-        if len(pauli_term.wires) == 1:
-            pauli_string[pauli_term.wires[0]] = pauli_term[pauli_term.wires[0]]
+        for _, val in enumerate(pauli_term.wires):
+            pauli_string[val] = pauli_term[val]
         pauli_string.reverse()
         pauli_string = ("").join(pauli_string)
         pauli_strings.append(pauli_string)
 
-    return SparsePauliOp(data = pauli_strings, coeffs = coeffs)
-
+    return SparsePauliOp(data=pauli_strings, coeffs=coeffs).simplify()
 
 
 def load_pauli_op(
@@ -820,7 +844,9 @@ def load_pauli_op(
         Y(5) @ Z(3) @ X(7)
     """
     if not isinstance(pauli_op, SparsePauliOp):
-        raise ValueError(f"The operator {pauli_op} is not a valid Qiskit SparsePauliOp.")
+        raise ValueError(
+            f"The operator {pauli_op} is not a valid Qiskit SparsePauliOp."
+        )
 
     if wires is not None and len(wires) != pauli_op.num_qubits:
         raise RuntimeError(
@@ -837,7 +863,9 @@ def load_pauli_op(
 
     coeffs = pauli_op.coeffs
     if ParameterExpression in [type(c) for c in coeffs]:
-        raise RuntimeError(f"Not all parameter expressions are assigned in coeffs {coeffs}")
+        raise RuntimeError(
+            f"Not all parameter expressions are assigned in coeffs {coeffs}"
+        )
 
     qiskit_terms = pauli_op.paulis
     pl_terms = []
@@ -936,7 +964,9 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
 
     # Check if the condition is as a tuple -> (Clbit/Clreg, Val)
     if isinstance(condition, tuple):
-        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        clbits = (
+            [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        )
 
         # Proceed only if we have access to all conditioned classical bits
         if all(clbit in mid_circ_regs for clbit in clbits):
@@ -983,13 +1013,17 @@ def _process_switch_condition(condition, mid_circ_regs):
     # if the target is not an Expr
     if not isinstance(condition[0], expr.Expr):
         # Prepare the classical bits used for the condition
-        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        clbits = (
+            [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        )
 
         # Proceed only if we have access to all conditioned classical bits
         meas_pl_op = None
         if all(clbit in mid_circ_regs for clbit in clbits):
             # Build an integer representation for each switch case
-            meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+            meas_pl_op = sum(
+                2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits)
+            )
 
     # if the target is an Expr
     else:
@@ -1071,7 +1105,9 @@ def _expr_evaluation(condition, mid_circ_regs):
 
     # divide the bits among left and right cbit registers
     if len(clbits) == 2:
-        condition_res = _expr_eval_clregs(clbits, _expr_mapping[condition_name], bitwise_flag)
+        condition_res = _expr_eval_clregs(
+            clbits, _expr_mapping[condition_name], bitwise_flag
+        )
 
     # divide the bits into a cbit register and integer
     else:
@@ -1114,7 +1150,8 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
     # So we build an integer form 'before' performing the operation.
     else:
         meas1, meas2 = [
-            sum(2**idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
+            sum(2**idx * meas for idx, meas in enumerate(clreg))
+            for clreg in [clreg1, clreg2]
         ]
         condition_res = expr_func(meas1, meas2)
 
