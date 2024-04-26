@@ -1777,6 +1777,17 @@ class TestConverterUtilsPennyLaneToQiskit:
     @pytest.mark.parametrize(
         "operator, expected",
         [
+            (qml.X(0), SparsePauliOp("IIIIX")),
+            (qml.I(1), SparsePauliOp("IIIII")),
+            (Y(0), SparsePauliOp("IIIIY")),
+            (qml.PauliZ(0), SparsePauliOp("IIIIZ")),
+            (
+                X(0) + I(0) + 2 * Y(1) + I(1),
+                SparsePauliOp("IIIIX")
+                + SparsePauliOp("IIIII")
+                + 2 * SparsePauliOp("IIIYI")
+                + SparsePauliOp("IIIII"),
+            ),
             (
                 qml.X(0) + qml.X(0) + qml.Y(1) + qml.Z(2),
                 SparsePauliOp("IIIIX")
