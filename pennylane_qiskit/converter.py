@@ -718,15 +718,18 @@ def mp_to_pauli(mp, register_size):
     op = mp.obs
 
     if op.pauli_rep:
-        pauli_strings = [
-            "".join(
-                ["I" if i not in pauli_term.wires else pauli_term[i] for i in range(register_size)][
-                    ::-1
-                ]  ## Qiskit follows opposite wire order convention
+        for pauli_term, coeff in op.pauli_rep.items():
+            pauli_strings.append(
+                "".join(
+                    [
+                        "I" if i not in pauli_term.wires else pauli_term[i]
+                        for i in range(register_size)
+                    ][
+                        ::-1
+                    ]  ## Qiskit follows opposite wire order convention
+                )
             )
-            for pauli_term, _ in op.pauli_rep.items()
-        ]
-        coeffs = [coeff for _, coeff in op.pauli_rep.items()]
+            coeffs.append(coeff)
     else:
         raise ValueError(f"The operator")
 
