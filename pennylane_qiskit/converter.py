@@ -726,7 +726,7 @@ def mp_to_pauli(mp, register_size):
         ]
         coeffs = list(op.pauli_rep.values())
     else:
-        raise ValueError(f"The operator")
+        raise ValueError(f"The operator {op} does not have a representation for SparsePauliOp")
 
     return SparsePauliOp(data=pauli_strings, coeffs=coeffs).simplify()
 
