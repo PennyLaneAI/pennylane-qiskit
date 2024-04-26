@@ -722,7 +722,7 @@ def mp_to_pauli(mp, register_size):
         coeffs.append(coeff)
         for _, val in enumerate(pauli_term.wires):
             pauli_string[val] = pauli_term[val]
-        pauli_string.reverse()
+        pauli_string.reverse() # Qiskit follows opposite wire order convention
         pauli_string = ("").join(pauli_string)
         pauli_strings.append(pauli_string)
 
