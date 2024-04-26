@@ -1930,11 +1930,12 @@ class TestConverterUtilsPennyLaneToQiskit:
         assert pauli_op.equiv(expected.simplify())
 
     @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
-    def test_mp_to_pauli_error_for_no_pauli_rep(self, measurement_type, operator):
+    def test_mp_to_pauli_error_for_no_pauli_rep(self, measurement_type):
         """Tests that an error is raised when mp_to_pauli is given an operator that does not have a pauli representation"""
 
         obs = measurement_type(qml.X(0) @ qml.Hadamard(2))
 
+        assert not obs.obs.pauli_rep
         with pytest.raises(ValueError, match="The operator"):
             mp_to_pauli(obs, 5)
 
