@@ -1927,8 +1927,6 @@ class TestConverterUtilsPennyLaneToQiskit:
         pauli_op_list = list(pauli_op.paulis.to_labels()[0])
         # all qubits in register are accounted for
         assert len(pauli_op_list) == register_size
-        print(pauli_op)
-        print(expected.simplify())
         assert pauli_op.equiv(expected.simplify())
 
     @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
