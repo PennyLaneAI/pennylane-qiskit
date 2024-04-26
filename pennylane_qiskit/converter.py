@@ -35,9 +35,6 @@ from sympy import lambdify
 import pennylane as qml
 import pennylane.ops as pennylane_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
-
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
-
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 dagger_map = {
