@@ -1820,6 +1820,17 @@ class TestConverterUtilsPennyLaneToQiskit:
                 - 1.5 * SparsePauliOp("IIIIX")
                 - 0.5 * SparsePauliOp("IIIIY"),
             ),
+            (
+                qml.ops.LinearCombination(
+                    [1, 3, 4],
+                    qml.Hamiltonian([1, 3], qml.dot([2, 3], [qml.X(0), qml.Y(0)])) - 2 * qml.Y(2),
+                )
+                + qml.X(4),
+                3 * 2 * SparsePauliOp("IIIIX")
+                + 4 * 3 * 3 * SparsePauliOp("IIIIY")
+                - 2 * SparsePauliOp("IIYII")
+                + SparsePauliOp("XIIII"),
+            ),
         ],
     )
     def test_mp_to_pauli_for_general_operator(self, measurement_type, operator, expected):
@@ -1919,6 +1930,22 @@ class TestConverterUtilsPennyLaneToQiskit:
         print(pauli_op)
         print(expected.simplify())
         assert pauli_op.equiv(expected.simplify())
+
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize(
+        "operator",
+        [
+            (qml.X(0) @ qml.Hadamard(2)),
+        ],
+    )
+    def test_mp_to_pauli_error_for_no_pauli_rep(self, measurement_type, operator):
+        """Tests that a SparsePauliOp is created from a Hamiltonian, and that
+        it has the expected format"""
+
+        obs = measurement_type(operator)
+
+        with pytest.raises(ValueError, match="The operator"):
+            mp_to_pauli(obs, 5)
 
 
 class TestControlOpIntegration:
