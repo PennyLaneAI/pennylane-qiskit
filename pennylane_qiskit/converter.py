@@ -713,8 +713,6 @@ def mp_to_pauli(mp, register_size):
         mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
         register_size(int): total size of the qubit register being measured
     """
-    pauli_strings = []
-    coeffs = []
     op = mp.obs
 
     if op.pauli_rep:
