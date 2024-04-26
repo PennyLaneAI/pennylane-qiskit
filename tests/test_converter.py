@@ -1823,12 +1823,12 @@ class TestConverterUtilsPennyLaneToQiskit:
             (
                 qml.ops.LinearCombination(
                     [1, 3, 4],
-                    qml.Hamiltonian([1, 3], qml.dot([2, 3], [qml.X(0), qml.Y(0)])) - 2 * qml.Y(2),
+                    [X(3) @ Y(2), Y(4) - X(2), Z(2) * 3],
                 )
                 + qml.X(4),
-                3 * 2 * SparsePauliOp("IIIIX")
-                + 4 * 3 * 3 * SparsePauliOp("IIIIY")
-                - 2 * SparsePauliOp("IIYII")
+                1 * SparsePauliOp("IXIII") @ SparsePauliOp("IIYII")
+                + 3 * (SparsePauliOp("YIIII") - SparsePauliOp("IIXII"))
+                + 3 * 4 * SparsePauliOp("IIZII")
                 + SparsePauliOp("XIIII"),
             ),
         ],
