@@ -722,9 +722,9 @@ def mp_to_pauli(mp, register_size):
                     ::-1
                 ]  ## Qiskit follows opposite wire order convention
             )
-            for pauli_term, _ in op.pauli_rep.items()
+            for pauli_term in op.pauli_rep.keys()
         ]
-        coeffs = [coeff for _, coeff in op.pauli_rep.items()]
+        coeffs = list(op.pauli_rep.values())
     else:
         raise ValueError(f"The operator")
 
