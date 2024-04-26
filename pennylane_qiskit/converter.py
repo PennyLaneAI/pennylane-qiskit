@@ -717,14 +717,18 @@ def mp_to_pauli(mp, register_size):
     coeffs = []
     op = mp.obs
 
-    for pauli_term, coeff in op.pauli_rep.items():
-        pauli_string = ["I"] * register_size
-        coeffs.append(coeff)
-        for _, val in enumerate(pauli_term.wires):
-            pauli_string[val] = pauli_term[val]
-        pauli_string.reverse()  # Qiskit follows opposite wire order convention
-        pauli_string = ("").join(pauli_string)
-        pauli_strings.append(pauli_string)
+    if op.pauli_rep:
+        pauli_strings = [
+            "".join(
+                ["I" if i not in pauli_term.wires else pauli_term[i] for i in range(register_size)][
+                    ::-1
+                ]  ## Qiskit follows opposite wire order convention
+            )
+            for pauli_term, _ in op.pauli_rep.items()
+        ]
+        coeffs = [coeff for _, coeff in op.pauli_rep.items()]
+    else:
+        raise ValueError(f"The operator")
 
     return SparsePauliOp(data=pauli_strings, coeffs=coeffs).simplify()
 
