@@ -1931,8 +1931,7 @@ class TestConverterUtilsPennyLaneToQiskit:
 
     @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
     def test_mp_to_pauli_error_for_no_pauli_rep(self, measurement_type, operator):
-        """Tests that a SparsePauliOp is created from a Hamiltonian, and that
-        it has the expected format"""
+        """Tests that an error is raised when mp_to_pauli is given an operator that does not have a pauli representation"""
 
         obs = measurement_type(qml.X(0) @ qml.Hadamard(2))
 
