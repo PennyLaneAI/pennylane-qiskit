@@ -22,4 +22,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run Black
-        run: black -l 100 pennylane_qiskit/ --check
+        run: | 
+          black -l 100 pennylane_qiskit/ --check
+          black -l 100 tests/ --check
+
+      - name: Run Pylint (source files)
+        if: always()
+        run: pylint --rcfile .pylintrc $(find pennylane_qiskit -name "*.py")
+
+      - name: Run Pylint (test files)
+        if: always()
+        run: pylint --rcfile tests/.pylintrc $(find tests -name "*.py")
