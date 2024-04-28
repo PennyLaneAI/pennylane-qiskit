@@ -1,15 +1,30 @@
+# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains tests for appling operations on PennyLane IBMQ devices.
+"""
 import pytest
 
 import numpy as np
 import pennylane as qml
 from scipy.linalg import block_diag
 
-from pennylane_qiskit import AerDevice, BasicAerDevice
-
 from conftest import U, U2
 
-np.random.seed(42)
+# pylint: disable=protected-access
 
+np.random.seed(42)
 
 # global variables and rotations
 I = np.identity(2)
@@ -26,7 +41,7 @@ toffoli = np.diag([1 for i in range(8)])
 toffoli[6:8, 6:8] = np.array([[0, 1], [1, 0]])
 CSWAP = block_diag(I, I, SWAP)
 
-
+# pylint: disable=unnecessary-lambda-assignment
 phase_shift = lambda phi: np.array([[1, 0], [0, np.exp(1j * phi)]])
 rx = lambda theta: np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * X
 ry = lambda theta: np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Y

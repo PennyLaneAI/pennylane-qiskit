@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-This module contains tests for PennyLane runtime programs.
+This module contains come configuaration for PennyLane IBMQ devices.
 """
 
 import os
@@ -22,8 +22,10 @@ import qiskit
 
 import pennylane as qml
 from semantic_version import Version
-from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_provider import IBMProvider, IBMProviderValueError
 from pennylane_qiskit import AerDevice, BasicAerDevice, BasicSimulatorDevice
+
+# pylint: disable=protected-access, unused-argument, redefined-outer-name
 
 np.random.seed(42)
 
@@ -61,7 +63,7 @@ def skip_if_no_account():
     t = os.getenv("IBMQX_TOKEN", None)
     try:
         IBMProvider(token=t)
-    except Exception:
+    except IBMProviderValueError:
         missing = "token" if t else "account"
         pytest.skip(f"Skipping test, no IBMQ {missing} available")
 

@@ -1,7 +1,26 @@
+# Copyright 2021-2022 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains integration tests for PennyLane IBMQ devices.
+"""
 import sys
 
 from functools import partial
 import numpy as np
+
+from conftest import state_backends
+
 import pennylane as qml
 from pennylane.numpy import tensor
 from semantic_version import Version
@@ -9,10 +28,10 @@ import pytest
 import qiskit
 import qiskit_aer
 
-from pennylane_qiskit.qiskit_device import QiskitDevice
 from qiskit.providers import QiskitBackendNotFoundError
+from pennylane_qiskit.qiskit_device import QiskitDevice
 
-from conftest import state_backends
+# pylint: disable=protected-access, unused-argument, ungrouped-imports
 
 if Version(qiskit.__version__) < Version("1.0.0"):
     pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
@@ -26,6 +45,7 @@ if Version(qiskit.__version__) < Version("1.0.0"):
         return True, None
 
 else:
+    # pylint: disable=
     from qiskit.providers.basic_provider import BasicProvider
 
     pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider())]
@@ -228,7 +248,7 @@ class TestKeywordArguments:
             m.setattr(
                 qiskit_aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
             )
-            dev = qml.device("qiskit.aer", wires=2, noise_model="test value")
+            qml.device("qiskit.aer", wires=2, noise_model="test value")
         assert cache[-1] == {"noise_model": "test value"}
 
     def test_invalid_noise_model(self):
@@ -236,7 +256,7 @@ class TestKeywordArguments:
         if the backend does not support it"""
         dev_name = pldevices[1][0]
         with pytest.raises(AttributeError, match="field noise_model is not valid for this backend"):
-            dev = qml.device(dev_name, wires=2, noise_model="test value")
+            qml.device(dev_name, wires=2, noise_model="test value")
 
     def test_overflow_kwargs(self):
         """Test all overflow kwargs are extracted for the AerDevice"""
@@ -249,6 +269,7 @@ class TestLoadIntegration:
     """Integration tests for the PennyLane load function. This test ensures that the PennyLane-Qiskit
     specific load functions integrate properly with the PennyLane-Qiskit plugin."""
 
+    # pylint: disable=implicit-str-concat
     hadamard_qasm = "OPENQASM 2.0;" 'include "qelib1.inc";' "qreg q[1];" "h q[0];"
 
     def test_load_qiskit_circuit(self):
@@ -299,10 +320,10 @@ class TestLoadIntegration:
         """Test that quantum circuits can be loaded from a qasm file."""
         apply_hadamard = tmpdir.join("hadamard.qasm")
 
-        with open(apply_hadamard, "w") as f:
+        with open(apply_hadamard, "w", encoding="utf") as f:
             f.write(TestLoadIntegration.hadamard_qasm)
 
-        with open(apply_hadamard, "r") as f:
+        with open(apply_hadamard, "r", encoding="utf") as f:
             hadamard = qml.from_qasm(f.read())
 
         dev = qml.device("default.qubit", wires=2)

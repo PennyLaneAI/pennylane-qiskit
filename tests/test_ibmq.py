@@ -14,11 +14,12 @@
 r"""
 This module contains tests for PennyLane IBMQ devices.
 """
+from unittest.mock import patch
 from functools import partial
+
 import numpy as np
 import pennylane as qml
 import pytest
-from unittest.mock import patch
 
 from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_provider.exceptions import IBMAccountError
@@ -27,11 +28,14 @@ from qiskit_ibm_provider.job import IBMJobError, IBMCircuitJob
 from pennylane_qiskit import IBMQDevice
 from pennylane_qiskit import ibmq
 
+# pylint: disable=protected-access, unused-argument
+
 
 class MockQiskitDeviceInit:
     """A mocked version of the QiskitDevice __init__ method which
     is called on by the IBMQDevice"""
 
+    # pylint: disable=attribute-defined-outside-init
     def mocked_init(self, wires, provider, backend, shots, **kwargs):
         """Stores the provider which QiskitDevice.__init__ was
         called with."""
