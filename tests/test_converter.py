@@ -1661,6 +1661,7 @@ class TestControlOpIntegration:
             )
         )
 
+    # pylint: disable=too-many-statements
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
     def test_control_flow_ops_circuit_switch(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
