@@ -3,7 +3,7 @@ on:
 - pull_request
 
 jobs:
-  black:
+  black-pylint:
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
