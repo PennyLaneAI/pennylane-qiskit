@@ -19,7 +19,7 @@ import pytest
 import numpy as np
 import pennylane as qml
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-arguments
 
 np.random.seed(42)
 

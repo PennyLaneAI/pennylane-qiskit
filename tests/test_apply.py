@@ -22,7 +22,7 @@ from scipy.linalg import block_diag
 
 from conftest import U, U2
 
-# pylint: disable=protected-access
+# pylint: disable=protected-access, too-many-arguments, too-few-public-methods
 
 np.random.seed(42)
 

@@ -22,7 +22,7 @@ import pennylane as qml
 
 from conftest import A
 
-# pylint: disable=protected-access, unused-argument
+# pylint: disable=protected-access, unused-argument, too-many-arguments
 
 np.random.seed(42)
 

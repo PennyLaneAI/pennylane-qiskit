@@ -26,7 +26,7 @@ import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
 
-# pylint: disable=protected-access, unused-argument
+# pylint: disable=protected-access, unused-argumen, too-few-public-methods
 
 
 class Configuration:

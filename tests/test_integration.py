@@ -31,7 +31,7 @@ import qiskit_aer
 from qiskit.providers import QiskitBackendNotFoundError
 from pennylane_qiskit.qiskit_device import QiskitDevice
 
-# pylint: disable=protected-access, unused-argument, ungrouped-imports
+# pylint: disable=protected-access, unused-argument, ungrouped-imports, too-many-arguments, too-few-public-methods
 
 if Version(qiskit.__version__) < Version("1.0.0"):
     pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]

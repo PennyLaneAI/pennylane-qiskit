@@ -28,7 +28,7 @@ from qiskit_ibm_provider.job import IBMJobError, IBMCircuitJob
 from pennylane_qiskit import IBMQDevice
 from pennylane_qiskit import ibmq
 
-# pylint: disable=protected-access, unused-argument
+# pylint: disable=protected-access, unused-argument, too-few-public-methods
 
 
 class MockQiskitDeviceInit:

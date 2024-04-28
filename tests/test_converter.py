@@ -39,7 +39,7 @@ from pennylane_qiskit.converter import (
     _check_parameter_bound,
 )
 
-# pylint: disable=protected-access, unused-argument
+# pylint: disable=protected-access, unused-argument, too-many-arguments
 
 THETA = np.linspace(0.11, 3, 5)
 PHI = np.linspace(0.32, 3, 5)

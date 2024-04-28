@@ -20,7 +20,7 @@ import numpy as np
 from flaky import flaky
 import pennylane as qml
 
-# pylint: disable=protected-access, unused-argument
+# pylint: disable=protected-access, unused-argument, too-many-arguments
 
 np.random.seed(42)
 
