@@ -2111,7 +2111,7 @@ class TestLoadPauliOp:
         a PennyLane operator with too few custom wires.
         """
         match = (
-            r"The specified number of wires - 1 - does not match "
+            "The specified number of wires - 1 - does not match "
             "the number of qubits the SparsePauliOp acts on."
         )
         with pytest.raises(RuntimeError, match=match):
@@ -2132,6 +2132,6 @@ class TestLoadPauliOp:
         """Tests that a ValueError is raised if an attempt is made to convert an object which is not
         a SparsePauliOp into a PennyLane operator.
         """
-        match = r"The operator 123 is not a valid Qiskit SparsePauliOp\."
+        match = "The operator 123 is not a valid Qiskit SparsePauliOp."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)

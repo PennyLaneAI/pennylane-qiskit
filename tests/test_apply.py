@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-This module contains tests for appling operations on PennyLane IBMQ devices.
+This module contains tests for applying operations on PennyLane IBMQ devices.
 """
 import pytest
 

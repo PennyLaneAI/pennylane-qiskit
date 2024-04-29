@@ -37,6 +37,7 @@ if Version(qiskit.__version__) < Version("1.0.0"):
     pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
 
     def check_provider_backend_compatibility(pldevice, backend_name):
+        """check compatibility of provided backend"""
         dev_name, _ = pldevice
         if (dev_name == "qiskit.aer" and "aer" not in backend_name) or (
             dev_name == "qiskit.basicaer" and "aer" in backend_name
@@ -45,12 +46,12 @@ if Version(qiskit.__version__) < Version("1.0.0"):
         return True, None
 
 else:
-    # pylint: disable=
     from qiskit.providers.basic_provider import BasicProvider
 
     pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider())]
 
     def check_provider_backend_compatibility(pldevice, backend_name):
+        """check compatibility of provided backend"""
         dev_name, _ = pldevice
         if dev_name == "qiskit.aer" and backend_name == "basic_simulator":
             return (False, "basic_simulator is not supported on the AerDevice")
@@ -424,7 +425,7 @@ class TestPLOperations:
 
     @pytest.mark.parametrize("shots", [None, 1000])
     def test_adjoint(self, state_vector_device, shots, tol):
-
+        """Test adjoint of an operation using Qiskit device with statevector backend."""
         dev = state_vector_device(1)
 
         if dev._is_unitary_backend:
