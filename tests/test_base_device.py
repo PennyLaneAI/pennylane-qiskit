@@ -1053,7 +1053,12 @@ class TestExecution:
                 qml.RX,
                 qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3]),
             ),
-            (np.pi, qml.RX, qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3])),
+            (
+                np.pi,
+                qml.RX,
+                qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3])
+                - 4 * qml.X(2),
+            ),
             (np.pi / 2, qml.RY, qml.sum(qml.PauliZ(0), qml.PauliX(1))),
             (np.pi, qml.RY, qml.dot([2, 3], [qml.X(0), qml.Y(0)])),
             (
@@ -1095,7 +1100,7 @@ class TestExecution:
         sampler_execute.assert_not_called()
         estimator_execute.assert_called_once()
 
-        assert np.allclose(res, expectation, atol=1)
+        assert np.allclose(res, expectation, atol=0.3)  ## atol is high due to high variance
 
     @pytest.mark.parametrize(
         "measurements, expectation",
