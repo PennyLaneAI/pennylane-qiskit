@@ -249,8 +249,6 @@ class QiskitDevice2(Device):
         "Sum",
         "SProd",
         "Prod",
-        "Exp",  # this may not work
-        "Evolution",  # this may not work
     }
 
     # pylint:disable = too-many-arguments
