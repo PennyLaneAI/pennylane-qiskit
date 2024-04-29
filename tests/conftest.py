@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-This module contains come configuaration for PennyLane IBMQ devices.
+This module contains some configuration for PennyLane IBMQ devices.
 """
 
 import os
