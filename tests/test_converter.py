@@ -1102,12 +1102,11 @@ class TestConverterQasm:
     )
 
     @pytest.mark.skipif(sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6")
-    # pylint:disable=unspecified-encoding
     def test_qasm_from_file(self, tmpdir, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm file."""
         qft_qasm = tmpdir.join("qft.qasm")
 
-        with open(qft_qasm, "w") as f:
+        with open(qft_qasm, "w", encoding="utf") as f:
             f.write(TestConverterQasm.qft_qasm)
 
         quantum_circuit = load_qasm_from_file(qft_qasm)
