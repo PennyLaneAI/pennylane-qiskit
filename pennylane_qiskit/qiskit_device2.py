@@ -243,7 +243,6 @@ class QiskitDevice2(Device):
         "Hermitian",
         "Identity",
         "Projector",
-        "SparseHamiltonian",
         "Hamiltonian",
         "LinearCombination",
         "Sum",
