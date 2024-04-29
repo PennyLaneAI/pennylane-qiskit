@@ -1017,26 +1017,22 @@ class TestConverterWarningsAndErrors:
         qc.measure_all()
 
         with pytest.raises(
-            TypeError,
-            match="Missing 1 required argument to define Parameter value for: c",
+            TypeError, match="Missing 1 required argument to define Parameter value for: c"
         ):
             load(qc)(0.2, 0.3)
 
         with pytest.raises(
-            TypeError,
-            match="Missing 1 required argument to define Parameter value for: b",
+            TypeError, match="Missing 1 required argument to define Parameter value for: b"
         ):
             load(qc)(0.2, c=0.4)
 
         with pytest.raises(
-            TypeError,
-            match="Missing 2 required arguments to define Parameter values for: a, c",
+            TypeError, match="Missing 2 required arguments to define Parameter values for: a, c"
         ):
             load(qc)(b=0.3)
 
         with pytest.raises(
-            TypeError,
-            match="Missing 1 required argument to define Parameter value for: c",
+            TypeError, match="Missing 1 required argument to define Parameter value for: c"
         ):
             load(qc)({a: 0.2, b: 0.3})
 
@@ -1058,20 +1054,17 @@ class TestConverterWarningsAndErrors:
         load(qc)(0.2, 0.4, [0.1, 0.3])
 
         with pytest.raises(
-            TypeError,
-            match="Missing 1 required argument to define Parameter value for: v",
+            TypeError, match="Missing 1 required argument to define Parameter value for: v"
         ):
             load(qc)(0.2, c=0.4)
 
         with pytest.raises(
-            TypeError,
-            match="Missing 2 required arguments to define Parameter values for: c, v",
+            TypeError, match="Missing 2 required arguments to define Parameter values for: c, v"
         ):
             load(qc)(a=0.2)
 
         with pytest.raises(
-            TypeError,
-            match="Missing 2 required arguments to define Parameter values for: a, v",
+            TypeError, match="Missing 2 required arguments to define Parameter values for: a, v"
         ):
             load(qc)({c: 0.3})
 
@@ -1428,11 +1421,7 @@ class TestConverterIntegration:
         theta = 0.53
         phi = -1.23
         varphi = 0.8654
-        params = [
-            qml.numpy.tensor(theta),
-            qml.numpy.tensor(phi),
-            qml.numpy.tensor(varphi),
-        ]
+        params = [qml.numpy.tensor(theta), qml.numpy.tensor(phi), qml.numpy.tensor(varphi)]
 
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
@@ -1633,10 +1622,7 @@ class TestConverterPennyLaneCircuitToQiskit:
 
     @pytest.mark.parametrize(
         "operations, final_op_name",
-        [
-            ([qml.PauliX(0), qml.PauliY(1)], "y"),
-            ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"]),
-        ],
+        [([qml.PauliX(0), qml.PauliY(1)], "y"), ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"])],
     )
     @pytest.mark.parametrize("measure", [True, False])
     # pylint:disable=pointless-statement
@@ -1656,8 +1642,7 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
 
         qscript = QuantumScript(
-            [qml.Hadamard(1), qml.CNOT([1, 0])],
-            measurements=[qml.expval(qml.PauliY(1))],
+            [qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))]
         )
         assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
 
@@ -2311,11 +2296,9 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        (
-            theta,
-            qiskit_circuit,
-            circuit_native_pennylane,
-        ) = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
+        (theta, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2328,11 +2311,9 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        (
-            _,
-            qiskit_circuit,
-            circuit_native_pennylane,
-        ) = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
+        (_, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2346,11 +2327,9 @@ class TestPassingParameters:
         converted to a PennyLane template with the expected arguments passed as a keyword arguement
         """
 
-        (
-            _,
-            qiskit_circuit,
-            circuit_native_pennylane,
-        ) = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
+        (_, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
