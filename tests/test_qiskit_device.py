@@ -25,11 +25,6 @@ from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
-from qiskit_aer import noise
-from qiskit.providers import BackendV1, BackendV2
-from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
-from unittest.mock import Mock
-from qiskit_ibm_runtime.options import Options
 
 # pylint: disable=protected-access, unused-argument, too-few-public-methods
 
