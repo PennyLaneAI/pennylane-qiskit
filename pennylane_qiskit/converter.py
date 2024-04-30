@@ -542,11 +542,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
-                        partial(
-                            load(branch_inst, measurements=None),
-                            params=params,
-                            wires=wires,
-                        )
+                        partial(load(branch_inst, measurements=None), params=params, wires=wires)
                         for branch_inst in operation_params
                         if isinstance(branch_inst, QuantumCircuit)
                     ]
