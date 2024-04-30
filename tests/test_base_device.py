@@ -266,7 +266,7 @@ class TestDeviceInitialization:
         dev1 = QiskitDevice2(wires=3, backend=backend)
         dev2 = QiskitDevice2(wires=3, backend=new_backend, options=options)
 
-        assert dev1.backend.options.noise_model == None
+        assert dev1.backend.options.noise_model is None
         assert dev2.backend.options.noise_model == {"placeholder": 1}
 
 
@@ -277,7 +277,7 @@ class TestQiskitSessionManagement:
         """Test that the default behaviour is no session at initialization"""
 
         dev = QiskitDevice2(wires=2, backend=backend)
-        assert dev._session == None
+        assert dev._session is None
 
     def test_initializing_with_session(self):
         """Test that you can initialize a device with an existing Qiskit session"""
@@ -761,7 +761,7 @@ class TestMockedExecution:
         )
 
         assert len(compiled_circuits) == len(input_circuits)
-        for i, circuit in enumerate(compiled_circuits):
+        for _, circuit in enumerate(compiled_circuits):
             assert isinstance(circuit, QuantumCircuit)
 
     @pytest.mark.parametrize(
@@ -872,7 +872,7 @@ class TestMockedExecution:
         qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
 
         with patch("pennylane_qiskit.qiskit_device2.Session") as mock_session:
-            res = dev.execute(qs)
+            dev.execute(qs)
             mock_session.assert_called_once()  # a session was created
 
         assert dev._session is None  # the device session is still None
@@ -896,7 +896,7 @@ class TestMockedExecution:
                 qml.sample(),
             ],
         )
-        tapes, reorder_fn = split_measurement_types(qs)
+        tapes, _ = split_measurement_types(qs)
 
         with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
             with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
