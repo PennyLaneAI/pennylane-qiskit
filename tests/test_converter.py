@@ -198,7 +198,9 @@ class TestConverterQiskitToPennyLane:
         assert isinstance(recorded_op, qml.RX)
         assert recorded_op.parameters == a_val * np.cos(b_val) + c_val
 
-    def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
+    def test_quantum_circuit_loaded_multiple_times_with_different_arguments(
+        self, recorder
+    ):
         """Tests that a loaded quantum circuit can be called multiple times with
         different arguments."""
 
@@ -379,7 +381,9 @@ class TestConverterQiskitToPennyLane:
         assert recorder.queue[0].parameters == []
         assert recorder.queue[0].wires == Wires(three_wires)
 
-    def test_wires_quantum_circuit_init_with_two_different_quantum_registers(self, recorder):
+    def test_wires_quantum_circuit_init_with_two_different_quantum_registers(
+        self, recorder
+    ):
         """Tests that the wires is correct even if the quantum circuit was initiliazed with two
         separate quantum registers."""
 
@@ -426,7 +430,11 @@ class TestConverterGatesQiskitToPennyLane:
 
     @pytest.mark.parametrize(
         "qiskit_operation, pennylane_name",
-        [(QuantumCircuit.crx, "CRX"), (QuantumCircuit.crz, "CRZ"), (QuantumCircuit.cry, "CRY")],
+        [
+            (QuantumCircuit.crx, "CRX"),
+            (QuantumCircuit.crz, "CRZ"),
+            (QuantumCircuit.cry, "CRY"),
+        ],
     )
     def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit controlled rotations (except
@@ -455,7 +463,9 @@ class TestConverterGatesQiskitToPennyLane:
             (QuantumCircuit.rzz, "IsingZZ"),
         ],
     )
-    def test_controlled_rotations_ising(self, qiskit_operation, pennylane_name, recorder):
+    def test_controlled_rotations_ising(
+        self, qiskit_operation, pennylane_name, recorder
+    ):
         """Tests loading a circuit with two qubit Ising operations."""
 
         q2 = QuantumRegister(2)
@@ -784,7 +794,9 @@ class TestCheckParameterBound:
         of unbound parameters.
         """
         param = Parameter("θ")
-        with pytest.raises(ValueError, match=r"The parameter θ was not bound correctly\."):
+        with pytest.raises(
+            ValueError, match=r"The parameter θ was not bound correctly\."
+        ):
             _check_parameter_bound(param=param, unbound_params={})
 
 
@@ -996,13 +1008,19 @@ class TestConverterWarningsAndErrors:
         qc.rx(b * c[1], 1)
         qc.measure_all()
 
-        with pytest.raises(TypeError, match="Expected 3 positional arguments but 4 were given"):
+        with pytest.raises(
+            TypeError, match="Expected 3 positional arguments but 4 were given"
+        ):
             load(qc)(0.2, 0.4, [0.1, 0.3], 0.5)
 
-        with pytest.raises(TypeError, match="Expected 1 positional argument but 2 were given"):
+        with pytest.raises(
+            TypeError, match="Expected 1 positional argument but 2 were given"
+        ):
             load(qc)(0.4, 0.5, a=0.2, c=[0.1, 0.3])
 
-        with pytest.raises(TypeError, match="Expected 1 positional argument but 2 were given"):
+        with pytest.raises(
+            TypeError, match="Expected 1 positional argument but 2 were given"
+        ):
             load(qc)([0.1, 0.3], 0.5, a=0.2, b=0.4)
 
     def test_missing_argument(self):
@@ -1018,22 +1036,26 @@ class TestConverterWarningsAndErrors:
         qc.measure_all()
 
         with pytest.raises(
-            TypeError, match="Missing 1 required argument to define Parameter value for: c"
+            TypeError,
+            match="Missing 1 required argument to define Parameter value for: c",
         ):
             load(qc)(0.2, 0.3)
 
         with pytest.raises(
-            TypeError, match="Missing 1 required argument to define Parameter value for: b"
+            TypeError,
+            match="Missing 1 required argument to define Parameter value for: b",
         ):
             load(qc)(0.2, c=0.4)
 
         with pytest.raises(
-            TypeError, match="Missing 2 required arguments to define Parameter values for: a, c"
+            TypeError,
+            match="Missing 2 required arguments to define Parameter values for: a, c",
         ):
             load(qc)(b=0.3)
 
         with pytest.raises(
-            TypeError, match="Missing 1 required argument to define Parameter value for: c"
+            TypeError,
+            match="Missing 1 required argument to define Parameter value for: c",
         ):
             load(qc)({a: 0.2, b: 0.3})
 
@@ -1055,17 +1077,20 @@ class TestConverterWarningsAndErrors:
         load(qc)(0.2, 0.4, [0.1, 0.3])
 
         with pytest.raises(
-            TypeError, match="Missing 1 required argument to define Parameter value for: v"
+            TypeError,
+            match="Missing 1 required argument to define Parameter value for: v",
         ):
             load(qc)(0.2, c=0.4)
 
         with pytest.raises(
-            TypeError, match="Missing 2 required arguments to define Parameter values for: c, v"
+            TypeError,
+            match="Missing 2 required arguments to define Parameter values for: c, v",
         ):
             load(qc)(a=0.2)
 
         with pytest.raises(
-            TypeError, match="Missing 2 required arguments to define Parameter values for: a, v"
+            TypeError,
+            match="Missing 2 required arguments to define Parameter values for: a, v",
         ):
             load(qc)({c: 0.3})
 
@@ -1080,7 +1105,9 @@ class TestConverterWarningsAndErrors:
 
         quantum_circuit = load(qc)
 
-        with pytest.raises(TypeError, match="Missing required argument to define Parameter value"):
+        with pytest.raises(
+            TypeError, match="Missing required argument to define Parameter value"
+        ):
             quantum_circuit()
 
 
@@ -1102,7 +1129,9 @@ class TestConverterQasm:
         "measure q -> c;"
     )
 
-    @pytest.mark.skipif(sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6")
+    @pytest.mark.skipif(
+        sys.version_info < (3, 6), reason="tmpdir fixture requires Python >=3.6"
+    )
     def test_qasm_from_file(self, tmpdir, recorder):
         """Tests that a QuantumCircuit object is deserialized from a qasm file."""
         qft_qasm = tmpdir.join("qft.qasm")
@@ -1252,12 +1281,12 @@ class TestConverterIntegration:
             qml.RZ(angle, wires=0)
             return qml.expval(qml.PauliZ(0))
 
-        assert circuit_loaded_qiskit_circuit(rotation_angle) == circuit_native_pennylane(
+        assert circuit_loaded_qiskit_circuit(
             rotation_angle
-        )
-        assert circuit_loaded_qiskit_circuit2(rotation_angle) == circuit_native_pennylane(
+        ) == circuit_native_pennylane(rotation_angle)
+        assert circuit_loaded_qiskit_circuit2(
             rotation_angle
-        )
+        ) == circuit_native_pennylane(rotation_angle)
 
     def test_one_parameter_in_qc_one_passed_into_qnode(self, qubit_device_2_wires):
         """Tests passing a parameter by pre-defining it and then
@@ -1290,12 +1319,12 @@ class TestConverterIntegration:
             qml.RX(rotation_angle2, wires=0)
             return qml.expval(qml.PauliZ(0))
 
-        assert circuit_loaded_qiskit_circuit(rotation_angle1) == circuit_native_pennylane(
+        assert circuit_loaded_qiskit_circuit(
             rotation_angle1
-        )
-        assert circuit_loaded_qiskit_circuit2(rotation_angle1) == circuit_native_pennylane(
+        ) == circuit_native_pennylane(rotation_angle1)
+        assert circuit_loaded_qiskit_circuit2(
             rotation_angle1
-        )
+        ) == circuit_native_pennylane(rotation_angle1)
 
     def test_initialize_with_qubit_state_vector(self, qubit_device_single_wire):
         """Tests the QuantumCircuit.initialize method in a QNode."""
@@ -1320,7 +1349,6 @@ class TestConverterIntegration:
 
     @pytest.mark.parametrize("shots", [None])
     @pytest.mark.parametrize("theta,phi,varphi", list(zip(THETA, PHI, VARPHI)))
-    # pylint:disable=too-many-arguments
     def test_gradient(self, theta, phi, varphi, shots, tol):
         """Tests that the gradient of a circuit is calculated correctly."""
         qc = QuantumCircuit(3)
@@ -1421,7 +1449,11 @@ class TestConverterIntegration:
         theta = 0.53
         phi = -1.23
         varphi = 0.8654
-        params = [qml.numpy.tensor(theta), qml.numpy.tensor(phi), qml.numpy.tensor(varphi)]
+        params = [
+            qml.numpy.tensor(theta),
+            qml.numpy.tensor(phi),
+            qml.numpy.tensor(varphi),
+        ]
 
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
@@ -1587,7 +1619,9 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
 
         qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0])])
-        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+        qc = circuit_to_qiskit(
+            qscript, len(qscript.wires), diagonalize=False, measure=False
+        )
 
         operation_names = [instruction.operation.name for instruction in qc.data]
 
@@ -1598,7 +1632,9 @@ class TestConverterPennyLaneCircuitToQiskit:
         angle = 1.2
 
         qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0]), qml.RX(angle, 2)])
-        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+        qc = circuit_to_qiskit(
+            qscript, len(qscript.wires), diagonalize=False, measure=False
+        )
 
         operation_names = [instruction.operation.name for instruction in qc.data]
         operation_params = [instruction.operation.params for instruction in qc.data]
@@ -1606,7 +1642,9 @@ class TestConverterPennyLaneCircuitToQiskit:
         assert operation_names == ["h", "cx", "rx"]
         assert operation_params == [[], [], [angle]]
 
-    @pytest.mark.parametrize("operations", [[], [qml.PauliX(0), qml.PauliY(1)], [qml.Hadamard(0)]])
+    @pytest.mark.parametrize(
+        "operations", [[], [qml.PauliX(0), qml.PauliY(1)], [qml.Hadamard(0)]]
+    )
     @pytest.mark.parametrize("register_size", [2, 5])
     def test_circuit_to_qiskit_register_size(self, operations, register_size):
         """Test that the regsiter_size determines the shape of the Qiskit
@@ -1622,7 +1660,10 @@ class TestConverterPennyLaneCircuitToQiskit:
 
     @pytest.mark.parametrize(
         "operations, final_op_name",
-        [([qml.PauliX(0), qml.PauliY(1)], "y"), ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"])],
+        [
+            ([qml.PauliX(0), qml.PauliY(1)], "y"),
+            ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"]),
+        ],
     )
     @pytest.mark.parametrize("measure", [True, False])
     # pylint:disable=pointless-statement
@@ -1642,7 +1683,8 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
 
         qscript = QuantumScript(
-            [qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))]
+            [qml.Hadamard(1), qml.CNOT([1, 0])],
+            measurements=[qml.expval(qml.PauliY(1))],
         )
         assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
 
@@ -1787,7 +1829,10 @@ class TestConverterUtilsPennyLaneToQiskit:
                 + SparsePauliOp("IIIYI")
                 + SparsePauliOp("IIZII"),
             ),
-            ((qml.X(0) + 2 * qml.Y(1)), SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI")),
+            (
+                (qml.X(0) + 2 * qml.Y(1)),
+                SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI"),
+            ),
             (
                 qml.sum(X(0) + qml.s_prod(2, Y(1))),
                 SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI"),
@@ -1818,7 +1863,9 @@ class TestConverterUtilsPennyLaneToQiskit:
             ),
         ],
     )
-    def test_mp_to_pauli_for_general_operator(self, measurement_type, operator, expected):
+    def test_mp_to_pauli_for_general_operator(
+        self, measurement_type, operator, expected
+    ):
         """Tests that a SparsePauliOp is created given any general operator that has a Pauli representation, and that it has the expected format"""
         obs = measurement_type(operator)
         register_size = 5
@@ -1885,12 +1932,15 @@ class TestConverterUtilsPennyLaneToQiskit:
                 SparsePauliOp(["IIIIX", "IIIIX"], [3, -2]),
             ),
             (
-                qml.Hamiltonian([-3, 3, 0.5, 5], [qml.X(0), qml.X(0), qml.Z(1), qml.Y(2)]),
+                qml.Hamiltonian(
+                    [-3, 3, 0.5, 5], [qml.X(0), qml.X(0), qml.Z(1), qml.Y(2)]
+                ),
                 SparsePauliOp(["IIIIX", "IIIIX", "IIIZI", "IIYII"], [-3, 3, 0.5, 5]),
             ),
             (
                 qml.Hamiltonian([1], [qml.X(0)]) + 2 * qml.Z(0) @ qml.Z(1),
-                SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIIZ") @ SparsePauliOp("IIIZI"),
+                SparsePauliOp("IIIIX")
+                + 2 * SparsePauliOp("IIIIZ") @ SparsePauliOp("IIIZI"),
             ),
             (
                 qml.Hamiltonian([1], [qml.X(0) @ Y(2)]) - 3 * qml.Z(4) @ qml.Z(1),
@@ -1996,7 +2046,10 @@ class TestControlOpIntegration:
             qml.RZ(0.24, wires=0)
             qml.CNOT([0, 1])
             qml.Barrier([0, 1, 2])
-            return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
+            return [
+                qml.expval(m)
+                for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]
+            ]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
         assert all(
@@ -2047,7 +2100,9 @@ class TestControlOpIntegration:
         qc.measure_all()
 
         dev = qml.device("default.qubit", wires=5, seed=24)
-        qiskit_circuit = load(qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))])
+        qiskit_circuit = load(
+            qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))]
+        )
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
@@ -2256,11 +2311,15 @@ class TestPassingParameters:
         """Test calling the qfunc with the new interface for setting the value
         of Qiskit Parameters by passing args in order."""
 
-        qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
+        qc, circuit_native_pennylane = self._get_parameter_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
-            load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
+            load(qc)(
+                0.5, 0.3, 0.4
+            )  # a, b, c (alphabetical) rather than order used in qc
             return qml.expval(qml.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
@@ -2269,7 +2328,9 @@ class TestPassingParameters:
         """Test calling the qfunc with the new interface for setting the value
         of Qiskit Parameters by passing kwargs matching the parameter names"""
 
-        qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
+        qc, circuit_native_pennylane = self._get_parameter_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2282,7 +2343,9 @@ class TestPassingParameters:
         """Test calling the qfunc with the new interface for setting the value
         of Qiskit Parameters - by passing a combination of kwargs and args"""
 
-        qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
+        qc, circuit_native_pennylane = self._get_parameter_test_circuit(
+            qubit_device_2_wires
+        )
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2295,9 +2358,11 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        (theta, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
-            qubit_device_2_wires
-        )
+        (
+            theta,
+            qiskit_circuit,
+            circuit_native_pennylane,
+        ) = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2306,13 +2371,17 @@ class TestPassingParameters:
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
-    def test_using_parameter_vector_with_positional_argument(self, qubit_device_2_wires):
+    def test_using_parameter_vector_with_positional_argument(
+        self, qubit_device_2_wires
+    ):
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        (_, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
-            qubit_device_2_wires
-        )
+        (
+            _,
+            qiskit_circuit,
+            circuit_native_pennylane,
+        ) = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2326,9 +2395,11 @@ class TestPassingParameters:
         converted to a PennyLane template with the expected arguments passed as a keyword arguement
         """
 
-        (_, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
-            qubit_device_2_wires
-        )
+        (
+            _,
+            qiskit_circuit,
+            circuit_native_pennylane,
+        ) = self._get_parameter_vector_test_circuit(qubit_device_2_wires)
 
         @qml.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
@@ -2439,7 +2510,9 @@ class TestLoadPauliOp:
             (
                 SparsePauliOp("XYZ"),
                 "ABC",
-                qml.prod(qml.PauliZ(wires="A"), qml.PauliY(wires="B"), qml.PauliX(wires="C")),
+                qml.prod(
+                    qml.PauliZ(wires="A"), qml.PauliY(wires="B"), qml.PauliX(wires="C")
+                ),
             ),
             (
                 SparsePauliOp(["XY", "ZX"]),
