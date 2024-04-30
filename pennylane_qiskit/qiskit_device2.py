@@ -239,15 +239,10 @@ class QiskitDevice2(Device):
         "PauliX",
         "PauliY",
         "PauliZ",
+        "Identity",
         "Hadamard",
         "Hermitian",
-        "Identity",
         "Projector",
-        "Hamiltonian",
-        "LinearCombination",
-        "Sum",
-        "SProd",
-        "Prod",
     }
 
     # pylint:disable = too-many-arguments
