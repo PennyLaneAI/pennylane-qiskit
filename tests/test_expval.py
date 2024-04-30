@@ -1,3 +1,19 @@
+# Copyright 2021-2024 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains tests for using expvals for PennyLane IBMQ devices.
+"""
 import pytest
 from flaky import flaky
 
@@ -6,6 +22,7 @@ import pennylane as qml
 
 from conftest import A
 
+# pylint: disable=protected-access, unused-argument, too-many-arguments
 
 np.random.seed(42)
 
@@ -138,7 +155,7 @@ class TestExpval:
         correct"""
         dev = device(2)
 
-        A = np.array(
+        mat = np.array(
             [
                 [-6, 2 + 1j, -3, -5 + 2j],
                 [2 - 1j, 0, 2 - 1j, -5 + 4j],
@@ -146,7 +163,7 @@ class TestExpval:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
-        O1 = qml.Hermitian(A, wires=[0, 1])
+        O1 = qml.Hermitian(mat, wires=[0, 1])
 
         dev.apply(
             [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
@@ -257,7 +274,7 @@ class TestTensorExpval:
         """Test that a tensor product involving qml.Hermitian works
         correctly"""
         dev = device(3)
-        A = np.array(
+        mat = np.array(
             [
                 [-6, 2 + 1j, -3, -5 + 2j],
                 [2 - 1j, 0, 2 - 1j, -5 + 4j],
@@ -266,7 +283,7 @@ class TestTensorExpval:
             ]
         )
 
-        obs = qml.PauliZ(0) @ qml.Hermitian(A, wires=[1, 2])
+        obs = qml.PauliZ(0) @ qml.Hermitian(mat, wires=[1, 2])
 
         dev.apply(
             [
