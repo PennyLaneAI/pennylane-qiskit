@@ -1924,11 +1924,11 @@ class TestConverterUtilsPennyLaneToQiskit:
         with pytest.raises(ValueError, match="The operator"):
             mp_to_pauli(obs, 5)
 
+
 # pylint:disable=not-context-manager
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""
 
-    
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
     def test_control_flow_ops_circuit_ifelse(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
@@ -2189,7 +2189,6 @@ class TestControlOpIntegration:
             )
             for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations)
         )
-
 
     def test_measurement_are_not_discriminated(self):
         """Test the all measurements are considered mid-circuit measurements when no terminal measurements are given"""
