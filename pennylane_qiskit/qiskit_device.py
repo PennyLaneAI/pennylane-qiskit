@@ -266,6 +266,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return self._backend
 
     def reset(self):
+        """Reset the Qiskit backend device"""
         # Reset only internal data, not the options that are determined on
         # device creation
         self._reg = QuantumRegister(self.num_wires, "q")
@@ -305,6 +306,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self._circuit.save_state()
 
     def apply(self, operations, **kwargs):
+        """Build the circuit object and apply the operations"""
         self.create_circuit_object(operations, **kwargs)
 
         # These operations need to run for all devices
@@ -448,9 +450,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     @property
     def state(self):
+        """Get state of the device"""
         return self._state
 
     def analytic_probability(self, wires=None):
+        """Get the analytic probability of the device"""
         if self._state is None:
             return None
 
@@ -482,7 +486,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         return compiled_circuits
 
     def batch_execute(self, circuits, timeout: int = None):
-        # pylint: disable=missing-function-docstring
+        """Batch execute the circuits on the device"""
 
         compiled_circuits = self.compile_circuits(circuits)
 
@@ -500,6 +504,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             result = self._current_job.result()
 
         # increment counter for number of executions of qubit device
+        # pylint: disable=no-member
         self._num_executions += 1
 
         # Compute statistics using the state and/or samples

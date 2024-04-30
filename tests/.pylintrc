@@ -1,6 +1,6 @@
 [MASTER]
-# A comma-separated list of packages or module names from where C extensions may
-# be loaded. Extensions are loaded into the active Python interpreter and may
+# A comma-separated list of package or module names from where C extensions may
+# be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code
 extension-pkg-whitelist=numpy,scipy,autograd,qiskit,pennylane,sympy,qiskit_ibm_runtime,qiskit_ibm_provider,semantic_version
 
@@ -12,22 +12,24 @@ extension-pkg-whitelist=numpy,scipy,autograd,qiskit,pennylane,sympy,qiskit_ibm_r
 # supports qualified module names, as well as Unix pattern matching.
 ignored-modules=numpy,scipy,autograd,qiskit,pennylane,sympy,qiskit_ibm_runtime,qiskit_ibm_provider,semantic_version
 
-# List of class names for which member attributes should not be checked
-# (useful for classes with attributes dynamically set). This can work
+# List of classes names for which member attributes should not be checked
+# (useful for classes with attributes dynamically set). This supports can work
 # with qualified names.
 ignored-classes=numpy,scipy,autograd,qiskit,pennylane,sympy,qiskit_ibm_runtime,qiskit_ibm_provider,semantic_version
 
 [MESSAGES CONTROL]
 
 # Enable the message, report, category or checker with the given id(s). You can
-# either give multiple identifiers separated by comma (,) or put this option
-# multiple times.
+# either give multiple identifier separated by comma (,) or put this option
+# multiple time.
 #enable=
 
 # Disable the message, report, category or checker with the given id(s). You
-# can either give multiple identifiers separated by comma (,) or put this option
-# multiple times (only on the command line, not in the configuration file where
+# can either give multiple identifier separated by comma (,) or put this option
+# multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
+# Cyclical import checks are disabled for now as they are frequently used in
+# the code base, but this can be removed in the future once cycles are resolved.
 disable=
   line-too-long,
   invalid-name,
@@ -37,7 +39,18 @@ disable=
   duplicate-code,
   cyclic-import,
   import-error,
-  bad-option-value
+  bad-option-value,
+  import-outside-toplevel,
+  missing-class-docstring,
+  missing-function-docstring,
+  no-self-use,
+  no-member, # because of qnode decorator
+  comparison-with-callable,
+  unsubscriptable-object, # because of qnode decorator
+  not-callable, # because of qnode decorator
+  unexpected-keyword-arg,
+  arguments-differ,
+  no-value-for-parameter
 
 [MISCELLANEOUS]
 

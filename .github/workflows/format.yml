@@ -3,7 +3,7 @@ on:
 - pull_request
 
 jobs:
-  black:
+  black-pylint:
     runs-on: ubuntu-latest
     steps:
       - name: Cancel Previous Runs
@@ -17,9 +17,19 @@ jobs:
           python-version: 3.9
 
       - name: Install dependencies
-        run: pip install black
+        run: pip install black pylint==2.7.4
 
       - uses: actions/checkout@v2
 
       - name: Run Black
-        run: black -l 100 pennylane_qiskit/ --check
+        run: | 
+          black -l 100 pennylane_qiskit/ --check
+          black -l 100 tests/ --check
+
+      - name: Run Pylint (source files)
+        if: always()
+        run: pylint --rcfile .pylintrc $(find pennylane_qiskit -name "*.py")
+
+      - name: Run Pylint (test files)
+        if: always()
+        run: pylint --rcfile tests/.pylintrc $(find tests -name "*.py")
