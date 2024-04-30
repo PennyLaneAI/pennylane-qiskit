@@ -29,6 +29,7 @@ from qiskit.quantum_info import SparsePauliOp
 import pennylane as qml
 from pennylane import I, X, Y, Z
 from pennylane import numpy as np
+from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
@@ -43,6 +44,10 @@ from pennylane_qiskit.converter import (
     _check_parameter_bound,
 )
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1b85a3a (some changes)
 # pylint: disable=protected-access, unused-argument, too-many-arguments
 
 THETA = np.linspace(0.11, 3, 5)
