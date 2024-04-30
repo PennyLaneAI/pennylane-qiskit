@@ -114,7 +114,7 @@ class MockSession:
     def close(self):  # This is just to appease a test
         pass
 
-
+# pylint: disable=broad-except
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
