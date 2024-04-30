@@ -542,7 +542,11 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
-                        partial(load(branch_inst, measurements=None), params=params, wires=wires)
+                        partial(
+                            load(branch_inst, measurements=None),
+                            params=params,
+                            wires=wires,
+                        )
                         for branch_inst in operation_params
                         if isinstance(branch_inst, QuantumCircuit)
                     ]
@@ -607,7 +611,6 @@ def load_qasm_from_file(file: str):
 # diagonalize is currently only used if measuring
 # maybe always diagonalize when measuring, and never when not?
 # will this be used for a user-facing function to convert from PL to Qiskit as well?
-# pylint:disable=fixme
 def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     """Builds the circuit objects based on the operations and measurements
     specified to apply.
