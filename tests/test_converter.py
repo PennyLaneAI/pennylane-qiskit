@@ -1634,8 +1634,6 @@ class TestConverterPennyLaneCircuitToQiskit:
 
         if measure:
             assert final_instruction.operation.name == "measure"
-        else:
-            final_instruction.operation.name == final_op_name
 
     @pytest.mark.parametrize("diagonalize", [True, False])
     def test_circuit_to_qiskit_diagonalize_kwarg(self, diagonalize):
@@ -1757,7 +1755,7 @@ class TestConverterGatePennyLaneToQiskit:
         assert wires1 == wires2 == [2]
         assert params1 == params2 == [[1.23]]
 
-
+# pylint:disable=too-few-public-methods
 class TestConverterUtilsPennyLaneToQiskit:
 
     @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
