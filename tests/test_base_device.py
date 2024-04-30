@@ -996,7 +996,7 @@ class TestMockedExecution:
                 dev.execute(qs)
 
     def test_unsupported_observable_uses_execute_runtime_service(self, mocker):
-        """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
+        """Test that a device that has an unsupported observables uses _execute_runtime_service instead"""
 
         dev = QiskitDevice2(
             wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
