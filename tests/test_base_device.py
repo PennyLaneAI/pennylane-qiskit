@@ -48,7 +48,6 @@ from pennylane_qiskit.converter import (
     QISKIT_OPERATION_MAP,
 )
 
-
 # pylint: disable=protected-access, unused-argument, too-many-arguments, redefined-outer-name
 
 
