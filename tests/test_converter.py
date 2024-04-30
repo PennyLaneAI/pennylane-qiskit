@@ -2297,7 +2297,7 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        (theta, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
+        theta, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(
             qubit_device_2_wires
         )
 
@@ -2312,7 +2312,7 @@ class TestPassingParameters:
         """Test that a parameterized QuanutmCircuit based on a ParameterVector can also be
         converted to a PennyLane template with the expected arguments passed as a params dict"""
 
-        (_, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
+        _, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(
             qubit_device_2_wires
         )
 
@@ -2328,7 +2328,7 @@ class TestPassingParameters:
         converted to a PennyLane template with the expected arguments passed as a keyword arguement
         """
 
-        (_, qiskit_circuit, circuit_native_pennylane) = self._get_parameter_vector_test_circuit(
+        _, qiskit_circuit, circuit_native_pennylane = self._get_parameter_vector_test_circuit(
             qubit_device_2_wires
         )
 
