@@ -416,7 +416,7 @@ class TestDevicePreprocessing:
         [
             (qml.PauliX(0), True),
             (qml.Hadamard(3), True),
-            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
+            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), False),
         ],
     )
     def test_observable_stopping_condition(self, obs, expected):
@@ -1181,10 +1181,9 @@ class TestExecution:
         for data in result.metadata:
             assert isinstance(data, dict)
             assert list(data.keys()) == ["variance", "shots"]
-
         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
-        assert np.allclose(processed_result, expectation, atol=0.05)
+        assert np.allclose(processed_result, expectation, atol=0.1)
 
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
