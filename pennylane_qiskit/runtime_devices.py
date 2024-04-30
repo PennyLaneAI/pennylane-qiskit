@@ -193,6 +193,7 @@ class IBMQSamplerDevice(IBMQDevice):
 
         return results
 
+    # pylint: disable=arguments-differ
     def generate_samples(self, circuit_id=None):
         r"""Returns the computational basis samples generated for all wires.
 

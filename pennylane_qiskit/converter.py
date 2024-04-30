@@ -446,6 +446,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         mid_circ_regs = {}
 
         # Processing the dictionary of parameters passed
+        # pylint: disable=too-many-nested-blocks
         for idx, circuit_instruction in enumerate(qc.data):
             (instruction, qargs, cargs) = circuit_instruction
             # the new Singleton classes have different names than the objects they represent,
