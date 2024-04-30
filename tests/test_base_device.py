@@ -15,31 +15,15 @@
 This module contains tests for the base Qiskit device for the new PennyLane device API
 """
 
+from unittest.mock import patch, Mock
 import numpy as np
 import pytest
-import inspect
-from unittest.mock import patch, Mock
 from semantic_version import Version
 import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-
-from pennylane_qiskit import AerDevice
-from pennylane_qiskit.qiskit_device2 import (
-    QiskitDevice2,
-    qiskit_session,
-    accepted_sample_measurement,
-    split_measurement_types,
-    qiskit_options_to_flat_dict,
-)
-from pennylane_qiskit.converter import (
-    circuit_to_qiskit,
-    mp_to_pauli,
-    QISKIT_OPERATION_MAP,
-)
-
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Estimator
+from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
 from qiskit_ibm_runtime.options import Options
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
@@ -52,8 +36,20 @@ from qiskit.primitives import EstimatorResult
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
+from pennylane_qiskit import AerDevice
+from pennylane_qiskit.qiskit_device2 import (
+    QiskitDevice2,
+    qiskit_session,
+    split_measurement_types,
+    qiskit_options_to_flat_dict,
+)
+from pennylane_qiskit.converter import (
+    circuit_to_qiskit,
+    mp_to_pauli,
+    QISKIT_OPERATION_MAP,
+)
 
-from qiskit_aer.noise import NoiseModel
+
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments, redefined-outer-name
 
