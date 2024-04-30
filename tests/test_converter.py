@@ -1754,7 +1754,7 @@ class TestConverterGatePennyLaneToQiskit:
         assert wires1 == wires2 == [2]
         assert params1 == params2 == [[1.23]]
 
-
+# pylint:disable=too-few-public-methods
 class TestConverterUtilsPennyLaneToQiskit:
     @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
     @pytest.mark.parametrize(
