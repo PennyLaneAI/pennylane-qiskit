@@ -55,7 +55,9 @@ from qiskit import QuantumCircuit
 
 from qiskit_aer.noise import NoiseModel
 
+# pylint: disable=protected-access, unused-argument, too-many-arguments, redefined-outer-name
 
+#pylint: disable=too-few-public-methods
 class Configuration:
     def __init__(self, n_qubits, backend_name):
         self.n_qubits = n_qubits
@@ -107,7 +109,7 @@ class MockedBackendLegacy(BackendV1):
     def options(self):
         return self._options
 
-
+#pylint: disable=too-few-public-methods
 class MockSession:
     def __init__(self, backend, max_time=None):
         self.backend = backend
