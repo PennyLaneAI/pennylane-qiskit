@@ -118,7 +118,7 @@ class MockSession:
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
-finally:
+except Exception:
     backend = MockedBackend()
 
 legacy_backend = MockedBackendLegacy()
