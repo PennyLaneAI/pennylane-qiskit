@@ -1,3 +1,19 @@
+# Copyright 2021-2024 Xanadu Quantum Technologies Inc.
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+r"""
+This module contains tests for converting circuits for PennyLane IBMQ devices.
+"""
 import sys
 from typing import cast
 
@@ -8,11 +24,11 @@ from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
-from qiskit.exceptions import QiskitError
-from qiskit.quantum_info import Operator, SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp
 
 import pennylane as qml
 from pennylane import numpy as np
+from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
     load_pauli_op,
@@ -25,9 +41,11 @@ from pennylane_qiskit.converter import (
     _format_params_dict,
     _check_parameter_bound,
 )
-from pennylane.wires import Wires
+
 from pennylane.tape.qscript import QuantumScript
 
+
+# pylint: disable=protected-access, unused-argument, too-many-arguments
 
 THETA = np.linspace(0.11, 3, 5)
 PHI = np.linspace(0.32, 3, 5)
@@ -314,8 +332,8 @@ class TestConverterQiskitToPennyLane:
 
         with pytest.raises(
             qml.QuantumFunctionError,
-            match="The specified number of wires - {} - does not match the"
-            " number of wires the loaded quantum circuit acts on.".format(len(only_two_wires)),
+            match=f"The specified number of wires - {len(only_two_wires)} - does not match the"
+            " number of wires the loaded quantum circuit acts on.",
         ):
             with recorder:
                 quantum_circuit(wires=only_two_wires)
@@ -337,10 +355,8 @@ class TestConverterQiskitToPennyLane:
 
         with pytest.raises(
             qml.QuantumFunctionError,
-            match="The specified number of wires - {} - does not match the"
-            " number of wires the loaded quantum circuit acts on.".format(
-                len(more_than_three_wires)
-            ),
+            match=f"The specified number of wires - {len(more_than_three_wires)} - does not match the"
+            " number of wires the loaded quantum circuit acts on.",
         ):
             with recorder:
                 quantum_circuit(wires=more_than_three_wires)
@@ -441,7 +457,7 @@ class TestConverterGatesQiskitToPennyLane:
             (QuantumCircuit.rzz, "IsingZZ"),
         ],
     )
-    def test_controlled_rotations(self, qiskit_operation, pennylane_name, recorder):
+    def test_controlled_rotations_ising(self, qiskit_operation, pennylane_name, recorder):
         """Tests loading a circuit with two qubit Ising operations."""
 
         q2 = QuantumRegister(2)
@@ -784,7 +800,7 @@ class TestConverterUtils:
         qc = QuantumCircuit(1)
         qc_wires = [hash(q) for q in qc.qubits]
 
-        assert map_wires(wires, qc_wires) == {0: hash(qc.qubits[0])}
+        assert map_wires(qc_wires=wires, wires=qc_wires) == {0: hash(qc.qubits[0])}
 
     def test_map_wires_instantiate_quantum_circuit_with_registers(self, recorder):
         """Tests the map_wires function for wires of a quantum circuit instantiated
@@ -797,7 +813,7 @@ class TestConverterUtils:
         qc = QuantumCircuit(qr1, qr2, qr3)
         qc_wires = [hash(q) for q in qc.qubits]
 
-        mapped_wires = map_wires(wires, qc_wires)
+        mapped_wires = map_wires(qc_wires=wires, wires=qc_wires)
 
         assert len(mapped_wires) == len(wires)
         assert list(mapped_wires.keys()) == wires
@@ -811,7 +827,7 @@ class TestConverterUtils:
         qc = QuantumCircuit(3)
         qc_wires = [hash(q) for q in qc.qubits]
 
-        mapped_wires = map_wires(wires, qc_wires)
+        mapped_wires = map_wires(qc_wires=wires, wires=qc_wires)
 
         for q in qc.qubits:
             assert hash(q) in mapped_wires.values()
@@ -832,8 +848,7 @@ class TestConverterUtils:
 
         with pytest.raises(
             qml.QuantumFunctionError,
-            match="The specified number of wires - {} - does not match "
-            "the number of wires the loaded quantum circuit acts on.".format(len(wires)),
+            match=f"The specified number of wires - {len(wires)} - does not match ",
         ):
             map_wires(qc_wires, wires)
 
@@ -1094,7 +1109,7 @@ class TestConverterQasm:
         """Tests that a QuantumCircuit object is deserialized from a qasm file."""
         qft_qasm = tmpdir.join("qft.qasm")
 
-        with open(qft_qasm, "w") as f:
+        with open(qft_qasm, "w", encoding="utf") as f:
             f.write(TestConverterQasm.qft_qasm)
 
         quantum_circuit = load_qasm_from_file(qft_qasm)
@@ -1310,7 +1325,7 @@ class TestConverterIntegration:
     def test_gradient(self, theta, phi, varphi, shots, tol):
         """Tests that the gradient of a circuit is calculated correctly."""
         qc = QuantumCircuit(3)
-        qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
+        qiskit_params = [Parameter(f"param_{i}") for i in range(3)]
 
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
@@ -1402,7 +1417,7 @@ class TestConverterIntegration:
         """Test that extracting the differentiable parameters works correctly
         for arrays"""
         qc = QuantumCircuit(3)
-        qiskit_params = [Parameter("param_{}".format(i)) for i in range(3)]
+        qiskit_params = [Parameter(f"param_{i}".format(i)) for i in range(3)]
 
         theta = 0.53
         phi = -1.23
@@ -1860,6 +1875,7 @@ class TestControlOpIntegration:
             )
         )
 
+    # pylint: disable=too-many-statements
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
     def test_control_flow_ops_circuit_switch(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
@@ -2015,6 +2031,7 @@ class TestControlOpIntegration:
             qml.from_qiskit(qc)()
             return qml.expval(qml.PauliZ(0))
 
+        # pylint: disable=unused-variable
         @qml.qnode(dev)
         def pl_circuit():
             qml.RX(0.9, [0])
@@ -2308,8 +2325,8 @@ class TestLoadPauliOp:
         a PennyLane operator with too few custom wires.
         """
         match = (
-            r"The specified number of wires - 1 - does not match "
-            f"the number of qubits the SparsePauliOp acts on."
+            "The specified number of wires - 1 - does not match "
+            "the number of qubits the SparsePauliOp acts on."
         )
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(SparsePauliOp("II"), wires=[0])
@@ -2319,8 +2336,8 @@ class TestLoadPauliOp:
         a PennyLane operator with too many custom wires.
         """
         match = (
-            r"The specified number of wires - 3 - does not match "
-            f"the number of qubits the SparsePauliOp acts on."
+            "The specified number of wires - 3 - does not match "
+            "the number of qubits the SparsePauliOp acts on."
         )
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(SparsePauliOp("II"), wires=[0, 1, 2])
@@ -2329,6 +2346,6 @@ class TestLoadPauliOp:
         """Tests that a ValueError is raised if an attempt is made to convert an object which is not
         a SparsePauliOp into a PennyLane operator.
         """
-        match = r"The operator 123 is not a valid Qiskit SparsePauliOp\."
+        match = "The operator 123 is not a valid Qiskit SparsePauliOp."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)
