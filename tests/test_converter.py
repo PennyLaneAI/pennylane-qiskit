@@ -44,10 +44,6 @@ from pennylane_qiskit.converter import (
     _check_parameter_bound,
 )
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 1b85a3a (some changes)
 # pylint: disable=protected-access, unused-argument, too-many-arguments
 
 THETA = np.linspace(0.11, 3, 5)
