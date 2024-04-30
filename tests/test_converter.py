@@ -1633,8 +1633,6 @@ class TestConverterPennyLaneCircuitToQiskit:
 
         if measure:
             assert final_instruction.operation.name == "measure"
-        else:
-            final_instruction.operation.name == final_op_name
 
     @pytest.mark.parametrize("diagonalize", [True, False])
     def test_circuit_to_qiskit_diagonalize_kwarg(self, diagonalize):
