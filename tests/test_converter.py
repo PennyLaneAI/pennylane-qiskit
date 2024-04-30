@@ -1639,8 +1639,7 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
 
         qscript = QuantumScript(
-            [qml.Hadamard(1), qml.CNOT([1, 0])],
-            measurements=[qml.expval(qml.PauliY(1))],
+            [qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))]
         )
         assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
 
