@@ -792,7 +792,7 @@ class TestCheckParameterBound:
 class TestConverterUtils:
     """Tests the utility functions used by the converter function."""
 
-    def test_map_wires(self):
+    def test_map_wires(self, recorder):
         """Tests the map_wires function for wires of a quantum circuit."""
 
         wires = [0]
@@ -801,7 +801,7 @@ class TestConverterUtils:
 
         assert map_wires(qc_wires=wires, wires=qc_wires) == {0: hash(qc.qubits[0])}
 
-    def test_map_wires_instantiate_quantum_circuit_with_registers(self):
+    def test_map_wires_instantiate_quantum_circuit_with_registers(self, recorder):
         """Tests the map_wires function for wires of a quantum circuit instantiated
         using quantum registers."""
 
@@ -819,7 +819,7 @@ class TestConverterUtils:
         for q in qc.qubits:
             assert hash(q) in mapped_wires.values()
 
-    def test_map_wires_provided_non_standard_order(self):
+    def test_map_wires_provided_non_standard_order(self, recorder):
         """Tests the map_wires function for wires of non-standard order."""
 
         wires = [1, 2, 0]
@@ -837,7 +837,7 @@ class TestConverterUtils:
         assert mapped_wires[1] == qc_wires[0]
         assert mapped_wires[2] == qc_wires[1]
 
-    def test_map_wires_exception_mismatch_in_number_of_wires(self):
+    def test_map_wires_exception_mismatch_in_number_of_wires(self, recorder):
         """Tests that the map_wires function raises an exception if there is a mismatch between
         wires."""
 
@@ -1070,7 +1070,7 @@ class TestConverterWarningsAndErrors:
         ):
             load(qc)({c: 0.3})
 
-    def test_no_parameters_raises_error(self):
+    def test_no_parameters_raises_error(self, recorder):
         """Tests the load method for a QuantumCircuit raises a TypeError if no
         parameters are passed to a loaded function that requires parameters"""
 
