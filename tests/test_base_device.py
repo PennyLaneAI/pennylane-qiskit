@@ -1031,7 +1031,7 @@ class TestExecution:
                 qml.var(qml.PauliY(wire)),
                 qml.var(qml.PauliZ(wire)),
             ],
-        )   
+        )
 
         res = dev.execute(qs)
 
