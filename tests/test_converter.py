@@ -1789,6 +1789,7 @@ class TestConverterUtilsPennyLaneToQiskit:
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
 
+
 # pylint:disable=not-context-manager
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""
