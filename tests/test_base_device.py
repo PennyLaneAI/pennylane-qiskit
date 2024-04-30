@@ -15,31 +15,15 @@
 This module contains tests for the base Qiskit device for the new PennyLane device API
 """
 
+from unittest.mock import patch, Mock
 import numpy as np
 import pytest
-import inspect
-from unittest.mock import patch, Mock
 from semantic_version import Version
 import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-
-from pennylane_qiskit import AerDevice
-from pennylane_qiskit.qiskit_device2 import (
-    QiskitDevice2,
-    qiskit_session,
-    accepted_sample_measurement,
-    split_measurement_types,
-    qiskit_options_to_flat_dict,
-)
-from pennylane_qiskit.converter import (
-    circuit_to_qiskit,
-    mp_to_pauli,
-    QISKIT_OPERATION_MAP,
-)
-
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Estimator
+from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
 from qiskit_ibm_runtime.options import Options
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
@@ -53,9 +37,22 @@ from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
 
-from qiskit_aer.noise import NoiseModel
+from pennylane_qiskit.qiskit_device2 import (
+    QiskitDevice2,
+    qiskit_session,
+    split_measurement_types,
+    qiskit_options_to_flat_dict,
+)
+from pennylane_qiskit.converter import (
+    circuit_to_qiskit,
+    mp_to_pauli,
+    QISKIT_OPERATION_MAP,
+)
+
+# pylint: disable=protected-access, unused-argument, too-many-arguments, redefined-outer-name
 
 
+# pylint: disable=too-few-public-methods
 class Configuration:
     def __init__(self, n_qubits, backend_name):
         self.n_qubits = n_qubits
@@ -108,6 +105,7 @@ class MockedBackendLegacy(BackendV1):
         return self._options
 
 
+# pylint: disable=too-few-public-methods
 class MockSession:
     def __init__(self, backend, max_time=None):
         self.backend = backend
@@ -118,10 +116,11 @@ class MockSession:
         pass
 
 
+# pylint: disable=broad-except
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
-except:
+except Exception:
     backend = MockedBackend()
 
 legacy_backend = MockedBackendLegacy()
@@ -251,7 +250,7 @@ class TestDeviceInitialization:
         the number of wires available on the backend, for both backend versions"""
 
         with pytest.raises(ValueError, match="supports maximum"):
-            dev = QiskitDevice2(wires=500, backend=backend)
+            QiskitDevice2(wires=500, backend=backend)
 
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
@@ -264,7 +263,7 @@ class TestDeviceInitialization:
         dev1 = QiskitDevice2(wires=3, backend=backend)
         dev2 = QiskitDevice2(wires=3, backend=new_backend, options=options)
 
-        assert dev1.backend.options.noise_model == None
+        assert dev1.backend.options.noise_model is None
         assert dev2.backend.options.noise_model == {"placeholder": 1}
 
 
@@ -275,7 +274,7 @@ class TestQiskitSessionManagement:
         """Test that the default behaviour is no session at initialization"""
 
         dev = QiskitDevice2(wires=2, backend=backend)
-        assert dev._session == None
+        assert dev._session is None
 
     def test_initializing_with_session(self):
         """Test that you can initialize a device with an existing Qiskit session"""
@@ -759,7 +758,7 @@ class TestMockedExecution:
         )
 
         assert len(compiled_circuits) == len(input_circuits)
-        for i, circuit in enumerate(compiled_circuits):
+        for _, circuit in enumerate(compiled_circuits):
             assert isinstance(circuit, QuantumCircuit)
 
     @pytest.mark.parametrize(
@@ -894,7 +893,7 @@ class TestMockedExecution:
                 qml.sample(),
             ],
         )
-        tapes, reorder_fn = split_measurement_types(qs)
+        tapes, _ = split_measurement_types(qs)
 
         with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
             with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):

@@ -28,6 +28,7 @@ from qiskit.quantum_info import SparsePauliOp
 
 import pennylane as qml
 from pennylane import numpy as np
+from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
@@ -41,8 +42,6 @@ from pennylane_qiskit.converter import (
     _format_params_dict,
     _check_parameter_bound,
 )
-
-from pennylane.tape.qscript import QuantumScript
 
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments
