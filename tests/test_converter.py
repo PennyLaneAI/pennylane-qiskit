@@ -1923,11 +1923,11 @@ class TestConverterUtilsPennyLaneToQiskit:
         with pytest.raises(ValueError, match="The operator"):
             mp_to_pauli(obs, 5)
 
-
+# pylint:disable=not-context-manager
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""
 
-    # pylint:disable=not-context-manager
+    
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
     def test_control_flow_ops_circuit_ifelse(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
@@ -2009,7 +2009,7 @@ class TestControlOpIntegration:
             )
         )
 
-    # pylint:disable=not-context-manager, too-many-statements
+    # pylint:disable=too-many-statements
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
     def test_control_flow_ops_circuit_switch(self, cond_type):
         """Tests mid-measurements are recognized and returned correctly."""
@@ -2096,7 +2096,6 @@ class TestControlOpIntegration:
             )
         )
 
-    # pylint:disable=not-context-manager
     def test_warning_for_non_accessible_classical_info(self):
         """Tests a UserWarning is raised if we do not have access to classical info."""
 
@@ -2141,7 +2140,7 @@ class TestControlOpIntegration:
 
         assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
 
-    # pylint:disable=not-context-manager, unused-variable
+    # pylint:disable=unused-variable
     def test_mid_circuit_as_terminal(self):
         """Test the control workflows where mid-circuit measurements disguise as terminal ones"""
 
@@ -2189,7 +2188,7 @@ class TestControlOpIntegration:
             for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations)
         )
 
-    # pylint:disable=not-context-manager
+
     def test_measurement_are_not_discriminated(self):
         """Test the all measurements are considered mid-circuit measurements when no terminal measurements are given"""
 
