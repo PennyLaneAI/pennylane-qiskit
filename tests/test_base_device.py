@@ -27,6 +27,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
 from qiskit_ibm_runtime.options import Options
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit_aer import AerSimulator
 
 # do not import Estimator (imported above) from qiskit.primitives - the identically
 # named Estimator object has a different call signature than the remote device Estimator,
