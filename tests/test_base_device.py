@@ -869,7 +869,7 @@ class TestMockedExecution:
         qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
 
         with patch("pennylane_qiskit.qiskit_device2.Session") as mock_session:
-            res = dev.execute(qs)
+            dev.execute(qs)
             mock_session.assert_called_once()  # a session was created
 
         assert dev._session is None  # the device session is still None

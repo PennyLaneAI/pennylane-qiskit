@@ -1789,7 +1789,7 @@ class TestConverterUtilsPennyLaneToQiskit:
         # remaining wires are all Identity
         assert np.all([op == "I" for op in pauli_op_list])
 
-
+# pylint:disable=not-context-manager
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""
 
@@ -2005,6 +2005,7 @@ class TestControlOpIntegration:
 
         assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
 
+    # pylint:disable=unused-variable
     def test_mid_circuit_as_terminal(self):
         """Test the control workflows where mid-circuit measurements disguise as terminal ones"""
 
