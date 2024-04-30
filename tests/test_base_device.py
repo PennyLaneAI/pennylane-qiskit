@@ -1155,7 +1155,7 @@ class TestExecution:
         ],
     )
     def test_process_estimator_job(self, measurements, expectation):
-        """Tests that the estimator returns expected and accurate results for a Expval and Var for a variety of multi qubit observables"""
+        """Tests that the estimator returns expected and accurate results for an ``expval`` and ``var`` for a variety of multi-qubit observables"""
 
         # make PennyLane circuit
         qs = QuantumScript([], measurements=measurements)
