@@ -36,7 +36,6 @@ from qiskit.primitives import EstimatorResult
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
-from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
@@ -119,7 +118,7 @@ class MockSession:
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
-except:
+except Exception:
     backend = MockedBackend()
 
 legacy_backend = MockedBackendLegacy()
@@ -249,7 +248,7 @@ class TestDeviceInitialization:
         the number of wires available on the backend, for both backend versions"""
 
         with pytest.raises(ValueError, match="supports maximum"):
-            dev = QiskitDevice2(wires=500, backend=backend)
+            QiskitDevice2(wires=500, backend=backend)
 
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
