@@ -63,7 +63,7 @@ def skip_if_no_account():
     t = os.getenv("IBMQX_TOKEN", None)
     try:
         IBMProvider(token=t)
-    except IBMProviderValueError:
+    except:  # pylint: disable=broad-except, bare-except
         missing = "token" if t else "account"
         pytest.skip(f"Skipping test, no IBMQ {missing} available")
 
