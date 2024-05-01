@@ -115,11 +115,11 @@ class MockSession:
         pass
 
 
-# pylint: disable=broad-except
+# pylint: disable=bare-except
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
-except Exception:
+except:
     backend = MockedBackend()
 
 legacy_backend = MockedBackendLegacy()
