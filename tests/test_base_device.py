@@ -995,6 +995,31 @@ class TestMockedExecution:
             ):
                 dev.execute(qs)
 
+    def test_unsupported_observable_uses_execute_runtime_service(self, mocker):
+        """Test that a device that has an unsupported observables uses _execute_runtime_service instead"""
+
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
+        )
+        qs = QuantumScript(
+            measurements=[
+                qml.expval(qml.Hadamard(0)),
+            ],
+            shots=[10],
+        )
+        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
+            with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
+                with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
+                    runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+                    sampler_execute = mocker.spy(dev, "_execute_sampler")
+                    estimator_execute = mocker.spy(dev, "_execute_estimator")
+
+                    dev.execute(qs)
+
+        runtime_service_execute.assert_called_once()
+        sampler_execute.assert_not_called()
+        estimator_execute.assert_not_called()
+
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
