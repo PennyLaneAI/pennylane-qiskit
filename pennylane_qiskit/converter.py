@@ -1,4 +1,4 @@
-# Copyright 2019 Xanadu Quantum Technologies Inc.
+# Copyright 2021-2024 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -356,7 +356,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: The resulting PennyLane template.
     """
 
-    # pylint:disable=too-many-branches, fixme, protected-access
+    # pylint:disable=too-many-branches, fixme, protected-access, too-many-nested-blocks
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -707,20 +707,22 @@ def mp_to_pauli(mp, register_size):
         mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
         register_size(int): total size of the qubit register being measured
     """
+    op = mp.obs
 
-    # ToDo: I believe this could be extended to cover expectation values of Hamiltonians
+    if op.pauli_rep:
+        pauli_strings = [
+            "".join(
+                ["I" if i not in pauli_term.wires else pauli_term[i] for i in range(register_size)][
+                    ::-1
+                ]  ## Qiskit follows opposite wire order convention
+            )
+            for pauli_term in op.pauli_rep.keys()
+        ]
+        coeffs = list(op.pauli_rep.values())
+    else:
+        raise ValueError(f"The operator {op} does not have a representation for SparsePauliOp")
 
-    observables = {"PauliX": "X", "PauliY": "Y", "PauliZ": "Z", "Identity": "I"}
-
-    pauli_string = ["I"] * register_size
-    pauli_string[mp.wires[0]] = observables[mp.obs.name]
-
-    # Qiskit orders wires in the opposite direction compared to PL
-    pauli_string.reverse()
-
-    pauli_string = ("").join(pauli_string)
-
-    return SparsePauliOp(pauli_string)
+    return SparsePauliOp(data=pauli_strings, coeffs=coeffs).simplify()
 
 
 def load_pauli_op(

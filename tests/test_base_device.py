@@ -36,7 +36,6 @@ from qiskit.primitives import EstimatorResult
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
-
 from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
@@ -1043,6 +1042,64 @@ class TestExecution:
 
         assert np.allclose(res, expectation, atol=0.1)
 
+    @pytest.mark.parametrize("wire", [0, 1, 2, 3])
+    @pytest.mark.parametrize(
+        "angle, op, multi_q_obs",
+        [
+            (
+                np.pi / 2,
+                qml.RX,
+                qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3]),
+            ),
+            (
+                np.pi,
+                qml.RX,
+                qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3])
+                - 4 * qml.X(2),
+            ),
+            (np.pi / 2, qml.RY, qml.sum(qml.PauliZ(0), qml.PauliX(1))),
+            (np.pi, qml.RY, qml.dot([2, 3], [qml.X(0), qml.Y(0)])),
+            (
+                np.pi / 2,
+                qml.RZ,
+                qml.Hamiltonian([1], [qml.X(0) @ qml.Y(2)]) - 3 * qml.Z(3) @ qml.Z(1),
+            ),
+        ],
+    )
+    def test_estimator_with_various_multi_qubit_pauli_obs(
+        self, mocker, wire, angle, op, multi_q_obs
+    ):
+        """Test that the Estimator with various multi-qubit observables returns expected results.
+        Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
+        expected. Iterating over wires ensures that the wire operated on and the wire measured
+        correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
+        """
+
+        pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
+        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend, use_primitives=True)
+
+        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+        sampler_execute = mocker.spy(dev, "_execute_sampler")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
+
+        qs = QuantumScript(
+            [op(angle, wire)],
+            measurements=[
+                qml.expval(multi_q_obs),
+                qml.var(multi_q_obs),
+            ],
+            shots=10000,
+        )
+
+        res = dev.execute(qs)
+        expectation = pl_dev.execute(qs)
+
+        runtime_service_execute.assert_not_called()
+        sampler_execute.assert_not_called()
+        estimator_execute.assert_called_once()
+
+        assert np.allclose(res, expectation, atol=0.3)  ## atol is high due to high variance
+
     @pytest.mark.parametrize(
         "measurements, expectation",
         [
@@ -1056,10 +1113,22 @@ class TestExecution:
                 ],
                 (0, 1, 1),
             ),
+            ([qml.expval(0.5 * qml.Y(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0))], (0)),
+            (
+                [
+                    qml.expval(
+                        qml.ops.LinearCombination(
+                            [1, 3, 4], [qml.X(3) @ qml.Y(2), qml.Y(4) - qml.X(2), qml.Z(2) * 3]
+                        )
+                        + qml.X(4)
+                    )
+                ],
+                (16),
+            ),
         ],
     )
     def test_process_estimator_job(self, measurements, expectation):
-        """for variance and for expval and for a combination"""
+        """Tests that the estimator returns expected and accurate results for an ``expval`` and ``var`` for a variety of multi-qubit observables"""
 
         # make PennyLane circuit
         qs = QuantumScript([], measurements=measurements)
@@ -1085,10 +1154,9 @@ class TestExecution:
         for data in result.metadata:
             assert isinstance(data, dict)
             assert list(data.keys()) == ["variance", "shots"]
-
         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
-        assert np.allclose(processed_result, expectation, atol=0.05)
+        assert np.allclose(processed_result, expectation, atol=0.1)
 
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
