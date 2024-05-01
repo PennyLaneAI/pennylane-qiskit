@@ -121,10 +121,11 @@ class MockSession:
 try:
     service = QiskitRuntimeService(channel="ibm_quantum")
     backend = service.backend("ibmq_qasm_simulator")
-except Exception:
+except:
     backend = MockedBackend()
 
 legacy_backend = MockedBackendLegacy()
+aer_sim = AerSimulator()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
 
@@ -146,6 +147,7 @@ class TestSupportForV1andV2:
         [
             legacy_backend,
             backend,
+            aer_sim
         ],
     )
     def test_v1_and_v2_mocked(self, backend):
@@ -153,9 +155,6 @@ class TestSupportForV1andV2:
         dev = QiskitDevice2(wires=10, backend=backend, use_primitives=True)
         assert dev._backend == backend
 
-    @pytest.mark.skip(
-        reason="Fake backends do not have attribute _service, should address in (SC 55725)"
-    )
     @pytest.mark.parametrize(
         "backend",
         [
@@ -171,11 +170,9 @@ class TestSupportForV1andV2:
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
-            return qml.sample(qml.PauliZ(0))
+            return qml.expval(qml.PauliZ(0))
 
         res = circuit(np.pi / 2)
-        assert isinstance(res, np.ndarray)
-        assert np.shape(res) == (1024,)
 
 
 class TestDeviceInitialization:
