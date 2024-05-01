@@ -22,7 +22,7 @@ import qiskit
 
 import pennylane as qml
 from semantic_version import Version
-from qiskit_ibm_provider import IBMProvider, IBMProviderValueError
+from qiskit_ibm_provider import IBMProvider
 from pennylane_qiskit import AerDevice, BasicAerDevice, BasicSimulatorDevice
 
 # pylint: disable=protected-access, unused-argument, redefined-outer-name
@@ -63,7 +63,7 @@ def skip_if_no_account():
     t = os.getenv("IBMQX_TOKEN", None)
     try:
         IBMProvider(token=t)
-    except IBMProviderValueError:
+    except:  # pylint: disable=broad-except, bare-except
         missing = "token" if t else "account"
         pytest.skip(f"Skipping test, no IBMQ {missing} available")
 
