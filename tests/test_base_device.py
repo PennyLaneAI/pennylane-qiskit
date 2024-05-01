@@ -1295,3 +1295,23 @@ class TestExecution:
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
         assert dev._current_job.metadata[0]["shots"] == 2
+
+    def test_unsupported_observable_gives_accurate_answer(self, mocker):
+        """Test that a device that has an unsupported observables uses _execute_runtime_service and provides an accurate answer"""
+
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
+        )
+
+        pl_dev = qml.device("default.qubit", wires=5)
+
+        qs = QuantumScript(
+            measurements=[
+                qml.expval(qml.Hadamard(0)),
+            ],
+            shots=[10000],
+        )
+        res = dev.execute(qs)
+        pl_res = pl_dev.execute(qs)
+
+        assert np.allclose(res, pl_res, atol=0.05)
