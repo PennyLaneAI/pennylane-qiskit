@@ -1324,7 +1324,13 @@ class TestExecution:
             measurements=measurements,
             shots=[10000],
         )
-        res = dev.execute(qs)
+
+        with pytest.warns(
+            UserWarning,
+            match="`use_primitives` is set",
+        ):
+            res = dev.execute(qs)
+
         pl_res = pl_dev.execute(qs)
 
         assert np.allclose(res, pl_res, atol=0.05)
