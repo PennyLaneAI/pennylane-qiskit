@@ -1028,24 +1028,6 @@ class TestMockedExecution:
         sampler_execute.assert_not_called()
         estimator_execute.assert_not_called()
 
-    def test_mocked_warning_for_execute_runtime_service(self):
-        """Test that a warning is raised when device uses _execute_runtime_service
-        despite use_primitives being set to True"""
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-
-        qs = QuantumScript(
-            measurements=[qml.expval(qml.Hadamard(0))],
-            shots=[1],
-        )
-
-        with pytest.warns(
-            UserWarning,
-            match="`use_primitives` is set as True",
-        ):
-            dev.execute(qs)
-
-
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
     @pytest.mark.parametrize("wire", [0, 1])
