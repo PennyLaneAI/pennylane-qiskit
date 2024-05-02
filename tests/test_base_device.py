@@ -1309,7 +1309,7 @@ class TestExecution:
             [qml.expval(qml.Hadamard(0))],
             [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
             [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
-            # [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))] This should not fail, but fails due to the way we diagonalize right now. For more information, refer to [SC-62047].
+            # [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))] fails due to a bug in _execute_runtime_service.
         ],
     )
     def test_unsupported_observable_gives_accurate_answer(self, measurements):
