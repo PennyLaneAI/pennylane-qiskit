@@ -516,8 +516,6 @@ class QiskitDevice2(Device):
         # update kwargs in case Options has been modified since last execution
         self._update_kwargs()
 
-        print(self._use_primitives)
-
         if self._use_primitives:
             warnings.warn(
                 "`use_primitives` is set as True but the circuit will be ran without using "
