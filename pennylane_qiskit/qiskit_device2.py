@@ -516,6 +516,13 @@ class QiskitDevice2(Device):
         # update kwargs in case Options has been modified since last execution
         self._update_kwargs()
 
+        if self._use_primitives:
+            warnings.warn(
+                "`use_primitives` is set as True but the circuit will be ran without using "
+                "primitives. This is because an observable e.g. `qml.expval(qml.Hadamard(0))`"
+                " does not have a `pauli_rep`."
+            )
+
         # in case a single circuit is passed
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
