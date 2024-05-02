@@ -1005,7 +1005,8 @@ class TestMockedExecution:
         ],
     )
     def test_unsupported_observable_uses_execute_runtime_service(self, mocker, measurements):
-        """Test that a device uses _execute_runtime_service instead of _execute_estimator when the observable does not have a pauli_rep"""
+        """Test that a device uses _execute_runtime_service instead of _execute_estimator
+        when measurements contains an observable that does not have a pauli_rep"""
 
         dev = QiskitDevice2(
             wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
@@ -1026,6 +1027,23 @@ class TestMockedExecution:
         runtime_service_execute.assert_called_once()
         sampler_execute.assert_not_called()
         estimator_execute.assert_not_called()
+
+    def test_mocked_warning_for_execute_runtime_service(self):
+        """Test that a warning is raised when device uses _execute_runtime_service
+        despite use_primitives being set to True"""
+
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+
+        qs = QuantumScript(
+            measurements=[qml.expval(qml.Hadamard(0))],
+            shots=[1],
+        )
+
+        with pytest.warns(
+            UserWarning,
+            match="`use_primitives` is set as True",
+        ):
+            dev.execute(qs)
 
 
 @pytest.mark.usefixtures("skip_if_no_account")
@@ -1312,8 +1330,10 @@ class TestExecution:
             # [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))] fails due to not splitting non-commuting transforms. Refer to [SC-62047]
         ],
     )
+    @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_unsupported_observable_gives_accurate_answer(self, measurements):
-        """Test that the device uses _execute_runtime_service and provides an accurate answer for observables without a pauli_rep."""
+        """Test that the device uses _execute_runtime_service and provides an accurate answer
+        for measurements that contain observables that don't a pauli_rep."""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
@@ -1325,12 +1345,34 @@ class TestExecution:
             shots=[10000],
         )
 
+        res = dev.execute(qs)
+        pl_res = pl_dev.execute(qs)
+
+        assert np.allclose(res, pl_res, atol=0.05)
+
+    @pytest.mark.parametrize(
+        "measurements",
+        [
+            [qml.expval(qml.Hadamard(0))],
+            [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
+            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
+            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))],
+        ],
+    )
+    def test_warning_for_execute_runtime_service(self, measurements):
+        """Test that a warning is raised when device uses _execute_runtime_service
+        despite use_primitives being set to True"""
+
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+
+        qs = QuantumScript(
+            ops=[qml.X(0), qml.Hadamard(0)],
+            measurements=measurements,
+            shots=[10000],
+        )
+
         with pytest.warns(
             UserWarning,
             match="`use_primitives` is set",
         ):
-            res = dev.execute(qs)
-
-        pl_res = pl_dev.execute(qs)
-
-        assert np.allclose(res, pl_res, atol=0.05)
+            dev.execute(qs)
