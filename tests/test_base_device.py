@@ -1028,6 +1028,7 @@ class TestMockedExecution:
         sampler_execute.assert_not_called()
         estimator_execute.assert_not_called()
 
+
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
     @pytest.mark.parametrize("wire", [0, 1])
