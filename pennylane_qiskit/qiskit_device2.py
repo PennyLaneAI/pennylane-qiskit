@@ -558,6 +558,11 @@ class QiskitDevice2(Device):
 
         results = []
 
+        ### ToDo: ensure the measurements in circuit.measurements commute
+        ### Need to wait to implement transforms such as split non-commute, ham expand, etc.
+        ### [SC-62047]
+        ### Can't raise a warning/error because if we could figure out that the measurements
+        ### did not commute then we could just split it instead of raising a warning/error.
         for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
             res = [
