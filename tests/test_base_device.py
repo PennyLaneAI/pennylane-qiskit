@@ -143,11 +143,7 @@ class TestSupportForV1andV2:
 
     @pytest.mark.parametrize(
         "backend",
-        [
-            legacy_backend,
-            backend,
-            aer_sim
-        ],
+        [legacy_backend, backend, aer_sim],
     )
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
