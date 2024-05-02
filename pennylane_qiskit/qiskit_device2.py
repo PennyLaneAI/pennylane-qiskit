@@ -495,9 +495,8 @@ class QiskitDevice2(Device):
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
                             f"The circuit will be run once with {circ.shots.total_shots} shots instead."
                         )
-                    if (
-                        isinstance(circ.measurements[0], (ExpectationMP, VarianceMP))
-                        and circ.measurements[0].obs.pauli_rep
+                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and all(
+                        mp.obs.pauli_rep for mp in circ.measurements
                     ):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
@@ -602,8 +601,6 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
 
-        # ToDo: need to sort differently for cases where the observable is not
-        # compatible with a SparsePauliOp representation
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
         self._current_job = result

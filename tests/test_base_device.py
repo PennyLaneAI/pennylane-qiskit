@@ -995,16 +995,23 @@ class TestMockedExecution:
             ):
                 dev.execute(qs)
 
-    def test_unsupported_observable_uses_execute_runtime_service(self, mocker):
-        """Test that a device that has an unsupported observables uses _execute_runtime_service instead"""
+    @pytest.mark.parametrize(
+        "measurements",
+        [
+            [qml.expval(qml.Hadamard(0))],
+            [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
+            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
+            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))],
+        ],
+    )
+    def test_unsupported_observable_uses_execute_runtime_service(self, mocker, measurements):
+        """Test that a device uses _execute_runtime_service instead of _execute_estimator when the observable does not have a pauli_rep"""
 
         dev = QiskitDevice2(
             wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
         )
         qs = QuantumScript(
-            measurements=[
-                qml.expval(qml.Hadamard(0)),
-            ],
+            measurements=measurements,
             shots=[10],
         )
         with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
@@ -1296,19 +1303,25 @@ class TestExecution:
         circuit()
         assert dev._current_job.metadata[0]["shots"] == 2
 
-    def test_unsupported_observable_gives_accurate_answer(self, mocker):
-        """Test that a device that has an unsupported observables uses _execute_runtime_service and provides an accurate answer"""
+    @pytest.mark.parametrize(
+        "measurements",
+        [
+            [qml.expval(qml.Hadamard(0))],
+            [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
+            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
+            # [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))] This should not fail, but fails due to the way we diagonalize right now. For more information, refer to [SC-62047].
+        ],
+    )
+    def test_unsupported_observable_gives_accurate_answer(self, measurements):
+        """Test that the device uses _execute_runtime_service and provides an accurate answer for observables without a pauli_rep."""
 
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
-        )
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
         pl_dev = qml.device("default.qubit", wires=5)
 
         qs = QuantumScript(
-            measurements=[
-                qml.expval(qml.Hadamard(0)),
-            ],
+            ops=[qml.X(0), qml.Hadamard(0)],
+            measurements=measurements,
             shots=[10000],
         )
         res = dev.execute(qs)
