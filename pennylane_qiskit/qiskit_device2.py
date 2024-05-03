@@ -556,7 +556,10 @@ class QiskitDevice2(Device):
             )
             self._current_job = job.result(decoder=RunnerResult)
         else:  # Uses local simulator instead. After May 15th, all simulations will use this logic instead.
-            job = self.backend.run(compiled_circuits, options=options)  # Missing shots
+            self.options.execution.shots = program_inputs["shots"]
+            job = self.backend.run(
+                compiled_circuits, options=self.options
+            )  # Missing shots potentially
             self._current_job = job.result()
 
         results = []
