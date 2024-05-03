@@ -546,13 +546,18 @@ class QiskitDevice2(Device):
         }
 
         # Send circuits to the cloud for execution by the circuit-runner program.
-        job = self.service.run(
-            program_id="circuit-runner",
-            options=options,
-            inputs=program_inputs,
-            session_id=session.session_id,
-        )
-        self._current_job = job.result(decoder=RunnerResult)
+        # Cloud simulators will be deprecated on May 15th so this will be exclusively for real hardware devices.
+        if self.service:
+            job = self.service.run(
+                program_id="circuit-runner",
+                options=options,
+                inputs=program_inputs,
+                session_id=session.session_id,
+            )
+            self._current_job = job.result(decoder=RunnerResult)
+        else:  # Uses local simulator instead. After May 15th, all simulations will use this logic instead.
+            job = self.backend.run(compiled_circuits, options=options)  # Missing shots
+            self._current_job = job.result()
 
         results = []
 
