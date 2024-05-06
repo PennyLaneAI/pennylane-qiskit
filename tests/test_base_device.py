@@ -1294,8 +1294,9 @@ class TestExecution:
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_unsupported_observable_gives_accurate_answer(self, mocker, observable):
-        """Test that the device uses _execute_runtime_service and _execute_estimator and provides
-        an accurate answer for measurements that contain observables that don't have a pauli_rep."""
+        """Test that the device uses _execute_runtime_service and _execute_estimator appropriately
+        and provides an accurate answer for measurements with observables that don't have a pauli_rep.
+        """
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
@@ -1326,9 +1327,9 @@ class TestExecution:
 
         assert np.allclose(res, pl_res, atol=0.1)
 
-    def test_warning_for_execute_runtime_service(self):
-        """Test that a warning is raised when device uses _execute_runtime_service
-        despite use_primitives being set to True"""
+    def test_warning_for_split_execution_types_when_observable_no_pauli(self):
+        """Test that a warning is raised when device is passed a measurement on
+        an observable that does not have a pauli_rep."""
 
         dev = QiskitDevice2(
             wires=5,
