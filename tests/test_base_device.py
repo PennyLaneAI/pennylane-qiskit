@@ -72,6 +72,9 @@ class MockedBackend(BackendV2):
 
     def _default_options(self):
         return {}
+    
+    def _coupling_map(self):
+        return {}
 
     def max_circuits(self):
         return 10
