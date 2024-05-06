@@ -1289,7 +1289,7 @@ class TestExecution:
         [
             [qml.Hadamard(0), qml.PauliX(1)],
             [qml.PauliZ(0), qml.Hadamard(1)],
-            # [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))] fails due to not splitting non-commuting transforms. Refer to [SC-62047]
+            [qml.PauliZ(0), qml.Hadamard(0)],
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
