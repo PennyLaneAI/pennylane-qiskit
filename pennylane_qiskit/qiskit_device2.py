@@ -138,8 +138,15 @@ def split_execution_types(
     no_prim = []
 
     for i, mp in enumerate(tape.measurements):
-        if isinstance(mp, (ExpectationMP, VarianceMP)) and mp.obs.pauli_rep:
-            estimator.append((mp, i))
+        if isinstance(mp, (ExpectationMP, VarianceMP)):
+            if mp.obs.pauli_rep:
+                estimator.append((mp, i))
+            else:
+                warnings.warn(
+                    f"The observable measured {mp.obs} does not have a `pauli_rep` "
+                    "and will be run without using the Estimator primitive. Instead, "
+                    "the standard backend.run function will be used."
+                )
         elif isinstance(mp, ProbabilityMP):
             sampler.append((mp, i))
         else:
@@ -518,13 +525,6 @@ class QiskitDevice2(Device):
         """Execution using old runtime_service (can't use runtime sessions)"""
         # update kwargs in case Options has been modified since last execution
         self._update_kwargs()
-
-        if self._use_primitives:
-            warnings.warn(
-                "`use_primitives` is set as True but the circuit will be ran without using "
-                "primitives. This is because an observable e.g. `qml.expval(qml.Hadamard(0))`"
-                " does not have a `pauli_rep`."
-            )
 
         # in case a single circuit is passed
         if isinstance(circuits, QuantumScript):

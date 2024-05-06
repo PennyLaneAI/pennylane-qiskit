@@ -39,7 +39,7 @@ from qiskit import QuantumCircuit
 from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
-    split_measurement_types,
+    split_execution_types,
     qiskit_options_to_flat_dict,
 )
 from pennylane_qiskit.converter import (
@@ -376,13 +376,13 @@ class TestDevicePreprocessing:
             ),
         ],
     )
-    def test_split_measurement_types(self, measurements, expectation):
-        """Test that the split_measurement_types transform splits measurements into Estimator-based
+    def test_split_execution_types(self, measurements, expectation):
+        """Test that the split_execution_types transform splits measurements into Estimator-based
         (expval, var), Sampler-based (probs) and raw-sample based (everything else)"""
 
         operations = [qml.PauliX(0), qml.PauliY(1), qml.Hadamard(2), qml.CNOT([2, 1])]
         qs = QuantumScript(operations, measurements=measurements)
-        tapes, reorder_fn = split_measurement_types(qs)
+        tapes, reorder_fn = split_execution_types(qs)
 
         # operations not modified
         assert np.all([tape.operations == operations for tape in tapes])
@@ -892,7 +892,7 @@ class TestMockedExecution:
                 qml.sample(),
             ],
         )
-        tapes, _ = split_measurement_types(qs)
+        tapes, _ = split_execution_types(qs)
 
         with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
             with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
@@ -1346,29 +1346,20 @@ class TestExecution:
 
         assert np.allclose(res, pl_res, atol=0.1)
 
-    @pytest.mark.parametrize(
-        "measurements",
-        [
-            [qml.expval(qml.Hadamard(0))],
-            [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
-            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
-            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))],
-        ],
-    )
-    def test_warning_for_execute_runtime_service(self, measurements):
+    def test_warning_for_execute_runtime_service(self):
         """Test that a warning is raised when device uses _execute_runtime_service
         despite use_primitives being set to True"""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
-        qs = QuantumScript(
-            ops=[qml.X(0), qml.Hadamard(0)],
-            measurements=measurements,
-            shots=[10000],
-        )
+        @qml.qnode(dev)
+        def circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(qml.Hadamard(0))
 
         with pytest.warns(
             UserWarning,
-            match="`use_primitives` is set",
+            match="The observable measured",
         ):
-            dev.execute(qs)
+            circuit()
