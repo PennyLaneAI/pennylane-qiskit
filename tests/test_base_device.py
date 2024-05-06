@@ -66,7 +66,6 @@ class MockedBackend(BackendV2):
         self.name = name
         self._target = Mock()
         self._target.num_qubits = num_qubits
-        self._coupling_map = {}
 
     def set_options(self, noise_model):
         self.options.noise_model = noise_model
@@ -375,8 +374,21 @@ class TestDevicePreprocessing:
                 [qml.probs(wires=[2])],
                 [[qml.probs(wires=[2])]],
             ),
+            (
+                [
+                    qml.expval(qml.Hadamard(0)),
+                    qml.expval(qml.PauliX(0)),
+                    qml.var(qml.PauliZ(0)),
+                    qml.counts(),
+                ],
+                [
+                    [qml.expval(qml.PauliX(0)), qml.var(qml.PauliZ(0))],
+                    [qml.expval(qml.Hadamard(0)), qml.counts()],
+                ],
+            ),
         ],
     )
+    @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_split_execution_types(self, measurements, expectation):
         """Test that the split_execution_types transform splits measurements into Estimator-based
         (expval, var), Sampler-based (probs) and raw-sample based (everything else)"""
@@ -996,26 +1008,6 @@ class TestMockedExecution:
             ):
                 dev.execute(qs)
 
-    def test_warning_for_execute_runtime_service(self):
-        """Test that a warning is raised when device uses _execute_runtime_service
-        despite use_primitives being set to True"""
-
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
-        )
-
-        @qml.qnode(dev)
-        def circuit():
-            qml.X(0)
-            qml.Hadamard(0)
-            return qml.expval(qml.Hadamard(0))
-
-        with pytest.warns(
-            UserWarning,
-            match="The observable measured",
-        ):
-            circuit()
-
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
@@ -1333,3 +1325,25 @@ class TestExecution:
         sampler_execute.assert_not_called()
 
         assert np.allclose(res, pl_res, atol=0.1)
+
+    def test_warning_for_execute_runtime_service(self):
+        """Test that a warning is raised when device uses _execute_runtime_service
+        despite use_primitives being set to True"""
+
+        dev = QiskitDevice2(
+            wires=5,
+            backend=backend,
+            use_primitives=True,
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(qml.Hadamard(0))
+
+        with pytest.warns(
+            UserWarning,
+            match="The observable measured",
+        ):
+            circuit()
