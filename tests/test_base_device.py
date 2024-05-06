@@ -1000,7 +1000,9 @@ class TestMockedExecution:
         """Test that a warning is raised when device uses _execute_runtime_service
         despite use_primitives being set to True"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(
+            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
+        )
 
         @qml.qnode(dev)
         def circuit():
