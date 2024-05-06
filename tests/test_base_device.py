@@ -995,6 +995,24 @@ class TestMockedExecution:
             ):
                 dev.execute(qs)
 
+    def test_warning_for_execute_runtime_service(self):
+        """Test that a warning is raised when device uses _execute_runtime_service
+        despite use_primitives being set to True"""
+
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(qml.Hadamard(0))
+
+        with pytest.warns(
+            UserWarning,
+            match="The observable measured",
+        ):
+            circuit()
+
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
@@ -1312,21 +1330,3 @@ class TestExecution:
         sampler_execute.assert_not_called()
 
         assert np.allclose(res, pl_res, atol=0.1)
-
-    def test_warning_for_execute_runtime_service(self):
-        """Test that a warning is raised when device uses _execute_runtime_service
-        despite use_primitives being set to True"""
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-
-        @qml.qnode(dev)
-        def circuit():
-            qml.X(0)
-            qml.Hadamard(0)
-            return qml.expval(qml.Hadamard(0))
-
-        with pytest.warns(
-            UserWarning,
-            match="The observable measured",
-        ):
-            circuit()
