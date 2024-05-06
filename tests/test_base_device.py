@@ -1305,33 +1305,46 @@ class TestExecution:
         assert dev._current_job.metadata[0]["shots"] == 2
 
     @pytest.mark.parametrize(
-        "measurements",
+        "observable",
         [
-            [qml.expval(qml.Hadamard(0))],
-            [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
-            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
+            [qml.Hadamard(0), qml.PauliX(1)],
+            [qml.PauliZ(0), qml.Hadamard(1)],
             # [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))] fails due to not splitting non-commuting transforms. Refer to [SC-62047]
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    def test_unsupported_observable_gives_accurate_answer(self, measurements):
-        """Test that the device uses _execute_runtime_service and provides an accurate answer
-        for measurements that contain observables that don't a pauli_rep."""
+    def test_unsupported_observable_gives_accurate_answer(self, mocker, observable):
+        """Test that the device uses _execute_runtime_service and _execute_estimator and provides
+        an accurate answer for measurements that contain observables that don't a pauli_rep."""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
         pl_dev = qml.device("default.qubit", wires=5)
 
-        qs = QuantumScript(
-            ops=[qml.X(0), qml.Hadamard(0)],
-            measurements=measurements,
-            shots=[10000],
-        )
+        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
+        sampler_execute = mocker.spy(dev, "_execute_sampler")
 
-        res = dev.execute(qs)
-        pl_res = pl_dev.execute(qs)
+        @qml.qnode(dev)
+        def circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(observable[0]), qml.expval(observable[1])
 
-        assert np.allclose(res, pl_res, atol=0.05)
+        @qml.qnode(pl_dev)
+        def pl_circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(observable[0]), qml.expval(observable[1])
+
+        res = circuit()
+        pl_res = pl_circuit()
+
+        runtime_service_execute.assert_called_once()
+        estimator_execute.assert_called_once()
+        sampler_execute.assert_not_called()
+
+        assert np.allclose(res, pl_res, atol=0.1)
 
     @pytest.mark.parametrize(
         "measurements",

@@ -124,10 +124,12 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 
 
 @transform
-def split_measurement_types(
+def split_execution_types(
     tape: qml.tape.QuantumTape,
 ) -> (Sequence[qml.tape.QuantumTape], Callable):
-    """Split into separate tapes based on measurement type. Counts will use the
+    """Split into separate tapes based on measurement type. However, for `expval` and `var`
+    measurements, if the measured observable does not have a `pauli_rep`, it is split as a
+    separate tape and will use the standard backend.run function. Counts will use the
     Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
     strictly sample-based measurements will use the standard backend.run function"""
 
@@ -136,7 +138,7 @@ def split_measurement_types(
     no_prim = []
 
     for i, mp in enumerate(tape.measurements):
-        if isinstance(mp, (ExpectationMP, VarianceMP)):
+        if isinstance(mp, (ExpectationMP, VarianceMP)) and mp.obs.pauli_rep:
             estimator.append((mp, i))
         elif isinstance(mp, ProbabilityMP):
             sampler.append((mp, i))
@@ -401,7 +403,7 @@ class QiskitDevice2(Device):
         )
 
         transform_program.add_transform(broadcast_expand)
-        # missing: split non-commuting, sum_expand, etc.
+        # missing: split non-commuting, sum_expand, etc. [SC-62047]
 
         if self._use_primitives:
             transform_program.add_transform(split_measurement_types)
@@ -495,8 +497,9 @@ class QiskitDevice2(Device):
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
                             f"The circuit will be run once with {circ.shots.total_shots} shots instead."
                         )
-                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and all(
-                        mp.obs.pauli_rep for mp in circ.measurements
+                    if (
+                        isinstance(circ.measurements[0], (ExpectationMP, VarianceMP))
+                        and circ.measurements[0].obs.pauli_rep
                     ):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
@@ -565,11 +568,8 @@ class QiskitDevice2(Device):
 
         results = []
 
-        ### ToDo: ensure the measurements in circuit.measurements commute
-        ### Need to wait to implement transforms such as split non-commute, ham expand, etc.
-        ### [SC-62047]
-        ### Can't raise a warning/error because if we could figure out that the measurements
-        ### did not commute then we could just split it instead of raising a warning/error.
+        ### Note: this assumes that the input values are valid.
+        ### Don't write tests cases that require transforms not yet implemented (not here).
         for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
             res = [
