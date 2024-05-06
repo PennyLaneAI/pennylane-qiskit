@@ -1,7 +1,7 @@
 dc-qiskit-algorithms==0.0.14
 docutils==0.20.1
 ipykernel==6.29.2
-jinja2==3.1.3
+jinja2==3.1.4
 nbsphinx==0.9.3
 pennylane==0.34
 pybind11==2.11.1
