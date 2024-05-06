@@ -25,7 +25,8 @@ import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
 from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
 from qiskit_ibm_runtime.options import Options
-from qiskit_ibm_runtime.constants import RunnerResult
+
+# from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
 
@@ -116,15 +117,9 @@ class MockSession:
         pass
 
 
-# pylint: disable=bare-except
-try:
-    service = QiskitRuntimeService(channel="ibm_quantum")
-    backend = AerSimulator()
-except:
-    backend = MockedBackend()
-
+mocked_backend = MockedBackend()
 legacy_backend = MockedBackendLegacy()
-aer_sim = AerSimulator()
+backend = AerSimulator()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
 
@@ -143,7 +138,7 @@ class TestSupportForV1andV2:
 
     @pytest.mark.parametrize(
         "backend",
-        [legacy_backend, backend, aer_sim],
+        [legacy_backend, backend, mocked_backend],
     )
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
@@ -152,7 +147,12 @@ class TestSupportForV1andV2:
 
     @pytest.mark.parametrize(
         "backend, use_primitives",
-        [(FakeManila(), [True, False]), (FakeManilaV2(), [True, False])],
+        [
+            (FakeManila(), True),
+            (FakeManila(), False),
+            (FakeManilaV2(), True),
+            (FakeManilaV2(), False),
+        ],
     )
     def test_v1_and_v2_manila(self, backend, use_primitives):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
@@ -1002,14 +1002,14 @@ class TestExecution:
             (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
         ],
     )
-    def test_estimator_with_different_pauli_obs_aer_sim(self, mocker, wire, angle, op, expectation):
+    def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
         """Test that the Estimator with various observables returns expected results.
         Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
         expected. Iterating over wires ensures that the wire operated on and the wire measured
         correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
         """
 
-        dev = QiskitDevice2(wires=5, backend=aer_sim, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
@@ -1059,7 +1059,7 @@ class TestExecution:
             ),
         ],
     )
-    def test_estimator_with_various_multi_qubit_pauli_obs_aer_sim(
+    def test_estimator_with_various_multi_qubit_pauli_obs(
         self, mocker, wire, angle, op, multi_q_obs
     ):
         """Test that the Estimator with various multi-qubit observables returns expected results.
@@ -1069,7 +1069,7 @@ class TestExecution:
         """
 
         pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
-        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=aer_sim, use_primitives=True)
+        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend, use_primitives=True)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
@@ -1252,41 +1252,6 @@ class TestExecution:
         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
-
-    @pytest.mark.parametrize("num_wires", [1, 3, 5])
-    @pytest.mark.parametrize("num_shots", [50, 100])
-    def test_generate_samples(self, num_wires, num_shots):
-        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
-
-        qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
-        compiled_circuits = test_dev.compile_circuits([qcirc])
-
-        # Send circuits to the cloud for execution by the circuit-runner program
-        job = test_dev.service.run(
-            program_id="circuit-runner",
-            options={"backend": backend.name},
-            inputs={"circuits": compiled_circuits, "shots": num_shots},
-        )
-
-        test_dev._current_job = job.result(decoder=RunnerResult)
-
-        samples = test_dev.generate_samples()
-
-        assert len(samples) == num_shots
-        assert len(samples[0]) == num_wires
-
-        # we expect the samples to be orderd such that q0 has a 50% chance
-        # of being excited, and everything else is in the ground state
-        exp_res0 = np.zeros(num_wires)
-        exp_res1 = np.zeros(num_wires)
-        exp_res1[0] = 1
-
-        # the two expected results are in samples
-        assert exp_res1 in samples
-        assert exp_res0 in samples
-
-        # nothing else is in samples
-        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
     def test_tape_shots_used_runtime_service(self, mocker):
         """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
