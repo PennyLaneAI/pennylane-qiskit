@@ -413,7 +413,7 @@ class QiskitDevice2(Device):
         # missing: split non-commuting, sum_expand, etc. [SC-62047]
 
         if self._use_primitives:
-            transform_program.add_transform(split_measurement_types)
+            transform_program.add_transform(split_execution_types)
 
         return transform_program, config
 
