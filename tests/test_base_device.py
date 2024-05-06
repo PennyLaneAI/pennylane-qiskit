@@ -66,14 +66,12 @@ class MockedBackend(BackendV2):
         self.name = name
         self._target = Mock()
         self._target.num_qubits = num_qubits
+        self._coupling_map = {}
 
     def set_options(self, noise_model):
         self.options.noise_model = noise_model
 
     def _default_options(self):
-        return {}
-    
-    def _coupling_map(self):
         return {}
 
     def max_circuits(self):
