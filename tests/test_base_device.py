@@ -995,39 +995,6 @@ class TestMockedExecution:
             ):
                 dev.execute(qs)
 
-    @pytest.mark.parametrize(
-        "measurements",
-        [
-            [qml.expval(qml.Hadamard(0))],
-            [qml.expval(qml.Hadamard(0)), qml.expval(qml.PauliX(1))],
-            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(1))],
-            [qml.expval(qml.PauliZ(0)), qml.expval(qml.Hadamard(0))],
-        ],
-    )
-    def test_unsupported_observable_uses_execute_runtime_service(self, mocker, measurements):
-        """Test that a device uses _execute_runtime_service instead of _execute_estimator
-        when measurements contains an observable that does not have a pauli_rep"""
-
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
-        )
-        qs = QuantumScript(
-            measurements=measurements,
-            shots=[10],
-        )
-        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
-            with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
-                with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
-                    runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-                    sampler_execute = mocker.spy(dev, "_execute_sampler")
-                    estimator_execute = mocker.spy(dev, "_execute_estimator")
-
-                    dev.execute(qs)
-
-        runtime_service_execute.assert_called_once()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_not_called()
-
 
 @pytest.mark.usefixtures("skip_if_no_account")
 class TestExecution:
@@ -1315,7 +1282,7 @@ class TestExecution:
     @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_unsupported_observable_gives_accurate_answer(self, mocker, observable):
         """Test that the device uses _execute_runtime_service and _execute_estimator and provides
-        an accurate answer for measurements that contain observables that don't a pauli_rep."""
+        an accurate answer for measurements that contain observables that don't have a pauli_rep."""
 
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
 

@@ -147,6 +147,7 @@ def split_execution_types(
                     "and will be run without using the Estimator primitive. Instead, "
                     "the standard backend.run function will be used."
                 )
+                no_prim.append((mp, i))
         elif isinstance(mp, ProbabilityMP):
             sampler.append((mp, i))
         else:
