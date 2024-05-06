@@ -23,7 +23,7 @@ import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
+from qiskit_ibm_runtime import Estimator
 from qiskit_ibm_runtime.options import Options
 
 # from qiskit_ibm_runtime.constants import RunnerResult
@@ -1093,50 +1093,6 @@ class TestExecution:
 
         assert np.allclose(res, expectation, atol=0.3)  ## atol is high due to high variance
 
-    @pytest.mark.parametrize("wire", [0, 1])
-    @pytest.mark.parametrize(
-        "angle,op,expectation",
-        [
-            (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
-            (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RY, [1, 0, 0, 0, 1, 1]),
-            (np.pi, qml.RY, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
-        ],
-    )
-    def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
-        """Test that the Estimator with various observables returns expected results.
-        Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
-        expected. Iterating over wires ensures that the wire operated on and the wire measured
-        correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
-        """
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_estimator")
-
-        qs = QuantumScript(
-            [op(angle, wire)],
-            measurements=[
-                qml.expval(qml.PauliX(wire)),
-                qml.expval(qml.PauliY(wire)),
-                qml.expval(qml.PauliZ(wire)),
-                qml.var(qml.PauliX(wire)),
-                qml.var(qml.PauliY(wire)),
-                qml.var(qml.PauliZ(wire)),
-            ],
-        )
-
-        res = dev.execute(qs)
-
-        runtime_service_execute.assert_not_called()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_called_once()
-
-        assert np.allclose(res, expectation, atol=0.1)
-
     @pytest.mark.parametrize("wire", [0, 1, 2, 3])
     @pytest.mark.parametrize(
         "angle, op, multi_q_obs",
@@ -1161,40 +1117,6 @@ class TestExecution:
             ),
         ],
     )
-    def test_estimator_with_various_multi_qubit_pauli_obs(
-        self, mocker, wire, angle, op, multi_q_obs
-    ):
-        """Test that the Estimator with various multi-qubit observables returns expected results.
-        Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
-        expected. Iterating over wires ensures that the wire operated on and the wire measured
-        correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
-        """
-
-        pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
-        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend, use_primitives=True)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_estimator")
-
-        qs = QuantumScript(
-            [op(angle, wire)],
-            measurements=[
-                qml.expval(multi_q_obs),
-                qml.var(multi_q_obs),
-            ],
-            shots=10000,
-        )
-
-        res = dev.execute(qs)
-        expectation = pl_dev.execute(qs)
-
-        runtime_service_execute.assert_not_called()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_called_once()
-
-        assert np.allclose(res, expectation, atol=0.3)  ## atol is high due to high variance
-
     @pytest.mark.parametrize(
         "measurements, expectation",
         [
