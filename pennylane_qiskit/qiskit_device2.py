@@ -476,11 +476,8 @@ class QiskitDevice2(Device):
         circuits: QuantumTape_or_Batch,
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
-        
-        try: 
-            session = self._session or Session(backend=self.backend)
-        except QiskitBackendNotFoundError:
-            session = None
+
+        session = self._session or Session(backend=self.backend)
 
         if not self._use_primitives:
             results = self._execute_runtime_service(circuits, session=session)
@@ -509,8 +506,7 @@ class QiskitDevice2(Device):
                     results.append(execute_fn(circ, session))
                 yield results
             finally:
-                if session:
-                    session.close()
+                session.close()
 
         with execute_circuits(session) as results:
             return results
