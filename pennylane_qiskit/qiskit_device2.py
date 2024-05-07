@@ -128,7 +128,7 @@ def split_execution_types(
     tape: qml.tape.QuantumTape,
 ) -> (Sequence[qml.tape.QuantumTape], Callable):
     """Split into separate tapes based on measurement type. However, for ``expval`` and ``var``
-    measurements, if the measured observable does not have a `pauli_rep`, it is split as a
+    measurements, if the measured observable does not have a ``pauli_rep``, it is split as a
     separate tape and will use the standard backend.run function. Counts will use the
     Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
     strictly sample-based measurements will use the standard backend.run function"""
