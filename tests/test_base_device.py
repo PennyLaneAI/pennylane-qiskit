@@ -27,7 +27,6 @@ from pennylane.tape.qscript import QuantumScript
 from qiskit_ibm_runtime import Estimator
 from qiskit_ibm_runtime.options import Options
 
-# from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
 
