@@ -147,12 +147,12 @@ class TestSupportForV1andV2:
         assert dev._backend == backend
 
     @pytest.mark.parametrize(
-        "backend, use_primitives",
+        "backend, use_primitives, shape",
         [
-            (FakeManila(), True),
-            (FakeManila(), False),
-            (FakeManilaV2(), True),
-            (FakeManilaV2(), False),
+            (FakeManila(), True, (1, 1024)),
+            (FakeManila(), False, (1024,)),
+            (FakeManilaV2(), True, (1, 1024)),
+            (FakeManilaV2(), False, (1024,)),
         ],
     )
     @pytest.mark.skipif(
@@ -160,7 +160,7 @@ class TestSupportForV1andV2:
         reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
         ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
     )
-    def test_v1_and_v2_manila(self, backend, use_primitives):
+    def test_v1_and_v2_manila(self, backend, use_primitives, shape):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=use_primitives)
 
@@ -170,7 +170,9 @@ class TestSupportForV1andV2:
             qml.CNOT(wires=[0, 1])
             return qml.sample(qml.PauliZ(0))
 
-        circuit(np.pi / 2)
+        res = circuit(np.pi / 2)
+
+        assert np.shape(res) == shape
         assert dev._backend == backend
 
 
