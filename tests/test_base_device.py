@@ -1293,7 +1293,7 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    def test_unsupported_observable_gives_accurate_answer(self, mocker, observable):
+    def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
         """Test that the device uses _execute_runtime_service and _execute_estimator appropriately
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
