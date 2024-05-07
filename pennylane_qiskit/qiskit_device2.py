@@ -550,11 +550,19 @@ class QiskitDevice2(Device):
             else self.backend.configuration().backend_name
         )
 
-        options = {
+        circuit_runner_options = {
             "backend": backend_name,
             "log_level": self.options.environment.log_level,
             "job_tags": self.options.environment.job_tags,
             "max_execution_time": self.options.max_execution_time,
+        }
+
+        # Does not support AerSimulator specific options e.g. choose a specific method
+        # refer to this https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
+        # To support this would be confusing in terms of option setting (The options we currently support are runtime options)
+        # This here is just to capture and track shots information
+        aer_options = {
+            "shots": circuits[0].shots.total_shots or self.shots.total_shots,
         }
 
         # Send circuits to the cloud for execution by the circuit-runner program.
@@ -562,14 +570,13 @@ class QiskitDevice2(Device):
         if self.service:
             job = self.service.run(
                 program_id="circuit-runner",
-                options=options,
+                options=circuit_runner_options,
                 inputs=program_inputs,
                 session_id=session.session_id,
             )
             self._current_job = job.result(decoder=RunnerResult)
         else:  # Uses local simulator instead. After May 15th, all simulations will use this logic instead.
-            self.options.execution.shots = program_inputs["shots"]
-            self.backend.set_options(shots=self.options.execution.shots)
+            self.backend.set_options(**aer_options)
             job = self.backend.run(
                 compiled_circuits,
             )
