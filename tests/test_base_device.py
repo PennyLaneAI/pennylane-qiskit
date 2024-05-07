@@ -1009,7 +1009,6 @@ class TestMockedExecution:
                 dev.execute(qs)
 
 
-@pytest.mark.usefixtures("skip_if_no_account")
 @pytest.mark.skipif(
     Version(qiskit.__version__) < Version("1.0.0"),
     reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
