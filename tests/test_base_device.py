@@ -158,6 +158,7 @@ class TestSupportForV1andV2:
     @pytest.mark.skipif(
         Version(qiskit.__version__) < Version("1.0.0"),
         reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
+        ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
     )
     def test_v1_and_v2_manila(self, backend, use_primitives):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
@@ -997,6 +998,7 @@ class TestMockedExecution:
 @pytest.mark.skipif(
     Version(qiskit.__version__) < Version("1.0.0"),
     reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
+    ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
 )
 class TestExecution:
 
