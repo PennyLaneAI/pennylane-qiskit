@@ -507,7 +507,7 @@ class QiskitDevice2(Device):
                         )
                     if (
                         isinstance(circ.measurements[0], (ExpectationMP, VarianceMP))
-                        and circ.measurements[0].obs.pauli_rep
+                        and getattr(circ.measurements[0], "pauli_rep", None)
                     ):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
