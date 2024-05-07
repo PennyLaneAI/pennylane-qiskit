@@ -506,7 +506,7 @@ class QiskitDevice2(Device):
                             f"The circuit will be run once with {circ.shots.total_shots} shots instead."
                         )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
-                        circ.measurements[0], "pauli_rep", None
+                        circ.measurements[0].obs, "pauli_rep", None
                     ):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
