@@ -505,9 +505,8 @@ class QiskitDevice2(Device):
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
                             f"The circuit will be run once with {circ.shots.total_shots} shots instead."
                         )
-                    if (
-                        isinstance(circ.measurements[0], (ExpectationMP, VarianceMP))
-                        and getattr(circ.measurements[0], "pauli_rep", None)
+                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                        circ.measurements[0], "pauli_rep", None
                     ):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
