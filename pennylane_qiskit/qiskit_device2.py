@@ -485,7 +485,6 @@ class QiskitDevice2(Device):
         circuits: QuantumTape_or_Batch,
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
-
         session = self._session or Session(backend=self.backend)
 
         if not self._use_primitives:

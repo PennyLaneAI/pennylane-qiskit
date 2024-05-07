@@ -1174,6 +1174,36 @@ class TestExecution:
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
 
+    @pytest.mark.parametrize("num_wires", [1, 3, 5])
+    @pytest.mark.parametrize("num_shots", [50, 100])
+    def test_generate_samples(self, num_wires, num_shots):
+        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
+
+        qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
+        compiled_circuits = test_dev.compile_circuits([qcirc])
+
+        job = test_dev.backend.run(circuits=compiled_circuits, shots=num_shots)
+
+        test_dev._current_job = job.result()
+
+        samples = test_dev.generate_samples()
+
+        assert len(samples) == num_shots
+        assert len(samples[0]) == num_wires
+
+        # we expect the samples to be orderd such that q0 has a 50% chance
+        # of being excited, and everything else is in the ground state
+        exp_res0 = np.zeros(num_wires)
+        exp_res1 = np.zeros(num_wires)
+        exp_res1[0] = 1
+
+        # the two expected results are in samples
+        assert exp_res1 in samples
+        assert exp_res0 in samples
+
+        # nothing else is in samples
+        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
+
     def test_tape_shots_used_runtime_service(self, mocker):
         """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
