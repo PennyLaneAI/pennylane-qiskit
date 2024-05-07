@@ -1157,7 +1157,6 @@ class TestExecution:
 
         for data in result.metadata:
             assert isinstance(data, dict)
-            # assert list(data.keys()) == ["variance", "shots"]
         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
