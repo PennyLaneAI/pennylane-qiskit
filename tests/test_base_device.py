@@ -24,7 +24,7 @@ import qiskit
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
+from qiskit_ibm_runtime import Estimator
 from qiskit_ibm_runtime.options import Options
 
 # from qiskit_ibm_runtime.constants import RunnerResult
