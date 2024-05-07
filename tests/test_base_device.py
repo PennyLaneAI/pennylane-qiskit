@@ -155,10 +155,6 @@ class TestSupportForV1andV2:
             (FakeManilaV2(), False),
         ],
     )
-    @pytest.mark.skipif(
-        Version(qiskit.__version__) < Version("1.0.0"),
-        reason="Session initialization is different between the two versions",
-    )
     def test_v1_and_v2_manila(self, backend, use_primitives):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
         dev = QiskitDevice2(wires=5, backend=backend, use_primitives=use_primitives)
