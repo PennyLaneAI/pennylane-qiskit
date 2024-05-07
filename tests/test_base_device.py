@@ -1348,3 +1348,30 @@ class TestExecution:
             match="The observable measured",
         ):
             circuit()
+
+    @pytest.mark.parametrize(
+        "use_primitives",
+        [True, False],
+    )
+    def test_qiskit_probability_output_format(self, use_primitives):
+        """Test that Qiskit's probability output dictionary format is the same as pennylane's."""
+
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
+        qiskit_dev = QiskitDevice2(
+            wires=[0, 1, 2, 3], backend=backend, use_primitives=use_primitives
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return [qml.probs(wires=[0, 1])]
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.Hadamard(0)
+            return [qml.probs(wires=[0, 1])]
+
+        res = circuit()
+        qiskit_res = qiskit_circuit()
+        assert np.shape(res) == np.shape(qiskit_res)
+        assert np.allclose(res, qiskit_res, atol=0.03)
