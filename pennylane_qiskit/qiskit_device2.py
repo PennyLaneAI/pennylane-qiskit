@@ -31,6 +31,7 @@ from qiskit.providers import BackendV2
 from qiskit_ibm_runtime import Session, Sampler, Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
+from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
@@ -475,6 +476,7 @@ class QiskitDevice2(Device):
         circuits: QuantumTape_or_Batch,
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
+
         session = self._session or Session(backend=self.backend)
 
         if not self._use_primitives:

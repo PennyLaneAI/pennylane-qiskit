@@ -20,10 +20,11 @@ import numpy as np
 import pytest
 from semantic_version import Version
 import qiskit_ibm_runtime
+import qiskit
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import Estimator
+from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
 from qiskit_ibm_runtime.options import Options
 
 # from qiskit_ibm_runtime.constants import RunnerResult
@@ -153,6 +154,10 @@ class TestSupportForV1andV2:
             (FakeManilaV2(), True),
             (FakeManilaV2(), False),
         ],
+    )
+    @pytest.mark.skipif(
+        Version(qiskit.__version__) < Version("1.0.0"),
+        reason="Session initialization is different between the two versions",
     )
     def test_v1_and_v2_manila(self, backend, use_primitives):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
