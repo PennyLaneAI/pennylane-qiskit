@@ -124,10 +124,12 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 
 
 @transform
-def split_measurement_types(
+def split_execution_types(
     tape: qml.tape.QuantumTape,
 ) -> (Sequence[qml.tape.QuantumTape], Callable):
-    """Split into separate tapes based on measurement type. Counts will use the
+    """Split into separate tapes based on measurement type. However, for ``expval`` and ``var``
+    measurements, if the measured observable does not have a ``pauli_rep``, it is split as a
+    separate tape and will use the standard backend.run function. Counts will use the
     Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
     strictly sample-based measurements will use the standard backend.run function"""
 
@@ -137,7 +139,15 @@ def split_measurement_types(
 
     for i, mp in enumerate(tape.measurements):
         if isinstance(mp, (ExpectationMP, VarianceMP)):
-            estimator.append((mp, i))
+            if mp.obs.pauli_rep:
+                estimator.append((mp, i))
+            else:
+                warnings.warn(
+                    f"The observable measured {mp.obs} does not have a `pauli_rep` "
+                    "and will be run without using the Estimator primitive. Instead, "
+                    "the standard backend.run function will be used."
+                )
+                no_prim.append((mp, i))
         elif isinstance(mp, ProbabilityMP):
             sampler.append((mp, i))
         else:
@@ -401,10 +411,10 @@ class QiskitDevice2(Device):
         )
 
         transform_program.add_transform(broadcast_expand)
-        # missing: split non-commuting, sum_expand, etc.
+        # missing: split non-commuting, sum_expand, etc. [SC-62047]
 
         if self._use_primitives:
-            transform_program.add_transform(split_measurement_types)
+            transform_program.add_transform(split_execution_types)
 
         return transform_program, config
 
@@ -496,7 +506,9 @@ class QiskitDevice2(Device):
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
                             f"The circuit will be run once with {circ.shots.total_shots} shots instead."
                         )
-                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)):
+                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                        circ.measurements[0].obs, "pauli_rep", None
+                    ):
                         execute_fn = self._execute_estimator
                     elif isinstance(circ.measurements[0], ProbabilityMP):
                         execute_fn = self._execute_sampler
@@ -566,6 +578,8 @@ class QiskitDevice2(Device):
 
         results = []
 
+        ### Note: this assumes that the input values are valid.
+        ### Don't write tests cases that require transforms not yet implemented (not here).
         for index, circuit in enumerate(circuits):
             self._samples = self.generate_samples(index)
             res = [
@@ -609,8 +623,6 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
 
-        # ToDo: need to sort differently for cases where the observable is not
-        # compatible with a SparsePauliOp representation
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
         self._current_job = result

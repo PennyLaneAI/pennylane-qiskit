@@ -42,7 +42,7 @@ from qiskit import QuantumCircuit
 from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
-    split_measurement_types,
+    split_execution_types,
     qiskit_options_to_flat_dict,
 )
 from pennylane_qiskit.converter import (
@@ -372,15 +372,28 @@ class TestDevicePreprocessing:
                 [qml.probs(wires=[2])],
                 [[qml.probs(wires=[2])]],
             ),
+            (
+                [
+                    qml.expval(qml.Hadamard(0)),
+                    qml.expval(qml.PauliX(0)),
+                    qml.var(qml.PauliZ(0)),
+                    qml.counts(),
+                ],
+                [
+                    [qml.expval(qml.PauliX(0)), qml.var(qml.PauliZ(0))],
+                    [qml.expval(qml.Hadamard(0)), qml.counts()],
+                ],
+            ),
         ],
     )
-    def test_split_measurement_types(self, measurements, expectation):
-        """Test that the split_measurement_types transform splits measurements into Estimator-based
+    @pytest.mark.filterwarnings("ignore::UserWarning")
+    def test_split_execution_types(self, measurements, expectation):
+        """Test that the split_execution_types transform splits measurements into Estimator-based
         (expval, var), Sampler-based (probs) and raw-sample based (everything else)"""
 
         operations = [qml.PauliX(0), qml.PauliY(1), qml.Hadamard(2), qml.CNOT([2, 1])]
         qs = QuantumScript(operations, measurements=measurements)
-        tapes, reorder_fn = split_measurement_types(qs)
+        tapes, reorder_fn = split_execution_types(qs)
 
         # operations not modified
         assert np.all([tape.operations == operations for tape in tapes])
@@ -890,7 +903,7 @@ class TestMockedExecution:
                 qml.sample(),
             ],
         )
-        tapes, _ = split_measurement_types(qs)
+        tapes, _ = split_execution_types(qs)
 
         with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
             with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
@@ -1238,3 +1251,68 @@ class TestExecution:
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
         assert dev._current_job.metadata[0]["shots"] == 2
+
+    @pytest.mark.parametrize(
+        "observable",
+        [
+            [qml.Hadamard(0), qml.PauliX(1)],
+            [qml.PauliZ(0), qml.Hadamard(1)],
+            [qml.PauliZ(0), qml.Hadamard(0)],
+        ],
+    )
+    @pytest.mark.filterwarnings("ignore::UserWarning")
+    def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
+        """Test that the device uses _execute_runtime_service and _execute_estimator appropriately
+        and provides an accurate answer for measurements with observables that don't have a pauli_rep.
+        """
+
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+
+        pl_dev = qml.device("default.qubit", wires=5)
+
+        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
+        sampler_execute = mocker.spy(dev, "_execute_sampler")
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(observable[0]), qml.expval(observable[1])
+
+        @qml.qnode(pl_dev)
+        def pl_circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(observable[0]), qml.expval(observable[1])
+
+        res = circuit()
+        pl_res = pl_circuit()
+
+        runtime_service_execute.assert_called_once()
+        estimator_execute.assert_called_once()
+        sampler_execute.assert_not_called()
+
+        assert np.allclose(res, pl_res, atol=0.1)
+
+    def test_warning_for_split_execution_types_when_observable_no_pauli(self):
+        """Test that a warning is raised when device is passed a measurement on
+        an observable that does not have a pauli_rep."""
+
+        dev = QiskitDevice2(
+            wires=5,
+            backend=backend,
+            use_primitives=True,
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.X(0)
+            qml.Hadamard(0)
+            return qml.expval(qml.Hadamard(0))
+
+        with pytest.warns(
+            UserWarning,
+            match="The observable measured",
+        ):
+            circuit()
