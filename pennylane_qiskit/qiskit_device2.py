@@ -288,7 +288,6 @@ class QiskitDevice2(Device):
         self._backend = backend
         self._compile_backend = compile_backend if compile_backend else backend
 
-        # ToDo: possibly things fail if this is not a QiskitRuntimeService - confirm and decide how to handle (SC 55725)
         self._service = getattr(backend, "_service", None)
         self._use_primitives = use_primitives
         self._session = session
