@@ -530,6 +530,8 @@ class QiskitDevice2(Device):
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
 
+        shots = circuits[0].shots.total_shots or self.shots.total_shots
+
         qcirc = [
             circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True)
             for circ in circuits
@@ -538,7 +540,7 @@ class QiskitDevice2(Device):
 
         program_inputs = {
             "circuits": compiled_circuits,
-            "shots": circuits[0].shots.total_shots or self.shots.total_shots,
+            "shots": shots,
         }
 
         for kwarg, value in self._kwargs.items():
@@ -557,14 +559,6 @@ class QiskitDevice2(Device):
             "max_execution_time": self.options.max_execution_time,
         }
 
-        # Does not support AerSimulator specific options e.g. choose a specific method
-        # refer to this https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
-        # To support this would be confusing in terms of option setting (The options we currently support are runtime options)
-        # This here is just to capture and track shots information
-        aer_options = {
-            "shots": circuits[0].shots.total_shots or self.shots.total_shots,
-        }
-
         # Send circuits to the cloud for execution by the circuit-runner program.
         # Cloud simulators will be deprecated on May 15th so this will be exclusively for real hardware devices.
         if self.service:
@@ -576,7 +570,11 @@ class QiskitDevice2(Device):
             )
             self._current_job = job.result(decoder=RunnerResult)
         else:  # Uses local simulator instead. After May 15th, all simulations will use this logic instead.
-            self.backend.set_options(**aer_options)
+            # Does not support AerSimulator specific options e.g. choose a specific method
+            # refer to this https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
+            # To support this would be confusing in terms of option setting (The options we currently support are runtime options)
+            # This here is just to capture and track shots information
+            self.backend.set_options(shots=shots)
             job = self.backend.run(
                 compiled_circuits,
             )
