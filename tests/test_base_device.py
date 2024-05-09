@@ -1055,6 +1055,49 @@ class TestExecution:
 
         assert np.allclose(res, expectation, atol=0.1)
 
+    @pytest.mark.parametrize("wire", [0, 1])
+    @pytest.mark.parametrize(
+        "angle,op,expectation",
+        [
+            (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
+            (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
+            (np.pi / 2, qml.RY, [1, 0, 0, 0, 1, 1]),
+            (np.pi, qml.RY, [0, 0, -1, 1, 1, 0]),
+            (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
+        ],
+    )
+    def test_different_pauli_obs_runtime_service(self, mocker, wire, angle, op, expectation):
+        """Test that the Estimator with various observables returns expected results when primitives
+        are not used. Iterating over wires ensures that the wire operated on and the wire measured
+        correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
+        """
+
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
+
+        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+        sampler_execute = mocker.spy(dev, "_execute_sampler")
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
+
+        qs = QuantumScript(
+            [op(angle, wire)],
+            measurements=[
+                qml.expval(qml.PauliX(wire)),
+                qml.expval(qml.PauliY(wire)),
+                qml.expval(qml.PauliZ(wire)),
+                qml.var(qml.PauliX(wire)),
+                qml.var(qml.PauliY(wire)),
+                qml.var(qml.PauliZ(wire)),
+            ],
+        )
+
+        res = dev.execute(qs)
+
+        runtime_service_execute.assert_called_once()
+        sampler_execute.assert_not_called()
+        estimator_execute.assert_not_called()
+
+        assert np.allclose(res, expectation, atol=0.1)
+
     @pytest.mark.parametrize("wire", [0, 1, 2, 3])
     @pytest.mark.parametrize(
         "angle, op, multi_q_obs",
