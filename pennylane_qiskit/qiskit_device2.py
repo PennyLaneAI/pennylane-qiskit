@@ -523,6 +523,12 @@ class QiskitDevice2(Device):
 
     def _execute_runtime_service(self, circuits, session):
         """Execution using old runtime_service (can't use runtime sessions)"""
+
+        # The legacy backend.run() interface in Qiskit Runtime, which was used as the dedicated “direct hardware access” entry point, has been deprecated by Qiskit.
+        # The new SamplerV2 class now fulfills this role. Support for the backend.run() will be dropped on or around October 15, 2024.
+        # Please refer to the migration guide (https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime) for instructions on how to migrate any existing code.
+        # This corresponds to the "circuit-runner" and "qasm3-runner" programs if you are invoking the REST API directly.
+
         # update kwargs in case Options has been modified since last execution
         self._update_kwargs()
 
