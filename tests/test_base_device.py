@@ -1215,8 +1215,9 @@ class TestExecution:
     )
     @pytest.mark.parametrize("angle", [np.pi / 2, np.pi / 3, np.pi / 4])
     def test_behavior_for_use_primitives(self, angle, measurement, observable):
-        """Tests that results from ``use_primitives=True`` are equal to results from ``use_primitives=False``
-        ``qml.probs()`` is excluded due to the fact that it does not take in an observable the same way.
+        """Tests that the format for results from ``use_primitives=True`` and ``use_primitives=False``
+        are correct. ``qml.probs()`` is excluded due to the fact that it does not take in an
+        observable the same way.
         """
         true_dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
         false_dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=False)
