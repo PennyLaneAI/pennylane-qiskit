@@ -1208,8 +1208,9 @@ class TestExecution:
         # nothing else is in samples
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
+    # pylint: disable=unnecessary-lambda
     @pytest.mark.parametrize("observable", [qml.X(0), qml.Y(1), qml.Z(2)])
-    @pytest.mark.parametrize(  # pylint: disable=unnecessary-lambda
+    @pytest.mark.parametrize(
         "measurement",
         [
             lambda obs: qml.expval(obs),
