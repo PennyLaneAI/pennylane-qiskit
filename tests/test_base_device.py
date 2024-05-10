@@ -20,13 +20,15 @@ import numpy as np
 import pytest
 from semantic_version import Version
 import qiskit_ibm_runtime
+import qiskit
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import QiskitRuntimeService, Estimator
+from qiskit_ibm_runtime import Estimator
 from qiskit_ibm_runtime.options import Options
-from qiskit_ibm_runtime.constants import RunnerResult
+
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit_aer import AerSimulator
 
 # do not import Estimator (imported above) from qiskit.primitives - the identically
 # named Estimator object has a different call signature than the remote device Estimator,
@@ -115,14 +117,9 @@ class MockSession:
         pass
 
 
-# pylint: disable=bare-except
-try:
-    service = QiskitRuntimeService(channel="ibm_quantum")
-    backend = service.backend("ibmq_qasm_simulator")
-except:
-    backend = MockedBackend()
-
+mocked_backend = MockedBackend()
 legacy_backend = MockedBackendLegacy()
+backend = AerSimulator()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
 
@@ -141,29 +138,30 @@ class TestSupportForV1andV2:
 
     @pytest.mark.parametrize(
         "backend",
-        [
-            legacy_backend,
-            backend,
-        ],
+        [legacy_backend, backend, mocked_backend],
     )
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
         dev = QiskitDevice2(wires=10, backend=backend, use_primitives=True)
         assert dev._backend == backend
 
-    @pytest.mark.skip(
-        reason="Fake backends do not have attribute _service, should address in (SC 55725)"
-    )
     @pytest.mark.parametrize(
-        "backend",
+        "backend, use_primitives, shape",
         [
-            FakeManila(),
-            FakeManilaV2(),
+            (FakeManila(), True, (1, 1024)),
+            (FakeManila(), False, (1024,)),
+            (FakeManilaV2(), True, (1, 1024)),
+            (FakeManilaV2(), False, (1024,)),
         ],
     )
-    def test_v1_and_v2_manila(self, backend):
-        """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+    @pytest.mark.skipif(
+        Version(qiskit.__version__) < Version("1.0.0"),
+        reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
+        ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
+    )
+    def test_v1_and_v2_manila(self, backend, use_primitives, shape):
+        """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
+        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=use_primitives)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -172,8 +170,9 @@ class TestSupportForV1andV2:
             return qml.sample(qml.PauliZ(0))
 
         res = circuit(np.pi / 2)
-        assert isinstance(res, np.ndarray)
-        assert np.shape(res) == (1024,)
+
+        assert np.shape(res) == shape
+        assert dev._backend == backend
 
 
 class TestDeviceInitialization:
@@ -1009,11 +1008,16 @@ class TestMockedExecution:
                 dev.execute(qs)
 
 
-@pytest.mark.usefixtures("skip_if_no_account")
+@pytest.mark.skipif(
+    Version(qiskit.__version__) < Version("1.0.0"),
+    reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
+    ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
+)
 class TestExecution:
+
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
-        "angle,op,expectation",
+        "angle, op, expectation",
         [
             (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
             (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
@@ -1209,7 +1213,6 @@ class TestExecution:
 
         for data in result.metadata:
             assert isinstance(data, dict)
-            assert list(data.keys()) == ["variance", "shots"]
         processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
@@ -1222,14 +1225,9 @@ class TestExecution:
         qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
         compiled_circuits = test_dev.compile_circuits([qcirc])
 
-        # Send circuits to the cloud for execution by the circuit-runner program
-        job = test_dev.service.run(
-            program_id="circuit-runner",
-            options={"backend": backend.name},
-            inputs={"circuits": compiled_circuits, "shots": num_shots},
-        )
+        job = test_dev.backend.run(circuits=compiled_circuits, shots=num_shots)
 
-        test_dev._current_job = job.result(decoder=RunnerResult)
+        test_dev._current_job = job.result()
 
         samples = test_dev.generate_samples()
 

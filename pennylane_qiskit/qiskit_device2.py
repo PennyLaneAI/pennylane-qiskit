@@ -288,8 +288,7 @@ class QiskitDevice2(Device):
         self._backend = backend
         self._compile_backend = compile_backend if compile_backend else backend
 
-        # ToDo: possibly things fail if this is not a QiskitRuntimeService - confirm and decide how to handle (SC 55725)
-        self._service = backend._service
+        self._service = getattr(backend, "_service", None)
         self._use_primitives = use_primitives
         self._session = session
 
@@ -523,12 +522,21 @@ class QiskitDevice2(Device):
 
     def _execute_runtime_service(self, circuits, session):
         """Execution using old runtime_service (can't use runtime sessions)"""
+
+        # The legacy ``backend.run()`` interface in Qiskit Runtime, which was used as the dedicated “direct hardware access” entry point, has been deprecated by Qiskit.
+        # The new SamplerV2 class now fulfills this role. Support for the backend.run() will be dropped on or around October 15, 2024.
+        # Please refer to the `migration guide <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime>`_ for instructions on how to migrate any existing code.
+        # This corresponds to the "circuit-runner" and "qasm3-runner" programs if you are invoking the REST API directly.
+        # ToDo: deprecate this by or around October 15, 2024.
+
         # update kwargs in case Options has been modified since last execution
         self._update_kwargs()
 
         # in case a single circuit is passed
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
+
+        shots = circuits[0].shots.total_shots or self.shots.total_shots
 
         qcirc = [
             circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True)
@@ -538,7 +546,7 @@ class QiskitDevice2(Device):
 
         program_inputs = {
             "circuits": compiled_circuits,
-            "shots": circuits[0].shots.total_shots or self.shots.total_shots,
+            "shots": shots,
         }
 
         for kwarg, value in self._kwargs.items():
@@ -550,7 +558,7 @@ class QiskitDevice2(Device):
             else self.backend.configuration().backend_name
         )
 
-        options = {
+        circuit_runner_options = {
             "backend": backend_name,
             "log_level": self.options.environment.log_level,
             "job_tags": self.options.environment.job_tags,
@@ -558,13 +566,25 @@ class QiskitDevice2(Device):
         }
 
         # Send circuits to the cloud for execution by the circuit-runner program.
-        job = self.service.run(
-            program_id="circuit-runner",
-            options=options,
-            inputs=program_inputs,
-            session_id=session.session_id,
-        )
-        self._current_job = job.result(decoder=RunnerResult)
+        # Cloud simulators will be deprecated on May 15th so this will be exclusively for real hardware devices.
+        if self.service:
+            job = self.service.run(
+                program_id="circuit-runner",
+                options=circuit_runner_options,
+                inputs=program_inputs,
+                session_id=session.session_id,
+            )
+            self._current_job = job.result(decoder=RunnerResult)
+        else:  # Uses local simulator instead. After May 15th, all simulations will use this logic instead.
+            # Does not support AerSimulator specific options e.g. choose a specific method
+            # refer to this https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
+            # To support this would be confusing in terms of option setting (The options we currently support are runtime options)
+            # This here is just to capture and track shots information
+            self.backend.set_options(shots=shots)
+            job = self.backend.run(
+                compiled_circuits,
+            )
+            self._current_job = job.result()
 
         results = []
 
