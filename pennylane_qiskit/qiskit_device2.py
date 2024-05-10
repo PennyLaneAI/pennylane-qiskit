@@ -605,12 +605,13 @@ class QiskitDevice2(Device):
     def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
 
-        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
+        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         if circuit.shots:
             self.options.execution.shots = circuit.shots.total_shots
         sampler = Sampler(session=session, options=self.options)
+        compiled_circuits = self.compile_circuits(qcirc)
 
-        result = sampler.run(qcirc).result()
+        result = sampler.run(compiled_circuits).result()
         self._current_job = result
 
         # needs processing function to convert to the correct format for states, and
@@ -623,10 +624,11 @@ class QiskitDevice2(Device):
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
-        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
+        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
         if circuit.shots:
             self.options.execution.shots = circuit.shots.total_shots
         estimator = Estimator(session=session, options=self.options)
+        compiled_circuits = self.compile_circuits(qcirc)
 
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
@@ -634,7 +636,9 @@ class QiskitDevice2(Device):
         # that right now feels excessive
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
+        result = estimator.run(
+            compiled_circuits * len(pauli_observables), pauli_observables
+        ).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
