@@ -1208,6 +1208,45 @@ class TestExecution:
         # nothing else is in samples
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
+    @pytest.mark.parametrize("observable", [qml.X(0), qml.Y(1), qml.Z(2)])
+    @pytest.mark.parametrize(
+        "measurement",
+        [lambda obs: qml.expval(obs), lambda obs: qml.counts(obs), lambda obs: qml.var(obs)],
+    )
+    @pytest.mark.parametrize("angle", [np.pi / 2, np.pi / 3, np.pi / 4])
+    def test_behavior_for_use_primitives(self, angle, measurement, observable):
+        """Tests that results from ``use_primitives=True`` are equal to results from ``use_primitives=False``
+        ``qml.probs()`` is excluded due to the fact that it does not take in an observable the same way.
+        """
+        true_dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+        false_dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=False)
+        pl_dev = qml.device("default.qubit", wires=5)
+
+        @qml.qnode(true_dev)
+        def circuit_true(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return measurement(observable)
+
+        @qml.qnode(false_dev)
+        def circuit_false(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return measurement(observable)
+
+        @qml.qnode(pl_dev)
+        def circuit_pl(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return measurement(observable)
+
+        true_res = circuit_true(angle, shots=1024)
+        false_res = circuit_false(angle, shots=1024)
+        pl_res = circuit_pl(angle, shots=1024)
+
+        assert np.shape(true_res) == np.shape(pl_res)
+        assert np.shape(false_res) == np.shape(pl_res)
+
     def test_tape_shots_used_runtime_service(self, mocker):
         """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
         dev = QiskitDevice2(wires=7, backend=backend, shots=2, use_primitives=True)

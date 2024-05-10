@@ -200,7 +200,7 @@ def split_execution_types(
         # Need to check for shot_vector attribute because if an array of shots is inputted
         # an array of results is expected by the device. Unfortunately, you cannot just
         # "tell" the device we are not going to run an array of shots, so this is a bit of a hack
-        return result[0] if len(result) == 1 and not hasattr(tape.shots, "shot_vector") else result
+        return result[0] if len(result) == 1 and len(tape.shots.shot_vector) == 1 else result
 
     return tapes, reorder_fn
 
