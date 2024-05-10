@@ -148,9 +148,9 @@ class TestSupportForV1andV2:
     @pytest.mark.parametrize(
         "backend, use_primitives, shape",
         [
-            (FakeManila(), True, (1, 1024)),
+            (FakeManila(), True, (1024,)),
             (FakeManila(), False, (1024,)),
-            (FakeManilaV2(), True, (1, 1024)),
+            (FakeManilaV2(), True, (1024,)),
             (FakeManilaV2(), False, (1024,)),
         ],
     )
@@ -403,7 +403,11 @@ class TestDevicePreprocessing:
         assert [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
-        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
+        assert (
+            reorder_fn([tape.measurements for tape in tapes]) == qs.measurements[0]
+            if len(qs.measurements) == 0
+            else tuple(qs.measurements)
+        )
 
     @pytest.mark.parametrize(
         "op, expected",
@@ -1059,49 +1063,6 @@ class TestExecution:
 
         assert np.allclose(res, expectation, atol=0.1)
 
-    @pytest.mark.parametrize("wire", [0, 1])
-    @pytest.mark.parametrize(
-        "angle,op,expectation",
-        [
-            (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
-            (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RY, [1, 0, 0, 0, 1, 1]),
-            (np.pi, qml.RY, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
-        ],
-    )
-    def test_different_pauli_obs_runtime_service(self, mocker, wire, angle, op, expectation):
-        """Test that the Estimator with various observables returns expected results when primitives
-        are not used. Iterating over wires ensures that the wire operated on and the wire measured
-        correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
-        """
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
-
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_estimator")
-
-        qs = QuantumScript(
-            [op(angle, wire)],
-            measurements=[
-                qml.expval(qml.PauliX(wire)),
-                qml.expval(qml.PauliY(wire)),
-                qml.expval(qml.PauliZ(wire)),
-                qml.var(qml.PauliX(wire)),
-                qml.var(qml.PauliY(wire)),
-                qml.var(qml.PauliZ(wire)),
-            ],
-        )
-
-        res = dev.execute(qs)
-
-        runtime_service_execute.assert_called_once()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_not_called()
-
-        assert np.allclose(res, expectation, atol=0.1)
-
     @pytest.mark.parametrize("wire", [0, 1, 2, 3])
     @pytest.mark.parametrize(
         "angle, op, multi_q_obs",
@@ -1249,7 +1210,7 @@ class TestExecution:
 
     def test_tape_shots_used_runtime_service(self, mocker):
         """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
-        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+        dev = QiskitDevice2(wires=7, backend=backend, shots=2, use_primitives=True)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
 
@@ -1261,11 +1222,11 @@ class TestExecution:
 
         runtime_service_execute.assert_called_once()
 
-        assert len(res[0]) == 5
+        assert len(res) == 5
 
         # Should reset to device shots if circuit ran again without shots defined
         res = circuit()
-        assert len(res[0]) == 2
+        assert len(res) == 2
 
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""

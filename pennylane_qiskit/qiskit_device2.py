@@ -195,7 +195,12 @@ def split_execution_types(
 
         result = dict(zip(flattened_indices, flattened_results))
 
-        return tuple(result[i] for i in sorted(result.keys()))
+        result = tuple(result[i] for i in sorted(result.keys()))
+
+        # Need to check for shot_vector attribute because if an array of shots is inputted
+        # an array of results is expected by the device. Unfortunately, you cannot just
+        # "tell" the device we are not going to run an array of shots, so this is a bit of a hack
+        return result[0] if len(result) == 1 and not hasattr(tape.shots, "shot_vector") else result
 
     return tapes, reorder_fn
 
