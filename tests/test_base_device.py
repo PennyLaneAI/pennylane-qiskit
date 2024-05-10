@@ -1209,13 +1209,13 @@ class TestExecution:
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
     @pytest.mark.parametrize("observable", [qml.X(0), qml.Y(1), qml.Z(2)])
-    @pytest.mark.parametrize(
+    @pytest.mark.parametrize(  # pylint: disable=unnecessary-lambda
         "measurement",
         [
             lambda obs: qml.expval(obs),
             lambda obs: qml.counts(obs),
             lambda obs: qml.var(obs),
-        ],  # pylint: disable=unnecessary-lambda
+        ],
     )
     @pytest.mark.parametrize("angle", [np.pi / 2, np.pi / 3, np.pi / 4])
     def test_behavior_for_use_primitives(self, angle, measurement, observable):
