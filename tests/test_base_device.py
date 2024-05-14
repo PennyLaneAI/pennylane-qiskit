@@ -759,7 +759,10 @@ class TestTrackerFunctionality:
             pl_out = dev.execute(tape)
 
         assert qiskit_dev.tracker.history.keys() == dev.tracker.history.keys()
-        assert qiskit_dev.tracker.history["shots"] == dev.tracker.history["shots"]
+        assert (
+            qiskit_dev.tracker.history["resources"][0].shots
+            == dev.tracker.history["resources"][0].shots
+        )
         assert np.allclose(pl_out, qiskit_out, atol=0.1)
 
 
