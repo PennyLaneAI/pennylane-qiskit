@@ -1005,10 +1005,7 @@ class TestMockedExecution:
         )
 
         with patch.object(dev, "_execute_estimator"):
-            with pytest.raises(
-                ValueError,
-                match="Setting shot vector",
-            ):
+            with pytest.raises(ValueError, match="Setting shot vector"):
                 dev.execute(qs)
 
 
