@@ -46,6 +46,7 @@ from pennylane.devices.preprocess import (
     validate_device_wires,
 )
 from pennylane.measurements import ProbabilityMP, ExpectationMP, VarianceMP
+from pennylane.devices.modifiers import single_tape_support, simulator_tracking
 
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
@@ -214,6 +215,8 @@ def qiskit_options_to_flat_dict(options):
     return options_dict
 
 
+@simulator_tracking
+@single_tape_support
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
