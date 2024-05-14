@@ -1317,10 +1317,7 @@ class TestExecution:
         def circuit():
             return qml.expval(qml.PauliX(0))
 
-        with pytest.raises(
-            ValueError,
-            match="Setting shot vector",
-        ):
+        with pytest.raises(ValueError, match="Setting shot vector"):
             circuit(shots=[5, 10, 2])
 
         # Should reset to device shots if circuit ran again without shots defined
