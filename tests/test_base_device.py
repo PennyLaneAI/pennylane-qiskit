@@ -405,8 +405,8 @@ class TestDevicePreprocessing:
         # reorder_fn puts them back
         assert (
             reorder_fn([tape.measurements for tape in tapes]) == qs.measurements[0]
-            if len(qs.measurements) == 0
-            else tuple(qs.measurements)
+            if len(qs.measurements) == 1
+            else reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
         )
 
     @pytest.mark.parametrize(
