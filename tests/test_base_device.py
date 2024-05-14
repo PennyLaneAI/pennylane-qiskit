@@ -718,8 +718,8 @@ class TestDeviceProperties:
 class TestTrackerFunctionality:
     def test_tracker_batched(self):
         """Test that the tracker works for batched circuits"""
-        dev = qml.device("default.qubit", wires=1, shots=1024)
-        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator())
+        dev = qml.device("default.qubit", wires=1, shots=300)
+        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator(), shots=300)
 
         x = np.array(0.1, requires_grad=True)
 
@@ -742,6 +742,7 @@ class TestTrackerFunctionality:
         assert tracker.totals.keys() == qiskit_tracker.totals.keys()
         assert tracker.latest.keys() == qiskit_tracker.latest.keys()
         assert tracker.history.keys() == qiskit_tracker.history.keys()
+        assert tracker.history["shots"] == qiskit_tracker.history["shots"]
         assert np.allclose(tracker.history["results"], qiskit_tracker.history["results"], atol=0.1)
         assert tracker.history["resources"][0] == tracker.history["resources"][0]
 
