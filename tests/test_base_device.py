@@ -991,26 +991,6 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == mock_counts["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == mock_counts["01"]
 
-    def test_shot_vector_warning_mocked(self):
-        """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
-
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
-        )
-        qs = QuantumScript(
-            measurements=[
-                qml.expval(qml.PauliX(0)),
-            ],
-            shots=[5, 10, 2],
-        )
-
-        with patch.object(dev, "_execute_estimator"):
-            with pytest.warns(
-                UserWarning,
-                match="Setting shot vector",
-            ):
-                dev.execute(qs)
-
 
 @pytest.mark.skipif(
     Version(qiskit.__version__) < Version("1.0.0"),
@@ -1312,20 +1292,19 @@ class TestExecution:
         circuit()
         assert dev._current_job.metadata[0]["shots"] == 2
 
-    def test_warning_for_shot_vector(self):
-        """Tests that a warning is raised if a shot vector is passed and total shots of tape is used instead."""
+    def test_error_for_shot_vector(self):
+        """Tests that a ValueError is raised if a shot vector is passed."""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
 
         @qml.qnode(dev)
         def circuit():
             return qml.expval(qml.PauliX(0))
 
-        with pytest.warns(
-            UserWarning,
+        with pytest.raises(
+            ValueError,
             match="Setting shot vector",
         ):
             circuit(shots=[5, 10, 2])
-        assert dev._current_job.metadata[0]["shots"] == 17
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()

@@ -199,8 +199,14 @@ def split_execution_types(
 
         # Need to check for shot_vector attribute because if an array of shots is inputted
         # an array of results is expected by the device. Unfortunately, you cannot just
-        # "tell" the device we are not going to run an array of shots, so this is a bit of a hack
-        return result[0] if len(result) == 1 and len(tape.shots.shot_vector) == 1 else result
+        # "tell" the device we are not going to run an array of shots, so we raise an error here.
+        if len(tape.shots.shot_vector) > 1:
+            raise ValueError(
+                f"Setting shot vector {tape.shots.shot_vector} is not supported for this device."
+                "Please use a single integer number of shots instead when specifying number of shots."
+            )
+
+        return result[0] if len(result) == 1 else result
 
     return tapes, reorder_fn
 
@@ -504,11 +510,6 @@ class QiskitDevice2(Device):
         def execute_circuits(session):
             try:
                 for circ in circuits:
-                    if circ.shots and len(circ.shots.shot_vector) > 1:
-                        warnings.warn(
-                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            f"The circuit will be run once with {circ.shots.total_shots} shots instead."
-                        )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
                         circ.measurements[0].obs, "pauli_rep", None
                     ):
