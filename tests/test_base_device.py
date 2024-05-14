@@ -1213,13 +1213,13 @@ class TestExecution:
             lambda obs: qml.expval(obs),
             lambda obs: qml.counts(obs),
             lambda obs: qml.var(obs),
+            # lambda obs: qml.probs(op=obs) fails for now due to output format [sc-54389]
         ],
     )
     @pytest.mark.parametrize("angle", [np.pi / 2, np.pi / 3, np.pi / 4])
     def test_behavior_for_use_primitives(self, angle, measurement, observable):
         """Tests that the format for results from ``use_primitives=True`` and ``use_primitives=False``
-        are correct. ``qml.probs()`` is excluded due to the fact that it does not take in an
-        observable the same way.
+        are correct.
         """
         true_dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
         false_dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=False)
