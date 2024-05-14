@@ -16,7 +16,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 """
 
 from unittest.mock import patch, Mock
-import numpy as np
+from pennylane import numpy as np
 import pytest
 from semantic_version import Version
 import qiskit_ibm_runtime
@@ -715,6 +715,52 @@ class TestDeviceProperties:
         assert dev.num_wires == len(wires)
 
 
+class TestTrackerFunctionality:
+    def test_tracker_batched(self):
+        """Test that the tracker works for batched circuits"""
+        dev = qml.device("default.qubit", wires=1, shots=1024)
+        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator())
+
+        x = np.array(0.1, requires_grad=True)
+
+        @qml.qnode(dev, diff_method="parameter-shift")
+        def circuit(x):
+            qml.RX(x, wires=0)
+            return qml.expval(qml.Z(0))
+
+        @qml.qnode(qiskit_dev, diff_method="parameter-shift")
+        def qiskit_circuit(x):
+            qml.RX(x, wires=0)
+            return qml.expval(qml.Z(0))
+
+        with qml.Tracker(dev) as tracker:
+            qml.grad(circuit)(x)
+
+        with qml.Tracker(qiskit_dev) as qiskit_tracker:
+            qml.grad(qiskit_circuit)(x)
+
+        assert tracker.totals.keys() == qiskit_tracker.totals.keys()
+        assert tracker.latest.keys() == qiskit_tracker.latest.keys()
+        assert tracker.history.keys() == qiskit_tracker.history.keys()
+        assert np.allclose(tracker.history["results"], qiskit_tracker.history["results"], atol=0.1)
+        assert tracker.history["resources"][0] == tracker.history["resources"][0]
+
+    def test_tracker_single_tape(self):
+        """Test that the tracker works for a single tape"""
+        dev = qml.device("default.qubit", wires=1, shots=1024)
+        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator())
+
+        tape = qml.tape.QuantumTape([qml.S(0)], [qml.expval(qml.X(0))])
+        with qiskit_dev.tracker:
+            qiskit_out = qiskit_dev.execute(tape)
+
+        with dev.tracker:
+            pl_out = dev.execute(tape)
+
+        assert qiskit_dev.tracker.history.keys() == dev.tracker.history.keys()
+        assert np.allclose(pl_out, qiskit_out, atol=0.1)
+
+
 class TestMockedExecution:
     def test_get_transpile_args(self):
         """Test that get_transpile_args works as expected by filtering out
@@ -857,7 +903,7 @@ class TestMockedExecution:
             ],
         )
 
-        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
+        with patch.object(dev, "_execute_runtime_service", return_value=["runtime_execute_res"]):
             runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
             res = dev.execute(qs)
 
