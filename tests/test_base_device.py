@@ -837,23 +837,20 @@ class TestMockedExecution:
         )
         tapes, _ = split_execution_types(qs)
 
-        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
-            with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
-                with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
-                    runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-                    sampler_execute = mocker.spy(dev, "_execute_sampler")
-                    estimator_execute = mocker.spy(dev, "_execute_estimator")
+        with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
+            with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
+                runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
+                sampler_execute = mocker.spy(dev, "_execute_sampler")
+                estimator_execute = mocker.spy(dev, "_execute_estimator")
 
-                    res = dev.execute(tapes)
+                res = dev.execute(tapes)
 
-        runtime_service_execute.assert_called_once()
         sampler_execute.assert_called_once()
         estimator_execute.assert_called_once()
 
         assert res == [
             "estimator_execute_res",
             "sampler_execute_res",
-            "runtime_execute_res",
         ]
 
     @patch("pennylane_qiskit.qiskit_device2.Estimator")
