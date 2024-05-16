@@ -28,7 +28,7 @@ import pennylane as qml
 from qiskit.compiler import transpile
 from qiskit.providers import BackendV2
 
-from qiskit_ibm_runtime import Session, Sampler, Estimator
+from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
 
@@ -261,10 +261,6 @@ class QiskitDevice2(Device):
 
             shots = 1024
 
-        self.options = options or Options()
-        if self.options.execution.shots == 4000:  ## 4000 is default value in Qiskit.
-            self.options.execution.shots = shots
-
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
@@ -278,8 +274,6 @@ class QiskitDevice2(Device):
         # _kwargs are used instead of the Options for performing raw sample based measurements (using old Qiskit API)
         # the _kwargs are a combination of information from Options and _init_kwargs
         self._kwargs = None
-        if self.options.simulator.noise_model:
-            self.backend.set_options(noise_model=self.options.simulator.noise_model)
 
         # Perform validation against backend
         available_qubits = (
@@ -400,7 +394,9 @@ class QiskitDevice2(Device):
     def _update_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
-        option_kwargs = qiskit_options_to_flat_dict(self.options)
+        if not self.options:
+            return
+        option_kwargs = self.options
 
         overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
         if overlapping_kwargs:
