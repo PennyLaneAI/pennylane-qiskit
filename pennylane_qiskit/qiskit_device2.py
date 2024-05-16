@@ -30,7 +30,6 @@ from qiskit.providers import BackendV2
 
 from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
-from qiskit_ibm_runtime.options import Options
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
