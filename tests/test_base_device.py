@@ -317,8 +317,7 @@ class TestDevicePreprocessing:
                 ],
                 [
                     [qml.expval(qml.PauliZ(1)), qml.var(qml.PauliY(0))],
-                    [qml.probs(wires=[2])],
-                    [qml.counts()],
+                    [qml.counts(), qml.probs(wires=[2])],
                 ],
             ),
             (
@@ -382,7 +381,7 @@ class TestDevicePreprocessing:
     @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_split_execution_types(self, measurements, expectation):
         """Test that the split_execution_types transform splits measurements into Estimator-based
-        (expval, var), Sampler-based (probs) and raw-sample based (everything else)"""
+        (expval, var), Sampler-based (probs, raw-samples)"""
 
         operations = [qml.PauliX(0), qml.PauliY(1), qml.Hadamard(2), qml.CNOT([2, 1])]
         qs = QuantumScript(operations, measurements=measurements)
@@ -431,9 +430,9 @@ class TestDevicePreprocessing:
         [
             ([qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])], 2),
             ([qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])], 2),
-            ([qml.counts(), qml.probs(wires=[0, 1]), qml.sample()], 2),
+            ([qml.counts(), qml.probs(wires=[0, 1]), qml.sample()], 1),
             ([qml.var(qml.PauliZ(0)), qml.expval(qml.PauliX(1))], 1),
-            ([qml.probs(wires=[0]), qml.counts(), qml.var(qml.PauliY(2))], 3),
+            ([qml.probs(wires=[0]), qml.counts(), qml.var(qml.PauliY(2))], 2),
         ],
     )
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
