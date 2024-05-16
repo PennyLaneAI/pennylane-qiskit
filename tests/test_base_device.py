@@ -142,16 +142,14 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
-        dev = QiskitDevice2(wires=10, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=10, backend=backend)
         assert dev._backend == backend
 
     @pytest.mark.parametrize(
-        "backend, use_primitives, shape",
+        "backend, shape",
         [
-            (FakeManila(), True, (1, 1024)),
-            (FakeManila(), False, (1024,)),
-            (FakeManilaV2(), True, (1, 1024)),
-            (FakeManilaV2(), False, (1024,)),
+            (FakeManila(), (1, 1024)),
+            (FakeManilaV2(), (1, 1024)),
         ],
     )
     @pytest.mark.skipif(
@@ -159,9 +157,9 @@ class TestSupportForV1andV2:
         reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
         ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
     )
-    def test_v1_and_v2_manila(self, backend, use_primitives, shape):
+    def test_v1_and_v2_manila(self, backend, shape):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=use_primitives)
+        dev = QiskitDevice2(wires=5, backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -190,12 +188,6 @@ class TestDeviceInitialization:
 
         assert dev2._compile_backend != dev2._backend
         assert dev2._compile_backend == compile_backend
-
-    @pytest.mark.parametrize("use_primitives", [True, False])
-    def test_use_primitives_kwarg(self, use_primitives):
-        """Test the _use_primitives attribute is set on initialization"""
-        dev = QiskitDevice2(wires=2, backend=backend, use_primitives=use_primitives)
-        assert dev._use_primitives == use_primitives
 
     def test_no_shots_warns_and_defaults(self):
         """Test that initializing with shots=None raises a warning indicating that
@@ -449,7 +441,7 @@ class TestDevicePreprocessing:
         on meausrement type. Expval and Variance are one type (Estimator), Probs another (Sampler),
         and everything else a third (raw sample-based measurements)."""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
 
         program, _ = dev.preprocess()
@@ -457,29 +449,6 @@ class TestDevicePreprocessing:
 
         # measurements that are incompatible are split when use_primtives=True
         assert len(tapes) == num_types
-
-    @pytest.mark.parametrize(
-        "measurements",
-        [
-            [qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])],
-            [qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])],
-            [qml.counts(), qml.probs(wires=[0, 1]), qml.sample()],
-        ],
-    )
-    def test_preprocess_measurements_without_primitives(self, measurements):
-        """Test if Primitives are not being used that the preprocess does not split
-        the tapes based on measurement type"""
-
-        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
-
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=False)
-        program, _ = dev.preprocess()
-
-        tapes, _ = program([qs])
-
-        # measurements that are incompatible on the primitive-based device
-        # are not split when use_primtives=False
-        assert len(tapes) == 1
 
     def test_preprocess_decomposes_unsupported_operator(self):
         """Test that the device preprocess decomposes operators that
@@ -833,47 +802,12 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    @pytest.mark.parametrize("backend", [backend, legacy_backend])
-    def test_execute_pipeline_no_primitives_mocked(self, mocker, backend):
-        """Test that a device **not** using Primitives only calls the _execute_runtime_service
-        to execute, regardless of measurement type"""
-
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=False, session=MockSession(backend)
-        )
-
-        initial_session = dev._session
-
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_estimator")
-
-        qs = QuantumScript(
-            [qml.PauliX(0), qml.PauliY(1)],
-            measurements=[
-                qml.expval(qml.PauliZ(0)),
-                qml.probs(wires=[0, 1]),
-                qml.counts(),
-                qml.sample(),
-            ],
-        )
-
-        with patch.object(dev, "_execute_runtime_service", return_value="runtime_execute_res"):
-            runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-            res = dev.execute(qs)
-
-        runtime_service_execute.assert_called_once()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_not_called()
-
-        assert res == "runtime_execute_res"
-        assert initial_session == dev._session  # session is not changed
-
     @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._execute_estimator")
     def test_execute_pipeline_primitives_no_session(self, mocker):
         """Test that a Primitives-based device initialized with no Session creates one for the
         execution, and then returns the device session to None."""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True, session=None)
+        dev = QiskitDevice2(wires=5, backend=backend, session=None)
 
         assert dev._session is None
 
@@ -891,9 +825,7 @@ class TestMockedExecution:
         to execute measurements that require raw samples, and the relevant primitive measurements
         on the other measurements"""
 
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
-        )
+        dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
 
         qs = QuantumScript(
             [qml.PauliX(0), qml.PauliY(1)],
@@ -959,7 +891,7 @@ class TestMockedExecution:
         """Test the _execute_sampler function using a mocked version of Sampler
         that returns a meaningless result."""
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend)
 
         mock_counts = {"00": 125, "10": 500, "01": 250, "11": 125}
         mock_result = Mock()
@@ -990,9 +922,7 @@ class TestMockedExecution:
     def test_shot_vector_warning_mocked(self):
         """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
 
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=True, session=MockSession(backend)
-        )
+        dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
         qs = QuantumScript(
             measurements=[
                 qml.expval(qml.PauliX(0)),
@@ -1033,7 +963,7 @@ class TestExecution:
         correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
         """
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
@@ -1093,7 +1023,7 @@ class TestExecution:
         """
 
         pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
-        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
@@ -1206,7 +1136,7 @@ class TestExecution:
 
     def test_tape_shots_used_runtime_service(self, mocker):
         """Tests that device uses tape shots rather than device shots for _execute_runtime_service"""
-        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
 
@@ -1226,7 +1156,7 @@ class TestExecution:
 
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
-        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -1245,7 +1175,7 @@ class TestExecution:
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
-        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
@@ -1265,7 +1195,7 @@ class TestExecution:
 
     def test_warning_for_shot_vector(self):
         """Tests that a warning is raised if a shot vector is passed and total shots of tape is used instead."""
-        dev = QiskitDevice2(wires=5, backend=backend, shots=2, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         @qml.qnode(dev)
         def circuit():
@@ -1296,7 +1226,7 @@ class TestExecution:
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
 
-        dev = QiskitDevice2(wires=5, backend=backend, use_primitives=True)
+        dev = QiskitDevice2(wires=5, backend=backend)
 
         pl_dev = qml.device("default.qubit", wires=5)
 
@@ -1329,11 +1259,7 @@ class TestExecution:
         """Test that a warning is raised when device is passed a measurement on
         an observable that does not have a pauli_rep."""
 
-        dev = QiskitDevice2(
-            wires=5,
-            backend=backend,
-            use_primitives=True,
-        )
+        dev = QiskitDevice2(wires=5, backend=backend)
 
         @qml.qnode(dev)
         def circuit():
