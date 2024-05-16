@@ -57,7 +57,7 @@ Result_or_ResultBatch = Union[Result, ResultBatch]
 
 # pylint: disable=protected-access
 @contextmanager
-def qiskit_session(device):
+def qiskit_session(device, **kwargs):
     """A context manager that creates a Qiskit Session and sets it as a session
     on the device while the context manager is active. Using the context manager
     will ensure the Session closes properly and is removed from the device after
@@ -100,7 +100,25 @@ def qiskit_session(device):
     """
     # Code to acquire session:
     existing_session = device._session
-    session = Session(backend=device.backend)
+    session_options = {
+        "service": device.service,
+        "backend": device.backend,
+        "max_time": existing_session._max_time if existing_session else None,
+    }
+
+    for k, v in kwargs.items():
+        if k in session_options and k != "max_time":
+            warnings.warn(f"Using '{k}' set in device", UserWarning)
+            kwargs.pop(k)
+        elif k == "max_time":
+            warnings.warn(
+                f"`max_time` was set in the Session passed to the device. Using `max_time` '{v}' set in `qiskit_session`.",
+                UserWarning,
+            )
+            session_options["max_time"] = v
+            kwargs.pop(k)
+
+    session = Session(**session_options, **kwargs)
     device._session = session
     try:
         yield session
