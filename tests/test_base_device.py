@@ -839,7 +839,6 @@ class TestMockedExecution:
 
         with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
             with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
-                runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
                 sampler_execute = mocker.spy(dev, "_execute_sampler")
                 estimator_execute = mocker.spy(dev, "_execute_estimator")
 
