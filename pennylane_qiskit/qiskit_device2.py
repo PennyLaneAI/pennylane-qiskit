@@ -135,7 +135,6 @@ def split_execution_types(
 
     estimator = []
     sampler = []
-    no_prim = []
 
     for i, mp in enumerate(tape.measurements):
         if isinstance(mp, (ExpectationMP, VarianceMP)):
@@ -147,13 +146,10 @@ def split_execution_types(
                     "and will be run without using the Estimator primitive. Instead, "
                     "the standard backend.run function will be used."
                 )
-                no_prim.append((mp, i))
-        elif isinstance(mp, ProbabilityMP):
-            sampler.append((mp, i))
         else:
-            no_prim.append((mp, i))
+            sampler.append((mp, i))
 
-    order_indices = [[i for mp, i in group] for group in [estimator, sampler, no_prim]]
+    order_indices = [[i for mp, i in group] for group in [estimator, sampler]]
 
     tapes = []
     if estimator:
@@ -172,16 +168,6 @@ def split_execution_types(
                 qml.tape.QuantumScript(
                     tape.operations,
                     measurements=[mp for mp, i in sampler],
-                    shots=tape.shots,
-                )
-            ]
-        )
-    if no_prim:
-        tapes.extend(
-            [
-                qml.tape.QuantumScript(
-                    tape.operations,
-                    measurements=[mp for mp, i in no_prim],
                     shots=tape.shots,
                 )
             ]
@@ -226,10 +212,6 @@ class QiskitDevice2(Device):
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        use_primitives (bool): whether or not to use Qiskit Primitives. Defaults to False. If True,
-            getting expectation values and variance from the backend will use a Qiskit Estimator,
-            and getting probabilities will use a Qiskit Sampler. Other measurement types will continue
-            to return results from the backend without using a Primitive.
         options (Options): a Qiskit Options object for specifying handling the Qiskit task
             (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
             for more details.
@@ -261,7 +243,6 @@ class QiskitDevice2(Device):
         wires,
         backend,
         shots=1024,
-        use_primitives=False,
         options=None,
         session=None,
         compile_backend=None,
@@ -289,7 +270,6 @@ class QiskitDevice2(Device):
         self._compile_backend = compile_backend if compile_backend else backend
 
         self._service = getattr(backend, "_service", None)
-        self._use_primitives = use_primitives
         self._session = session
 
         # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
@@ -412,8 +392,7 @@ class QiskitDevice2(Device):
         transform_program.add_transform(broadcast_expand)
         # missing: split non-commuting, sum_expand, etc. [SC-62047]
 
-        if self._use_primitives:
-            transform_program.add_transform(split_execution_types)
+        transform_program.add_transform(split_execution_types)
 
         return transform_program, config
 
@@ -485,10 +464,6 @@ class QiskitDevice2(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
         session = self._session or Session(backend=self.backend)
-
-        if not self._use_primitives:
-            results = self._execute_runtime_service(circuits, session=session)
-            return results
 
         results = []
 
