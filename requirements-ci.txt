@@ -2,3 +2,4 @@ pennylane>=0.32
 qiskit
 numpy
 sympy
+autoray==0.6.8
