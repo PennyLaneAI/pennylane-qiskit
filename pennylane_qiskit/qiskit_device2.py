@@ -28,7 +28,7 @@ import pennylane as qml
 from qiskit.compiler import transpile
 from qiskit.providers import BackendV2
 
-from qiskit_ibm_runtime import Session, Sampler, Estimator
+from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
 
