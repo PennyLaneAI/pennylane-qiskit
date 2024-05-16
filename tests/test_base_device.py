@@ -110,7 +110,7 @@ class MockedBackendLegacy(BackendV1):
 class MockSession:
     def __init__(self, backend, max_time=None):
         self.backend = backend
-        self.max_time = max_time
+        self._max_time = max_time
         self.session_id = "123"
 
     def close(self):  # This is just to appease a test
