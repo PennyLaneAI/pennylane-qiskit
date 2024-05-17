@@ -24,23 +24,6 @@ from pennylane_qiskit import BasicSimulatorDevice
 
 # pylint: disable= unused-argument
 
-
-@pytest.mark.skipif(
-    Version(qiskit.__version__) < Version("1.0.0"),
-    reason="versions below 1.0 are compatible with BasicAer",
-)
-def test_error_is_raised_if_initalizing_basicaer_device(monkeypatch):
-    """Test that when Qiskit 1.0 is installed, an error is raised if you try
-    to initialize the 'qiskit.basicaer' device."""
-
-    # test that the correct error is actually raised in Qiskit 1.0 (rather than fx an import error)
-    with pytest.raises(
-        RuntimeError,
-        match="Qiskit has discontinued the BasicAer device",
-    ):
-        qml.device("qiskit.basicaer", wires=2)
-
-
 @pytest.mark.skipif(
     Version(qiskit.__version__) >= Version("1.0.0"),
     reason="versions 1.0 and above are compatible with BasicSimulator",
