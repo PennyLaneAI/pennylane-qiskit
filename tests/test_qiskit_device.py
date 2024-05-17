@@ -172,7 +172,7 @@ class TestAnalyticWarningHWSimulator:
         hardware simulators when calculating the expectation"""
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
+            _ = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         # Two warnings are being raised: one about analytic calculations and another about deprecation.
         # Removed specific warning test
