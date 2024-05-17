@@ -19,9 +19,8 @@ using PennyLane.
 import qiskit
 
 from semantic_version import Version
-
-from .qiskit_device import QiskitDevice
 from qiskit.providers.basic_provider import BasicProvider
+from .qiskit_device import QiskitDevice
 
 
 class BasicSimulatorDevice(QiskitDevice):
