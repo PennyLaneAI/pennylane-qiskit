@@ -7,7 +7,7 @@ pennylane==0.34
 pybind11==2.11.1
 pygments==2.17.2
 pygments-github-lexers==0.0.5
-qiskit==0.45.3
+qiskit==1.1.0
 qiskit-aer==0.13.3
 qiskit-ibm-runtime==0.20.0
 qiskit-ibm-provider==0.10.0
