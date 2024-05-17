@@ -124,7 +124,7 @@ test_dev = QiskitDevice2(wires=5, backend=backend)
 
 def options_for_testing():
     """Creates an Options object with defined values in multiple sub-categories"""
-    options = Options()
+    options = {}
     options.environment.job_tags = ["getting angle"]
     options.resilience.noise_amplifier = "LocalFoldingAmplifier"
     options.optimization_level = 2
@@ -205,8 +205,7 @@ class TestDeviceInitialization:
         """Test that update_kwargs is called on intialization and combines the Options
         and kwargs as self._kwargs"""
 
-        options = Options()
-        options.environment.job_tags = ["my_tag"]
+        options = {"my_tag": 1}
 
         spy = mocker.spy(QiskitDevice2, "_update_kwargs")
 
@@ -245,7 +244,7 @@ class TestDeviceInitialization:
         """Test that the simulator noise model saved on a passed Options
         object is used to set the backend noise model"""
 
-        options = Options()
+        options = {}
         options.simulator.noise_model = {"placeholder": 1}
 
         new_backend = MockedBackend()
