@@ -45,11 +45,7 @@ info = {
         'pennylane.plugins': [
             'qiskit.remote = pennylane_qiskit:RemoteDevice',
             'qiskit.aer = pennylane_qiskit:AerDevice',
-            'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
             'qiskit.basicsim = pennylane_qiskit:BasicSimulatorDevice',
-            'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
-            'qiskit.ibmq.circuit_runner = pennylane_qiskit:IBMQCircuitRunnerDevice',
-            'qiskit.ibmq.sampler = pennylane_qiskit:IBMQSamplerDevice'
             ],
         'pennylane.io': [
             'qiskit = pennylane_qiskit:load',
