@@ -15,7 +15,6 @@ r"""
 This module contains tests for testing backends and providers for PennyLane IBMQ devices.
 """
 import pytest
-import pennylane as qml
 import qiskit
 
 from semantic_version import Version
@@ -23,6 +22,7 @@ from semantic_version import Version
 from pennylane_qiskit import BasicSimulatorDevice
 
 # pylint: disable= unused-argument
+
 
 @pytest.mark.skipif(
     Version(qiskit.__version__) >= Version("1.0.0"),
