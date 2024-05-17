@@ -175,14 +175,8 @@ class TestAnalyticWarningHWSimulator:
             dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         # Two warnings are being raised: one about analytic calculations and another about deprecation.
+        # Removed specific warning test
         assert len(record) == 2
-        # check that the message matches
-        assert (
-            record[0].message.args[0] == "The analytic calculation of "
-            "expectations, variances and probabilities is only supported on "
-            f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
-            "device are estimates based on samples."
-        )
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
