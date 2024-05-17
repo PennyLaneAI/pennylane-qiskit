@@ -22,10 +22,10 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=0.32",
-    "qiskit-aer",
-    "qiskit-ibm-runtime",
-    "qiskit-ibm-provider",
+    "qiskit>=1.0.2",
+    "qiskit-aer>=0.14.1",
+    "qiskit-ibm-runtime>=0.21.0",
+    "qiskit-ibm-provider>=0.11.0",
     "pennylane>=0.30",
     "numpy",
     "networkx>=2.2",
