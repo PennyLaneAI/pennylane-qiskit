@@ -174,8 +174,8 @@ class TestAnalyticWarningHWSimulator:
         with pytest.warns(UserWarning) as record:
             dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
-        # check that only one warning was raised
-        assert len(record) == 1
+        # Two warnings are being raised: one about analytic calculations and another about deprecation.
+        assert len(record) == 2
         # check that the message matches
         assert (
             record[0].message.args[0] == "The analytic calculation of "
@@ -193,8 +193,10 @@ class TestAnalyticWarningHWSimulator:
 
         _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
 
-        # check that no warnings were raised
-        assert len(recwarn) == 0
+        # These simulators are being deprecated. Warning is raised in Qiskit 1.0
+        # Migrate to AerSimulator with AerSimulator(method=method) and append
+        # run circuits with the `save_state` instruction.
+        assert len(recwarn) == 1
 
 
 class TestAerBackendOptions:
