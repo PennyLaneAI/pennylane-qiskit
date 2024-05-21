@@ -30,7 +30,7 @@ qiskit-ibm-runtime==0.20.0
 qiskit-ibm-provider==0.10.0
 qiskit-ignis==0.7.1
 qiskit-terra==0.46.0
-requests==2.31.0
+requests==2.32.2
 requests-ntlm==1.2.0
 retworkx==0.14.1
 scipy==1.12.0
