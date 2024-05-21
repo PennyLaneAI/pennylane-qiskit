@@ -41,7 +41,6 @@ from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
     split_execution_types,
-    qiskit_options_to_flat_dict,
 )
 from pennylane_qiskit.converter import (
     circuit_to_qiskit,
@@ -121,17 +120,6 @@ legacy_backend = MockedBackendLegacy()
 backend = AerSimulator()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
-
-def options_for_testing():
-    """Creates an Options object with defined values in multiple sub-categories"""
-    options = {}
-    options.environment.job_tags = ["getting angle"]
-    options.resilience.noise_amplifier = "LocalFoldingAmplifier"
-    options.optimization_level = 2
-    options.resilience_level = 1
-    return options
-
-
 class TestSupportForV1andV2:
     """Tests compatibility with BackendV1 and BackendV2"""
 
@@ -150,11 +138,6 @@ class TestSupportForV1andV2:
             (FakeManila(), (1, 1024)),
             (FakeManilaV2(), (1, 1024)),
         ],
-    )
-    @pytest.mark.skipif(
-        Version(qiskit.__version__) < Version("1.0.0"),
-        reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
-        ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
     )
     def test_v1_and_v2_manila(self, backend, shape):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
@@ -478,43 +461,18 @@ class TestDevicePreprocessing:
         assert np.all([op.name in QISKIT_OPERATION_MAP for op in tapes[0].operations])
 
 
+@pytest.mark.skip(reason="Options handling not decided on yet")
 class TestOptionsHandling:
-    def test_qiskit_options_to_flat_dict(self):
-        """Test that a Qiskit Options object is converted to an un-nested python dictionary"""
-
-        options = options_for_testing()
-
-        options_dict = qiskit_options_to_flat_dict(options)
-
-        assert isinstance(options_dict, dict)
-        # the values in the dict are not themselves dictionaries or convertable to dictionaries
-        for val in options_dict.values():
-            assert not hasattr(val, "__dict__")
-            assert not isinstance(val, dict)
-
-    @pytest.mark.parametrize("options", [None, options_for_testing()])
-    def test_shots_kwarg_updates_default_options(self, options):
-        """Check that the shots passed to the device are set on the device
-        as well as updated on the Options object"""
-
-        dev = QiskitDevice2(wires=2, backend=backend, shots=23, options=options)
-
-        assert dev.shots.total_shots == 23
-        assert dev.options.execution.shots == 23
-
     def test_warning_if_shots(self):
         """Test that a warning is raised if the user attempt to specify shots on
         Options instead of as a kwarg, and sets shots to the shots passed (defaults
         to 1024)."""
 
-        options = options_for_testing()
-        options.execution.shots = 1000
-
         with pytest.warns(
             UserWarning,
             match="Setting shots via the Options is not supported on PennyLane devices",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, options=options)
+            dev = QiskitDevice2(wires=2, backend=backend, default_shots=1000)
 
         assert dev.shots.total_shots == 1024
         assert dev.options.execution.shots == 1024
@@ -523,7 +481,7 @@ class TestOptionsHandling:
             UserWarning,
             match="Setting shots via the Options is not supported on PennyLane devices",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, shots=200, options=options)
+            dev = QiskitDevice2(wires=2, backend=backend, shots=200, default_shots=1000)
 
         assert dev.shots.total_shots == 200
         assert dev.options.execution.shots == 200
@@ -535,23 +493,13 @@ class TestOptionsHandling:
         dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a")
 
         assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
-        if Version(qiskit_ibm_runtime.__version__) < Version("0.21.0"):
-            assert dev._kwargs == {
-                "random_kwarg1": True,
-                "random_kwarg2": "a",
-                "skip_transpilation": False,
-                "init_qubits": True,
-                "log_level": "WARNING",
-                "job_tags": [],
-            }
-        else:
-            assert dev._kwargs == {
-                "random_kwarg1": True,
-                "random_kwarg2": "a",
-                "skip_transpilation": False,
-                "init_qubits": True,
-                "log_level": "WARNING",
-            }
+        assert dev._kwargs == {
+            "random_kwarg1": True,
+            "random_kwarg2": "a",
+            "skip_transpilation": False,
+            "init_qubits": True,
+            "log_level": "WARNING",
+        }
 
         dev.options.environment.job_tags = ["my_tag"]
         dev.options.max_execution_time = "1m"

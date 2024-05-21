@@ -186,20 +186,6 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
-def qiskit_options_to_flat_dict(options):
-    """Create a dictionary from a Qiskit Options object"""
-    # this will break (or at least overwrite potentially relevant information)
-    # if they name things in some categories on Options the same as things in
-    # other categories, but at that point they've really departed from the kwarg API
-    options_dict = {}
-    for key, val in vars(options).items():
-        if hasattr(val, "__dict__"):
-            options_dict.update(qiskit_options_to_flat_dict(val))
-        elif val is not None:
-            options_dict[key] = val
-    return options_dict
-
-
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
@@ -212,9 +198,6 @@ class QiskitDevice2(Device):
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        options (Options): a Qiskit Options object for specifying handling the Qiskit task
-            (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
-            for more details.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
@@ -243,7 +226,6 @@ class QiskitDevice2(Device):
         wires,
         backend,
         shots=1024,
-        options=None,
         session=None,
         compile_backend=None,
         **kwargs,
@@ -284,7 +266,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._update_kwargs()
+        #self._update_kwargs()
 
     @property
     def backend(self):
@@ -390,31 +372,31 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def _update_kwargs(self):
-        """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there is conflicting information"""
-        if not self.options:
-            return
-        option_kwargs = self.options
+    # def _update_kwargs(self):
+    #     """Combine the settings defined in options and the settings passed as kwargs, with
+    #     the definition in options taking precedence if there is conflicting information"""
+    #     if not self.options:
+    #         return
+    #     option_kwargs = self.options
 
-        overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
-        if overlapping_kwargs:
-            warnings.warn(
-                f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
-                f"defined in the device Options. The definition in Options will be used."
-            )
-        if option_kwargs["shots"] != self.shots.total_shots:
-            warnings.warn(
-                f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
-                f"passed to the device will be used."
-            )
-            self.options.execution.shots = self.shots.total_shots
+    #     overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
+    #     if overlapping_kwargs:
+    #         warnings.warn(
+    #             f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
+    #             f"defined in the device Options. The definition in Options will be used."
+    #         )
+    #     if option_kwargs["shots"] != self.shots.total_shots:
+    #         warnings.warn(
+    #             f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
+    #             f"passed to the device will be used."
+    #         )
+    #         self.options.execution.shots = self.shots.total_shots
 
-        option_kwargs.pop("shots")
-        kwargs = self._init_kwargs.copy()
-        kwargs.update(option_kwargs)
+    #     option_kwargs.pop("shots")
+    #     kwargs = self._init_kwargs.copy()
+    #     kwargs.update(option_kwargs)
 
-        self._kwargs = kwargs
+    #     self._kwargs = kwargs
 
     @staticmethod
     def get_transpile_args(kwargs):
@@ -479,10 +461,8 @@ class QiskitDevice2(Device):
                         circ.measurements[0].obs, "pauli_rep", None
                     ):
                         execute_fn = self._execute_estimator
-                    elif isinstance(circ.measurements[0], ProbabilityMP):
-                        execute_fn = self._execute_sampler
                     else:
-                        execute_fn = self._execute_runtime_service
+                        execute_fn = self._execute_sampler
                     results.append(execute_fn(circ, session))
                 yield results
             finally:
@@ -577,9 +557,7 @@ class QiskitDevice2(Device):
         """Execution for the Sampler primitive"""
 
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
-        if circuit.shots:
-            self.options.execution.shots = circuit.shots.total_shots
-        sampler = Sampler(session=session, options=self.options)
+        sampler = Sampler(session=session)
 
         result = sampler.run(qcirc).result()
         self._current_job = result
@@ -595,9 +573,7 @@ class QiskitDevice2(Device):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
-        if circuit.shots:
-            self.options.execution.shots = circuit.shots.total_shots
-        estimator = Estimator(session=session, options=self.options)
+        estimator = Estimator(session=session)
 
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
