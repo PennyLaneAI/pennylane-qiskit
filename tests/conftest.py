@@ -40,22 +40,14 @@ U2 = np.array([[0, 1, 1, 1], [1, 0, 1, -1], [1, -1, 0, 1], [1, 1, -1, 0]]) / np.
 A = np.array([[1.02789352, 1.61296440 - 0.3498192j], [1.61296440 + 0.3498192j, 1.23920938 + 0j]])
 
 
-if Version(qiskit.__version__) < Version("1.0.0"):
-    test_devices = [AerDevice]
-    hw_backends = ["qasm_simulator", "aer_simulator"]
-    state_backends = [
-        "statevector_simulator",
-        "unitary_simulator",
-    ]
-else:
-    test_devices = [AerDevice, BasicSimulatorDevice]
-    hw_backends = ["qasm_simulator", "aer_simulator", "basic_simulator"]
-    state_backends = [
-        "statevector_simulator",
-        "unitary_simulator",
-        "aer_simulator_statevector",
-        "aer_simulator_unitary",
-    ]
+test_devices = [AerDevice, BasicSimulatorDevice]
+hw_backends = ["qasm_simulator", "aer_simulator", "basic_simulator"]
+state_backends = [
+    "statevector_simulator",
+    "unitary_simulator",
+    "aer_simulator_statevector",
+    "aer_simulator_unitary",
+]
 
 
 @pytest.fixture
