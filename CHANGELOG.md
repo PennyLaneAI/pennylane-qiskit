@@ -13,7 +13,7 @@
 * The test suite no longer runs for Qiskit versions below 0.46.
   [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
 
-* The basic aer device has been removed.
+* The ``qiskit.basicaer`` device has been removed because it is not supported for versions of Qiskit above 0.46.
   [(#546)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
 
 ### Deprecations 👋
