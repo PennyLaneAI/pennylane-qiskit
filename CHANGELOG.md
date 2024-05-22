@@ -14,7 +14,7 @@
   [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
 
 * The basic aer device has been removed.
-  [(#331)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
+  [(#546)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
 
 ### Deprecations 👋
 
