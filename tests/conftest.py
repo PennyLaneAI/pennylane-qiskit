@@ -18,10 +18,8 @@ This module contains some configuration for PennyLane IBMQ devices.
 import os
 import pytest
 import numpy as np
-import qiskit
 
 import pennylane as qml
-from semantic_version import Version
 from qiskit_ibm_provider import IBMProvider
 from pennylane_qiskit import AerDevice, BasicSimulatorDevice
 
