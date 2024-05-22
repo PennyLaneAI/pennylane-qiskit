@@ -21,10 +21,6 @@ The following devices are available:
     :description: Qiskit's staple simulator with great features such as noise models.
     :link: devices/aer.html
 
-.. title-card::
-    :name: 'qiskit.basicaer'
-    :description: A simplified version of the Aer device, which requires fewer dependencies.
-    :link: devices/basicaer.html
 
 .. title-card::
     :name: 'qiskit.basicsim'
@@ -138,7 +134,6 @@ hardware access.
    :hidden:
 
    devices/aer
-   devices/basicaer
    devices/basicsim
    devices/ibmq
    devices/runtime
