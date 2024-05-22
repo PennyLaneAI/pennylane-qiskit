@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* The basic aer device has been removed.
+  [(#331)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
+
 ### Deprecations 👋
 
 ### Documentation 📝
@@ -15,6 +18,7 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+Austin Huang
 
 ---
 # Release 0.36.0
