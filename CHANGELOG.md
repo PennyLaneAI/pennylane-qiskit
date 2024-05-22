@@ -5,6 +5,13 @@
 ### Improvements 🛠
 
 ### Breaking changes 💔
+* Support has been removed for Qiskit versions below 0.46. The minimum required version for Qiskit is now 1.0. 
+  If you want to continue to use older versions of Qiskit with the plugin, please use version 0.36 of 
+  the Pennylane-Qiskit plugin. 
+  [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
+
+* The test suite no longer runs for Qiskit versions below 0.46.
+  [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
 
 * The basic aer device has been removed.
   [(#331)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
