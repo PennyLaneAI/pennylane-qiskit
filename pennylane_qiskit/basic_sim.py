@@ -50,15 +50,4 @@ class BasicSimulatorDevice(QiskitDevice):
     )
 
     def __init__(self, wires, shots=1024, backend="basic_simulator", **kwargs):
-
-        min_version = Version("1.0.0")
-
-        if Version(qiskit.__version__) < min_version:
-            raise RuntimeError(
-                f"The 'qiskit.simulator' device is not compatible with version of Qiskit prior "
-                f"to 1.0. You have version {qiskit.__version__} installed. For a Python simulator, "
-                f"use the 'qiskit.basicaer' device instead. Alternatively, upgrade Qiskit "
-                f"(see https://docs.quantum.ibm.com/start/install) to use the 'qiskit.basicsim' device."
-            )
-
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
