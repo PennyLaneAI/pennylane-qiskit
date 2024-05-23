@@ -595,10 +595,11 @@ class QiskitDevice2(Device):
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
 
+        
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        result = estimator.run(
-            compiled_circuits * len(pauli_observables), pauli_observables
-        ).result()
+        compiled_circuits *= len(pauli_observables)
+        circ_and_obs = [(compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))]
+        result = estimator.run(circ_and_obs).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
@@ -610,8 +611,8 @@ class QiskitDevice2(Device):
         along with some metadata. Extract the relevant number for each measurement process and
         return the requested results from the Estimator executions."""
 
-        expvals = job_result()[0].data.evs
-        variances = [res["variance"] for res in job_result.metadata]
+        expvals = [res.data.evs for res in job_result]
+        variances = [1-expval**2 for expval in expvals]
 
         result = []
         for i, mp in enumerate(measurements):
