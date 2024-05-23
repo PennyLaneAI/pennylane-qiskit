@@ -611,7 +611,8 @@ class QiskitDevice2(Device):
         return the requested results from the Estimator executions."""
 
         expvals = [res.data.evs.item() for res in job_result]
-        variances = [res.data.stds.item()**2*4096 for res in job_result]
+        variances = [res.data.stds.item()**2*4096 for res in job_result] # this 4096 is the # of shots
+        # ToDo: Track the # of shots and use that to calculate the variance
 
         result = []
         for i, mp in enumerate(measurements):
