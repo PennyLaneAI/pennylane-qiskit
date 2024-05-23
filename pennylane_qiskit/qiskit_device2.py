@@ -181,7 +181,7 @@ def split_execution_types(
 
         result = dict(zip(flattened_indices, flattened_results))
 
-        return tuple(result[i] for i in sorted(result.keys()))
+        return result[0] if len(result) == 1 else result
 
     return tapes, reorder_fn
 
@@ -254,7 +254,7 @@ class QiskitDevice2(Device):
         self._init_kwargs = kwargs
         # _kwargs are used instead of the Options for performing raw sample based measurements (using old Qiskit API)
         # the _kwargs are a combination of information from Options and _init_kwargs
-        self._kwargs = None
+        self._kwargs = kwargs
 
         # Perform validation against backend
         available_qubits = (
@@ -560,7 +560,7 @@ class QiskitDevice2(Device):
         sampler = Sampler(session=session)
         compiled_circuits = self.compile_circuits(qcirc)
 
-        result = sampler.run(compiled_circuits).result()
+        result = sampler.run(compiled_circuits).result()[0]
         self._current_job = result
 
         # needs processing function to convert to the correct format for states, and
@@ -568,7 +568,11 @@ class QiskitDevice2(Device):
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        return (result[0].data.meas.get_counts(),)
+        attr = dir(result.data)[-1]
+        res = getattr(result.data, attr).get_counts()
+        print(res)
+
+        return (res, )
 
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
