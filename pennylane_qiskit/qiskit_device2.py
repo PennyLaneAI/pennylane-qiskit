@@ -181,7 +181,7 @@ def split_execution_types(
 
         result = dict(zip(flattened_indices, flattened_results))
 
-        return result[0] if len(result) == 1 else result
+        return tuple(result[i] for i in sorted(result.keys()))
 
     return tapes, reorder_fn
 
@@ -266,7 +266,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        #self._update_kwargs()
+        # self._update_kwargs()
 
     @property
     def backend(self):
@@ -561,18 +561,27 @@ class QiskitDevice2(Device):
         compiled_circuits = self.compile_circuits(qcirc)
 
         result = sampler.run(compiled_circuits).result()[0]
-        self._current_job = result
+        attr = dir(result.data)[-1]
+        self._current_job = getattr(result.data, attr)
+
+        results = []
 
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        attr = dir(result.data)[-1]
-        res = getattr(result.data, attr).get_counts()
-        print(res)
+        for index, circuit in enumerate([circuit]):
+            self._samples = self.generate_samples(index)
+            res = [
+                mp.process_samples(self._samples, wire_order=self.wires)
+                for mp in circuit.measurements
+            ]
+            single_measurement = len(circuit.measurements) == 1
+            res = res[0] if single_measurement else tuple(res)
+            results.append(res)
 
-        return (res, )
+        return tuple(results)
 
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
@@ -628,6 +637,7 @@ class QiskitDevice2(Device):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
+
         counts = self._current_job.get_counts()
         # Batch of circuits
         if not isinstance(counts, dict):
