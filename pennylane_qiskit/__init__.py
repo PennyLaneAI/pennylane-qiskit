@@ -15,7 +15,7 @@
 
 from ._version import __version__
 from .aer import AerDevice
-from .basic_aer import BasicAerDevice, BasicSimulatorDevice
+from .basic_sim import BasicSimulatorDevice
 from .ibmq import IBMQDevice
 from .remote import RemoteDevice
 from .converter import load, load_pauli_op, load_qasm, load_qasm_from_file

@@ -21,10 +21,6 @@ The following devices are available:
     :description: Qiskit's staple simulator with great features such as noise models.
     :link: devices/aer.html
 
-.. title-card::
-    :name: 'qiskit.basicaer'
-    :description: A simplified version of the Aer device, which requires fewer dependencies.
-    :link: devices/basicaer.html
 
 .. title-card::
     :name: 'qiskit.basicsim'
@@ -76,9 +72,9 @@ follows:
 
     dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
-PennyLane chooses the ``qasm_simulator`` as the default backend if no backend is specified.
-For more details on the ``qasm_simulator``, including available backend options, see
-`Qiskit Qasm Simulator documentation <https://qiskit.org/ecosystem/aer/stubs/qiskit_aer.QasmSimulator.html>`_.
+PennyLane chooses the ``aer_simulator`` as the default backend if no backend is specified.
+For more details on the ``aer_simulator``, including available backend options, see
+`Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
 
 Tutorials
 ~~~~~~~~~
@@ -138,7 +134,6 @@ hardware access.
    :hidden:
 
    devices/aer
-   devices/basicaer
    devices/basicsim
    devices/ibmq
    devices/runtime
