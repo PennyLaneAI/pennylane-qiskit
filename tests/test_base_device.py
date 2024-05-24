@@ -20,7 +20,6 @@ import numpy as np
 import pytest
 from semantic_version import Version
 import qiskit_ibm_runtime
-import qiskit
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
@@ -769,9 +768,8 @@ class TestMockedExecution:
 
     @pytest.mark.parametrize("backend", [backend, legacy_backend])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
-        """Test that a device that **is** using Primitives calls the _execute_runtime_service
-        to execute measurements that require raw samples, and the relevant primitive measurements
-        on the other measurements"""
+        """Test that a device executes measurements that require raw samples on the sampler,
+        and the relevant primitive measurements on the estimator"""
 
         dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
 
@@ -833,40 +831,6 @@ class TestMockedExecution:
         # to emphasize, this did nothing except appease CodeCov
         assert isinstance(result[0], Mock)
 
-    @patch("pennylane_qiskit.qiskit_device2.transpile")
-    @pytest.mark.skip(reason="Runtime service will be deprecated")
-    def test_execute_runtime_service_mocked(self, mocked_transpile):
-        """Test the _execute_sampler function using a mocked version of Sampler
-        that returns a meaningless result."""
-
-        dev = QiskitDevice2(wires=5, backend=backend)
-
-        mock_counts = {"00": 125, "10": 500, "01": 250, "11": 125}
-        mock_result = Mock()
-        mock_job = Mock()
-        mock_service = Mock()
-
-        mock_result.get_counts = Mock(return_value=mock_counts)
-        mock_job.result = Mock(return_value=mock_result)
-        mock_service.run = Mock(return_value=mock_job)
-
-        dev._service = mock_service
-
-        qs = QuantumScript([qml.PauliX(0)], measurements=[qml.sample()])
-        result = dev._execute_runtime_service(qs, MockSession(backend))
-
-        samples = result[0]
-
-        assert len(samples) == sum(mock_counts.values())
-        assert len(samples[0]) == 2
-
-        assert len(np.argwhere([np.allclose(s, [0, 0]) for s in samples])) == mock_counts["00"]
-        assert len(np.argwhere([np.allclose(s, [1, 1]) for s in samples])) == mock_counts["11"]
-
-        # order of samples is swapped compared to keys (Qiskit wire order convention is reverse of PennyLane)
-        assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == mock_counts["10"]
-        assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == mock_counts["01"]
-
     def test_shot_vector_warning_mocked(self):
         """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
 
@@ -886,11 +850,6 @@ class TestMockedExecution:
                 dev.execute(qs)
 
 
-@pytest.mark.skipif(
-    Version(qiskit.__version__) < Version("1.0.0"),
-    reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
-    ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
-)
 class TestExecution:
 
     @pytest.mark.parametrize("wire", [0, 1])
@@ -913,7 +872,6 @@ class TestExecution:
 
         dev = QiskitDevice2(wires=5, backend=backend)
 
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -931,7 +889,6 @@ class TestExecution:
 
         res = dev.execute(qs)
 
-        runtime_service_execute.assert_not_called()
         sampler_execute.assert_not_called()
         estimator_execute.assert_called_once()
 
@@ -973,7 +930,6 @@ class TestExecution:
         pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
         dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
 
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -989,7 +945,6 @@ class TestExecution:
         res = dev.execute(qs)
         expectation = pl_dev.execute(qs)
 
-        runtime_service_execute.assert_not_called()
         sampler_execute.assert_not_called()
         estimator_execute.assert_called_once()
 
@@ -1095,9 +1050,11 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    @pytest.mark.skip(reason="Handling observables that don't have a pauli_rep using v2 primitives should be a separate PR")
+    @pytest.mark.skip(
+        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
+    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
-        """Test that the device uses _execute_runtime_service and _execute_estimator appropriately
+        """Test that the device uses _sampler and _execute_estimator appropriately
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
 
@@ -1105,7 +1062,6 @@ class TestExecution:
 
         pl_dev = qml.device("default.qubit", wires=5)
 
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
@@ -1124,9 +1080,8 @@ class TestExecution:
         res = circuit()
         pl_res = pl_circuit()
 
-        runtime_service_execute.assert_called_once()
         estimator_execute.assert_called_once()
-        sampler_execute.assert_not_called()
+        sampler_execute.assert_called_once()
 
         assert np.allclose(res, pl_res, atol=0.1)
 
