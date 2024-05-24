@@ -1055,6 +1055,7 @@ class TestExecution:
 
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
+    @pytest.mark.skip(reason="Need to replace this with using SamplerV2.")
     def test_generate_samples(self, num_wires, num_shots):
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
 
