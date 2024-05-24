@@ -251,6 +251,7 @@ class QiskitDevice2(Device):
         self._session = session
 
         self._kwargs = kwargs
+        self._kwargs["shots"] = shots
 
         # Perform validation against backend
         available_qubits = (
@@ -371,6 +372,16 @@ class QiskitDevice2(Device):
     def _process_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
+
+        if "default_shots" in self._kwargs:
+            warnings.warn(
+                f"default_shots was found as a keyword argument, but it is not supported by {self.name}"
+                "Please use the `shots` keyword argument instead. The default number of shots"
+                f"{self._kwargs["shots"]} will be used instead"
+            )
+        self._kwargs["default_shots"] = self._kwargs["shots"]
+        self._kwargs.pop("shots")
+
         return
 
     @staticmethod
@@ -448,12 +459,17 @@ class QiskitDevice2(Device):
 
     def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
-
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
+        sampler.options.update(**self._kwargs)
         compiled_circuits = self.compile_circuits(qcirc)
 
-        result = sampler.run(compiled_circuits).result()[0]
+        result = (
+            sampler.run(compiled_circuits, shots=circuit.shots.total_shots).result()[0]
+            if circuit.shots
+            else sampler.run(compiled_circuits).result()[0]
+        )
+
         attr = dir(result.data)[-1]
         self._current_job = getattr(result.data, attr)
 
@@ -481,6 +497,7 @@ class QiskitDevice2(Device):
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
         estimator = Estimator(session=session)
+        estimator.options.update(**self._kwargs)
 
         compiled_circuits = self.compile_circuits(qcirc)
         # split into one call per measurement
@@ -493,7 +510,11 @@ class QiskitDevice2(Device):
         circ_and_obs = [
             (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
         ]
-        result = estimator.run(circ_and_obs).result()
+        result = estimator.run(
+            circ_and_obs,
+            precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
+        ).result()
+
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
