@@ -44,7 +44,7 @@ from pennylane.devices.preprocess import (
     validate_measurements,
     validate_device_wires,
 )
-from pennylane.measurements import ProbabilityMP, ExpectationMP, VarianceMP
+from pennylane.measurements import ExpectationMP, VarianceMP
 
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
