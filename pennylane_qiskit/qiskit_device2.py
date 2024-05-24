@@ -179,7 +179,9 @@ def split_execution_types(
 
         result = dict(zip(flattened_indices, flattened_results))
 
-        return tuple(result[i] for i in sorted(result.keys()))
+        result = tuple(result[i] for i in sorted(result.keys()))
+
+        return result[0] if len(result) == 1 else result
 
     return tapes, reorder_fn
 
@@ -451,9 +453,9 @@ class QiskitDevice2(Device):
             try:
                 for circ in circuits:
                     if circ.shots and len(circ.shots.shot_vector) > 1:
-                        warnings.warn(
+                        raise ValueError(
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            f"The circuit will be run once with {circ.shots.total_shots} shots instead."
+                            "Please use a single integer number of shots instead when specifying number of shots."
                         )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
                         circ.measurements[0].obs, "pauli_rep", None
@@ -510,10 +512,12 @@ class QiskitDevice2(Device):
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        
+
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits *= len(pauli_observables)
-        circ_and_obs = [(compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))]
+        circ_and_obs = [
+            (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
+        ]
         result = estimator.run(circ_and_obs).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
@@ -527,7 +531,9 @@ class QiskitDevice2(Device):
         return the requested results from the Estimator executions."""
 
         expvals = [res.data.evs.item() for res in job_result]
-        variances = [res.data.stds.item()**2*4096 for res in job_result] # this 4096 is the # of shots
+        variances = [
+            res.data.stds.item() ** 2 * 4096 for res in job_result
+        ]  # this 4096 is the # of shots
         # ToDo: Track the # of shots and use that to calculate the variance
 
         result = []

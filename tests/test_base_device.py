@@ -135,8 +135,8 @@ class TestSupportForV1andV2:
     @pytest.mark.parametrize(
         "backend, shape",
         [
-            (FakeManila(), (1, 1024)),
-            (FakeManilaV2(), (1, 1024)),
+            (FakeManila(), (1024,)),
+            (FakeManilaV2(), (1024,)),
         ],
     )
     def test_v1_and_v2_manila(self, backend, shape):
@@ -376,7 +376,11 @@ class TestDevicePreprocessing:
         assert [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
-        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
+        assert (
+            reorder_fn([tape.measurements for tape in tapes]) == qs.measurements[0]
+            if len(qs.measurements) == 1
+            else reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
+        )
 
     @pytest.mark.parametrize(
         "op, expected",
@@ -831,8 +835,8 @@ class TestMockedExecution:
         # to emphasize, this did nothing except appease CodeCov
         assert isinstance(result[0], Mock)
 
-    def test_shot_vector_warning_mocked(self):
-        """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
+    def test_shot_vector_error_mocked(self):
+        """Test that a device that executes a circuit with an array of shots raises the appropriate ValueError"""
 
         dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
         qs = QuantumScript(
@@ -843,10 +847,7 @@ class TestMockedExecution:
         )
 
         with patch.object(dev, "_execute_estimator"):
-            with pytest.warns(
-                UserWarning,
-                match="Setting shot vector",
-            ):
+            with pytest.raises(ValueError, match="Setting shot vector"):
                 dev.execute(qs)
 
 
@@ -952,14 +953,16 @@ class TestExecution:
 
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
-    @pytest.mark.skip(reason="Need to replace this with using SamplerV2.")
+    @pytest.mark.skip(
+        reason="Need to replace this with using SamplerV2."
+    )  # ToDo: Do we even need this?
     def test_generate_samples(self, num_wires, num_shots):
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
 
         qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
         compiled_circuits = test_dev.compile_circuits([qcirc])
 
-        job = test_dev.backend.run(circuits=compiled_circuits, shots=num_shots)
+        job = test_dev._execute_sampler(circuits=compiled_circuits, shots=num_shots)
 
         test_dev._current_job = job.result()
 
@@ -981,7 +984,9 @@ class TestExecution:
         # nothing else is in samples
         assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
-    @pytest.mark.skip(reason="Tracking shot information will be addressed in the PR about options handling")
+    @pytest.mark.skip(
+        reason="Tracking shot information will be addressed in the PR about options handling"
+    )
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2)
@@ -1001,7 +1006,9 @@ class TestExecution:
         circuit()
         assert dev._current_job.metadata[0]["shots"] == 2
 
-    @pytest.mark.skip(reason="Tracking shot information will be addressed in the PR about options handling")
+    @pytest.mark.skip(
+        reason="Tracking shot information will be addressed in the PR about options handling"
+    )
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2)
@@ -1022,21 +1029,19 @@ class TestExecution:
         circuit()
         assert dev._current_job.metadata[0]["shots"] == 2
 
-    @pytest.mark.skip(reason="Tracking shot information will be addressed in the PR about options handling")
-    def test_warning_for_shot_vector(self):
-        """Tests that a warning is raised if a shot vector is passed and total shots of tape is used instead."""
+    @pytest.mark.skip(
+        reason="Tracking shot information will be addressed in the PR about options handling"
+    )
+    def test_error_for_shot_vector(self):
+        """Tests that a ValueError is raised if a shot vector is passed."""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         @qml.qnode(dev)
         def circuit():
             return qml.expval(qml.PauliX(0))
 
-        with pytest.warns(
-            UserWarning,
-            match="Setting shot vector",
-        ):
+        with pytest.raises(ValueError, match="Setting shot vector"):
             circuit(shots=[5, 10, 2])
-        assert dev._current_job.metadata[0]["shots"] == 17
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
@@ -1051,9 +1056,6 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    @pytest.mark.skip(
-        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
-    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
         """Test that the device uses _sampler and _execute_estimator appropriately
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.
@@ -1103,3 +1105,26 @@ class TestExecution:
             match="The observable measured",
         ):
             circuit()
+
+    def test_qiskit_probability_output_format(self):
+        """Test that Qiskit's probability output dictionary format is the same as pennylane's."""
+
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return [qml.probs(wires=[0, 1])]
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.Hadamard(0)
+            return [qml.probs(wires=[0, 1])]
+
+        res = circuit()
+        qiskit_res = qiskit_circuit()
+
+        print(res, qiskit_res)
+        assert np.shape(res) == np.shape(qiskit_res)
+        assert np.allclose(res, qiskit_res, atol=0.03)
