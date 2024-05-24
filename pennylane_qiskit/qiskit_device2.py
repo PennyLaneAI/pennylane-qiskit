@@ -29,7 +29,6 @@ from qiskit.compiler import transpile
 from qiskit.providers import BackendV2
 
 from qiskit_ibm_runtime import Session, Sampler, Estimator
-from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
 
 from pennylane import transform
@@ -484,10 +483,8 @@ class QiskitDevice2(Device):
                         circ.measurements[0].obs, "pauli_rep", None
                     ):
                         execute_fn = self._execute_estimator
-                    elif isinstance(circ.measurements[0], ProbabilityMP):
-                        execute_fn = self._execute_sampler
                     else:
-                        execute_fn = self._execute_runtime_service
+                        execute_fn = self._execute_sampler
                     results.append(execute_fn(circ, session))
                 yield results
             finally:

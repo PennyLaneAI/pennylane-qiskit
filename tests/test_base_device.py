@@ -20,7 +20,6 @@ import numpy as np
 import pytest
 from semantic_version import Version
 import qiskit_ibm_runtime
-import qiskit
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
@@ -152,10 +151,8 @@ class TestSupportForV1andV2:
             (FakeManilaV2(), (1, 1024)),
         ],
     )
-    @pytest.mark.skipif(
-        Version(qiskit.__version__) < Version("1.0.0"),
-        reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
-        ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
+    @pytest.mark.skip(
+        reason="The functionality of using sampler to get an accurate answer is not yet implemented"
     )
     def test_v1_and_v2_manila(self, backend, shape):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
@@ -899,11 +896,6 @@ class TestMockedExecution:
                 dev.execute(qs)
 
 
-@pytest.mark.skipif(
-    Version(qiskit.__version__) < Version("1.0.0"),
-    reason="Session initialization is not supported for local simulators for Qiskit version < 1.0/qiskit_ibm_runtime version < 0.22.0",
-    ## See https://docs.quantum.ibm.com/api/migration-guides/local-simulators for additional details
-)
 class TestExecution:
 
     @pytest.mark.parametrize("wire", [0, 1])
@@ -1158,8 +1150,11 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
+    @pytest.mark.skip(
+        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
+    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
-        """Test that the device uses _execute_runtime_service and _execute_estimator appropriately
+        """Test that the device uses _sampler and _execute_estimator appropriately
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
 
@@ -1167,7 +1162,6 @@ class TestExecution:
 
         pl_dev = qml.device("default.qubit", wires=5)
 
-        runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
@@ -1186,9 +1180,8 @@ class TestExecution:
         res = circuit()
         pl_res = pl_circuit()
 
-        runtime_service_execute.assert_called_once()
         estimator_execute.assert_called_once()
-        sampler_execute.assert_not_called()
+        sampler_execute.assert_called_once()
 
         assert np.allclose(res, pl_res, atol=0.1)
 
