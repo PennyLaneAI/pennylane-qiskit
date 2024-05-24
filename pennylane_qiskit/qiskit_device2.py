@@ -250,10 +250,6 @@ class QiskitDevice2(Device):
         self._service = getattr(backend, "_service", None)
         self._session = session
 
-        # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
-        self._init_kwargs = kwargs
-        # _kwargs are used instead of the Options for performing raw sample based measurements (using old Qiskit API)
-        # the _kwargs are a combination of information from Options and _init_kwargs
         self._kwargs = kwargs
 
         # Perform validation against backend
@@ -266,7 +262,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        # self._update_kwargs()
+        self._process_kwargs()
 
     @property
     def backend(self):
@@ -372,31 +368,10 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def _update_kwargs(self):
+    def _process_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
-        if not self.options:
-            return
-        option_kwargs = self.options
-
-        overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
-        if overlapping_kwargs:
-            warnings.warn(
-                f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
-                f"defined in the device Options. The definition in Options will be used."
-            )
-        if option_kwargs["shots"] != self.shots.total_shots:
-            warnings.warn(
-                f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
-                f"passed to the device will be used."
-            )
-            self.options.execution.shots = self.shots.total_shots
-
-        option_kwargs.pop("shots")
-        kwargs = self._init_kwargs.copy()
-        kwargs.update(option_kwargs)
-
-        self._kwargs = kwargs
+        return
 
     @staticmethod
     def get_transpile_args(kwargs):
