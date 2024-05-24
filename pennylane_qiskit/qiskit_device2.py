@@ -126,11 +126,10 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 def split_execution_types(
     tape: qml.tape.QuantumTape,
 ) -> (Sequence[qml.tape.QuantumTape], Callable):
-    """Split into separate tapes based on measurement type. However, for ``expval`` and ``var``
-    measurements, if the measured observable does not have a ``pauli_rep``, it is split as a
-    separate tape and will use the standard backend.run function. Counts will use the
-    Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
-    strictly sample-based measurements will use the standard backend.run function"""
+    """Split into separate tapes based on measurement type. Counts and sample-based measurements
+    will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
+    when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
+    used, and the raw samples will be processed to give an expectation value."""
 
     estimator = []
     sampler = []
@@ -143,7 +142,7 @@ def split_execution_types(
                 warnings.warn(
                     f"The observable measured {mp.obs} does not have a `pauli_rep` "
                     "and will be run without using the Estimator primitive. Instead, "
-                    "the standard backend.run function will be used."
+                    "the Sampler will be used."
                 )
                 sampler.append((mp, i))
         else:
