@@ -1107,7 +1107,7 @@ class TestExecution:
             circuit()
 
     def test_qiskit_probability_output_format(self):
-        """Test that Qiskit's probability output dictionary format is the same as pennylane's."""
+        """Test that Qiskit's probability output dictionary format and values are the same as pennylane's."""
 
         dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
         qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
@@ -1125,6 +1125,5 @@ class TestExecution:
         res = circuit()
         qiskit_res = qiskit_circuit()
 
-        print(res, qiskit_res)
         assert np.shape(res) == np.shape(qiskit_res)
         assert np.allclose(res, qiskit_res, atol=0.03)
