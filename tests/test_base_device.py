@@ -23,7 +23,6 @@ import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import EstimatorV2 as Estimator
 
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
@@ -43,7 +42,6 @@ from pennylane_qiskit.qiskit_device2 import (
 )
 from pennylane_qiskit.converter import (
     circuit_to_qiskit,
-    mp_to_pauli,
     QISKIT_OPERATION_MAP,
 )
 
@@ -477,7 +475,7 @@ class TestOptionsHandling:
             UserWarning,
             match="Setting shots via the Options is not supported on PennyLane devices",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, options=options)
+            dev = QiskitDevice2(wires=2, backend=backend)
 
         assert dev.shots.total_shots == 1024
         assert dev.options.execution.shots == 1024
@@ -486,7 +484,7 @@ class TestOptionsHandling:
             UserWarning,
             match="Setting shots via the Options is not supported on PennyLane devices",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, shots=200, options=options)
+            dev = QiskitDevice2(wires=2, backend=backend, shots=200)
 
         assert dev.shots.total_shots == 200
         assert dev.options.execution.shots == 200
