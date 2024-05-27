@@ -434,8 +434,8 @@ class TestDevicePreprocessing:
     )
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
         """Test that the default behaviour for preprocess it to split the tapes based
-        on meausrement type. Expval and Variance are one type (Estimator), Probs, raw-sample
-        based, and everything else are another type(Sampler)."""
+        on meausrement type. Expval and Variance are one type (Estimator), Probs and raw-sample based measurements
+        are another type(Sampler)."""
 
         dev = QiskitDevice2(wires=5, backend=backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
