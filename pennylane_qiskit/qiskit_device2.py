@@ -479,8 +479,8 @@ class QiskitDevice2(Device):
         compiled_circuits = self.compile_circuits(qcirc)
 
         result = sampler.run(compiled_circuits).result()[0]
-        attr = dir(result.data)[-1]
-        self._current_job = getattr(result.data, attr)
+        classical_register_name = compiled_circuits[0].cregs[0].name
+        self._current_job = getattr(result.data, classical_register_name)
 
         results = []
 
@@ -489,13 +489,12 @@ class QiskitDevice2(Device):
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        for index, circuit in enumerate([circuit]):
+        for index, circ in enumerate([circuit]):
             self._samples = self.generate_samples(index)
             res = [
-                mp.process_samples(self._samples, wire_order=self.wires)
-                for mp in circuit.measurements
+                mp.process_samples(self._samples, wire_order=self.wires) for mp in circ.measurements
             ]
-            single_measurement = len(circuit.measurements) == 1
+            single_measurement = len(circ.measurements) == 1
             res = res[0] if single_measurement else tuple(res)
             results.append(res)
 
