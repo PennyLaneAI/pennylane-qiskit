@@ -23,7 +23,6 @@ import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import EstimatorV2 as Estimator
 
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
@@ -43,7 +42,6 @@ from pennylane_qiskit.qiskit_device2 import (
 )
 from pennylane_qiskit.converter import (
     circuit_to_qiskit,
-    mp_to_pauli,
     QISKIT_OPERATION_MAP,
 )
 
@@ -363,7 +361,7 @@ class TestDevicePreprocessing:
     @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_split_execution_types(self, measurements, expectation):
         """Test that the split_execution_types transform splits measurements into Estimator-based
-        (expval, var) and Sampler-based (probs, raw-samples, everything else)"""
+        (expval, var) and Sampler-based (everything else)"""
 
         operations = [qml.PauliX(0), qml.PauliY(1), qml.Hadamard(2), qml.CNOT([2, 1])]
         qs = QuantumScript(operations, measurements=measurements)
@@ -423,8 +421,8 @@ class TestDevicePreprocessing:
     )
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
         """Test that the default behaviour for preprocess it to split the tapes based
-        on meausrement type. Expval and Variance are one type (Estimator), Probs, raw-sample
-        based, and everything else are another type(Sampler)."""
+        on measurement type. Expval and Variance are one type (Estimator), Probs and raw-sample based measurements
+        are another type(Sampler)."""
 
         dev = QiskitDevice2(wires=5, backend=backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))

@@ -141,7 +141,7 @@ def split_execution_types(
                 warnings.warn(
                     f"The observable measured {mp.obs} does not have a `pauli_rep` "
                     "and will be run without using the Estimator primitive. Instead, "
-                    "the Sampler will be used."
+                    "raw samples from the Sampler will be used."
                 )
                 sampler.append((mp, i))
         else:
@@ -464,14 +464,9 @@ class QiskitDevice2(Device):
         sampler.options.update(**self._kwargs)
         compiled_circuits = self.compile_circuits(qcirc)
 
-        result = (
-            sampler.run(compiled_circuits, shots=circuit.shots.total_shots).result()[0]
-            if circuit.shots
-            else sampler.run(compiled_circuits).result()[0]
-        )
-
-        attr = dir(result.data)[-1]
-        self._current_job = getattr(result.data, attr)
+        result = sampler.run(compiled_circuits).result()[0]
+        classical_register_name = compiled_circuits[0].cregs[0].name
+        self._current_job = getattr(result.data, classical_register_name)
 
         results = []
 
@@ -480,13 +475,12 @@ class QiskitDevice2(Device):
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        for index, circuit in enumerate([circuit]):
+        for index, circ in enumerate([circuit]):
             self._samples = self.generate_samples(index)
             res = [
-                mp.process_samples(self._samples, wire_order=self.wires)
-                for mp in circuit.measurements
+                mp.process_samples(self._samples, wire_order=self.wires) for mp in circ.measurements
             ]
-            single_measurement = len(circuit.measurements) == 1
+            single_measurement = len(circ.measurements) == 1
             res = res[0] if single_measurement else tuple(res)
             results.append(res)
 
