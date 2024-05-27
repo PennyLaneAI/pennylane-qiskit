@@ -142,7 +142,7 @@ def split_execution_types(
                 warnings.warn(
                     f"The observable measured {mp.obs} does not have a `pauli_rep` "
                     "and will be run without using the Estimator primitive. Instead, "
-                    "the Sampler will be used."
+                    "raw samples from the Sampler will be used."
                 )
                 sampler.append((mp, i))
         else:
