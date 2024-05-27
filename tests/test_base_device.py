@@ -477,7 +477,7 @@ class TestOptionsHandling:
             UserWarning,
             match="Setting shots via the Options is not supported on PennyLane devices",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, default_shots=1000)
+            dev = QiskitDevice2(wires=2, backend=backend, options=options)
 
         assert dev.shots.total_shots == 1024
         assert dev.options.execution.shots == 1024
@@ -486,7 +486,7 @@ class TestOptionsHandling:
             UserWarning,
             match="Setting shots via the Options is not supported on PennyLane devices",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, shots=200, default_shots=1000)
+            dev = QiskitDevice2(wires=2, backend=backend, shots=200, options=options)
 
         assert dev.shots.total_shots == 200
         assert dev.options.execution.shots == 200
