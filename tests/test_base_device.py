@@ -378,7 +378,7 @@ class TestDevicePreprocessing:
     @pytest.mark.filterwarnings("ignore::UserWarning")
     def test_split_execution_types(self, measurements, expectation):
         """Test that the split_execution_types transform splits measurements into Estimator-based
-        (expval, var) and Sampler-based (probs, raw-samples, everything else)"""
+        (expval, var) and Sampler-based (everything else)"""
 
         operations = [qml.PauliX(0), qml.PauliY(1), qml.Hadamard(2), qml.CNOT([2, 1])]
         qs = QuantumScript(operations, measurements=measurements)
