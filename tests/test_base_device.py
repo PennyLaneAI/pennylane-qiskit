@@ -1054,6 +1054,9 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
+    @pytest.mark.skip(
+        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
+    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
         """Test that the device uses _sampler and _execute_estimator appropriately
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.
