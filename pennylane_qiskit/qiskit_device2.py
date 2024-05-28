@@ -533,7 +533,6 @@ class QiskitDevice2(Device):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-
         counts = self._current_job.get_counts()
         # Batch of circuits
         if not isinstance(counts, dict):
