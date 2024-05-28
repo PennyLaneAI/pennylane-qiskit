@@ -266,7 +266,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        # self._update_kwargs()
+        # ToDo: process or update kwargs in some fashion here
 
     @property
     def backend(self):
@@ -506,8 +506,9 @@ class QiskitDevice2(Device):
         expvals = [res.data.evs.item() for res in job_result]
         variances = [
             res.data.stds.item() ** 2 * 4096 for res in job_result
-        ]  # this 4096 is the # of shots
-        # ToDo: Track the # of shots and use that to calculate the variance
+        ]  # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
+        # ToDo: Track the # of shots and use that instead of hard-coding
+        # to calculate the variance.
 
         result = []
         for i, mp in enumerate(measurements):
