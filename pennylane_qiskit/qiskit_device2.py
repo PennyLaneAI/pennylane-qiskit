@@ -493,14 +493,12 @@ class QiskitDevice2(Device):
         estimator = Estimator(session=session)
         estimator.options.update(**self._kwargs)
 
-        compiled_circuits = self.compile_circuits(qcirc)
+        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
+        compiled_circuits = self.compile_circuits(qcirc) * len(pauli_observables)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-
-        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        compiled_circuits *= len(pauli_observables)
         circ_and_obs = [
             (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
         ]
@@ -523,8 +521,9 @@ class QiskitDevice2(Device):
         expvals = [res.data.evs.item() for res in job_result]
         variances = [
             res.data.stds.item() ** 2 * 4096 for res in job_result
-        ]  # this 4096 is the # of shots
-        # ToDo: Track the # of shots and use that to calculate the variance
+        ]  # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
+        # ToDo: Track the # of shots and use that instead of hard-coding
+        # to calculate the variance.
 
         result = []
         for i, mp in enumerate(measurements):
@@ -549,7 +548,6 @@ class QiskitDevice2(Device):
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
-
         counts = self._current_job.get_counts()
         # Batch of circuits
         if not isinstance(counts, dict):
