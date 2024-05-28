@@ -376,8 +376,8 @@ class QiskitDevice2(Device):
         if "default_shots" in self._kwargs:
             warnings.warn(
                 f"default_shots was found as a keyword argument, but it is not supported by {self.name}"
-                "Please use the `shots` keyword argument instead. The default number of shots"
-                f"{self._kwargs["shots"]} will be used instead"
+                "Please use the `shots` keyword argument instead. The default number of shots "
+                "1024 will be used instead"
             )
         self._kwargs["default_shots"] = self._kwargs["shots"]
         self._kwargs.pop("shots")
@@ -464,7 +464,10 @@ class QiskitDevice2(Device):
         sampler.options.update(**self._kwargs)
         compiled_circuits = self.compile_circuits(qcirc)
 
-        result = sampler.run(compiled_circuits).result()[0]
+        result = sampler.run(
+            compiled_circuits,
+            shots=circuit.shots.total_shots if circuit.shots.total_shots else None,
+        ).result()[0]
         classical_register_name = compiled_circuits[0].cregs[0].name
         self._current_job = getattr(result.data, classical_register_name)
 
@@ -520,10 +523,8 @@ class QiskitDevice2(Device):
 
         expvals = [res.data.evs.item() for res in job_result]
         variances = [
-            res.data.stds.item() ** 2 * 4096 for res in job_result
-        ]  # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
-        # ToDo: Track the # of shots and use that instead of hard-coding
-        # to calculate the variance.
+            (res.data.stds.item() / res.metadata["target_precision"]) ** 2 for res in job_result
+        ]
 
         result = []
         for i, mp in enumerate(measurements):

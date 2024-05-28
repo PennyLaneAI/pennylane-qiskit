@@ -464,6 +464,23 @@ class TestDevicePreprocessing:
         assert np.all([op.name in QISKIT_OPERATION_MAP for op in tapes[0].operations])
 
 
+class TestKwargsHandling:
+    def test_warning_if_shots(self):
+        """Test that a warning is raised if the user attempts to specify shots by using
+        `default_shots`, and instead sets shots to the default amount of 1024."""
+
+        with pytest.warns(
+            UserWarning,
+            match="default_shots was found as a keyword argument",
+        ):
+            dev = QiskitDevice2(wires=2, backend=backend, default_shots=333)
+
+        assert dev._kwargs["default_shots"] == 1024
+
+        dev = QiskitDevice2(wires=2, backend=backend, shots=200)
+        assert dev._kwargs["default_shots"] == 200
+
+
 class TestDeviceProperties:
     def test_name_property(self):
         """Test the backend property"""
@@ -855,7 +872,7 @@ class TestExecution:
 
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
-        dev = QiskitDevice2(wires=5, backend=backend, default_shots=2)
+        dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -866,7 +883,10 @@ class TestExecution:
         circuit(shots=[5])
 
         estimator_execute.assert_called_once()
-        print(dev._current_job)
+        assert dev._current_job[0].metadata["target_precision"] == np.sqrt(1 / 5)
+
+        circuit()
+        assert dev._current_job[0].metadata["target_precision"] == np.sqrt(1 / 2)
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
