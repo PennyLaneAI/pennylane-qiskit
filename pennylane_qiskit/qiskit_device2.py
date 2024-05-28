@@ -480,14 +480,12 @@ class QiskitDevice2(Device):
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
         estimator = Estimator(session=session)
 
-        compiled_circuits = self.compile_circuits(qcirc)
+        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
+        compiled_circuits = self.compile_circuits(qcirc) * len(pauli_observables)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-
-        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        compiled_circuits *= len(pauli_observables)
         circ_and_obs = [
             (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
         ]
