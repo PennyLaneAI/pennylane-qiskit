@@ -770,8 +770,8 @@ class TestMockedExecution:
 
     @pytest.mark.parametrize("backend", [backend, legacy_backend])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
-        """Test that a device executes measurements that require raw samples on the sampler,
-        and the relevant primitive measurements on the estimator"""
+        """Test that a device executes measurements that require raw samples via the sampler,
+        and the relevant primitive measurements via the estimator"""
 
         dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
 
