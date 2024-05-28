@@ -441,7 +441,7 @@ class QiskitDevice2(Device):
                     if circ.shots and len(circ.shots.shot_vector) > 1:
                         raise ValueError(
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            "Please use a single integer number of shots instead when specifying number of shots."
+                            "Please use a single integer instead when specifying the number of shots."
                         )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
                         circ.measurements[0].obs, "pauli_rep", None

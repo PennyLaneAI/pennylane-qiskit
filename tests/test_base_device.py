@@ -422,7 +422,7 @@ class TestDevicePreprocessing:
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
         """Test that the default behaviour for preprocess it to split the tapes based
         on measurement type. Expval and Variance are one type (Estimator), Probs and raw-sample based measurements
-        are another type(Sampler)."""
+        are another type (Sampler)."""
 
         dev = QiskitDevice2(wires=5, backend=backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
@@ -641,8 +641,8 @@ class TestMockedExecution:
 
     @pytest.mark.parametrize("backend", [backend, legacy_backend])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
-        """Test that a device executes measurements that require raw samples on the sampler,
-        and the relevant primitive measurements on the estimator"""
+        """Test that a device executes measurements that require raw samples via the sampler,
+        and the relevant primitive measurements via the estimator"""
 
         dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
 
