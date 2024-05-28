@@ -179,38 +179,6 @@ class TestDeviceInitialization:
 
         assert dev.shots.total_shots == 1024
 
-    @pytest.mark.skip(reason="Options handling not decided on yet")
-    def test_kwargs_on_initialization(self, mocker):
-        """Test that update_kwargs is called on intialization and combines the Options
-        and kwargs as self._kwargs"""
-
-        options = {"my_tag": 1}
-
-        spy = mocker.spy(QiskitDevice2, "_update_kwargs")
-
-        dev = QiskitDevice2(
-            wires=2,
-            backend=backend,
-            options=options,
-            random_kwarg1=True,
-            random_kwarg2="a",
-        )
-
-        spy.assert_called_once()
-
-        # kwargs are updated to a combination of the information from the Options and kwargs
-        assert dev._kwargs == {
-            "random_kwarg1": True,
-            "random_kwarg2": "a",
-            "skip_transpilation": False,
-            "init_qubits": True,
-            "log_level": "WARNING",
-            "job_tags": ["my_tag"],
-        }
-
-        # initial kwargs are saved without modification
-        assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
-
     @pytest.mark.parametrize("backend", [backend, legacy_backend])
     def test_backend_wire_validation(self, backend):
         """Test that an error is raised if the number of device wires exceeds
@@ -219,17 +187,13 @@ class TestDeviceInitialization:
         with pytest.raises(ValueError, match="supports maximum"):
             QiskitDevice2(wires=500, backend=backend)
 
-    @pytest.mark.skip(reason="Options handling not decided on yet")
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
         object is used to set the backend noise model"""
 
-        options = {}
-        options.simulator.noise_model = {"placeholder": 1}
-
         new_backend = MockedBackend()
         dev1 = QiskitDevice2(wires=3, backend=backend)
-        dev2 = QiskitDevice2(wires=3, backend=new_backend, options=options)
+        dev2 = QiskitDevice2(wires=3, backend=new_backend, noise_model={"placeholder": 1})
 
         assert dev1.backend.options.noise_model is None
         assert dev2.backend.options.noise_model == {"placeholder": 1}

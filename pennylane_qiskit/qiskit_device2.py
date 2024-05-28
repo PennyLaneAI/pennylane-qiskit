@@ -370,6 +370,10 @@ class QiskitDevice2(Device):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
 
+        if "noise_model" in self._kwargs:
+            noise_model = self._kwargs.pop("noise_model")
+            self.backend.set_options(noise_model=noise_model)
+
         if "default_shots" in self._kwargs:
             warnings.warn(
                 f"default_shots was found as a keyword argument, but it is not supported by {self.name}"
