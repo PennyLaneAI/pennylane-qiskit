@@ -18,8 +18,6 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 from unittest.mock import patch, Mock
 import numpy as np
 import pytest
-from semantic_version import Version
-import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
