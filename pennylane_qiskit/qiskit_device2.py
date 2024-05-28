@@ -382,8 +382,6 @@ class QiskitDevice2(Device):
         self._kwargs["default_shots"] = self._kwargs["shots"]
         self._kwargs.pop("shots")
 
-        return
-
     @staticmethod
     def get_transpile_args(kwargs):
         """The transpile argument setter.
