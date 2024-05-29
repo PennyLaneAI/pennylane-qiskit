@@ -799,39 +799,6 @@ class TestExecution:
 
         assert np.allclose(res[0], expectation, atol=0.3)  ## atol is high due to high variance
 
-    @pytest.mark.parametrize("num_wires", [1, 3, 5])
-    @pytest.mark.parametrize("num_shots", [50, 100])
-    @pytest.mark.skip(
-        reason="Need to replace this with using SamplerV2."
-    )  # ToDo: Do we even need this?
-    def test_generate_samples(self, num_wires, num_shots):
-        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
-
-        qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
-        compiled_circuits = test_dev.compile_circuits([qcirc])
-
-        job = test_dev._execute_sampler(circuits=compiled_circuits, shots=num_shots)
-
-        test_dev._current_job = job.result()
-
-        samples = test_dev.generate_samples()
-
-        assert len(samples) == num_shots
-        assert len(samples[0]) == num_wires
-
-        # we expect the samples to be orderd such that q0 has a 50% chance
-        # of being excited, and everything else is in the ground state
-        exp_res0 = np.zeros(num_wires)
-        exp_res1 = np.zeros(num_wires)
-        exp_res1[0] = 1
-
-        # the two expected results are in samples
-        assert exp_res1 in samples
-        assert exp_res0 in samples
-
-        # nothing else is in samples
-        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
-
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2)
@@ -845,10 +812,11 @@ class TestExecution:
         circuit(shots=[5])
 
         estimator_execute.assert_called_once()
-        assert dev._current_job[0].metadata["target_precision"] == np.sqrt(1 / 5)
+        # calculates # of shots executed from precision
+        assert int(np.ceil(1 / dev._current_job[0].metadata["target_precision"] ** 2)) == 5
 
         circuit()
-        assert dev._current_job[0].metadata["target_precision"] == np.sqrt(1 / 2)
+        assert int(np.ceil(1 / dev._current_job[0].metadata["target_precision"] ** 2)) == 2
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
@@ -870,23 +838,20 @@ class TestExecution:
         circuit()
         assert dev._current_job.num_shots == 2
 
-    @pytest.mark.skip(
-        reason="Tracking shot information will be addressed in the PR about options handling"
-    )
     def test_error_for_shot_vector(self):
         """Tests that a ValueError is raised if a shot vector is passed."""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         @qml.qnode(dev)
         def circuit():
-            return qml.expval(qml.PauliX(0))
+            return qml.sample(qml.PauliX(0))
 
         with pytest.raises(ValueError, match="Setting shot vector"):
             circuit(shots=[5, 10, 2])
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
-        assert dev._current_job.metadata[0]["shots"] == 2
+        assert dev._current_job.num_shots == 2
 
     @pytest.mark.parametrize(
         "observable",
