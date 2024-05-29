@@ -442,6 +442,33 @@ class TestKwargsHandling:
         dev = QiskitDevice2(wires=2, backend=backend, shots=200)
         assert dev._kwargs["default_shots"] == 200
 
+        with pytest.warns(
+            UserWarning,
+            match="default_shots was found as a keyword argument",
+        ):
+            dev = QiskitDevice2(wires=2, backend=backend, options={"default_shots": 30})
+
+        assert dev._kwargs["default_shots"] == 1024
+
+    def test_warning_if_options_and_kwargs_overlap(self):
+        """Test that a warning is raised if the user has options that overlap with the kwargs"""
+
+        with pytest.warns(
+            UserWarning,
+            match="An overlap between",
+        ):
+            dev = QiskitDevice2(
+                wires=2,
+                backend=backend,
+                options={"resilience_level": 1, "optimization_level": 2},
+                resilience_level=2,
+                random_sauce="spaghetti",
+            )
+
+        assert dev._kwargs["resilience_level"] == 1
+        assert dev._kwargs["optimization_level"] == 2
+        assert dev._kwargs["random_sauce"] == "spaghetti"
+
 
 class TestDeviceProperties:
     def test_name_property(self):

@@ -374,14 +374,22 @@ class QiskitDevice2(Device):
             noise_model = self._kwargs.pop("noise_model")
             self.backend.set_options(noise_model=noise_model)
 
+        if "options" in self._kwargs:
+            for key, val in self._kwargs.pop("options").items():
+                if key in self._kwargs:
+                    warnings.warn(
+                        "An overlap between what was passed in via options and what was passed in via kwargs was found."
+                        f"The value set in options {key}: {val} will be used."
+                    )
+                self._kwargs[key] = val
+
         if "default_shots" in self._kwargs:
             warnings.warn(
                 f"default_shots was found as a keyword argument, but it is not supported by {self.name}"
                 "Please use the `shots` keyword argument instead. The default number of shots "
                 "1024 will be used instead"
             )
-        self._kwargs["default_shots"] = self._kwargs["shots"]
-        self._kwargs.pop("shots")
+        self._kwargs["default_shots"] = self._kwargs.pop("shots")
 
     @staticmethod
     def get_transpile_args(kwargs):
