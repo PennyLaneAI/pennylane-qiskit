@@ -872,12 +872,9 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    @pytest.mark.skip(
-        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
-    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
-        """Test that the device uses _sampler and _execute_estimator appropriately
-        and provides an accurate answer for measurements with observables that don't have a pauli_rep.
+        """Test that the device uses _sampler and _execute_estimator appropriately and
+        provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
 
         dev = QiskitDevice2(wires=5, backend=backend)
@@ -926,7 +923,8 @@ class TestExecution:
             circuit()
 
     def test_qiskit_probability_output_format(self):
-        """Test that Qiskit's probability output dictionary format and values are the same as pennylane's."""
+        """Test that the format and values of the Qiskit device's output for `qml.probs` is
+        the same as pennylane's."""
 
         dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
         qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
@@ -946,3 +944,26 @@ class TestExecution:
 
         assert np.shape(res) == np.shape(qiskit_res)
         assert np.allclose(res, qiskit_res, atol=0.03)
+
+    def test_sampler_output_shape(self):
+        """Test that the shape of the results produced from the sampler for the Qiskit device
+        is consistent with Pennylane"""
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3], shots=1024)
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample()
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample()
+
+        res = circuit(np.pi / 2)
+        qiskit_res = qiskit_circuit(np.pi / 2)
+
+        assert np.shape(res) == np.shape(qiskit_res)
