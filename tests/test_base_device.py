@@ -1060,8 +1060,8 @@ class TestExecution:
             circuit()
 
     def test_qiskit_probability_output_format(self):
-        """Test that the Qiskit device's probability output dictionary format and values
-        are the same as pennylane's."""
+        """Test that the format and values of the Qiskit device's output for `qml.probs` is
+        the same as pennylane's."""
 
         dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
         qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
