@@ -489,7 +489,7 @@ class TestKwargsHandling:
         dev = QiskitDevice2(
             wires=2,
             backend=backend,
-            options={"resilience_level": 1, "optimization_level": 1},
+            options={"resilience_level": 1},
             execution={"init_qubits": False},
         )
 
@@ -500,8 +500,7 @@ class TestKwargsHandling:
         circuit()
 
         assert dev._kwargs["resilience_level"] == 1
-        assert dev._kwargs["optimization_level"] == 1
-        assert dev._kwargs["execution"]["init_qubits"] == False
+        assert dev._kwargs["execution"]["init_qubits"] is False
 
     def test_no_error_is_raised_if_transpilation_options_are_passed(self):
         dev = QiskitDevice2(
