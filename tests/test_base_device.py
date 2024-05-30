@@ -542,10 +542,6 @@ class TestMockedExecution:
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
 
-        # independently
-        kwargs = {"random_kwarg": 3, "optimization_level": 3, "circuits": []}
-        assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
-
         # on a device
         transpile_args = {
             "random_kwarg": 3,
@@ -557,7 +553,7 @@ class TestMockedExecution:
         dev = QiskitDevice2(
             wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
         )
-        assert dev.get_transpile_args(dev._kwargs) == {
+        assert dev.get_transpile_args() == {
             "optimization_level": 3,
             "seed_transpiler": 42,
         }
