@@ -14,6 +14,21 @@ that can be accessed in this plugin through:
 
 This device uses the Qiskit ``BasicSimulator`` backend from the
 `basic_provider <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_ module in Qiskit.
+In Qiskit, ``BasicSimulator`` uses ``shots=1024`` by default. As such, the same convention has been applied
+to `'qiskit.basicsim'` in PennyLane. 
+
+.. code-block:: python
+
+    @qml.qnode(dev)
+    def circuit():
+        qml.Hadamard(0)
+        qml.Hadamard(1)
+        return qml.count(wires=1)
+
+.. code-block:: pycon
+    
+    >>> circuit()
+    {'0': tensor(520, requires_grad=True), '1': tensor(504, requires_grad=True)} 
 
 .. note::
 
