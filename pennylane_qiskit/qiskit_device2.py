@@ -204,8 +204,8 @@ class QiskitDevice2(Device):
             sent to the backend device, to be set if the backend desired for compliation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
         **kwargs: transpilation and runtime kwargs to be used for measurements with Primitives. If `options` is
-            defined amongst the kwargs, if there are settings that overlap with those in kwargs, `options`
-            will take precedence kwargs. Otherwise, both will be used. Kwargs accepted by both the transpiler
+            defined amongst the kwargs, and there are settings that overlap with those in kwargs, the settings
+            in `options` will take precedence over kwargs. Kwargs accepted by both the transpiler
             and at runtime (e.g. optimization_level) will be passed to the transpiler rather than to the Primitive.
     """
 
@@ -386,13 +386,15 @@ class QiskitDevice2(Device):
                     )
                 self._kwargs[key] = val
 
+        shots = self._kwargs.pop("shots")
+
         if "default_shots" in self._kwargs:
             warnings.warn(
                 f"default_shots was found as a keyword argument, but it is not supported by {self.name}"
-                "Please use the `shots` keyword argument instead. The default number of shots "
-                "1024 will be used instead"
+                "Please use the `shots` keyword argument instead. The number of shots "
+                f"{shots} will be used instead."
             )
-        self._kwargs["default_shots"] = self._kwargs.pop("shots")
+        self._kwargs["default_shots"] = shots
 
     def get_transpile_args(self):
         """The transpile argument setter.
