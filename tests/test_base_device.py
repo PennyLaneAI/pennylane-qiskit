@@ -17,6 +17,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 
 from unittest.mock import patch, Mock
 import numpy as np
+from pydantic_core import ValidationError
 import pytest
 
 import pennylane as qml
@@ -459,17 +460,45 @@ class TestKwargsHandling:
             dev = QiskitDevice2(
                 wires=2,
                 backend=backend,
-                options={"resilience_level": 1, "optimization_level": 2},
+                options={"resilience_level": 1, "optimization_level": 1},
                 resilience_level=2,
                 random_sauce="spaghetti",
             )
 
         assert dev._kwargs["resilience_level"] == 1
-        assert dev._kwargs["optimization_level"] == 2
+        assert dev._kwargs["optimization_level"] == 1
+
+        # You can initialize the device with any kwarg, but you'll get a ValidationError
+        # when you run the circuit
         assert dev._kwargs["random_sauce"] == "spaghetti"
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
+
+        with pytest.raises(ValidationError, match="Object has no attribute"):
+            circuit()
+
+    def test_no_error_is_raised_if_transpilation_options_are_passed(self):
+        dev = QiskitDevice2(
+            wires=2,
+            backend=backend,
+            options={"resilience_level": 1, "optimization_level": 1},
+            seed_transpiler=42,
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
+
+        circuit()
+
+        assert dev._kwargs["resilience_level"] == 1
+        assert not hasattr(dev._kwargs, "seed_transpiler")
 
 
 class TestDeviceProperties:
+
     def test_name_property(self):
         """Test the backend property"""
         assert test_dev.name == "QiskitDevice2"

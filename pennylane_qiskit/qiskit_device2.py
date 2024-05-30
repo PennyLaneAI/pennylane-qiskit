@@ -203,7 +203,10 @@ class QiskitDevice2(Device):
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
             sent to the backend device, to be set if the backend desired for compliation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
-        **kwargs: transpilation and runtime kwargs to be used for measurements with Primitives.
+        **kwargs: transpilation and runtime kwargs to be used for measurements with Primitives. If `options` is
+            defined amongst the kwargs, if there are settings that overlap with those in kwargs, `options`
+            will take precedence kwargs. Otherwise, both will be used. Kwargs accepted by both the transpiler
+            and at runtime (e.g. optimization_level) will be passed to the transpiler rather than to the Primitive.
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
@@ -391,8 +394,7 @@ class QiskitDevice2(Device):
             )
         self._kwargs["default_shots"] = self._kwargs.pop("shots")
 
-    @staticmethod
-    def get_transpile_args(kwargs):
+    def get_transpile_args(self):
         """The transpile argument setter.
 
         Keyword Args:
@@ -402,7 +404,9 @@ class QiskitDevice2(Device):
 
         transpile_sig = inspect.signature(transpile).parameters
 
-        transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
+        transpile_args = {
+            arg: self._kwargs.pop(arg) for arg in transpile_sig if arg in self._kwargs
+        }
         transpile_args.pop("circuits", None)
         transpile_args.pop("backend", None)
 
@@ -419,7 +423,7 @@ class QiskitDevice2(Device):
         """
         # Compile each circuit object
         compiled_circuits = []
-        transpile_args = self.get_transpile_args(self._kwargs)
+        transpile_args = self.get_transpile_args()
 
         for i, circuit in enumerate(circuits):
             compiled_circ = transpile(circuit, backend=self.compile_backend, **transpile_args)
@@ -468,8 +472,8 @@ class QiskitDevice2(Device):
         """Execution for the Sampler primitive"""
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
-        sampler.options.update(**self._kwargs)
         compiled_circuits = self.compile_circuits(qcirc)
+        sampler.options.update(**self._kwargs)
 
         result = sampler.run(
             compiled_circuits,
@@ -501,10 +505,10 @@ class QiskitDevice2(Device):
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
         estimator = Estimator(session=session)
-        estimator.options.update(**self._kwargs)
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc) * len(pauli_observables)
+        estimator.options.update(**self._kwargs)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
