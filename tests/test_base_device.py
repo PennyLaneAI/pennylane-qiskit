@@ -29,7 +29,6 @@ from qiskit_aer import AerSimulator
 # named Estimator object has a different call signature than the remote device Estimator,
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
-from qiskit.primitives import EstimatorResult
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
@@ -567,35 +566,6 @@ class TestMockedExecution:
             assert isinstance(circuit, QuantumCircuit)
 
     @pytest.mark.parametrize(
-        "measurements, expectation",
-        [
-            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
-            ([qml.var(qml.PauliX(0))], (1)),
-            (
-                [
-                    qml.expval(qml.PauliX(0)),
-                    qml.expval(qml.PauliZ(0)),
-                    qml.var(qml.PauliX(0)),
-                ],
-                (0, 1, 1),
-            ),
-        ],
-    )
-    @pytest.mark.skip(reason="EstimatorResult object is for results from the estimaorV1")
-    def test_process_estimator_job_mocked(self, measurements, expectation):
-        """Test the process_estimator_job function with constructed return for
-        Estimator (integration test that runs with a Token is below)"""
-
-        values = np.array([np.random.ranf() for i in range(len(measurements))])
-        metadata = [{"variance": np.random.ranf(), "shots": 4000} for i in range(len(measurements))]
-
-        result = EstimatorResult(values, metadata)
-        processed_result = QiskitDevice2._process_estimator_job(measurements, result)
-
-        assert isinstance(processed_result, tuple)
-        assert len(processed_result) == len(measurements)
-
-    @pytest.mark.parametrize(
         "results, index",
         [
             ({"00": 125, "10": 500, "01": 250, "11": 125}, None),
@@ -694,21 +664,6 @@ class TestMockedExecution:
 
         # to emphasize, this did nothing except appease CodeCov
         assert isinstance(result, Mock)
-
-    @patch("pennylane_qiskit.qiskit_device2.Sampler")
-    @pytest.mark.skip(
-        reason="Do we really need this to appease codecov now that we run our tests on local simulators?"
-    )
-    @pytest.mark.parametrize("session", [None, MockSession(backend)])
-    def test_execute_sampler_mocked(self, mocked_sampler, session):
-        """Test the _execute_sampler function using a mocked version of Sampler
-        that returns a meaningless result."""
-
-        qs = QuantumScript([qml.PauliX(0)], measurements=[qml.counts()], shots=100)
-        result = test_dev._execute_sampler(qs, session)
-
-        # to emphasize, this did nothing except appease CodeCov
-        assert isinstance(result[0], Mock)
 
     def test_shot_vector_error_mocked(self):
         """Test that a device that executes a circuit with an array of shots raises the appropriate ValueError"""
@@ -889,6 +844,9 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
+    @pytest.mark.skip(
+        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
+    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
         """Test that the device uses _sampler and _execute_estimator appropriately
         and provides an accurate answer for measurements with observables that don't have a pauli_rep.

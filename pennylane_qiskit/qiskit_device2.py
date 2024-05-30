@@ -542,6 +542,7 @@ class QiskitDevice2(Device):
 
         single_measurement = len(measurements) == 1
         result = (result[0],) if single_measurement else tuple(result)
+
         return result
 
     def generate_samples(self, circuit=None):
