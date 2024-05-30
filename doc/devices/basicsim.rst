@@ -25,7 +25,7 @@ to `'qiskit.basicsim'` in PennyLane.
         qml.Hadamard(1)
         return qml.count(wires=1)
 
-.. code-block:: pycon
+.. code-block:: console
     
     >>> circuit()
     {'0': tensor(520, requires_grad=True), '1': tensor(504, requires_grad=True)} 
