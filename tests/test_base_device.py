@@ -482,6 +482,27 @@ class TestKwargsHandling:
         with pytest.raises(ValidationError, match="Object has no attribute"):
             circuit()
 
+    def test_options_and_kwargs_combine_into_unified_kwargs(self):
+        """Test that options set via the keyword argument options and options set via kwargs
+        will combine into a single unified kwargs that is passed to the device"""
+
+        dev = QiskitDevice2(
+            wires=2,
+            backend=backend,
+            options={"resilience_level": 1, "optimization_level": 1},
+            execution={"init_qubits": False},
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
+
+        circuit()
+
+        assert dev._kwargs["resilience_level"] == 1
+        assert dev._kwargs["optimization_level"] == 1
+        assert dev._kwargs["execution"]["init_qubits"] == False
+
     def test_no_error_is_raised_if_transpilation_options_are_passed(self):
         dev = QiskitDevice2(
             wires=2,
