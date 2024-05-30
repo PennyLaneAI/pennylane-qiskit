@@ -31,7 +31,6 @@ from qiskit_aer import AerSimulator
 # named Estimator object has a different call signature than the remote device Estimator,
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
-from qiskit.primitives import EstimatorResult
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
