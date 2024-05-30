@@ -437,6 +437,8 @@ class TestKwargsHandling:
         ):
             dev = QiskitDevice2(wires=2, backend=backend, default_shots=333)
 
+        # Qiskit takes in `default_shots` to define the # of shots, therefore we use
+        # the kwarg "default_shots" rather than shots to pass it to Qiskit.
         assert dev._kwargs["default_shots"] == 1024
 
         dev = QiskitDevice2(wires=2, backend=backend, shots=200)
@@ -448,6 +450,7 @@ class TestKwargsHandling:
         ):
             dev = QiskitDevice2(wires=2, backend=backend, options={"default_shots": 30})
 
+        # resets to default since we reinitialize the device
         assert dev._kwargs["default_shots"] == 1024
 
     def test_warning_if_options_and_kwargs_overlap(self):
