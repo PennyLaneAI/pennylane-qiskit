@@ -10,6 +10,9 @@
 
 ### Documentation 📝
 
+* An example showing that `qiskit.basicsim` has a default `shots` value of 1024 has been added to the BasicSim device's usage page.
+  [(#549)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/549)
+
 ### Bug fixes 🐛
 
 ### Contributors ✍️
