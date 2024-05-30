@@ -15,7 +15,7 @@ that can be accessed in this plugin through:
 This device uses the Qiskit ``BasicSimulator`` backend from the
 `basic_provider <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_ module in Qiskit.
 In Qiskit, ``BasicSimulator`` uses ``shots=1024`` by default. As such, the same convention has been applied
-to `'qiskit.basicsim'` in PennyLane. 
+to ``'qiskit.basicsim'`` in PennyLane. 
 
 .. code-block:: python
 
