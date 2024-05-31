@@ -390,7 +390,7 @@ class QiskitDevice2(Device):
 
         if "default_shots" in self._kwargs:
             warnings.warn(
-                f"default_shots was found as a keyword argument, but it is not supported by {self.name}"
+                f"default_shots was found in the keyword arguments, but it is not supported by {self.name}"
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
