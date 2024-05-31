@@ -25,6 +25,7 @@ from pennylane.tape.qscript import QuantumScript
 
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
+from qiskit_ibm_runtime import Session
 
 # do not import Estimator (imported above) from qiskit.primitives - the identically
 # named Estimator object has a different call signature than the remote device Estimator,
@@ -847,6 +848,31 @@ class TestExecution:
 
         circuit()
         assert int(np.ceil(1 / dev._current_job[0].metadata["target_precision"] ** 2)) == 2
+
+    @pytest.mark.parametrize("num_wires", [1, 3, 5])
+    @pytest.mark.parametrize("num_shots", [50, 100])
+    def test_generate_samples(self, num_wires, num_shots):
+        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
+        dev = QiskitDevice2(wires=num_wires, backend=backend, shots=num_shots)
+        dev._execute_sampler(circuit=qs, session=Session(backend=backend))
+
+        samples = dev.generate_samples(0)
+
+        assert len(samples) == num_shots
+        assert len(samples[0]) == num_wires
+
+        # we expect the samples to be orderd such that q0 has a 50% chance
+        # of being excited, and everything else is in the ground state
+        exp_res0 = np.zeros(num_wires)
+        exp_res1 = np.zeros(num_wires)
+        exp_res1[0] = 1
+
+        # the two expected results are in samples
+        assert exp_res1 in samples
+        assert exp_res0 in samples
+
+        # nothing else is in samples
+        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
