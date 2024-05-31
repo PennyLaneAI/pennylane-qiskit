@@ -23,6 +23,7 @@ import pytest
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
 
+from qiskit_ibm_runtime import Session, EstimatorV2 as Estimator
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
 
@@ -32,7 +33,7 @@ from qiskit_aer import AerSimulator
 # both use this EstimatorResults, however:
 from qiskit.providers import BackendV1, BackendV2
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
@@ -41,6 +42,7 @@ from pennylane_qiskit.qiskit_device2 import (
 from pennylane_qiskit.converter import (
     circuit_to_qiskit,
     QISKIT_OPERATION_MAP,
+    mp_to_pauli,
 )
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments, redefined-outer-name
@@ -898,6 +900,83 @@ class TestExecution:
 
         circuit()
         assert int(np.ceil(1 / dev._current_job[0].metadata["target_precision"] ** 2)) == 2
+
+    @pytest.mark.parametrize(
+        "measurements, expectation",
+        [
+            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
+            ([qml.var(qml.PauliX(0))], (1)),
+            (
+                [
+                    qml.expval(qml.PauliX(0)),
+                    qml.expval(qml.PauliZ(0)),
+                    qml.var(qml.PauliX(0)),
+                ],
+                (0, 1, 1),
+            ),
+            ([qml.expval(0.5 * qml.Y(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0))], (0)),
+            (
+                [
+                    qml.expval(
+                        qml.ops.LinearCombination(
+                            [1, 3, 4], [qml.X(3) @ qml.Y(2), qml.Y(4) - qml.X(2), qml.Z(2) * 3]
+                        )
+                        + qml.X(4)
+                    )
+                ],
+                (16),
+            ),
+        ],
+    )
+    def test_process_estimator_job(self, measurements, expectation):
+        """Tests that the estimator returns expected and accurate results for an ``expval`` and ``var`` for a variety of multi-qubit observables"""
+
+        # make PennyLane circuit
+        qs = QuantumScript([], measurements=measurements)
+
+        # convert to Qiskit circuit information
+        qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
+        pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
+
+        # run on simulator via Estimator
+        estimator = Estimator(backend=backend)
+        compiled_circuits = [transpile(qcirc, backend=backend)]
+        circ_and_obs = [(compiled_circuits[0], pauli_observables)]
+        result = estimator.run(circ_and_obs).result()
+
+        assert isinstance(result[0].data.evs, np.ndarray)
+        assert result[0].data.evs.size == len(qs.measurements)
+
+        assert isinstance(result[0].metadata, dict)
+
+        processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
+        assert isinstance(processed_result, tuple)
+        assert np.allclose(processed_result, expectation, atol=0.1)
+
+    @pytest.mark.parametrize("num_wires", [1, 3, 5])
+    @pytest.mark.parametrize("num_shots", [50, 100])
+    def test_generate_samples(self, num_wires, num_shots):
+        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
+        dev = QiskitDevice2(wires=num_wires, backend=backend, shots=num_shots)
+        dev._execute_sampler(circuit=qs, session=Session(backend=backend))
+
+        samples = dev.generate_samples(0)
+
+        assert len(samples) == num_shots
+        assert len(samples[0]) == num_wires
+
+        # we expect the samples to be orderd such that q0 has a 50% chance
+        # of being excited, and everything else is in the ground state
+        exp_res0 = np.zeros(num_wires)
+        exp_res1 = np.zeros(num_wires)
+        exp_res1[0] = 1
+
+        # the two expected results are in samples
+        assert exp_res1 in samples
+        assert exp_res0 in samples
+
+        # nothing else is in samples
+        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
