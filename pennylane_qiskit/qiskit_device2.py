@@ -499,7 +499,9 @@ class QiskitDevice2(Device):
         return the requested results from the Estimator executions."""
 
         expvals = job_result[0].data.evs
-        variances = job_result[0].data.stds ** 2 * 4096 # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
+        variances = (
+            job_result[0].data.stds ** 2 * 4096
+        )  # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
         # ToDo: Track the # of shots and use that instead of hard-coding
         # to calculate the variance.
 
