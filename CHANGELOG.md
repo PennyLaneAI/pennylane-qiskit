@@ -16,7 +16,7 @@
 * The ``qiskit.basicaer`` device has been removed because it is not supported for versions of Qiskit above 0.46.
   [(#546)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
 
-* The "ibmq" devices, ``qiskit.ibmq``, ``qiskit.ibmq.circuit_runner``, ``qiskit.ibmq.sampler`` have been removed due to deprecations of the IBMProvider and the cloud simulator "ibmq_qasm_simulator".
+* The IBM quantum devices, ``qiskit.ibmq``, ``qiskit.ibmq.circuit_runner`` and ``qiskit.ibmq.sampler``, have been removed due to deprecations of the IBMProvider and the cloud simulator "ibmq_qasm_simulator".
   [(#550)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/550)
 
 ### Deprecations 👋
