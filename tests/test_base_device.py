@@ -849,41 +849,6 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    @pytest.mark.parametrize("backend", [backend, legacy_backend])
-    def test_execute_pipeline_no_primitives_mocked(self, mocker, backend):
-        """Test that a device **not** using Primitives only calls the _execute_runtime_service
-        to execute, regardless of measurement type"""
-
-        dev = QiskitDevice2(
-            wires=5, backend=backend, use_primitives=False, session=MockSession(backend)
-        )
-
-        initial_session = dev._session
-
-        sampler_execute = mocker.spy(dev, "_execute_sampler")
-        estimator_execute = mocker.spy(dev, "_execute_estimator")
-
-        qs = QuantumScript(
-            [qml.PauliX(0), qml.PauliY(1)],
-            measurements=[
-                qml.expval(qml.PauliZ(0)),
-                qml.probs(wires=[0, 1]),
-                qml.counts(),
-                qml.sample(),
-            ],
-        )
-
-        with patch.object(dev, "_execute_runtime_service", return_value=["runtime_execute_res"]):
-            runtime_service_execute = mocker.spy(dev, "_execute_runtime_service")
-            res = dev.execute(qs)
-
-        runtime_service_execute.assert_called_once()
-        sampler_execute.assert_not_called()
-        estimator_execute.assert_not_called()
-
-        assert res == "runtime_execute_res"
-        assert initial_session == dev._session  # session is not changed
-
     @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._execute_estimator")
     def test_execute_pipeline_primitives_no_session(self, mocker):
         """Test that a Primitives-based device initialized with no Session creates one for the
