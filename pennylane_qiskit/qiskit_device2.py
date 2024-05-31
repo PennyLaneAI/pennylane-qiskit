@@ -452,6 +452,7 @@ class QiskitDevice2(Device):
         sampler = Sampler(session=session)
         compiled_circuits = self.compile_circuits(qcirc)
 
+        # len(compiled_circuits) is always 1 so the indexing does not matter.
         result = sampler.run(compiled_circuits).result()[0]
         classical_register_name = compiled_circuits[0].cregs[0].name
         self._current_job = getattr(result.data, classical_register_name)
