@@ -119,8 +119,6 @@ hardware access.
 
    devices/aer
    devices/basicsim
-   devices/ibmq
-   devices/runtime
    devices/remote
 
 .. toctree::
