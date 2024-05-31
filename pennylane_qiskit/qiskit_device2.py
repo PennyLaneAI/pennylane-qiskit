@@ -477,6 +477,7 @@ class QiskitDevice2(Device):
         compiled_circuits = self.compile_circuits(qcirc)
         sampler.options.update(**self._kwargs)
 
+        # len(compiled_circuits) is always 1 so the indexing does not matter.
         result = sampler.run(
             compiled_circuits,
             shots=circuit.shots.total_shots if circuit.shots.total_shots else None,
@@ -491,14 +492,13 @@ class QiskitDevice2(Device):
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        for index, circ in enumerate([circuit]):
-            self._samples = self.generate_samples(index)
-            res = [
-                mp.process_samples(self._samples, wire_order=self.wires) for mp in circ.measurements
-            ]
-            single_measurement = len(circ.measurements) == 1
-            res = res[0] if single_measurement else tuple(res)
-            results.append(res)
+        self._samples = self.generate_samples(0)
+        res = [
+            mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
+        ]
+        single_measurement = len(circuit.measurements) == 1
+        res = res[0] if single_measurement else tuple(res)
+        results.append(res)
 
         return tuple(results)
 
@@ -509,20 +509,17 @@ class QiskitDevice2(Device):
         estimator = Estimator(session=session)
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        compiled_circuits = self.compile_circuits(qcirc) * len(pauli_observables)
+        compiled_circuits = self.compile_circuits(qcirc)
         estimator.options.update(**self._kwargs)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        circ_and_obs = [
-            (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
-        ]
+        circ_and_obs = [(compiled_circuits[0], pauli_observables)]
         result = estimator.run(
             circ_and_obs,
             precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
         ).result()
-
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
@@ -534,10 +531,8 @@ class QiskitDevice2(Device):
         along with some metadata. Extract the relevant number for each measurement process and
         return the requested results from the Estimator executions."""
 
-        expvals = [res.data.evs.item() for res in job_result]
-        variances = [
-            (res.data.stds.item() / res.metadata["target_precision"]) ** 2 for res in job_result
-        ]
+        expvals = job_result[0].data.evs
+        variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
 
         result = []
         for i, mp in enumerate(measurements):
