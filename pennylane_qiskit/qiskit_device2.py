@@ -463,14 +463,13 @@ class QiskitDevice2(Device):
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        for index, circ in enumerate([circuit]):
-            self._samples = self.generate_samples(index)
-            res = [
-                mp.process_samples(self._samples, wire_order=self.wires) for mp in circ.measurements
-            ]
-            single_measurement = len(circ.measurements) == 1
-            res = res[0] if single_measurement else tuple(res)
-            results.append(res)
+        self._samples = self.generate_samples(0)
+        res = [
+            mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
+        ]
+        single_measurement = len(circuit.measurements) == 1
+        res = res[0] if single_measurement else tuple(res)
+        results.append(res)
 
         return tuple(results)
 
@@ -481,14 +480,12 @@ class QiskitDevice2(Device):
         estimator = Estimator(session=session)
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        compiled_circuits = self.compile_circuits(qcirc) * len(pauli_observables)
+        compiled_circuits = self.compile_circuits(qcirc)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        circ_and_obs = [
-            (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
-        ]
+        circ_and_obs = [(compiled_circuits[0], pauli_observables)]
         result = estimator.run(circ_and_obs).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
@@ -501,10 +498,8 @@ class QiskitDevice2(Device):
         along with some metadata. Extract the relevant number for each measurement process and
         return the requested results from the Estimator executions."""
 
-        expvals = [res.data.evs.item() for res in job_result]
-        variances = [
-            res.data.stds.item() ** 2 * 4096 for res in job_result
-        ]  # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
+        expvals = job_result[0].data.evs
+        variances = job_result[0].data.stds ** 2 * 4096 # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
         # ToDo: Track the # of shots and use that instead of hard-coding
         # to calculate the variance.
 
