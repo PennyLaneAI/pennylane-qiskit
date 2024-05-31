@@ -28,25 +28,9 @@ The following devices are available:
     :link: devices/basicsim.html
 
 .. title-card::
-    :name: 'qiskit.ibmq.circuit_runner'
-    :description: Allows integration with Qiskit's circuit runner runtime program.
-    :link: devices/runtime.html
-
-.. title-card::
-    :name: 'qiskit.ibmq.sampler'
-    :description: Allows integration with Qiskit's sampler runtime program.
-    :link: devices/runtime.html
-
-.. title-card::
     :name: 'qiskit.remote'
     :description: Allows integration with any Qiskit backend.
     :link: devices/remote.html
-
-.. title-card::
-    :name: 'qiskit.ibmq'
-    :description: Allows integration with Qiskit's hardware backends, and hardware-specific simulators.
-    :link: devices/ibmq.html
-
 
 .. raw:: html
 
@@ -112,7 +96,7 @@ You can also try it out using any of the qubit based `demos from the PennyLane d
 <https://pennylane.ai/qml/demonstrations.html>`_, for example the tutorial on
 `qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_.
 Simply replace ``'default.qubit'`` with any of the available Qiskit devices,
-such as ``'qiskit.aer'``, or ``'qiskit.ibmq'`` if you have an API key for
+such as ``'qiskit.aer'``, or ``'qiskit.remote'`` if you have an API key for
 hardware access.
 
 .. raw:: html
@@ -135,8 +119,6 @@ hardware access.
 
    devices/aer
    devices/basicsim
-   devices/ibmq
-   devices/runtime
    devices/remote
 
 .. toctree::
