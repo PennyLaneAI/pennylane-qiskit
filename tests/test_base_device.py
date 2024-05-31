@@ -23,9 +23,9 @@ import pytest
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
 
+from qiskit_ibm_runtime import Session, EstimatorV2 as Estimator
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
-from qiskit_ibm_runtime import Session, EstimatorV2 as Estimator
 
 # do not import Estimator (imported above) from qiskit.primitives - the identically
 # named Estimator object has a different call signature than the remote device Estimator,
