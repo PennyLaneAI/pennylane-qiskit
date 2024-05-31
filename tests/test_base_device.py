@@ -433,7 +433,7 @@ class TestKwargsHandling:
 
         with pytest.warns(
             UserWarning,
-            match="default_shots was found as a keyword argument",
+            match="default_shots was found in the keyword arguments",
         ):
             dev = QiskitDevice2(wires=2, backend=backend, default_shots=333)
 
@@ -446,7 +446,7 @@ class TestKwargsHandling:
 
         with pytest.warns(
             UserWarning,
-            match="default_shots was found as a keyword argument",
+            match="default_shots was found in the keyword arguments",
         ):
             dev = QiskitDevice2(wires=2, backend=backend, options={"default_shots": 30})
 
