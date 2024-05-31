@@ -28,8 +28,7 @@ import pennylane as qml
 from qiskit.compiler import transpile
 from qiskit.providers import BackendV2
 
-from qiskit_ibm_runtime import Session, Sampler, Estimator
-from qiskit_ibm_runtime.options import Options
+from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
@@ -181,23 +180,11 @@ def split_execution_types(
 
         result = dict(zip(flattened_indices, flattened_results))
 
-        return tuple(result[i] for i in sorted(result.keys()))
+        result = tuple(result[i] for i in sorted(result.keys()))
+
+        return result[0] if len(result) == 1 else result
 
     return tapes, reorder_fn
-
-
-def qiskit_options_to_flat_dict(options):
-    """Create a dictionary from a Qiskit Options object"""
-    # this will break (or at least overwrite potentially relevant information)
-    # if they name things in some categories on Options the same as things in
-    # other categories, but at that point they've really departed from the kwarg API
-    options_dict = {}
-    for key, val in vars(options).items():
-        if hasattr(val, "__dict__"):
-            options_dict.update(qiskit_options_to_flat_dict(val))
-        elif val is not None:
-            options_dict[key] = val
-    return options_dict
 
 
 @simulator_tracking
@@ -214,18 +201,15 @@ class QiskitDevice2(Device):
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        options (Options): a Qiskit Options object for specifying handling the Qiskit task
-            (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
-            for more details.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
             sent to the backend device, to be set if the backend desired for compliation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
-        **kwargs: transpilation and runtime kwargs to be used for measurements without Qiskit Primitives.
-            If any values are defined both in ``options`` and in the remaining ``kwargs``, the value
-            provided in ``options`` will take precedence. These kwargs will be ignored for all Primitive-based
-            measurements on the device.
+        **kwargs: transpilation and runtime kwargs to be used for measurements with Primitives. If `options` is
+            defined amongst the kwargs, and there are settings that overlap with those in kwargs, the settings
+            in `options` will take precedence over kwargs. Kwargs accepted by both the transpiler
+            and at runtime (e.g. optimization_level) will be passed to the transpiler rather than to the Primitive.
 
     .. details::
         :title: Tracking
@@ -266,7 +250,6 @@ class QiskitDevice2(Device):
         wires,
         backend,
         shots=1024,
-        options=None,
         session=None,
         compile_backend=None,
         **kwargs,
@@ -283,10 +266,6 @@ class QiskitDevice2(Device):
 
             shots = 1024
 
-        self.options = options or Options()
-        if self.options.execution.shots == 4000:  ## 4000 is default value in Qiskit.
-            self.options.execution.shots = shots
-
         super().__init__(wires=wires, shots=shots)
 
         self._backend = backend
@@ -295,13 +274,8 @@ class QiskitDevice2(Device):
         self._service = getattr(backend, "_service", None)
         self._session = session
 
-        # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
-        self._init_kwargs = kwargs
-        # _kwargs are used instead of the Options for performing raw sample based measurements (using old Qiskit API)
-        # the _kwargs are a combination of information from Options and _init_kwargs
-        self._kwargs = None
-        if self.options.simulator.noise_model:
-            self.backend.set_options(noise_model=self.options.simulator.noise_model)
+        self._kwargs = kwargs
+        self._kwargs["shots"] = shots
 
         # Perform validation against backend
         available_qubits = (
@@ -313,7 +287,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._update_kwargs()
+        self._process_kwargs()
 
     @property
     def backend(self):
@@ -419,32 +393,34 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def _update_kwargs(self):
+    def _process_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information"""
-        option_kwargs = qiskit_options_to_flat_dict(self.options)
 
-        overlapping_kwargs = set(self._init_kwargs).intersection(set(option_kwargs))
-        if overlapping_kwargs:
+        if "noise_model" in self._kwargs:
+            noise_model = self._kwargs.pop("noise_model")
+            self.backend.set_options(noise_model=noise_model)
+
+        if "options" in self._kwargs:
+            for key, val in self._kwargs.pop("options").items():
+                if key in self._kwargs:
+                    warnings.warn(
+                        "An overlap between what was passed in via options and what was passed in via kwargs was found."
+                        f"The value set in options {key}={val} will be used."
+                    )
+                self._kwargs[key] = val
+
+        shots = self._kwargs.pop("shots")
+
+        if "default_shots" in self._kwargs:
             warnings.warn(
-                f"The keyword argument(s) {overlapping_kwargs} passed to the device are also "
-                f"defined in the device Options. The definition in Options will be used."
+                f"default_shots was found in the keyword arguments, but it is not supported by {self.name}"
+                "Please use the `shots` keyword argument instead. The number of shots "
+                f"{shots} will be used instead."
             )
-        if option_kwargs["shots"] != self.shots.total_shots:
-            warnings.warn(
-                f"Setting shots via the Options is not supported on PennyLane devices. The shots {self.shots} "
-                f"passed to the device will be used."
-            )
-            self.options.execution.shots = self.shots.total_shots
+        self._kwargs["default_shots"] = shots
 
-        option_kwargs.pop("shots")
-        kwargs = self._init_kwargs.copy()
-        kwargs.update(option_kwargs)
-
-        self._kwargs = kwargs
-
-    @staticmethod
-    def get_transpile_args(kwargs):
+    def get_transpile_args(self):
         """The transpile argument setter.
 
         Keyword Args:
@@ -454,7 +430,9 @@ class QiskitDevice2(Device):
 
         transpile_sig = inspect.signature(transpile).parameters
 
-        transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
+        transpile_args = {
+            arg: self._kwargs.pop(arg) for arg in transpile_sig if arg in self._kwargs
+        }
         transpile_args.pop("circuits", None)
         transpile_args.pop("backend", None)
 
@@ -471,7 +449,7 @@ class QiskitDevice2(Device):
         """
         # Compile each circuit object
         compiled_circuits = []
-        transpile_args = self.get_transpile_args(self._kwargs)
+        transpile_args = self.get_transpile_args()
 
         for i, circuit in enumerate(circuits):
             compiled_circ = transpile(circuit, backend=self.compile_backend, **transpile_args)
@@ -498,9 +476,9 @@ class QiskitDevice2(Device):
             try:
                 for circ in circuits:
                     if circ.shots and len(circ.shots.shot_vector) > 1:
-                        warnings.warn(
+                        raise ValueError(
                             f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            f"The circuit will be run once with {circ.shots.total_shots} shots instead."
+                            "Please use a single integer instead when specifying the number of shots."
                         )
                     if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
                         circ.measurements[0].obs, "pauli_rep", None
@@ -518,37 +496,57 @@ class QiskitDevice2(Device):
 
     def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
+        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
+        sampler = Sampler(session=session)
+        compiled_circuits = self.compile_circuits(qcirc)
+        sampler.options.update(**self._kwargs)
 
-        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)
-        if circuit.shots:
-            self.options.execution.shots = circuit.shots.total_shots
-        sampler = Sampler(session=session, options=self.options)
+        result = sampler.run(
+            compiled_circuits,
+            shots=circuit.shots.total_shots if circuit.shots.total_shots else None,
+        ).result()[0]
+        classical_register_name = compiled_circuits[0].cregs[0].name
+        self._current_job = getattr(result.data, classical_register_name)
 
-        result = sampler.run(qcirc).result()
-        self._current_job = result
+        results = []
 
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
         # single_measurement = len(circuit.measurements) == 1
         # res = (res[0], ) if single_measurement else tuple(res)
 
-        return (result.quasi_dists[0],)
+        for index, circ in enumerate([circuit]):
+            self._samples = self.generate_samples(index)
+            res = [
+                mp.process_samples(self._samples, wire_order=self.wires) for mp in circ.measurements
+            ]
+            single_measurement = len(circ.measurements) == 1
+            res = res[0] if single_measurement else tuple(res)
+            results.append(res)
+
+        return tuple(results)
 
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
-        qcirc = circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)
-        if circuit.shots:
-            self.options.execution.shots = circuit.shots.total_shots
-        estimator = Estimator(session=session, options=self.options)
+        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
+        estimator = Estimator(session=session)
 
+        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
+        compiled_circuits = self.compile_circuits(qcirc) * len(pauli_observables)
+        estimator.options.update(**self._kwargs)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
+        circ_and_obs = [
+            (compiled_circuits[i], pauli_observables[i]) for i in range(len(pauli_observables))
+        ]
+        result = estimator.run(
+            circ_and_obs,
+            precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
+        ).result()
 
-        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
@@ -560,8 +558,10 @@ class QiskitDevice2(Device):
         along with some metadata. Extract the relevant number for each measurement process and
         return the requested results from the Estimator executions."""
 
-        expvals = job_result.values
-        variances = [res["variance"] for res in job_result.metadata]
+        expvals = [res.data.evs.item() for res in job_result]
+        variances = [
+            (res.data.stds.item() / res.metadata["target_precision"]) ** 2 for res in job_result
+        ]
 
         result = []
         for i, mp in enumerate(measurements):

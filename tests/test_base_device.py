@@ -17,14 +17,11 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 
 from unittest.mock import patch, Mock
 from pennylane import numpy as np
+from pydantic_core import ValidationError
 import pytest
-from semantic_version import Version
-import qiskit_ibm_runtime
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import Estimator
-from qiskit_ibm_runtime.options import Options
 
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
@@ -33,7 +30,6 @@ from qiskit_aer import AerSimulator
 # named Estimator object has a different call signature than the remote device Estimator,
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
-from qiskit.primitives import EstimatorResult
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit
@@ -41,11 +37,9 @@ from pennylane_qiskit.qiskit_device2 import (
     QiskitDevice2,
     qiskit_session,
     split_execution_types,
-    qiskit_options_to_flat_dict,
 )
 from pennylane_qiskit.converter import (
     circuit_to_qiskit,
-    mp_to_pauli,
     QISKIT_OPERATION_MAP,
 )
 
@@ -122,16 +116,6 @@ backend = AerSimulator()
 test_dev = QiskitDevice2(wires=5, backend=backend)
 
 
-def options_for_testing():
-    """Creates an Options object with defined values in multiple sub-categories"""
-    options = Options()
-    options.environment.job_tags = ["getting angle"]
-    options.resilience.noise_amplifier = "LocalFoldingAmplifier"
-    options.optimization_level = 2
-    options.resilience_level = 1
-    return options
-
-
 class TestSupportForV1andV2:
     """Tests compatibility with BackendV1 and BackendV2"""
 
@@ -147,12 +131,9 @@ class TestSupportForV1andV2:
     @pytest.mark.parametrize(
         "backend, shape",
         [
-            (FakeManila(), (1, 1024)),
-            (FakeManilaV2(), (1, 1024)),
+            (FakeManila(), (1024,)),
+            (FakeManilaV2(), (1024,)),
         ],
-    )
-    @pytest.mark.skip(
-        reason="The functionality of using sampler to get an accurate answer is not yet implemented"
     )
     def test_v1_and_v2_manila(self, backend, shape):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
@@ -197,39 +178,6 @@ class TestDeviceInitialization:
             dev = QiskitDevice2(wires=2, backend=backend, shots=None)
 
         assert dev.shots.total_shots == 1024
-        assert dev.options.execution.shots == 1024
-
-    def test_kwargs_on_initialization(self, mocker):
-        """Test that update_kwargs is called on intialization and combines the Options
-        and kwargs as self._kwargs"""
-
-        options = Options()
-        options.environment.job_tags = ["my_tag"]
-
-        spy = mocker.spy(QiskitDevice2, "_update_kwargs")
-
-        dev = QiskitDevice2(
-            wires=2,
-            backend=backend,
-            options=options,
-            random_kwarg1=True,
-            random_kwarg2="a",
-        )
-
-        spy.assert_called_once()
-
-        # kwargs are updated to a combination of the information from the Options and kwargs
-        assert dev._kwargs == {
-            "random_kwarg1": True,
-            "random_kwarg2": "a",
-            "skip_transpilation": False,
-            "init_qubits": True,
-            "log_level": "WARNING",
-            "job_tags": ["my_tag"],
-        }
-
-        # initial kwargs are saved without modification
-        assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
 
     @pytest.mark.parametrize("backend", [backend, legacy_backend])
     def test_backend_wire_validation(self, backend):
@@ -243,12 +191,9 @@ class TestDeviceInitialization:
         """Test that the simulator noise model saved on a passed Options
         object is used to set the backend noise model"""
 
-        options = Options()
-        options.simulator.noise_model = {"placeholder": 1}
-
         new_backend = MockedBackend()
         dev1 = QiskitDevice2(wires=3, backend=backend)
-        dev2 = QiskitDevice2(wires=3, backend=new_backend, options=options)
+        dev2 = QiskitDevice2(wires=3, backend=new_backend, noise_model={"placeholder": 1})
 
         assert dev1.backend.options.noise_model is None
         assert dev2.backend.options.noise_model == {"placeholder": 1}
@@ -391,7 +336,11 @@ class TestDevicePreprocessing:
         assert [tape.measurements for tape in tapes] == expectation
 
         # reorder_fn puts them back
-        assert reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
+        assert (
+            reorder_fn([tape.measurements for tape in tapes]) == qs.measurements[0]
+            if len(qs.measurements) == 1
+            else reorder_fn([tape.measurements for tape in tapes]) == tuple(qs.measurements)
+        )
 
     @pytest.mark.parametrize(
         "op, expected",
@@ -434,7 +383,7 @@ class TestDevicePreprocessing:
     )
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
         """Test that the default behaviour for preprocess it to split the tapes based
-        on meausrement type. Expval and Variance are one type (Estimator), Probs and raw-sample based measurements
+        on measurement type. Expval and Variance are one type (Estimator), Probs and raw-sample based measurements
         are another type (Sampler)."""
 
         dev = QiskitDevice2(wires=5, backend=backend)
@@ -477,171 +426,102 @@ class TestDevicePreprocessing:
         assert np.all([op.name in QISKIT_OPERATION_MAP for op in tapes[0].operations])
 
 
-class TestOptionsHandling:
-    def test_qiskit_options_to_flat_dict(self):
-        """Test that a Qiskit Options object is converted to an un-nested python dictionary"""
-
-        options = options_for_testing()
-
-        options_dict = qiskit_options_to_flat_dict(options)
-
-        assert isinstance(options_dict, dict)
-        # the values in the dict are not themselves dictionaries or convertable to dictionaries
-        for val in options_dict.values():
-            assert not hasattr(val, "__dict__")
-            assert not isinstance(val, dict)
-
-    @pytest.mark.parametrize("options", [None, options_for_testing()])
-    def test_shots_kwarg_updates_default_options(self, options):
-        """Check that the shots passed to the device are set on the device
-        as well as updated on the Options object"""
-
-        dev = QiskitDevice2(wires=2, backend=backend, shots=23, options=options)
-
-        assert dev.shots.total_shots == 23
-        assert dev.options.execution.shots == 23
-
+class TestKwargsHandling:
     def test_warning_if_shots(self):
-        """Test that a warning is raised if the user attempt to specify shots on
-        Options instead of as a kwarg, and sets shots to the shots passed (defaults
-        to 1024)."""
-
-        options = options_for_testing()
-        options.execution.shots = 1000
+        """Test that a warning is raised if the user attempts to specify shots by using
+        `default_shots`, and instead sets shots to the default amount of 1024."""
 
         with pytest.warns(
             UserWarning,
-            match="Setting shots via the Options is not supported on PennyLane devices",
+            match="default_shots was found in the keyword arguments",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, options=options)
+            dev = QiskitDevice2(wires=2, backend=backend, default_shots=333)
 
-        assert dev.shots.total_shots == 1024
-        assert dev.options.execution.shots == 1024
+        # Qiskit takes in `default_shots` to define the # of shots, therefore we use
+        # the kwarg "default_shots" rather than shots to pass it to Qiskit.
+        assert dev._kwargs["default_shots"] == 1024
+
+        dev = QiskitDevice2(wires=2, backend=backend, shots=200)
+        assert dev._kwargs["default_shots"] == 200
 
         with pytest.warns(
             UserWarning,
-            match="Setting shots via the Options is not supported on PennyLane devices",
+            match="default_shots was found in the keyword arguments",
         ):
-            dev = QiskitDevice2(wires=2, backend=backend, shots=200, options=options)
+            dev = QiskitDevice2(wires=2, backend=backend, options={"default_shots": 30})
 
-        assert dev.shots.total_shots == 200
-        assert dev.options.execution.shots == 200
+        # resets to default since we reinitialize the device
+        assert dev._kwargs["default_shots"] == 1024
 
-    def test_update_kwargs_no_overlapping_options_passed(self):
-        """Test that if there is no overlap between options defined as device kwargs and on Options,
-        _update_kwargs creates a combined dictionary"""
-
-        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, random_kwarg2="a")
-
-        assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
-        if Version(qiskit_ibm_runtime.__version__) < Version("0.21.0"):
-            assert dev._kwargs == {
-                "random_kwarg1": True,
-                "random_kwarg2": "a",
-                "skip_transpilation": False,
-                "init_qubits": True,
-                "log_level": "WARNING",
-                "job_tags": [],
-            }
-        else:
-            assert dev._kwargs == {
-                "random_kwarg1": True,
-                "random_kwarg2": "a",
-                "skip_transpilation": False,
-                "init_qubits": True,
-                "log_level": "WARNING",
-            }
-
-        dev.options.environment.job_tags = ["my_tag"]
-        dev.options.max_execution_time = "1m"
-
-        dev._update_kwargs()
-
-        # _init_kwargs are unchanged, _kwargs are updated
-        assert dev._init_kwargs == {"random_kwarg1": True, "random_kwarg2": "a"}
-        assert dev._kwargs == {
-            "random_kwarg1": True,
-            "random_kwarg2": "a",
-            "max_execution_time": "1m",
-            "skip_transpilation": False,
-            "init_qubits": True,
-            "log_level": "WARNING",
-            "job_tags": ["my_tag"],
-        }
-
-    def test_update_kwargs_with_overlapping_options(self):
-        """Test that if there is overlap between options defined as device kwargs and on Options,
-        _update_kwargs creates a combined dictionary with Options taking precedence, and raises a
-        warning"""
-
-        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True, max_execution_time="1m")
-
-        assert dev._init_kwargs == {"random_kwarg1": True, "max_execution_time": "1m"}
-        if Version(qiskit_ibm_runtime.__version__) < Version("0.21.0"):
-            assert dev._kwargs == {
-                "random_kwarg1": True,
-                "max_execution_time": "1m",
-                "skip_transpilation": False,
-                "init_qubits": True,
-                "log_level": "WARNING",
-                "job_tags": [],
-            }
-        else:
-            assert dev._kwargs == {
-                "random_kwarg1": True,
-                "max_execution_time": "1m",
-                "skip_transpilation": False,
-                "init_qubits": True,
-                "log_level": "WARNING",
-            }
-
-        dev.options.environment.job_tags = ["my_tag"]
-        dev.options.max_execution_time = "30m"
+    def test_warning_if_options_and_kwargs_overlap(self):
+        """Test that a warning is raised if the user has options that overlap with the kwargs"""
 
         with pytest.warns(
             UserWarning,
-            match="also defined in the device Options. The definition in Options will be used.",
+            match="An overlap between",
         ):
-            dev._update_kwargs()
+            dev = QiskitDevice2(
+                wires=2,
+                backend=backend,
+                options={"resilience_level": 1, "optimization_level": 1},
+                resilience_level=2,
+                random_sauce="spaghetti",
+            )
 
-        # _init_kwargs are unchanged, _kwargs are updated
-        assert dev._init_kwargs == {"random_kwarg1": True, "max_execution_time": "1m"}
-        assert dev._kwargs == {
-            "random_kwarg1": True,
-            "max_execution_time": "30m",  # definition from Options is used
-            "skip_transpilation": False,
-            "init_qubits": True,
-            "log_level": "WARNING",
-            "job_tags": ["my_tag"],
-        }
+        assert dev._kwargs["resilience_level"] == 1
+        assert dev._kwargs["optimization_level"] == 1
 
-    def test_update_kwargs_with_shots_set_on_options(self):
-        """Test that if shots have been defined on Options, _update_kwargs raises a warning
-        and ignores the shots as defined on Options"""
+        # You can initialize the device with any kwarg, but you'll get a ValidationError
+        # when you run the circuit
+        assert dev._kwargs["random_sauce"] == "spaghetti"
 
-        dev = QiskitDevice2(wires=2, backend=backend, random_kwarg1=True)
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
 
-        start_init_kwargs = dev._init_kwargs
-        start_kwargs = dev._kwargs
+        with pytest.raises(ValidationError, match="Object has no attribute"):
+            circuit()
 
-        dev.options.execution.shots = 500
+    def test_options_and_kwargs_combine_into_unified_kwargs(self):
+        """Test that options set via the keyword argument options and options set via kwargs
+        will combine into a single unified kwargs that is passed to the device"""
 
-        with pytest.warns(
-            UserWarning,
-            match="Setting shots via the Options is not supported on PennyLane devices",
-        ):
-            assert dev.options.execution.shots == 500
-            dev._update_kwargs()
+        dev = QiskitDevice2(
+            wires=2,
+            backend=backend,
+            options={"resilience_level": 1},
+            execution={"init_qubits": False},
+        )
 
-        # _init_kwargs and _kwargs are unchanged, shots was ignored
-        assert dev._init_kwargs == start_init_kwargs
-        assert dev._kwargs == start_kwargs
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
 
-        # the shots on the Options have been reset to the device shots
-        assert dev.options.execution.shots == dev.shots.total_shots
+        circuit()
+
+        assert dev._kwargs["resilience_level"] == 1
+        assert dev._kwargs["execution"]["init_qubits"] is False
+
+    def test_no_error_is_raised_if_transpilation_options_are_passed(self):
+        dev = QiskitDevice2(
+            wires=2,
+            backend=backend,
+            options={"resilience_level": 1, "optimization_level": 1},
+            seed_transpiler=42,
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            return qml.expval(qml.PauliX(0))
+
+        circuit()
+
+        assert dev._kwargs["resilience_level"] == 1
+        assert not hasattr(dev._kwargs, "seed_transpiler")
 
 
 class TestDeviceProperties:
+
     def test_name_property(self):
         """Test the backend property"""
         assert test_dev.name == "QiskitDevice2"
@@ -704,14 +584,12 @@ class TestTrackerFunctionality:
         with qml.Tracker(qiskit_dev) as qiskit_tracker:
             qml.grad(qiskit_circuit)(x)
 
-        print(tracker.history["results"], qiskit_tracker.history["results"])
-
-        #assert tracker.totals.keys() == qiskit_tracker.totals.keys()
+        assert tracker.totals.keys() == qiskit_tracker.totals.keys()
         assert tracker.latest.keys() == qiskit_tracker.latest.keys()
         assert tracker.history.keys() == qiskit_tracker.history.keys()
-        #assert tracker.history["shots"] == qiskit_tracker.history["shots"]
-        #assert np.allclose(tracker.history["results"], qiskit_tracker.history["results"], atol=0.1)
-        #assert tracker.history["resources"][0] == tracker.history["resources"][0]
+        assert tracker.history["shots"] == qiskit_tracker.history["shots"]
+        assert np.allclose(tracker.history["results"], qiskit_tracker.history["results"], atol=0.1)
+        assert tracker.history["resources"][0] == tracker.history["resources"][0]
 
     def test_tracker_single_tape(self):
         """Test that the tracker works for a single tape"""
@@ -738,10 +616,6 @@ class TestMockedExecution:
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
 
-        # independently
-        kwargs = {"random_kwarg": 3, "optimization_level": 3, "circuits": []}
-        assert QiskitDevice2.get_transpile_args(kwargs) == {"optimization_level": 3}
-
         # on a device
         transpile_args = {
             "random_kwarg": 3,
@@ -753,7 +627,7 @@ class TestMockedExecution:
         dev = QiskitDevice2(
             wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
         )
-        assert dev.get_transpile_args(dev._kwargs) == {
+        assert dev.get_transpile_args() == {
             "optimization_level": 3,
             "seed_transpiler": 42,
         }
@@ -789,34 +663,6 @@ class TestMockedExecution:
         assert len(compiled_circuits) == len(input_circuits)
         for _, circuit in enumerate(compiled_circuits):
             assert isinstance(circuit, QuantumCircuit)
-
-    @pytest.mark.parametrize(
-        "measurements, expectation",
-        [
-            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
-            ([qml.var(qml.PauliX(0))], (1)),
-            (
-                [
-                    qml.expval(qml.PauliX(0)),
-                    qml.expval(qml.PauliZ(0)),
-                    qml.var(qml.PauliX(0)),
-                ],
-                (0, 1, 1),
-            ),
-        ],
-    )
-    def test_process_estimator_job_mocked(self, measurements, expectation):
-        """Test the process_estimator_job function with constructed return for
-        Estimator (integration test that runs with a Token is below)"""
-
-        values = np.array([np.random.ranf() for i in range(len(measurements))])
-        metadata = [{"variance": np.random.ranf(), "shots": 4000} for i in range(len(measurements))]
-
-        result = EstimatorResult(values, metadata)
-        processed_result = QiskitDevice2._process_estimator_job(measurements, result)
-
-        assert isinstance(processed_result, tuple)
-        assert len(processed_result) == len(measurements)
 
     @pytest.mark.parametrize(
         "results, index",
@@ -870,8 +716,8 @@ class TestMockedExecution:
 
     @pytest.mark.parametrize("backend", [backend, legacy_backend])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
-        """Test that a device executes measurements that require raw samples on the sampler,
-        and the relevant primitive measurements on the estimator"""
+        """Test that a device executes measurements that require raw samples via the sampler,
+        and the relevant primitive measurements via the estimator"""
 
         dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
 
@@ -918,20 +764,8 @@ class TestMockedExecution:
         # to emphasize, this did nothing except appease CodeCov
         assert isinstance(result, Mock)
 
-    @patch("pennylane_qiskit.qiskit_device2.Sampler")
-    @pytest.mark.parametrize("session", [None, MockSession(backend)])
-    def test_execute_sampler_mocked(self, mocked_sampler, session):
-        """Test the _execute_sampler function using a mocked version of Sampler
-        that returns a meaningless result."""
-
-        qs = QuantumScript([qml.PauliX(0)], measurements=[qml.counts()], shots=100)
-        result = test_dev._execute_sampler(qs, session)
-
-        # to emphasize, this did nothing except appease CodeCov
-        assert isinstance(result[0], Mock)
-
-    def test_shot_vector_warning_mocked(self):
-        """Test that a device that executes a circuit with an array of shots raises the appropriate warning"""
+    def test_shot_vector_error_mocked(self):
+        """Test that a device that executes a circuit with an array of shots raises the appropriate ValueError"""
 
         dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
         qs = QuantumScript(
@@ -942,10 +776,7 @@ class TestMockedExecution:
         )
 
         with patch.object(dev, "_execute_estimator"):
-            with pytest.warns(
-                UserWarning,
-                match="Setting shot vector",
-            ):
+            with pytest.raises(ValueError, match="Setting shot vector"):
                 dev.execute(qs)
 
 
@@ -1047,95 +878,7 @@ class TestExecution:
         sampler_execute.assert_not_called()
         estimator_execute.assert_called_once()
 
-        assert np.allclose(res, expectation, atol=0.3)  ## atol is high due to high variance
-
-    @pytest.mark.parametrize(
-        "measurements, expectation",
-        [
-            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
-            ([qml.var(qml.PauliX(0))], (1)),
-            (
-                [
-                    qml.expval(qml.PauliX(0)),
-                    qml.expval(qml.PauliZ(0)),
-                    qml.var(qml.PauliX(0)),
-                ],
-                (0, 1, 1),
-            ),
-            ([qml.expval(0.5 * qml.Y(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0))], (0)),
-            (
-                [
-                    qml.expval(
-                        qml.ops.LinearCombination(
-                            [1, 3, 4], [qml.X(3) @ qml.Y(2), qml.Y(4) - qml.X(2), qml.Z(2) * 3]
-                        )
-                        + qml.X(4)
-                    )
-                ],
-                (16),
-            ),
-        ],
-    )
-    def test_process_estimator_job(self, measurements, expectation):
-        """Tests that the estimator returns expected and accurate results for an ``expval`` and ``var`` for a variety of multi-qubit observables"""
-
-        # make PennyLane circuit
-        qs = QuantumScript([], measurements=measurements)
-
-        # convert to Qiskit circuit information
-        qcirc = circuit_to_qiskit(qs, register_size=qs.num_wires, diagonalize=False, measure=False)
-        pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
-
-        # run on simulator via Estimator
-        estimator = Estimator(backend=backend)
-        result = estimator.run([qcirc] * len(pauli_observables), pauli_observables).result()
-
-        # confirm that the result is as expected - if the test fails at this point, its because the
-        # Qiskit result format has changed
-        assert isinstance(result, EstimatorResult)
-
-        assert isinstance(result.values, np.ndarray)
-        assert result.values.size == len(qs.measurements)
-
-        assert isinstance(result.metadata, list)
-        assert len(result.metadata) == len(qs.measurements)
-
-        for data in result.metadata:
-            assert isinstance(data, dict)
-        processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
-        assert isinstance(processed_result, tuple)
-        assert np.allclose(processed_result, expectation, atol=0.1)
-
-    @pytest.mark.parametrize("num_wires", [1, 3, 5])
-    @pytest.mark.parametrize("num_shots", [50, 100])
-    @pytest.mark.skip(reason="Need to replace this with using SamplerV2.")
-    def test_generate_samples(self, num_wires, num_shots):
-        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
-
-        qcirc = circuit_to_qiskit(qs, register_size=num_wires, diagonalize=True, measure=True)
-        compiled_circuits = test_dev.compile_circuits([qcirc])
-
-        job = test_dev.backend.run(circuits=compiled_circuits, shots=num_shots)
-
-        test_dev._current_job = job.result()
-
-        samples = test_dev.generate_samples()
-
-        assert len(samples) == num_shots
-        assert len(samples[0]) == num_wires
-
-        # we expect the samples to be orderd such that q0 has a 50% chance
-        # of being excited, and everything else is in the ground state
-        exp_res0 = np.zeros(num_wires)
-        exp_res1 = np.zeros(num_wires)
-        exp_res1[0] = 1
-
-        # the two expected results are in samples
-        assert exp_res1 in samples
-        assert exp_res0 in samples
-
-        # nothing else is in samples
-        assert [s for s in samples if not s in np.array([exp_res0, exp_res1])] == []
+        assert np.allclose(res[0], expectation, atol=0.3)  ## atol is high due to high variance
 
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
@@ -1150,11 +893,11 @@ class TestExecution:
         circuit(shots=[5])
 
         estimator_execute.assert_called_once()
-        assert dev._current_job.metadata[0]["shots"] == 5
+        # calculates # of shots executed from precision
+        assert int(np.ceil(1 / dev._current_job[0].metadata["target_precision"] ** 2)) == 5
 
-        # Should reset to device shots if circuit ran again without shots defined
         circuit()
-        assert dev._current_job.metadata[0]["shots"] == 2
+        assert int(np.ceil(1 / dev._current_job[0].metadata["target_precision"] ** 2)) == 2
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
@@ -1170,30 +913,26 @@ class TestExecution:
         circuit(shots=[5])
 
         sampler_execute.assert_called_once()
-        assert dev._current_job.metadata[0]["shots"] == 5
+        assert dev._current_job.num_shots == 5
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
-        assert dev._current_job.metadata[0]["shots"] == 2
+        assert dev._current_job.num_shots == 2
 
-    def test_warning_for_shot_vector(self):
-        """Tests that a warning is raised if a shot vector is passed and total shots of tape is used instead."""
+    def test_error_for_shot_vector(self):
+        """Tests that a ValueError is raised if a shot vector is passed."""
         dev = QiskitDevice2(wires=5, backend=backend, shots=2)
 
         @qml.qnode(dev)
         def circuit():
-            return qml.expval(qml.PauliX(0))
+            return qml.sample(qml.PauliX(0))
 
-        with pytest.warns(
-            UserWarning,
-            match="Setting shot vector",
-        ):
+        with pytest.raises(ValueError, match="Setting shot vector"):
             circuit(shots=[5, 10, 2])
-        assert dev._current_job.metadata[0]["shots"] == 17
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
-        assert dev._current_job.metadata[0]["shots"] == 2
+        assert dev._current_job.num_shots == 2
 
     @pytest.mark.parametrize(
         "observable",
@@ -1204,12 +943,9 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
-    @pytest.mark.skip(
-        reason="The functionality of using sampler to get the accurate answer is not yet implemented"
-    )
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
-        """Test that the device uses _sampler and _execute_estimator appropriately
-        and provides an accurate answer for measurements with observables that don't have a pauli_rep.
+        """Test that the device uses _sampler and _execute_estimator appropriately and
+        provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
 
         dev = QiskitDevice2(wires=5, backend=backend)
@@ -1256,3 +992,49 @@ class TestExecution:
             match="The observable measured",
         ):
             circuit()
+
+    def test_qiskit_probability_output_format(self):
+        """Test that the format and values of the Qiskit device's output for `qml.probs` is
+        the same as pennylane's."""
+
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return [qml.probs(wires=[0, 1])]
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.Hadamard(0)
+            return [qml.probs(wires=[0, 1])]
+
+        res = circuit()
+        qiskit_res = qiskit_circuit()
+
+        assert np.shape(res) == np.shape(qiskit_res)
+        assert np.allclose(res, qiskit_res, atol=0.03)
+
+    def test_sampler_output_shape(self):
+        """Test that the shape of the results produced from the sampler for the Qiskit device
+        is consistent with Pennylane"""
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3], shots=1024)
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample()
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample()
+
+        res = circuit(np.pi / 2)
+        qiskit_res = qiskit_circuit(np.pi / 2)
+
+        assert np.shape(res) == np.shape(qiskit_res)
