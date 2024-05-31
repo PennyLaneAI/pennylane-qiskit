@@ -382,7 +382,7 @@ class QiskitDevice2(Device):
                 if key in self._kwargs:
                     warnings.warn(
                         "An overlap between what was passed in via options and what was passed in via kwargs was found."
-                        f"The value set in options {key}: {val} will be used."
+                        f"The value set in options {key}={val} will be used."
                     )
                 self._kwargs[key] = val
 
