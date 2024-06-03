@@ -207,7 +207,7 @@ class TestAnalyticWarningHWSimulator:
 
         with pytest.warns(UserWarning) as record:
             shortname, backend, msg = device_backend_msg
-            dev = qml.device(shortname, backend=backend, wires=2, shots=None)
+            dev = qml.device(shortname, backend=backend, wires=2)
 
         # check that only one warning was raised
         assert len(record) == 1
@@ -221,9 +221,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
 
-        _ = qml.device(
-            "qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None
-        )
+        _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2)
 
         # check that no warnings were raised
         assert len(recwarn) == 0
