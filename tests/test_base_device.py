@@ -622,7 +622,6 @@ class TestTrackerFunctionality:
         assert np.allclose(
             qiskit_dev.tracker.history["results"], dev.tracker.history["results"], atol=0.1
         )
-        
 
 
 class TestMockedExecution:
