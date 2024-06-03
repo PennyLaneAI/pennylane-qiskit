@@ -188,7 +188,6 @@ def split_execution_types(
 
 
 @simulator_tracking
-@single_tape_support
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
