@@ -115,6 +115,8 @@ def qiskit_session(device, **kwargs):
                     UserWarning,
                 )
             session_options["max_time"] = v
+        else:
+            session_options[k] = v
 
     session = Session(**session_options)
     device._session = session
