@@ -13,6 +13,9 @@ You can instantiate a ``'qiskit.aer'`` device for PennyLane with:
     import pennylane as qml
     dev = qml.device('qiskit.aer', wires=2)
 
+This device must be used in finite-shots mode with the ``aer_simulator`` backend. If ``shots=None`` in this setting, 
+it will be overwritten to ``shots=1024``.
+
 This device can then be used just like other devices for the definition and evaluation of QNodes within PennyLane.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
 parameters would look like:

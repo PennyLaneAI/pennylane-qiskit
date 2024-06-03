@@ -10,10 +10,15 @@
 
 ### Documentation 📝
 
-* An example showing that `qiskit.basicsim` has a default `shots` value of 1024 has been added to the BasicSim device's usage page.
+* The documentation for `qiskit.basicsim` and `qiskit.aer` device have been updated with a mention that 
+  they must be used in finite-shot mode.
   [(#549)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/549)
 
 ### Bug fixes 🐛
+
+* The `qiskit.basicsim` and `qiskit.aer` device (with the `aer_simulator` backend) now raise a warning 
+  when `shots=None` and change the number of shots to `shots=1024`.
+  [(#549)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/549)
 
 ### Contributors ✍️
 
