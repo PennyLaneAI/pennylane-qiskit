@@ -221,15 +221,6 @@ class QiskitDevice2(Device):
         * ``simulations``: the number of simulations performed. One simulation can cover multiple QPU executions, such as for non-commuting measurements and batched parameters.
         * ``batches``: The number of times :meth:`~.execute` is called.
         * ``results``: The results of each call of :meth:`~.execute`
-        * ``derivative_batches``: How many times :meth:`~.compute_derivatives` is called.
-        * ``execute_and_derivative_batches``: How many times :meth:`~.execute_and_compute_derivatives` is called
-        * ``vjp_batches``: How many times :meth:`~.compute_vjp` is called
-        * ``execute_and_vjp_batches``: How many times :meth:`~.execute_and_compute_vjp` is called
-        * ``jvp_batches``: How many times :meth:`~.compute_jvp` is called
-        * ``execute_and_jvp_batches``: How many times :meth:`~.execute_and_compute_jvp` is called
-        * ``derivatives``: How many circuits are submitted to :meth:`~.compute_derivatives` or :meth:`~.execute_and_compute_derivatives`.
-        * ``vjps``: How many circuits are submitted to :meth:`~.compute_vjp` or :meth:`~.execute_and_compute_vjp`
-        * ``jvps``: How many circuits are submitted to :meth:`~.compute_jvp` or :meth:`~.execute_and_compute_jvp`
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
