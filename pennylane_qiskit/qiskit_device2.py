@@ -29,7 +29,6 @@ from qiskit.compiler import transpile
 from qiskit.providers import BackendV2
 
 from qiskit_ibm_runtime import Session, Sampler, Estimator
-from qiskit_ibm_runtime.constants import RunnerResult
 from qiskit_ibm_runtime.options import Options
 
 from pennylane import transform
@@ -45,7 +44,7 @@ from pennylane.devices.preprocess import (
     validate_measurements,
     validate_device_wires,
 )
-from pennylane.measurements import ProbabilityMP, ExpectationMP, VarianceMP
+from pennylane.measurements import ExpectationMP, VarianceMP
 
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
@@ -145,15 +144,13 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 def split_execution_types(
     tape: qml.tape.QuantumTape,
 ) -> (Sequence[qml.tape.QuantumTape], Callable):
-    """Split into separate tapes based on measurement type. However, for ``expval`` and ``var``
-    measurements, if the measured observable does not have a ``pauli_rep``, it is split as a
-    separate tape and will use the standard backend.run function. Counts will use the
-    Qiskit Sampler, ExpectationValue and Variance will use the Estimator, and other
-    strictly sample-based measurements will use the standard backend.run function"""
+    """Split into separate tapes based on measurement type. Counts and sample-based measurements
+    will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
+    when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
+    used, and the raw samples will be processed to give an expectation value."""
 
     estimator = []
     sampler = []
-    no_prim = []
 
     for i, mp in enumerate(tape.measurements):
         if isinstance(mp, (ExpectationMP, VarianceMP)):
@@ -163,15 +160,13 @@ def split_execution_types(
                 warnings.warn(
                     f"The observable measured {mp.obs} does not have a `pauli_rep` "
                     "and will be run without using the Estimator primitive. Instead, "
-                    "the standard backend.run function will be used."
+                    "raw samples from the Sampler will be used."
                 )
-                no_prim.append((mp, i))
-        elif isinstance(mp, ProbabilityMP):
-            sampler.append((mp, i))
+                sampler.append((mp, i))
         else:
-            no_prim.append((mp, i))
+            sampler.append((mp, i))
 
-    order_indices = [[i for mp, i in group] for group in [estimator, sampler, no_prim]]
+    order_indices = [[i for mp, i in group] for group in [estimator, sampler]]
 
     tapes = []
     if estimator:
@@ -190,16 +185,6 @@ def split_execution_types(
                 qml.tape.QuantumScript(
                     tape.operations,
                     measurements=[mp for mp, i in sampler],
-                    shots=tape.shots,
-                )
-            ]
-        )
-    if no_prim:
-        tapes.extend(
-            [
-                qml.tape.QuantumScript(
-                    tape.operations,
-                    measurements=[mp for mp, i in no_prim],
                     shots=tape.shots,
                 )
             ]
@@ -244,10 +229,6 @@ class QiskitDevice2(Device):
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        use_primitives (bool): whether or not to use Qiskit Primitives. Defaults to False. If True,
-            getting expectation values and variance from the backend will use a Qiskit Estimator,
-            and getting probabilities will use a Qiskit Sampler. Other measurement types will continue
-            to return results from the backend without using a Primitive.
         options (Options): a Qiskit Options object for specifying handling the Qiskit task
             (transpiliation, error mitigation, execution, etc). Defaults to None. See Qiskit documentation
             for more details.
@@ -279,7 +260,6 @@ class QiskitDevice2(Device):
         wires,
         backend,
         shots=1024,
-        use_primitives=False,
         options=None,
         session=None,
         compile_backend=None,
@@ -307,7 +287,6 @@ class QiskitDevice2(Device):
         self._compile_backend = compile_backend if compile_backend else backend
 
         self._service = getattr(backend, "_service", None)
-        self._use_primitives = use_primitives
         self._session = session
 
         # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
@@ -430,8 +409,7 @@ class QiskitDevice2(Device):
         transform_program.add_transform(broadcast_expand)
         # missing: split non-commuting, sum_expand, etc. [SC-62047]
 
-        if self._use_primitives:
-            transform_program.add_transform(split_execution_types)
+        transform_program.add_transform(split_execution_types)
 
         return transform_program, config
 
@@ -504,10 +482,6 @@ class QiskitDevice2(Device):
     ) -> Result_or_ResultBatch:
         session = self._session or Session(backend=self.backend)
 
-        if not self._use_primitives:
-            results = self._execute_runtime_service(circuits, session=session)
-            return results
-
         results = []
 
         if isinstance(circuits, QuantumScript):
@@ -526,10 +500,8 @@ class QiskitDevice2(Device):
                         circ.measurements[0].obs, "pauli_rep", None
                     ):
                         execute_fn = self._execute_estimator
-                    elif isinstance(circ.measurements[0], ProbabilityMP):
-                        execute_fn = self._execute_sampler
                     else:
-                        execute_fn = self._execute_runtime_service
+                        execute_fn = self._execute_sampler
                     results.append(execute_fn(circ, session))
                 yield results
             finally:
@@ -537,88 +509,6 @@ class QiskitDevice2(Device):
 
         with execute_circuits(session) as results:
             return results
-
-    def _execute_runtime_service(self, circuits, session):
-        """Execution using old runtime_service (can't use runtime sessions)"""
-
-        # The legacy ``backend.run()`` interface in Qiskit Runtime, which was used as the dedicated “direct hardware access” entry point, has been deprecated by Qiskit.
-        # The new SamplerV2 class now fulfills this role. Support for the backend.run() will be dropped on or around October 15, 2024.
-        # Please refer to the `migration guide <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime>`_ for instructions on how to migrate any existing code.
-        # This corresponds to the "circuit-runner" and "qasm3-runner" programs if you are invoking the REST API directly.
-        # ToDo: deprecate this by or around October 15, 2024.
-
-        # update kwargs in case Options has been modified since last execution
-        self._update_kwargs()
-
-        # in case a single circuit is passed
-        if isinstance(circuits, QuantumScript):
-            circuits = [circuits]
-
-        shots = circuits[0].shots.total_shots or self.shots.total_shots
-
-        qcirc = [
-            circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True)
-            for circ in circuits
-        ]
-        compiled_circuits = self.compile_circuits(qcirc)
-
-        program_inputs = {
-            "circuits": compiled_circuits,
-            "shots": shots,
-        }
-
-        for kwarg, value in self._kwargs.items():
-            program_inputs[kwarg] = value
-
-        backend_name = (
-            self.backend.name
-            if isinstance(self.backend, BackendV2)
-            else self.backend.configuration().backend_name
-        )
-
-        circuit_runner_options = {
-            "backend": backend_name,
-            "log_level": self.options.environment.log_level,
-            "job_tags": self.options.environment.job_tags,
-            "max_execution_time": self.options.max_execution_time,
-        }
-
-        # Send circuits to the cloud for execution by the circuit-runner program.
-        # Cloud simulators will be deprecated on May 15th so this will be exclusively for real hardware devices.
-        if self.service:
-            job = self.service.run(
-                program_id="circuit-runner",
-                options=circuit_runner_options,
-                inputs=program_inputs,
-                session_id=session.session_id,
-            )
-            self._current_job = job.result(decoder=RunnerResult)
-        else:  # Uses local simulator instead. After May 15th, all simulations will use this logic instead.
-            # Does not support AerSimulator specific options e.g. choose a specific method
-            # refer to this https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
-            # To support this would be confusing in terms of option setting (The options we currently support are runtime options)
-            # This here is just to capture and track shots information
-            self.backend.set_options(shots=shots)
-            job = self.backend.run(
-                compiled_circuits,
-            )
-            self._current_job = job.result()
-
-        results = []
-
-        ### Note: this assumes that the input values are valid.
-        ### Don't write tests cases that require transforms not yet implemented (not here).
-        for index, circuit in enumerate(circuits):
-            self._samples = self.generate_samples(index)
-            res = [
-                mp.process_samples(self._samples, wire_order=self.wires)
-                for mp in circuit.measurements
-            ]
-            single_measurement = len(circuit.measurements) == 1
-            res = res[0] if single_measurement else tuple(res)
-            results.append(res)
-
-        return tuple(results)
 
     def _execute_sampler(self, circuit, session):
         """Execution for the Sampler primitive"""
