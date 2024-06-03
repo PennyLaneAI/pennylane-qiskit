@@ -107,17 +107,16 @@ def qiskit_session(device, **kwargs):
 
     for k, v in kwargs.items():
         if k in session_options and k != "max_time":
-            warnings.warn(f"Using '{k}' set in device", UserWarning)
-            kwargs.pop(k)
+            warnings.warn(f"Using '{k}' set in device, {device.backend}", UserWarning)
         elif k == "max_time":
-            warnings.warn(
-                f"`max_time` was set in the Session passed to the device. Using `max_time` '{v}' set in `qiskit_session`.",
-                UserWarning,
-            )
+            if session_options["max_time"]:
+                warnings.warn(
+                    f"`max_time` was set in the Session passed to the device. Using `max_time` '{v}' set in `qiskit_session`.",
+                    UserWarning,
+                )
             session_options["max_time"] = v
-            kwargs.pop(k)
 
-    session = Session(**session_options, **kwargs)
+    session = Session(**session_options)
     device._session = session
     try:
         yield session
