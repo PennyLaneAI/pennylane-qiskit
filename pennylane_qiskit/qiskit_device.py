@@ -144,6 +144,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "The analytic calculation of expectations, variances and "
         "probabilities is only supported on statevector backends, not on the {}. "
         "Such statistics obtained from this device are estimates based on samples."
+        "The simulation will be run with shots=1024."
     )
 
     _eigs = {}

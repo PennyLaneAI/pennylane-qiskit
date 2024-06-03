@@ -108,7 +108,9 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_mocked(self, dev_backend):
         """Test that device initializes with no error mocked"""
-        dev = qml.device("qiskit.remote", wires=10, backend=dev_backend, use_primitives=True)
+        dev = qml.device(
+            "qiskit.remote", wires=10, backend=dev_backend, use_primitives=True
+        )
         assert dev._backend == dev_backend
 
     @pytest.mark.parametrize(
@@ -120,7 +122,9 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_manila(self, dev_backend):
         """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = qml.device("qiskit.remote", wires=5, backend=dev_backend, use_primitives=True)
+        dev = qml.device(
+            "qiskit.remote", wires=5, backend=dev_backend, use_primitives=True
+        )
 
         @qml.qnode(dev)
         def circuit(x):
@@ -156,7 +160,9 @@ class TestTranspilationOptionInitialization:
         assert dev.transpile_args == device_options
 
     @pytest.mark.parametrize("transpile_options", test_transpile_options)
-    def test_transpilation_option_update(self, device, wires, device_options, transpile_options):
+    def test_transpilation_option_update(
+        self, device, wires, device_options, transpile_options
+    ):
         """Test that the transpilation options are updated as expected."""
         dev = device(wires, device_options)
         assert dev.transpile_args == device_options
@@ -167,22 +173,46 @@ class TestTranspilationOptionInitialization:
 class TestAnalyticWarningHWSimulator:
     """Tests the warnings for when the analytic attribute of a device is set to true"""
 
-    def test_warning_raised_for_hardware_backend_analytic_expval(self, recorder):
+    testcases_warning_raised_for_hardware_backend_analytic_expval = [
+        (
+            "qiskit.aer",
+            "aer_simulator",
+            (
+                "The analytic calculation of expectations, variances and "
+                "probabilities is only supported on statevector backends, not on the aer_simulator. "
+                "Such statistics obtained from this device are estimates based on samples."
+                "The simulation will be run with shots=1024."
+            ),
+        ),
+        (
+            "qiskit.basicsim",
+            "basic_simulator",
+            (
+                "The plugin does not currently support analytic calculation of expectations, variances "
+                "and probabilities with the BasicProvider backend basic_simulator. Such statistics obtained from this "
+                "device are estimates based on samples. The simulation will be run with shots=1024."
+            ),
+        ),
+    ]
+
+    @pytest.mark.parametrize(
+        "device_backend_msg",
+        testcases_warning_raised_for_hardware_backend_analytic_expval,
+    )
+    def test_warning_raised_for_hardware_backend_analytic_expval(
+        self, device_backend_msg, recorder
+    ):
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
+            shortname, backend, msg = device_backend_msg
+            dev = qml.device(shortname, backend=backend, wires=2, shots=None)
 
         # check that only one warning was raised
         assert len(record) == 1
         # check that the message matches
-        assert (
-            record[0].message.args[0] == "The analytic calculation of "
-            "expectations, variances and probabilities is only supported on "
-            f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
-            "device are estimates based on samples."
-        )
+        assert record[0].message.args[0] == msg
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
@@ -191,7 +221,9 @@ class TestAnalyticWarningHWSimulator:
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
 
-        _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
+        _ = qml.device(
+            "qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None
+        )
 
         # check that no warnings were raised
         assert len(recwarn) == 0
