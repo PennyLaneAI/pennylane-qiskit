@@ -1065,3 +1065,28 @@ class TestExecution:
         qiskit_res = qiskit_circuit(np.pi / 2)
 
         assert np.shape(res) == np.shape(qiskit_res)
+
+    def test_sampler_output_shape_multi_measurements(self):
+        """Test that the shape of the results produced from the sampler for the Qiskit device
+        is consistent with Pennylane for circuits with multiple measurements"""
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3], shots=10)
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend, shots=10)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample(), qml.sample(qml.Y(0))
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample(), qml.sample(qml.Y(0))
+
+        res = circuit(np.pi / 2)
+        qiskit_res = qiskit_circuit(np.pi / 2)
+
+        assert np.shape(res[0]) == np.shape(qiskit_res[0])
+        assert np.shape(res[1]) == np.shape(qiskit_res[1])
+        assert len(res) == len(qiskit_res)
