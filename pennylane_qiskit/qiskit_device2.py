@@ -250,16 +250,8 @@ class QiskitDevice2(Device):
         self._service = getattr(backend, "_service", None)
         self._session = session
 
-<<<<<<< process_kwargs
         self._kwargs = kwargs
         self._kwargs["shots"] = shots
-=======
-        # initial kwargs are saved and referenced every time the kwargs used for transpilation and execution
-        self._init_kwargs = kwargs
-        # _kwargs are used instead of the Options for performing raw sample based measurements (using old Qiskit API)
-        # the _kwargs are a combination of information from Options and _init_kwargs
-        self._kwargs = kwargs
->>>>>>> new_device_feature_branch
 
         # Perform validation against backend
         available_qubits = (
@@ -271,11 +263,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-<<<<<<< process_kwargs
         self._process_kwargs()  # processes kwargs and separates transpilation arguments to dev._transpile_args
-=======
-        # ToDo: process or update kwargs in some fashion here
->>>>>>> new_device_feature_branch
 
     @property
     def backend(self):
@@ -381,7 +369,6 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-<<<<<<< process_kwargs
     def _process_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information.
@@ -413,10 +400,6 @@ class QiskitDevice2(Device):
         self._transpile_args = self.get_transpile_args()
 
     def get_transpile_args(self):
-=======
-    @staticmethod
-    def get_transpile_args(kwargs):
->>>>>>> new_device_feature_branch
         """The transpile argument setter.
 
         Keyword Args:
@@ -505,18 +488,6 @@ class QiskitDevice2(Device):
         classical_register_name = compiled_circuits[0].cregs[0].name
         self._current_job = getattr(result.data, classical_register_name)
 
-<<<<<<< process_kwargs
-=======
-        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
-        sampler = Sampler(session=session)
-        compiled_circuits = self.compile_circuits(qcirc)
-
-        # len(compiled_circuits) is always 1 so the indexing does not matter.
-        result = sampler.run(compiled_circuits).result()[0]
-        classical_register_name = compiled_circuits[0].cregs[0].name
-        self._current_job = getattr(result.data, classical_register_name)
-
->>>>>>> new_device_feature_branch
         results = []
 
         # needs processing function to convert to the correct format for states, and
@@ -529,11 +500,7 @@ class QiskitDevice2(Device):
             mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
         ]
         single_measurement = len(circuit.measurements) == 1
-<<<<<<< process_kwargs
         res = res[0] if single_measurement else res
-=======
-        res = res[0] if single_measurement else tuple(res)
->>>>>>> new_device_feature_branch
         results.append(res)
 
         return tuple(results)
@@ -546,23 +513,16 @@ class QiskitDevice2(Device):
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc)
-<<<<<<< process_kwargs
         estimator.options.update(**self._kwargs)
-=======
->>>>>>> new_device_feature_branch
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
         circ_and_obs = [(compiled_circuits[0], pauli_observables)]
-<<<<<<< process_kwargs
         result = estimator.run(
             circ_and_obs,
             precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
         ).result()
-=======
-        result = estimator.run(circ_and_obs).result()
->>>>>>> new_device_feature_branch
         self._current_job = result
         result = self._process_estimator_job(circuit.measurements, result)
 
@@ -575,15 +535,7 @@ class QiskitDevice2(Device):
         return the requested results from the Estimator executions."""
 
         expvals = job_result[0].data.evs
-<<<<<<< process_kwargs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
-=======
-        variances = (
-            job_result[0].data.stds ** 2 * 4096
-        )  # this 4096 is the # of shots Qiskit uses by default. It is hard-coded here.
-        # ToDo: Track the # of shots and use that instead of hard-coding
-        # to calculate the variance.
->>>>>>> new_device_feature_branch
 
         result = []
         for i, mp in enumerate(measurements):
