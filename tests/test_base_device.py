@@ -500,7 +500,10 @@ class TestKwargsHandling:
             return qml.expval(qml.PauliX(0))
 
         circuit()
+        assert dev._kwargs["resilience_level"] == 1
+        assert dev._kwargs["execution"]["init_qubits"] is False
 
+        circuit(shots=123)
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
@@ -517,9 +520,15 @@ class TestKwargsHandling:
             return qml.expval(qml.PauliX(0))
 
         circuit()
-
         assert dev._kwargs["resilience_level"] == 1
         assert not hasattr(dev._kwargs, "seed_transpiler")
+        assert dev._transpile_args["seed_transpiler"] == 42
+
+        # Make sure that running the circuit again doesn't change the optios
+        circuit(shots=5)
+        assert dev._kwargs["resilience_level"] == 1
+        assert not hasattr(dev._kwargs, "seed_transpiler")
+        assert dev._transpile_args["seed_transpiler"] == 42
 
 
 class TestDeviceProperties:

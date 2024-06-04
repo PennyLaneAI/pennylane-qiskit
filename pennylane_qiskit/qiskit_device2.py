@@ -263,7 +263,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._process_kwargs()
+        self._process_kwargs()  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
     def backend(self):
@@ -371,7 +371,8 @@ class QiskitDevice2(Device):
 
     def _process_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there is conflicting information"""
+        the definition in options taking precedence if there is conflicting information.
+        Arguments related to transpilation are separated and saved in `dev._transpile_args`."""
 
         if "noise_model" in self._kwargs:
             noise_model = self._kwargs.pop("noise_model")
