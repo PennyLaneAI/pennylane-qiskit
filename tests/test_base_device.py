@@ -288,14 +288,14 @@ class TestQiskitSessionManagement:
     def test_using_session_context_options(self):
         dev = QiskitDevice2(wires=2, backend=backend)
 
-        assert dev._session == None
+        assert dev._session is None
 
         with qiskit_session(dev, max_time=30) as session:
             assert dev._session == session
-            assert dev._session != None
+            assert dev._session is not None
             assert dev._session._max_time == 30
 
-        assert dev._session == None
+        assert dev._session is None
 
     def test_error_when_passing_unexpected_kwarg(self):
         """We accept any keyword argument that the User wants to supply so that if Qiskit
@@ -304,16 +304,16 @@ class TestQiskitSessionManagement:
 
         dev = QiskitDevice2(wires=2, backend=backend)
 
-        assert dev._session == None
+        assert dev._session is None
 
         with pytest.raises(
             TypeError, match=r"Session.__init__\(\) got an unexpected keyword argument 'any_kwarg'"
         ):
             with qiskit_session(dev, any_kwarg=30) as session:
                 assert dev._session == session
-                assert dev._session != None
+                assert dev._session is not None
 
-        assert dev._session == None
+        assert dev._session is None
 
     def test_warnings_when_overriding_session_context_options(self):
         initial_session = Session(backend=backend)
