@@ -523,7 +523,6 @@ class TestKwargsHandling:
 
 
 class TestDeviceProperties:
-
     def test_name_property(self):
         """Test the backend property"""
         assert test_dev.name == "QiskitDevice2"
