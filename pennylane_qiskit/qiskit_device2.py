@@ -396,6 +396,8 @@ class QiskitDevice2(Device):
             )
         self._kwargs["default_shots"] = shots
 
+        self._transpile_args = self.get_transpile_args()
+
     def get_transpile_args(self):
         """The transpile argument setter.
 
@@ -425,7 +427,7 @@ class QiskitDevice2(Device):
         """
         # Compile each circuit object
         compiled_circuits = []
-        transpile_args = self.get_transpile_args()
+        transpile_args = self._transpile_args
 
         for i, circuit in enumerate(circuits):
             compiled_circ = transpile(circuit, backend=self.compile_backend, **transpile_args)

@@ -471,7 +471,7 @@ class TestKwargsHandling:
             )
 
         assert dev._kwargs["resilience_level"] == 1
-        assert dev._kwargs["optimization_level"] == 1
+        assert dev._transpile_args["optimization_level"] == 1
 
         # You can initialize the device with any kwarg, but you'll get a ValidationError
         # when you run the circuit
@@ -577,7 +577,7 @@ class TestMockedExecution:
         dev = QiskitDevice2(
             wires=5, backend=backend, compile_backend=compile_backend, **transpile_args
         )
-        assert dev.get_transpile_args() == {
+        assert dev._transpile_args == {
             "optimization_level": 3,
             "seed_transpiler": 42,
         }
@@ -607,7 +607,7 @@ class TestMockedExecution:
             compiled_circuits = dev.compile_circuits(input_circuits)
 
         transpile_mock.assert_called_with(
-            input_circuits[2], backend=dev.compile_backend, **transpile_args
+            input_circuits[2], backend=dev.compile_backend, **dev._transpile_args
         )
 
         assert len(compiled_circuits) == len(input_circuits)
