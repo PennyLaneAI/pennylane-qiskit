@@ -10,14 +10,12 @@
 
 ### Documentation 📝
 
-* The documentation for `qiskit.basicsim` and `qiskit.aer` device have been updated with a mention that 
-  they must be used in finite-shot mode.
+* The documentation for `qiskit.basicsim` has been updated with a mention that it must be used in finite-shot mode.
   [(#549)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/549)
 
 ### Bug fixes 🐛
 
-* The `qiskit.basicsim` and `qiskit.aer` device (with the `aer_simulator` backend) now raise a warning 
-  when `shots=None` and change the number of shots to `shots=1024`.
+* The `qiskit.basicsim` device now raises a warning when `shots=None` and changes the number of shots to `shots=1024` automatically.
   [(#549)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/549)
 
 ### Contributors ✍️
