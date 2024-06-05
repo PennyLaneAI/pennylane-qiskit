@@ -108,9 +108,7 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_mocked(self, dev_backend):
         """Test that device initializes with no error mocked"""
-        dev = qml.device(
-            "qiskit.remote", wires=10, backend=dev_backend, use_primitives=True
-        )
+        dev = qml.device("qiskit.remote", wires=10, backend=dev_backend, use_primitives=True)
         assert dev._backend == dev_backend
 
     @pytest.mark.parametrize(
@@ -122,9 +120,7 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_manila(self, dev_backend):
         """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = qml.device(
-            "qiskit.remote", wires=5, backend=dev_backend, use_primitives=True
-        )
+        dev = qml.device("qiskit.remote", wires=5, backend=dev_backend, use_primitives=True)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -160,9 +156,7 @@ class TestTranspilationOptionInitialization:
         assert dev.transpile_args == device_options
 
     @pytest.mark.parametrize("transpile_options", test_transpile_options)
-    def test_transpilation_option_update(
-        self, device, wires, device_options, transpile_options
-    ):
+    def test_transpilation_option_update(self, device, wires, device_options, transpile_options):
         """Test that the transpilation options are updated as expected."""
         dev = device(wires, device_options)
         assert dev.transpile_args == device_options
