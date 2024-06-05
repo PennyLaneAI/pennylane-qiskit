@@ -66,7 +66,9 @@ def _check_parameter_bound(
     """
     if isinstance(param, ParameterVectorElement):
         if param.vector not in unbound_params:
-            raise ValueError(f"The vector of parameter {param} was not bound correctly.")
+            raise ValueError(
+                f"The vector of parameter {param} was not bound correctly."
+            )
 
     elif isinstance(param, Parameter):
         if param not in unbound_params:
@@ -165,8 +167,12 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
         params[expected_params[k]] = v
 
     # get any parameters not defined in kwargs (may be all of them) and match to args in order
-    expected_arg_params = [param for name, param in expected_params.items() if name not in kwargs]
-    has_param_vectors = np.any([isinstance(p, ParameterVector) for p in expected_arg_params])
+    expected_arg_params = [
+        param for name, param in expected_params.items() if name not in kwargs
+    ]
+    has_param_vectors = np.any(
+        [isinstance(p, ParameterVector) for p in expected_arg_params]
+    )
 
     # if too many args were passed to the function call, raise an error
     # all other checks regarding correct arguments will be processed in _check_circuit_and_assign_parameters
@@ -225,7 +231,9 @@ def _check_circuit_and_assign_parameters(
         QuantumCircuit: quantum circuit with bound parameters
     """
     if not isinstance(quantum_circuit, QuantumCircuit):
-        raise ValueError(f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit.")
+        raise ValueError(
+            f"The circuit {quantum_circuit} is not a valid Qiskit QuantumCircuit."
+        )
 
     # confirm parameter names are valid for conversion to PennyLane
     for name in ["wires", "params"]:
@@ -246,7 +254,9 @@ def _check_circuit_and_assign_parameters(
         return quantum_circuit
 
     # if any parameters are missing a value, raise an error
-    undefined_params = [name for name, param in expected_params.items() if param not in params]
+    undefined_params = [
+        name for name, param in expected_params.items() if param not in params
+    ]
     if undefined_params:
         s = "s" if len(undefined_params) > 1 else ""
         param_names = ", ".join(undefined_params)
@@ -432,7 +442,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # and then bind the parameters to the circuit
         params = _format_params_dict(quantum_circuit, params, *args, **kwargs)
         unbound_params = _extract_variable_refs(params)
-        qc = _check_circuit_and_assign_parameters(quantum_circuit, params, unbound_params)
+        qc = _check_circuit_and_assign_parameters(
+            quantum_circuit, params, unbound_params
+        )
 
         # Wires from a qiskit circuit have unique IDs, so their hashes are unique too
         qc_wires = [hash(q) for q in qc.qubits]
@@ -451,11 +463,15 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             (instruction, qargs, cargs) = circuit_instruction
             # the new Singleton classes have different names than the objects they represent,
             # but base_class.__name__ still matches
-            instruction_name = getattr(instruction, "base_class", instruction.__class__).__name__
+            instruction_name = getattr(
+                instruction, "base_class", instruction.__class__
+            ).__name__
             # New Qiskit gates that are not natively supported by PL (identical
             # gates exist with a different name)
             # TODO: remove the following when gates have been renamed in PennyLane
-            instruction_name = "U3Gate" if instruction_name == "UGate" else instruction_name
+            instruction_name = (
+                "U3Gate" if instruction_name == "UGate" else instruction_name
+            )
 
             # Define operator builders and helpers
             # operation_class -> PennyLane operation class object mapped from the Qiskit operation
@@ -505,7 +521,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                                 break
                         # Check if the subsequent next_op is measurement interfering
                         if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
-                            next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                            next_op_wires = set(
+                                wire_map[hash(qubit)] for qubit in next_qargs
+                            )
                             # Check if there's any overlapping wires
                             if next_op_wires & op_wires:
                                 meas_terminal = False
@@ -543,7 +561,11 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
-                        partial(load(branch_inst, measurements=None), params=params, wires=wires)
+                        partial(
+                            load(branch_inst, measurements=None),
+                            params=params,
+                            wires=wires,
+                        )
                         for branch_inst in operation_params
                         if isinstance(branch_inst, QuantumCircuit)
                     ]
@@ -558,11 +580,17 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # Process qiskit condition to PL mid-circ meas conditions
                 # pl_meas_conds -> PL's conditional expression with mid-circuit meas.
                 # length(pl_meas_conds) == len(true_fns) ==> True
-                pl_meas_conds = _process_condition(inst_cond, mid_circ_regs, instruction_name)
+                pl_meas_conds = _process_condition(
+                    inst_cond, mid_circ_regs, instruction_name
+                )
 
                 # Iterate over each of the conditional triplet and apply the condition via qml.cond
-                for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
-                    qml.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
+                for pl_meas_cond, true_fn, false_fn in zip(
+                    pl_meas_conds, true_fns, false_fns
+                ):
+                    qml.cond(pl_meas_cond, true_fn, false_fn)(
+                        *operation_args, **operation_kwargs
+                    )
 
             # Check if it is not a mid-circuit measurement
             elif operation_class and not isinstance(instruction, Measure):
@@ -696,7 +724,9 @@ def load_pauli_op(
         Y(5) @ Z(3) @ X(7)
     """
     if not isinstance(pauli_op, SparsePauliOp):
-        raise ValueError(f"The operator {pauli_op} is not a valid Qiskit SparsePauliOp.")
+        raise ValueError(
+            f"The operator {pauli_op} is not a valid Qiskit SparsePauliOp."
+        )
 
     if wires is not None and len(wires) != pauli_op.num_qubits:
         raise RuntimeError(
@@ -713,7 +743,9 @@ def load_pauli_op(
 
     coeffs = pauli_op.coeffs
     if ParameterExpression in [type(c) for c in coeffs]:
-        raise RuntimeError(f"Not all parameter expressions are assigned in coeffs {coeffs}")
+        raise RuntimeError(
+            f"Not all parameter expressions are assigned in coeffs {coeffs}"
+        )
 
     qiskit_terms = pauli_op.paulis
     pl_terms = []
@@ -812,12 +844,14 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
 
     # Check if the condition is as a tuple -> (Clbit/Clreg, Val)
     if isinstance(condition, tuple):
-        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        clbits = (
+            [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        )
 
         # Proceed only if we have access to all conditioned classical bits
         if all(clbit in mid_circ_regs for clbit in clbits):
             pl_meas.append(
-                sum(2 ** idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+                sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
                 == condition[1]
             )
 
@@ -859,13 +893,17 @@ def _process_switch_condition(condition, mid_circ_regs):
     # if the target is not an Expr
     if not isinstance(condition[0], expr.Expr):
         # Prepare the classical bits used for the condition
-        clbits = [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        clbits = (
+            [condition[0]] if isinstance(condition[0], Clbit) else list(condition[0])
+        )
 
         # Proceed only if we have access to all conditioned classical bits
         meas_pl_op = None
         if all(clbit in mid_circ_regs for clbit in clbits):
             # Build an integer representation for each switch case
-            meas_pl_op = sum(2 ** idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+            meas_pl_op = sum(
+                2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits)
+            )
 
     # if the target is an Expr
     else:
@@ -947,7 +985,9 @@ def _expr_evaluation(condition, mid_circ_regs):
 
     # divide the bits among left and right cbit registers
     if len(clbits) == 2:
-        condition_res = _expr_eval_clregs(clbits, _expr_mapping[condition_name], bitwise_flag)
+        condition_res = _expr_eval_clregs(
+            clbits, _expr_mapping[condition_name], bitwise_flag
+        )
 
     # divide the bits into a cbit register and integer
     else:
@@ -982,7 +1022,7 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
     # So we build an integer form 'after' performing the operation.
     if bitwise:
         condition_res = sum(
-            2 ** idx * expr_func(meas1, meas2)
+            2**idx * expr_func(meas1, meas2)
             for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
         )
 
@@ -990,7 +1030,8 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
     # So we build an integer form 'before' performing the operation.
     else:
         meas1, meas2 = [
-            sum(2 ** idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
+            sum(2**idx * meas for idx, meas in enumerate(clreg))
+            for clreg in [clreg1, clreg2]
         ]
         condition_res = expr_func(meas1, meas2)
 
@@ -1019,13 +1060,13 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
         clreg2 = map(int, np.binary_repr(clreg2, width=num_bits))
         clreg1 = [0] * (num_bits - len(clreg1)) + clreg1
         condition_res = sum(
-            2 ** idx * expr_func(meas1, meas2)
+            2**idx * expr_func(meas1, meas2)
             for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
         )
 
     # For other operations, we just need the integer form of clreg1
     else:
-        meas1 = sum(2 ** idx * meas for idx, meas in enumerate(clreg1))
+        meas1 = sum(2**idx * meas for idx, meas in enumerate(clreg1))
         condition_res = expr_func(meas1, clreg2)
 
     return condition_res
