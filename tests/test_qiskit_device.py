@@ -196,8 +196,8 @@ class TestAnalyticWarningHWSimulator:
         hardware simulators when calculating the expectation"""
 
         with pytest.warns(UserWarning) as record:
-            shortname, backend, msg = device_backend_msg
-            dev = qml.device(shortname, backend=backend, wires=2)
+            shortname, backend_name, msg = device_backend_msg
+            _ = qml.device(shortname, backend=backend_name, wires=2)
 
         # check that only one warning was raised
         assert len(record) == 1
