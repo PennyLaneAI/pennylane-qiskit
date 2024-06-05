@@ -149,7 +149,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
     _eigs = {}
 
-    def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+    def __init__(self, wires, provider, backend, shots=None, **kwargs):
 
         super().__init__(wires=wires, shots=shots)
 

@@ -55,7 +55,7 @@ class BasicAerDevice(QiskitDevice):
 
     short_name = "qiskit.basicaer"
 
-    def __init__(self, wires, shots=None, backend="qasm_simulator", **kwargs):
+    def __init__(self, wires, shots=1024, backend="qasm_simulator", **kwargs):
 
         max_ver = Version("0.46", partial=True)
 
@@ -68,7 +68,9 @@ class BasicAerDevice(QiskitDevice):
                 f"'qiskit.basicaer' device."
             )
 
-        super().__init__(wires, provider=qiskit.BasicAer, backend=backend, shots=shots, **kwargs)
+        super().__init__(
+            wires, provider=qiskit.BasicAer, backend=backend, shots=shots, **kwargs
+        )
 
 
 class BasicSimulatorDevice(QiskitDevice):
@@ -108,4 +110,6 @@ class BasicSimulatorDevice(QiskitDevice):
                 f"(see https://docs.quantum.ibm.com/start/install) to use the 'qiskit.basicsim' device."
             )
 
-        super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
+        super().__init__(
+            wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs
+        )
