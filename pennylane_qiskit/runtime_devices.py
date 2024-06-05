@@ -53,13 +53,9 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
 
     short_name = "qiskit.ibmq.circuit_runner"
 
-    def __init__(
-        self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs
-    ):
+    def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
         self.kwargs = kwargs
-        super().__init__(
-            wires=wires, provider=provider, backend=backend, shots=shots, **kwargs
-        )
+        super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
         self.runtime_service = QiskitRuntimeService(channel="ibm_quantum")
 
     def batch_execute(self, circuits):
@@ -151,13 +147,9 @@ class IBMQSamplerDevice(IBMQDevice):
 
     short_name = "qiskit.ibmq.sampler"
 
-    def __init__(
-        self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs
-    ):
+    def __init__(self, wires, provider=None, backend="ibmq_qasm_simulator", shots=1024, **kwargs):
         self.kwargs = kwargs
-        super().__init__(
-            wires=wires, provider=provider, backend=backend, shots=shots, **kwargs
-        )
+        super().__init__(wires=wires, provider=provider, backend=backend, shots=shots, **kwargs)
         self.runtime_service = QiskitRuntimeService(channel="ibm_quantum")
 
     def batch_execute(self, circuits):
@@ -183,9 +175,7 @@ class IBMQSamplerDevice(IBMQDevice):
         # Specify the backend.
         options = {"backend": self.backend.name}
         # Send circuits to the cloud for execution by the sampler program.
-        job = self.runtime_service.run(
-            program_id="sampler", options=options, inputs=program_inputs
-        )
+        job = self.runtime_service.run(program_id="sampler", options=options, inputs=program_inputs)
         self._current_job = job.result()
 
         results = []
@@ -226,7 +216,7 @@ class IBMQSamplerDevice(IBMQDevice):
             .binary_probabilities()
         )
         # Since qiskit does not return padded string we need to recover the number of qubits with self.num_wires
-        number_of_states = 2**self.num_wires
+        number_of_states = 2 ** self.num_wires
         # Initialize probabilities to 0
         probs = [0] * number_of_states
         # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))

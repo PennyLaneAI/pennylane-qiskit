@@ -159,9 +159,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             self._backend = backend
             self.backend_name = _get_backend_name(backend)
         elif provider is None:
-            raise ValueError(
-                "Must pass a provider if the backend is not a Backend instance."
-            )
+            raise ValueError("Must pass a provider if the backend is not a Backend instance.")
         else:
             try:
                 self._backend = provider.get_backend(backend)
@@ -190,9 +188,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             else self.backend.configuration().n_qubits
         )
         if backend_qubits and len(self.wires) > int(backend_qubits):
-            raise ValueError(
-                f"Backend '{backend}' supports maximum {backend_qubits} wires"
-            )
+            raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
 
         # Initialize inner state
         self.reset()
@@ -232,9 +228,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
     @property
     def _is_state_backend(self):
         """Returns whether this device has a state backend."""
-        return self.backend_name in self._state_backends or self.backend.options.get(
-            "method"
-        ) in {
+        return self.backend_name in self._state_backends or self.backend.options.get("method") in {
             "unitary",
             "statevector",
         }
@@ -243,17 +237,13 @@ class QiskitDevice(QubitDevice, abc.ABC):
     def _is_statevector_backend(self):
         """Returns whether this device has a statevector backend."""
         method = "statevector"
-        return (
-            method in self.backend_name or self.backend.options.get("method") == method
-        )
+        return method in self.backend_name or self.backend.options.get("method") == method
 
     @property
     def _is_unitary_backend(self):
         """Returns whether this device has a unitary backend."""
         method = "unitary"
-        return (
-            method in self.backend_name or self.backend.options.get("method") == method
-        )
+        return method in self.backend_name or self.backend.options.get("method") == method
 
     def set_transpile_args(self, **kwargs):
         """The transpile argument setter.
@@ -263,9 +253,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
                 `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
         """
         transpile_sig = inspect.signature(transpile).parameters
-        self.transpile_args = {
-            arg: kwargs[arg] for arg in transpile_sig if arg in kwargs
-        }
+        self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
         self.transpile_args.pop("circuits", None)
         self.transpile_args.pop("backend", None)
 
@@ -400,9 +388,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
         backend.
         """
         compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(
-            self._circuit, backend=compile_backend, **self.transpile_args
-        )
+        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
         return compiled_circuits
 
     def run(self, qcirc):
@@ -432,7 +418,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
         elif self._is_unitary_backend:
             unitary = np.asarray(result.get_unitary(experiment))
-            initial_state = np.zeros([2**self.num_wires])
+            initial_state = np.zeros([2 ** self.num_wires])
             initial_state[0] = 1
 
             state = unitary @ initial_state
@@ -492,9 +478,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             # We need to reset the device here, else it will
             # not start the next computation in the zero state
             self.reset()
-            self.create_circuit_object(
-                circuit.operations, rotations=circuit.diagonalizing_gates
-            )
+            self.create_circuit_object(circuit.operations, rotations=circuit.diagonalizing_gates)
 
             compiled_circ = self.compile()
             compiled_circ.name = f"circ{len(compiled_circuits)}"
@@ -512,9 +496,7 @@ class QiskitDevice(QubitDevice, abc.ABC):
             return []
 
         # Send the batch of circuit objects using backend.run
-        self._current_job = self.backend.run(
-            compiled_circuits, shots=self.shots, **self.run_args
-        )
+        self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
 
         try:
             result = self._current_job.result(timeout=timeout)
