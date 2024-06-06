@@ -204,13 +204,15 @@ class TestDeviceInitialization:
 class TestQiskitSessionManagement:
     """Test using Qiskit sessions with the device"""
 
-    def test_default_no_session_on_initialization(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_default_no_session_on_initialization(self, backend):
         """Test that the default behaviour is no session at initialization"""
 
         dev = QiskitDevice2(wires=2, backend=backend)
         assert dev._session is None
 
-    def test_initializing_with_session(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_initializing_with_session(self, backend):
         """Test that you can initialize a device with an existing Qiskit session"""
 
         session = MockSession(backend=backend, max_time="1m")
@@ -484,12 +486,13 @@ class TestKwargsHandling:
         with pytest.raises(ValidationError, match="Object has no attribute"):
             circuit()
 
-    def test_options_and_kwargs_combine_into_unified_kwargs(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_options_and_kwargs_combine_into_unified_kwargs(self, backend):
         """Test that options set via the keyword argument options and options set via kwargs
         will combine into a single unified kwargs that is passed to the device"""
 
         dev = QiskitDevice2(
-            wires=2,
+            wires=5,
             backend=backend,
             options={"resilience_level": 1},
             execution={"init_qubits": False},
@@ -507,12 +510,13 @@ class TestKwargsHandling:
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
-    def test_no_error_is_raised_if_transpilation_options_are_passed(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_no_error_is_raised_if_transpilation_options_are_passed(self, backend):
         """Tests that when transpilation options are passed in, they are properly
         handled without error"""
 
         dev = QiskitDevice2(
-            wires=2,
+            wires=5,
             backend=backend,
             options={"resilience_level": 1, "optimization_level": 1},
             seed_transpiler=42,
@@ -544,7 +548,8 @@ class TestDeviceProperties:
         assert test_dev.backend == test_dev._backend
         assert test_dev.backend == backend
 
-    def test_compile_backend_property(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_compile_backend_property(self, backend):
         """Test the compile_backend property"""
 
         compile_backend = MockedBackend(name="compile_backend")
@@ -1036,8 +1041,8 @@ class TestExecution:
         """Test that the format and values of the Qiskit device's output for `qml.probs` is
         the same as pennylane's."""
 
-        dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
-        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3, 4])
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3, 4], backend=backend)
 
         @qml.qnode(dev)
         def circuit():
@@ -1055,11 +1060,12 @@ class TestExecution:
         assert np.shape(res) == np.shape(qiskit_res)
         assert np.allclose(res, qiskit_res, atol=0.03)
 
-    def test_sampler_output_shape(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_sampler_output_shape(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane"""
-        dev = qml.device("default.qubit", wires=[0, 1, 2, 3], shots=1024)
-        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend)
+        dev = qml.device("default.qubit", wires=[0, 1, 2, 3, 4], shots=1024)
+        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3, 4], backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -1078,7 +1084,8 @@ class TestExecution:
 
         assert np.shape(res) == np.shape(qiskit_res)
 
-    def test_sampler_output_shape_multi_measurements(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_sampler_output_shape_multi_measurements(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane for circuits with multiple measurements"""
         dev = qml.device("default.qubit", wires=[0, 1, 2, 3], shots=10)
