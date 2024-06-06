@@ -302,7 +302,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._process_kwargs()
+        self._process_kwargs()  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
     def backend(self):
@@ -410,7 +410,8 @@ class QiskitDevice2(Device):
 
     def _process_kwargs(self):
         """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there is conflicting information"""
+        the definition in options taking precedence if there is conflicting information.
+        Arguments related to transpilation are separated and saved in `dev._transpile_args`."""
 
         if "noise_model" in self._kwargs:
             noise_model = self._kwargs.pop("noise_model")
@@ -434,6 +435,8 @@ class QiskitDevice2(Device):
                 f"{shots} will be used instead."
             )
         self._kwargs["default_shots"] = shots
+
+        self._transpile_args = self.get_transpile_args()
 
     def get_transpile_args(self):
         """The transpile argument setter.
@@ -464,7 +467,7 @@ class QiskitDevice2(Device):
         """
         # Compile each circuit object
         compiled_circuits = []
-        transpile_args = self.get_transpile_args()
+        transpile_args = self._transpile_args
 
         for i, circuit in enumerate(circuits):
             compiled_circ = transpile(circuit, backend=self.compile_backend, **transpile_args)
@@ -536,7 +539,7 @@ class QiskitDevice2(Device):
             mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
         ]
         single_measurement = len(circuit.measurements) == 1
-        res = res[0] if single_measurement else tuple(res)
+        res = res[0] if single_measurement else res
         results.append(res)
 
         return tuple(results)
