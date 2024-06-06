@@ -439,11 +439,8 @@ class QiskitDevice2(Device):
         self._transpile_args = self.get_transpile_args()
 
     def get_transpile_args(self):
-        """The transpile argument setter.
-
-        Keyword Args:
-            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
-                `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+        """The transpile argument setter. For more details, see the `Qiskit transpiler documentation
+        <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
         """
 
         transpile_sig = inspect.signature(transpile).parameters
@@ -457,7 +454,7 @@ class QiskitDevice2(Device):
         return transpile_args
 
     def compile_circuits(self, circuits):
-        r"""Compiles multiple circuits one after the other.
+        """Compiles multiple circuits one after the other.
 
         Args:
             circuits (list[QuantumCircuit]): the circuits to be compiled
@@ -513,7 +510,19 @@ class QiskitDevice2(Device):
             return results
 
     def _execute_sampler(self, circuit, session):
-        """Execution for the Sampler primitive"""
+        """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
+
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from SamplerV2
+
+        """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
         compiled_circuits = self.compile_circuits(qcirc)
@@ -531,8 +540,6 @@ class QiskitDevice2(Device):
 
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
-        # single_measurement = len(circuit.measurements) == 1
-        # res = (res[0], ) if single_measurement else tuple(res)
 
         self._samples = self.generate_samples(0)
         res = [
@@ -545,6 +552,19 @@ class QiskitDevice2(Device):
         return tuple(results)
 
     def _execute_estimator(self, circuit, session):
+        """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
+
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via EstimatorV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+
+        """
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
@@ -569,9 +589,20 @@ class QiskitDevice2(Device):
 
     @staticmethod
     def _process_estimator_job(measurements, job_result):
-        """Estimator returns both expectation value and variance for each observable measured,
-        along with some metadata. Extract the relevant number for each measurement process and
-        return the requested results from the Estimator executions."""
+        """Estimator returns the expectation value and standard error for each observable measured,
+        along with some metadata that contains the precision. Extracts the relevant number for each
+        measurement process and return the requested results from the Estimator executions.
+
+        Note that for variance, we calculate the variance by using the standard error and the
+        precision value.
+
+        Args:
+            measurements (list[MeasurementProcess]): the measurements in the circuit
+            job_result (Any): the result from EstimatorV2
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
 
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
