@@ -309,7 +309,7 @@ class TestQiskitSessionManagement:
             UserWarning,
             match="Using 'backend' set in device",
         ):
-            with qiskit_session(dev, max_time=30, backend=FakeManilaV2) as session:
+            with qiskit_session(dev, max_time=30, backend=FakeManilaV2()) as session:
                 assert dev._session == session
                 assert dev._session != initial_session
                 assert dev._session._backend.name == "aer_simulator"
@@ -323,6 +323,7 @@ class TestQiskitSessionManagement:
                 assert dev._session != initial_session
                 assert dev._session._service != "placeholder"
 
+        # device session should be unchanged by qiskit_session
         assert dev._session == initial_session
 
         max_time_session = Session(backend=backend, max_time=60)
