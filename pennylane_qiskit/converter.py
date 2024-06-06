@@ -821,7 +821,7 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
         # Proceed only if we have access to all conditioned classical bits
         if all(clbit in mid_circ_regs for clbit in clbits):
             pl_meas.append(
-                sum(2 ** idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+                sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
                 == condition[1]
             )
 
@@ -869,7 +869,7 @@ def _process_switch_condition(condition, mid_circ_regs):
         meas_pl_op = None
         if all(clbit in mid_circ_regs for clbit in clbits):
             # Build an integer representation for each switch case
-            meas_pl_op = sum(2 ** idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+            meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
 
     # if the target is an Expr
     else:
@@ -986,7 +986,7 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
     # So we build an integer form 'after' performing the operation.
     if bitwise:
         condition_res = sum(
-            2 ** idx * expr_func(meas1, meas2)
+            2**idx * expr_func(meas1, meas2)
             for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
         )
 
@@ -994,7 +994,7 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
     # So we build an integer form 'before' performing the operation.
     else:
         meas1, meas2 = [
-            sum(2 ** idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
+            sum(2**idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
         ]
         condition_res = expr_func(meas1, meas2)
 
@@ -1023,13 +1023,13 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
         clreg2 = map(int, np.binary_repr(clreg2, width=num_bits))
         clreg1 = [0] * (num_bits - len(clreg1)) + clreg1
         condition_res = sum(
-            2 ** idx * expr_func(meas1, meas2)
+            2**idx * expr_func(meas1, meas2)
             for idx, (meas1, meas2) in enumerate(zip(clreg1, clreg2))
         )
 
     # For other operations, we just need the integer form of clreg1
     else:
-        meas1 = sum(2 ** idx * meas for idx, meas in enumerate(clreg1))
+        meas1 = sum(2**idx * meas for idx, meas in enumerate(clreg1))
         condition_res = expr_func(meas1, clreg2)
 
     return condition_res

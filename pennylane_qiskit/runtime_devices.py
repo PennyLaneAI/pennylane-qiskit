@@ -216,7 +216,7 @@ class IBMQSamplerDevice(IBMQDevice):
             .binary_probabilities()
         )
         # Since qiskit does not return padded string we need to recover the number of qubits with self.num_wires
-        number_of_states = 2 ** self.num_wires
+        number_of_states = 2**self.num_wires
         # Initialize probabilities to 0
         probs = [0] * number_of_states
         # Fill in probabilities from counts: (state, prob) (e.g. ('010', 0.5))

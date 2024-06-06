@@ -398,7 +398,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2 ** dev.num_wires)
+        expected_state = np.zeros(2**dev.num_wires)
         expected_state[2] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)
@@ -418,7 +418,7 @@ class TestPLOperations:
 
         basisstate()
 
-        expected_state = np.zeros(2 ** dev.num_wires)
+        expected_state = np.zeros(2**dev.num_wires)
         expected_state[0] = 1
 
         assert np.allclose(np.abs(dev.state) ** 2, np.abs(expected_state) ** 2, **tol)

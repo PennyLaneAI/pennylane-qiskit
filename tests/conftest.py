@@ -85,7 +85,7 @@ def tol(shots):
 @pytest.fixture
 def init_state(scope="session"):
     def _init_state(n):
-        state = np.random.random([2 ** n]) + np.random.random([2 ** n]) * 1j
+        state = np.random.random([2**n]) + np.random.random([2**n]) * 1j
         state /= np.linalg.norm(state)
         return state
 
