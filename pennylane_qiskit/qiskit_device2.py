@@ -45,7 +45,7 @@ from pennylane.devices.preprocess import (
 )
 
 from pennylane.measurements import ExpectationMP, VarianceMP
-from pennylane.devices.modifiers import single_tape_support, simulator_tracking
+from pennylane.devices.modifiers import simulator_tracking
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
