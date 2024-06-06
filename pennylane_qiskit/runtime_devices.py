@@ -67,7 +67,10 @@ class IBMQCircuitRunnerDevice(IBMQDevice):
             program_inputs[kwarg] = self.kwargs.get(kwarg)
 
         # Specify the backend.
-        options = {"backend": self.backend.name, "job_tags": self.kwargs.get("job_tags")}
+        options = {
+            "backend": self.backend.name,
+            "job_tags": self.kwargs.get("job_tags"),
+        }
 
         session_id = self.kwargs.get("session_id")
 

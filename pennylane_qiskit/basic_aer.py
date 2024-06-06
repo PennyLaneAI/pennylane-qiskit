@@ -93,10 +93,10 @@ class BasicSimulatorDevice(QiskitDevice):
     analytic_warning_message = (
         "The plugin does not currently support analytic calculation of expectations, variances "
         "and probabilities with the BasicProvider backend {}. Such statistics obtained from this "
-        "device are estimates based on samples."
+        "device are estimates based on samples. The simulation will be run with shots=1024."
     )
 
-    def __init__(self, wires, shots=1024, backend="basic_simulator", **kwargs):
+    def __init__(self, wires, shots=None, backend="basic_simulator", **kwargs):
 
         min_version = Version("1.0.0")
 

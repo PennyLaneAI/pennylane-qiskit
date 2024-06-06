@@ -14,6 +14,7 @@ that can be accessed in this plugin through:
 
 This device uses the Qiskit ``BasicSimulator`` backend from the
 `basic_provider <https://docs.quantum.ibm.com/api/qiskit/providers_basic_provider>`_ module in Qiskit.
+This device must be used in finite-shots mode. If ``shots=None``, it will be overwritten to ``shots=1024``.
 
 .. note::
 
