@@ -508,6 +508,9 @@ class TestKwargsHandling:
         assert dev._kwargs["execution"]["init_qubits"] is False
 
     def test_no_error_is_raised_if_transpilation_options_are_passed(self):
+        """Tests that when transpilation options are passed in, they are properly
+        handled without error"""
+
         dev = QiskitDevice2(
             wires=2,
             backend=backend,
