@@ -263,7 +263,7 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._process_kwargs()  # processes kwargs and separates transpilation arguments to dev._transpile_args
+       self._transpile_args, self._kwargs = self._process_kwargs(kwargs)  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
     def backend(self):
