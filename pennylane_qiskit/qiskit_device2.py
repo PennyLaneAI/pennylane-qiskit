@@ -101,23 +101,25 @@ def qiskit_session(device, **kwargs):
     session_options = {
         "service": device.service,
         "backend": device.backend,
-        "max_time": existing_session._max_time if existing_session else None,
     }
 
     for k, v in kwargs.items():
         # Options like service and backend should be tied to the settings set on device
         if k in session_options and k != "max_time":
             warnings.warn(f"Using '{k}' set in device, {device.backend}", UserWarning)
-        # Users can define max_time on qiskit_session initialization
-        elif k == "max_time":
-            if session_options["max_time"]:
-                warnings.warn(
-                    f"`max_time` was set in the Session passed to the device. Using `max_time` '{v}' set in `qiskit_session`.",
-                    UserWarning,
-                )
-            session_options["max_time"] = v
+
+        # Need "_" since `max_time` attribute on Session is `_max_time`
+        # When there is overlap between the Session options on the device and the session options
+        # passed in via qiskit_session, we prefer the ones passed in via qiskit_session
+        elif existing_session and (
+            hasattr(existing_session, "_" + k) or hasattr(existing_session, k)
+        ):
+            warnings.warn(
+                f"`{k}` was set in the Session passed to the device. Using `{k}` '{v}' set in `qiskit_session`.",
+                UserWarning,
+            )
+            session_options[k] = v
         else:
-            # If qiskit releases new session options they will be captured here
             session_options[k] = v
 
     session = Session(**session_options)

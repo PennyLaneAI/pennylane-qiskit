@@ -299,7 +299,7 @@ class TestQiskitSessionManagement:
 
         assert dev._session is None
 
-    def test_warnings_when_overriding_session_context_options(self):
+    def test_warnings_when_overriding_session_context_options(self, recorder):
         initial_session = Session(backend=backend)
         dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
 
@@ -329,15 +329,17 @@ class TestQiskitSessionManagement:
         max_time_session = Session(backend=backend, max_time=60)
         dev = QiskitDevice2(wires=2, backend=backend, session=max_time_session)
 
-        with pytest.warns(
-            UserWarning,
-            match="`max_time` was set in the Session passed to the device. Using `max_time` '30' set in `qiskit_session`",
-        ):
+        with pytest.warns(UserWarning) as record:
             with qiskit_session(dev, max_time=30) as session:
                 assert dev._session == session
                 assert dev._session != initial_session
                 assert dev._session._max_time == 30
                 assert dev._session._max_time != 60
+
+        assert (
+            record[0].message.args[0]
+            == "`max_time` was set in the Session passed to the device. Using `max_time` '30' set in `qiskit_session`."
+        )
 
         assert dev._session == max_time_session
         assert dev._session._max_time == 60
