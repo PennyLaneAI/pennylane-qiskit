@@ -402,7 +402,8 @@ class QiskitDevice2(Device):
 
         return kwargs, transpile_args
 
-    def get_transpile_args(self, kwargs):
+    @staticmethod
+    def get_transpile_args(kwargs):
         """The transpile argument setter.
 
         Keyword Args:
