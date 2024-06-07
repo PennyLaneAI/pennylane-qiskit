@@ -270,6 +270,7 @@ class TestQiskitSessionManagement:
         assert dev._session == initial_session
 
     def test_using_session_context_options(self):
+        """Test that you can set session options using qiskit_session"""
         dev = QiskitDevice2(wires=2, backend=backend)
 
         assert dev._session is None
@@ -282,8 +283,8 @@ class TestQiskitSessionManagement:
         assert dev._session is None
 
     def test_error_when_passing_unexpected_kwarg(self):
-        """We accept any keyword argument that the User wants to supply so that if Qiskit
-        allows for more customization we can automatically accomodate those needs. Right
+        """Test that we accept any keyword argument that the User wants to supply so that if
+        Qiskit allows for more customization we can automatically accomodate those needs. Right
         now there are no such keyword arguments, so an error on Qiskit's side is raised."""
 
         dev = QiskitDevice2(wires=2, backend=backend)
@@ -300,6 +301,10 @@ class TestQiskitSessionManagement:
         assert dev._session is None
 
     def test_warnings_when_overriding_session_context_options(self, recorder):
+        """Test that warnings are raised when there are is an overlap between the Session options
+        on the device and the session options passed in via qiskit_session. Also ensures that the
+        session options passed in from the qiskit_session take precedence except for `backend` or
+        `service`"""
         initial_session = Session(backend=backend)
         dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
 
