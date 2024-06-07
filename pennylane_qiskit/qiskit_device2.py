@@ -206,7 +206,7 @@ class QiskitDevice2(Device):
         **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives. If an `options` dictionary is
             defined amongst the kwargs, and there are settings that overlap with those in kwargs, the settings
             in `options` will take precedence over kwargs. Kwargs accepted by both the transpiler
-            and at runtime (e.g. optimization_level) will be passed to the transpiler rather than to the Primitive.
+            and at runtime (e.g. ``optimization_level``) will be passed to the transpiler rather than to the Primitive.
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
