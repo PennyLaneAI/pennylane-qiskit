@@ -203,10 +203,11 @@ class QiskitDevice2(Device):
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
             sent to the backend device, to be set if the backend desired for compliation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
-        **kwargs: transpilation and runtime kwargs to be used for measurements with Primitives. If `options` is
-            defined amongst the kwargs, and there are settings that overlap with those in kwargs, the settings
-            in `options` will take precedence over kwargs. Kwargs accepted by both the transpiler
-            and at runtime (e.g. optimization_level) will be passed to the transpiler rather than to the Primitive.
+        **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
+            If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
+            with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
+            arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
+            will be passed to the transpiler rather than to the Primitive.
 
     **Example:**
 
@@ -289,8 +290,7 @@ class QiskitDevice2(Device):
         self._service = getattr(backend, "_service", None)
         self._session = session
 
-        self._kwargs = kwargs
-        self._kwargs["shots"] = shots
+        kwargs["shots"] = shots
 
         # Perform validation against backend
         available_qubits = (
@@ -302,7 +302,9 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._process_kwargs()  # processes kwargs and separates transpilation arguments to dev._transpile_args
+        self._kwargs, self._transpile_args = self._process_kwargs(
+            kwargs
+        )  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
     def backend(self):
@@ -408,50 +410,53 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def _process_kwargs(self):
+    def _process_kwargs(self, kwargs):
         """Combine the settings defined in options and the settings passed as kwargs, with
         the definition in options taking precedence if there is conflicting information.
         Arguments related to transpilation are separated and saved in `dev._transpile_args`."""
 
-        if "noise_model" in self._kwargs:
-            noise_model = self._kwargs.pop("noise_model")
+        if "noise_model" in kwargs:
+            noise_model = kwargs.pop("noise_model")
             self.backend.set_options(noise_model=noise_model)
 
-        if "options" in self._kwargs:
-            for key, val in self._kwargs.pop("options").items():
-                if key in self._kwargs:
+        if "options" in kwargs:
+            for key, val in kwargs.pop("options").items():
+                if key in kwargs:
                     warnings.warn(
                         "An overlap between what was passed in via options and what was passed in via kwargs was found."
                         f"The value set in options {key}={val} will be used."
                     )
-                self._kwargs[key] = val
+                kwargs[key] = val
 
-        shots = self._kwargs.pop("shots")
+        shots = kwargs.pop("shots")
 
-        if "default_shots" in self._kwargs:
+        if "default_shots" in kwargs:
             warnings.warn(
                 f"default_shots was found in the keyword arguments, but it is not supported by {self.name}"
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
-        self._kwargs["default_shots"] = shots
+        kwargs["default_shots"] = shots
 
-        self._transpile_args = self.get_transpile_args()
+        kwargs, transpile_args = self.get_transpile_args(kwargs)
 
-    def get_transpile_args(self):
-        """The transpile argument setter. For more details, see the `Qiskit transpiler documentation
-        <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+
+    @staticmethod
+    def get_transpile_args(kwargs):
+        """The transpile argument setter.
+
+        Keyword Args:
+            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+                `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
         """
 
         transpile_sig = inspect.signature(transpile).parameters
 
-        transpile_args = {
-            arg: self._kwargs.pop(arg) for arg in transpile_sig if arg in self._kwargs
-        }
+        transpile_args = {arg: kwargs.pop(arg) for arg in transpile_sig if arg in kwargs}
         transpile_args.pop("circuits", None)
         transpile_args.pop("backend", None)
 
-        return transpile_args
+        return kwargs, transpile_args
 
     def compile_circuits(self, circuits):
         """Compiles multiple circuits one after the other.
