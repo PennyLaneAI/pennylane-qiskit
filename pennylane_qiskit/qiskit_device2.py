@@ -399,7 +399,7 @@ class QiskitDevice2(Device):
 
         self._transpile_args = self.get_transpile_args()
 
-    def get_transpile_args(self):
+    def get_transpile_args(self, kwargs): --> _transpile_args
         """The transpile argument setter.
 
         Keyword Args:
