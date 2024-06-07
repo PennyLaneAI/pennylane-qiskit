@@ -203,10 +203,11 @@ class QiskitDevice2(Device):
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
             sent to the backend device, to be set if the backend desired for compliation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
-        **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives. If an `options` dictionary is
-            defined amongst the kwargs, and there are settings that overlap with those in kwargs, the settings
-            in `options` will take precedence over kwargs. Keyword arguments accepted by both the transpiler
-            and at runtime (e.g. ``optimization_level``) will be passed to the transpiler rather than to the Primitive.
+        **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
+            If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
+            with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
+            arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
+            will be passed to the transpiler rather than to the Primitive.
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
