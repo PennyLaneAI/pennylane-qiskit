@@ -250,8 +250,7 @@ class QiskitDevice2(Device):
         self._service = getattr(backend, "_service", None)
         self._session = session
 
-        self._kwargs = kwargs
-        self._kwargs["shots"] = shots
+        kwargs["shots"] = shots
 
         # Perform validation against backend
         available_qubits = (
@@ -264,7 +263,7 @@ class QiskitDevice2(Device):
 
         self.reset()
         self._kwargs, self._transpile_args = self._process_kwargs(
-            self._kwargs
+            kwargs
         )  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
