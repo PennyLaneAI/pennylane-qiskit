@@ -411,9 +411,20 @@ class QiskitDevice2(Device):
         return transform_program, config
 
     def _process_kwargs(self, kwargs):
-        """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there is conflicting information.
-        Arguments related to transpilation are separated and saved in `dev._transpile_args`."""
+        """Process kwargs given and separates them into kwargs and transpile_args. If given
+        a keyword argument 'options' that is a dictionary, a common practice in
+        Qiskit, the options in said dictionary take precedence over any overlapping keyword
+        arguments defined in the kwargs.
+
+        Keyword Args:
+            kwargs (dict): keyword arguments that set either runtime options or transpilation
+            options.
+
+        Returns:
+            kwargs, transpile_args: keyword arguments for the runtime options and keyword
+            arguments for the transpiler
+
+        """
 
         if "noise_model" in kwargs:
             noise_model = kwargs.pop("noise_model")
@@ -440,14 +451,20 @@ class QiskitDevice2(Device):
 
         kwargs, transpile_args = self.get_transpile_args(kwargs)
 
+        return kwargs, transpile_args
 
     @staticmethod
     def get_transpile_args(kwargs):
-        """The transpile argument setter.
+        """The transpile argument setter. This separates keyword arguments related to transpilation
+        from the rest of the keyword arguments and removes those keyword arguments from kwargs.
 
         Keyword Args:
-            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+            kwargs (dict): combined keyword arguments to be parsed for the Qiskit transpiler. For more details, see the
                 `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+
+        Returns:
+            kwargs (dict), transpile_args (dict): keyword arguments for the runtime options and keyword
+            arguments for the transpiler
         """
 
         transpile_sig = inspect.signature(transpile).parameters
