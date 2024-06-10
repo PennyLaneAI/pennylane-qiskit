@@ -503,7 +503,7 @@ class QiskitDevice2(Device):
             mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
         ]
         single_measurement = len(circuit.measurements) == 1
-        res = res[0] if single_measurement else res
+        res = res[0] if single_measurement else tuple(res)
         results.append(res)
 
         return tuple(results)
