@@ -98,25 +98,26 @@ def qiskit_session(device, **kwargs):
     """
     # Code to acquire session:
     existing_session = device._session
-    session_options = {
-        "service": device.service,
-        "backend": device.backend,
-        "max_time": existing_session._max_time,
-    }
+
+    # When an existing session exists, we want to use its settings unless overwritten
+    # by settings in the qiskit_session
+    if existing_session:
+        session_args = inspect.signature(Session).parameters
+        session_options = {arg: getattr(existing_session, "_" + arg) for arg in session_args}
+    else:
+        session_options = {"backend": device.backend, "service": device.service}
 
     for k, v in kwargs.items():
         # Options like service and backend should be tied to the settings set on device
         if k in session_options and k != "max_time":
-            warnings.warn(f"Using '{k}' set in device, {device.backend}", UserWarning)
+            warnings.warn(f"Using '{k}' set in device, {getattr(device, k)}", UserWarning)
 
         # Need "_" since `max_time` attribute on Session is `_max_time`
         # When there is overlap between the Session options on the device and the session options
         # passed in via qiskit_session, we prefer the ones passed in via qiskit_session
-        elif existing_session and (
-            hasattr(existing_session, "_" + k) or hasattr(existing_session, k)
-        ):
+        elif existing_session and getattr(existing_session, "_" + k):
             warnings.warn(
-                f"`{k}` was set in the Session passed to the device. Using `{k}` '{v}' set in `qiskit_session`.",
+                f"`{k}` was also set in the Session passed to the device. Using `{k}` '{v}' set in `qiskit_session`.",
                 UserWarning,
             )
             session_options[k] = v

@@ -105,8 +105,10 @@ class MockedBackendLegacy(BackendV1):
 # pylint: disable=too-few-public-methods
 class MockSession:
     def __init__(self, backend, max_time=None):
-        self.backend = backend
+        self._backend = backend
         self._max_time = max_time
+        self._args = "random"  # this is to satisfy a mock
+        self._kwargs = "random"  # this is to satisfy a mock
         self.session_id = "123"
 
     def close(self):  # This is just to appease a test
@@ -349,17 +351,15 @@ class TestQiskitSessionManagement:
         max_time_session = Session(backend=backend, max_time=60)
         dev = QiskitDevice2(wires=2, backend=backend, session=max_time_session)
 
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(
+            UserWarning,
+            match="`max_time` was set in the Session passed to the device. Using `max_time` '30' set in `qiskit_session`.",
+        ):
             with qiskit_session(dev, max_time=30) as session:
                 assert dev._session == session
                 assert dev._session != initial_session
                 assert dev._session._max_time == 30
                 assert dev._session._max_time != 60
-
-        assert (
-            record[0].message.args[0]
-            == "`max_time` was set in the Session passed to the device. Using `max_time` '30' set in `qiskit_session`."
-        )
 
         assert dev._session == max_time_session
         assert dev._session._max_time == 60
