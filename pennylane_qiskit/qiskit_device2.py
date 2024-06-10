@@ -491,8 +491,6 @@ class QiskitDevice2(Device):
         classical_register_name = compiled_circuits[0].cregs[0].name
         self._current_job = getattr(result.data, classical_register_name)
 
-        results = []
-
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
         # single_measurement = len(circuit.measurements) == 1
@@ -502,11 +500,11 @@ class QiskitDevice2(Device):
         res = [
             mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
         ]
-        single_measurement = len(circuit.measurements) == 1
-        res = res[0] if single_measurement else tuple(res)
-        results.append(res)
 
-        return tuple(results)
+        single_measurement = len(circuit.measurements) == 1
+        res = (res[0],) if single_measurement else tuple(res)
+
+        return res
 
     def _execute_estimator(self, circuit, session):
         # the Estimator primitive takes care of diagonalization and measurements itself,
