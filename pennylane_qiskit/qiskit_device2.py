@@ -105,6 +105,7 @@ def qiskit_session(device, **kwargs):
         session_args = inspect.signature(Session).parameters
         session_options = {arg: getattr(existing_session, "_" + arg) for arg in session_args}
     else:
+        # when an existing session doesn't exist, we create a session with default settings
         session_options = {"backend": device.backend, "service": device.service}
 
     for k, v in kwargs.items():
