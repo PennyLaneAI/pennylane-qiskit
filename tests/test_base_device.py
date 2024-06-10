@@ -300,6 +300,21 @@ class TestQiskitSessionManagement:
 
         assert dev._session is None
 
+    def test_no_warning_when_using_initial_session_options(self):
+        initial_session = Session(backend=backend, max_time=30)
+        dev = QiskitDevice2(wires=2, backend=backend, session=initial_session)
+
+        assert dev._session == initial_session
+
+        with qiskit_session(dev) as session:
+            assert dev._session == session
+            assert dev._session != initial_session
+            assert dev._session._max_time == session._max_time
+            assert dev._session._max_time == initial_session._max_time
+
+        assert dev._session == initial_session
+        assert dev._session._max_time == initial_session._max_time
+
     def test_warnings_when_overriding_session_context_options(self, recorder):
         """Test that warnings are raised when there are is an overlap between the Session options
         on the device and the session options passed in via qiskit_session. Also ensures that the

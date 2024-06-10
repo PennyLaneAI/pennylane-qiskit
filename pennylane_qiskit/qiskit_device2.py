@@ -101,6 +101,7 @@ def qiskit_session(device, **kwargs):
     session_options = {
         "service": device.service,
         "backend": device.backend,
+        "max_time": existing_session._max_time,
     }
 
     for k, v in kwargs.items():
