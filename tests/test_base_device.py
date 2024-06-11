@@ -1156,6 +1156,9 @@ class TestExecution:
                     qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
                 )
             ],
+            lambda: [
+                qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0)) # qml.var fails here, maybe due to the std error from qiskit?
+            ],
         ],
     )
     def test_diagonalize_works_for_non_commuting(self, observable):

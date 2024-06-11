@@ -584,7 +584,6 @@ class QiskitDevice2(Device):
         """
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
-
         result = []
         for i, mp in enumerate(measurements):
             if isinstance(mp, ExpectationMP):
