@@ -1111,7 +1111,6 @@ class TestExecution:
         res = circuit(np.pi / 2)
         qiskit_res = qiskit_circuit(np.pi / 2)
 
-
         assert np.shape(res[0]) == np.shape(qiskit_res[0])
         assert np.shape(res[1]) == np.shape(qiskit_res[1])
         assert len(res) == len(qiskit_res)
