@@ -32,7 +32,7 @@ from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Est
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
-from pennylane.transforms import broadcast_expand
+from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.tape import QuantumTape, QuantumScript
 from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
