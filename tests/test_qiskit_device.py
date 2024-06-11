@@ -185,7 +185,7 @@ class TestAnalyticWarningHWSimulator:
         )
 
         # Two warnings are being raised: one about analytic calculations and another about deprecation.
-        assert len(record) == 2 if Version("1.0") < Version(qk.__version__) else 1
+        assert len(record) == (2 if Version("1.0") < Version(qk.__version__) else 1)
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
@@ -199,7 +199,7 @@ class TestAnalyticWarningHWSimulator:
         # These simulators are being deprecated. Warning is raised in Qiskit 1.0
         # Migrate to AerSimulator with AerSimulator(method=method) and append
         # run circuits with the `save_state` instruction.
-        assert len(recwarn) == 1 if Version("1.0") < Version(qk.__version__) else 0
+        assert len(recwarn) == (1 if Version("1.0") < Version(qk.__version__) else 0)
 
 
 class TestAerBackendOptions:
