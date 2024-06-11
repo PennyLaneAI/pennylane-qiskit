@@ -208,34 +208,6 @@ class QiskitDevice2(Device):
             with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
             arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
             will be passed to the transpiler rather than to the Primitive.
-
-    **Example:**
-        .. code-block:: python
-            import pennylane as qml
-            from qiskit_ibm_runtime import QiskitRuntimeService
-            service = QiskitRuntimeService(channel="ibm_quantum")
-            backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
-            dev = qml.device("qiskit.remote", wires=127, backend=backend)
-            @qml.qnode(dev)
-            def circuit(x):
-                qml.RX(x, wires=[0])
-                qml.CNOT(wires=[0, 1])
-                return qml.expval(qml.PauliZ(1))
-        >>> circuit(np.pi/3, shots=1024)
-        0.529296875
-        This device also supports the use of local simulators such as FakeManila or AerSimulator
-        .. code-block:: python
-            import pennylane as qml
-            from qiskit_ibm_runtime.fake_provider import FakeManilaV2
-            backend = FakeManilaV2()
-            dev = qml.device("qiskit.remote", wires=5, backend=backend)
-            @qml.qnode(dev)
-            def circuit(x):
-                qml.RX(x, wires=[0])
-                qml.CNOT(wires=[0, 1])
-                return qml.expval(qml.PauliZ(1))
-        >>> circuit(np.pi/3, shots=1024)
-        0.49755859375
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
