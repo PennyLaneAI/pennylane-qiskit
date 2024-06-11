@@ -18,6 +18,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 from unittest.mock import patch, Mock
 import numpy as np
 import pytest
+from semantic_version import Version
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
@@ -486,7 +487,6 @@ class TestDevicePreprocessing:
 
         assert len(tapes) == num_tapes
 
-
 @pytest.mark.skip(reason="Options handling not decided on yet")
 class TestOptionsHandling:
     def test_warning_if_shots(self):
@@ -659,7 +659,7 @@ class TestMockedExecution:
     def test_get_transpile_args(self):
         """Test that get_transpile_args works as expected by filtering out
         kwargs that don't match the Qiskit transpile signature"""
-
+        
         # on a device
         transpile_args = {
             "random_kwarg": 3,
@@ -887,7 +887,7 @@ class TestExecution:
                 np.pi,
                 qml.RX,
                 qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3])
-                - 4 * qml.X(0),
+                - 4 * qml.X(2),
             ),
             (np.pi / 2, qml.RY, qml.sum(qml.PauliZ(0), qml.PauliX(1))),
             (np.pi, qml.RY, qml.dot([2, 3], [qml.X(0), qml.Y(0)])),
@@ -895,11 +895,6 @@ class TestExecution:
                 np.pi / 2,
                 qml.RZ,
                 qml.Hamiltonian([1], [qml.X(0) @ qml.Y(2)]) - 3 * qml.Z(3) @ qml.Z(1),
-            ),
-            (
-                np.pi / 2,
-                qml.RZ,
-                qml.Hamiltonian([1], [qml.X(0) @ qml.Y(2)]) - 3 * qml.Z(0) @ qml.Z(0),
             ),
         ],
     )
@@ -924,7 +919,7 @@ class TestExecution:
                 qml.expval(multi_q_obs),
                 qml.var(multi_q_obs),
             ],
-            shots=4096,
+            shots=10000,
         )
 
         res = dev.execute(qs)

@@ -26,6 +26,8 @@ import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device import QiskitDevice
 
+# pylint: disable=protected-access, unused-argument, too-few-public-methods
+
 
 class Configuration:
     def __init__(self, n_qubits, backend_name):
@@ -106,11 +108,11 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_mocked(self, dev_backend):
         """Test that device initializes with no error mocked"""
-        dev = qml.device("qiskit.remote", wires=10, backend=backend, use_primitives=True)
-        assert dev._backend == backend
+        dev = qml.device("qiskit.remote", wires=10, backend=dev_backend, use_primitives=True)
+        assert dev._backend == dev_backend
 
     @pytest.mark.parametrize(
-        "backend",
+        "dev_backend",
         [
             FakeManila(),
             FakeManilaV2(),
@@ -118,7 +120,6 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_manila(self, dev_backend):
         """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = qml.device("qiskit.remote", wires=5, backend=backend, use_primitives=True)
 
         @qml.qnode(dev)
         def circuit(x):

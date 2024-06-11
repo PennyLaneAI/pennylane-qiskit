@@ -215,7 +215,6 @@ class QiskitDevice2(Device):
         "Hadamard",
         "Hermitian",
         "Projector",
-
     }
 
     # pylint:disable = too-many-arguments
