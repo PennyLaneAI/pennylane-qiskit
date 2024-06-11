@@ -208,6 +208,34 @@ class QiskitDevice2(Device):
             with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
             arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
             will be passed to the transpiler rather than to the Primitive.
+
+    **Example:**
+        .. code-block:: python
+            import pennylane as qml
+            from qiskit_ibm_runtime import QiskitRuntimeService
+            service = QiskitRuntimeService(channel="ibm_quantum")
+            backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
+            dev = qml.device("qiskit.remote", wires=127, backend=backend)
+            @qml.qnode(dev)
+            def circuit(x):
+                qml.RX(x, wires=[0])
+                qml.CNOT(wires=[0, 1])
+                return qml.expval(qml.PauliZ(1))
+        >>> circuit(np.pi/3, shots=1024)
+        0.529296875
+        This device also supports the use of local simulators such as FakeManila or AerSimulator
+        .. code-block:: python
+            import pennylane as qml
+            from qiskit_ibm_runtime.fake_provider import FakeManilaV2
+            backend = FakeManilaV2()
+            dev = qml.device("qiskit.remote", wires=5, backend=backend)
+            @qml.qnode(dev)
+            def circuit(x):
+                qml.RX(x, wires=[0])
+                qml.CNOT(wires=[0, 1])
+                return qml.expval(qml.PauliZ(1))
+        >>> circuit(np.pi/3, shots=1024)
+        0.49755859375
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
@@ -372,9 +400,19 @@ class QiskitDevice2(Device):
         return transform_program, config
 
     def _process_kwargs(self, kwargs):
-        """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there is conflicting information.
-        Arguments related to transpilation are separated and saved in `dev._transpile_args`."""
+        """Processes kwargs given and separates them into kwargs and transpile_args. If given
+        a keyword argument 'options' that is a dictionary, a common practice in
+        Qiskit, the options in said dictionary take precedence over any overlapping keyword
+        arguments defined in the kwargs.
+
+        Keyword Args:
+            kwargs (dict): keyword arguments that set either runtime options or transpilation
+            options.
+
+        Returns:
+            kwargs, transpile_args: keyword arguments for the runtime options and keyword
+            arguments for the transpiler
+        """
 
         if "noise_model" in kwargs:
             noise_model = kwargs.pop("noise_model")
@@ -405,11 +443,16 @@ class QiskitDevice2(Device):
 
     @staticmethod
     def get_transpile_args(kwargs):
-        """The transpile argument setter.
+        """The transpile argument setter. This separates keyword arguments related to transpilation
+        from the rest of the keyword arguments and removes those keyword arguments from kwargs.
 
         Keyword Args:
-            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+            kwargs (dict): combined keyword arguments to be parsed for the Qiskit transpiler. For more details, see the
                 `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+
+        Returns:
+            kwargs (dict), transpile_args (dict): keyword arguments for the runtime options and keyword
+            arguments for the transpiler
         """
 
         transpile_sig = inspect.signature(transpile).parameters
@@ -477,7 +520,17 @@ class QiskitDevice2(Device):
             return results
 
     def _execute_sampler(self, circuit, session):
-        """Execution for the Sampler primitive"""
+        """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from SamplerV2
+        """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
         compiled_circuits = self.compile_circuits(qcirc)
@@ -507,6 +560,17 @@ class QiskitDevice2(Device):
         return res
 
     def _execute_estimator(self, circuit, session):
+        """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via EstimatorV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
@@ -531,9 +595,19 @@ class QiskitDevice2(Device):
 
     @staticmethod
     def _process_estimator_job(measurements, job_result):
-        """Estimator returns both expectation value and variance for each observable measured,
-        along with some metadata. Extract the relevant number for each measurement process and
-        return the requested results from the Estimator executions."""
+        """Estimator returns the expectation value and standard error for each observable measured,
+        along with some metadata that contains the precision. Extracts the relevant number for each
+        measurement process and return the requested results from the Estimator executions.
+        Note that for variance, we calculate the variance by using the standard error and the
+        precision value.
+
+        Args:
+            measurements (list[MeasurementProcess]): the measurements in the circuit
+            job_result (Any): the result from EstimatorV2
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
 
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
