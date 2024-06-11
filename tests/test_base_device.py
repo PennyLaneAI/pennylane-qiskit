@@ -365,13 +365,39 @@ class TestDevicePreprocessing:
         [
             (qml.PauliX(0), True),
             (qml.Hadamard(3), True),
-            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), False),
+            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
         ],
     )
     def test_observable_stopping_condition(self, obs, expected):
         """Test that observable_stopping_condition works"""
         res = test_dev.observable_stopping_condition(obs)
         assert res == expected
+
+    @pytest.mark.parametrize(
+        "measurements,num_tapes",
+        [
+            (
+                [
+                    qml.expval(qml.X(0)),
+                    qml.expval(qml.Y(1)),
+                    qml.expval(qml.Z(0) @ qml.Z(1)),
+                    qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                ],
+                3,
+            ),
+            ([qml.expval(qml.prod(qml.Y(0), qml.Z(0), qml.Y(0)))], 1),
+        ],
+    )
+    def test_preprocess_split_non_commuting(self, measurements, num_tapes):
+        """Test that `split_non_commuting` works as expected in the preprocess function."""
+
+        dev = QiskitDevice2(wires=5, backend=backend)
+        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
+
+        program, _ = dev.preprocess()
+        tapes, _ = program([qs])
+
+        assert len(tapes) == num_tapes
 
     @pytest.mark.parametrize(
         "measurements,num_types",
@@ -1115,23 +1141,41 @@ class TestExecution:
         assert np.shape(res[1]) == np.shape(qiskit_res[1])
         assert len(res) == len(qiskit_res)
 
+    @pytest.mark.parametrize(
+        "observable",
+        [
+            lambda: [qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))],
+            lambda: [
+                qml.expval(qml.X(0)),
+                qml.expval(qml.Y(1)),
+                qml.expval(qml.Z(0) @ qml.Z(1)),
+                qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+            ],
+            lambda: [
+                qml.expval(
+                    qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
+                )
+            ],
+        ],
+    )
+    def test_diagonalize_works_for_non_commuting(self, observable):
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=10000)
 
-def test_diagonalize_works_for_non_commuting(self):
-    qiskit_dev = QiskitDevice2(wires=3, backend=backend)
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.RY(np.pi / 4, 0)
+            qml.RX(np.pi / 4, 1)
+            return observable()
 
-    @qml.qnode(qiskit_dev)
-    def qiskit_circuit():
-        qml.X(0)
-        return qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))
+        dev = qml.device("default.qubit", wires=3, shots=10000)
 
-    dev = qml.device("default.qubit", wires=3)
+        @qml.qnode(dev)
+        def circuit():
+            qml.RY(np.pi / 4, 0)
+            qml.RX(np.pi / 4, 1)
+            return observable()
 
-    @qml.qnode(dev)
-    def circuit():
-        qml.X(0)
-        return qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))
+        qiskit_res = qiskit_circuit()
+        res = circuit()
 
-    qiskit_res = qiskit_circuit()
-    res = circuit()
-
-    assert np.allclose(res, qiskit_res, atol=0.05)
+        assert np.allclose(res, qiskit_res, atol=0.05)

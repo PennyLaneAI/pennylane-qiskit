@@ -129,7 +129,6 @@ def split_execution_types(
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
     used, and the raw samples will be processed to give an expectation value."""
-
     estimator = []
     sampler = []
 
@@ -219,6 +218,9 @@ class QiskitDevice2(Device):
         "Hadamard",
         "Hermitian",
         "Projector",
+        "Prod",
+        "Sum",
+        "LinearCombination",
     }
 
     # pylint:disable = too-many-arguments
@@ -580,7 +582,6 @@ class QiskitDevice2(Device):
         Returns:
             result (tuple): the processed result from EstimatorV2
         """
-
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
 
