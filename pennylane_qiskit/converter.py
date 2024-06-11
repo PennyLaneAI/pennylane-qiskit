@@ -867,11 +867,15 @@ def _process_switch_condition(condition, mid_circ_regs):
         if all(clbit in mid_circ_regs for clbit in clbits):
             # Build an integer representation for each switch case
             meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+            # Non Expr-based condition can have 2**#clbits Boolean outputs: 0, ..., 2**#clbits - 1
+            # If all of them are already covered in the given cases, skip the default case.
             use_switch_default = bool(set(condition[1]) ^ set(range(2 ** len(clbits))))
 
     # if the target is an Expr
     else:
         meas_pl_op = _expr_evaluation(condition[0], mid_circ_regs)
+        # Expr-based condition can have two Boolean outputs: 0 and 1
+        # If both of them are already covered in the given cases, skip the default case.
         use_switch_default = bool(set(condition[1]) ^ {0, 1})
 
     meas_pl_ops = []
