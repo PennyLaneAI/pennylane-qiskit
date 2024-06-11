@@ -881,7 +881,7 @@ class TestExecution:
                 np.pi,
                 qml.RX,
                 qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3])
-                - 4 * qml.X(2),
+                - 4 * qml.X(0),
             ),
             (
                 np.pi,
