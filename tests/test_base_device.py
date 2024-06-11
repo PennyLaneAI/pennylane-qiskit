@@ -1114,3 +1114,24 @@ class TestExecution:
         assert np.shape(res[0]) == np.shape(qiskit_res[0])
         assert np.shape(res[1]) == np.shape(qiskit_res[1])
         assert len(res) == len(qiskit_res)
+
+
+def test_diagonalize_works_for_non_commuting(self):
+    qiskit_dev = QiskitDevice2(wires=3, backend=backend)
+
+    @qml.qnode(qiskit_dev)
+    def qiskit_circuit():
+        qml.X(0)
+        return qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))
+
+    dev = qml.device("default.qubit", wires=3)
+
+    @qml.qnode(dev)
+    def circuit():
+        qml.X(0)
+        return qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))
+
+    qiskit_res = qiskit_circuit()
+    res = circuit()
+
+    assert np.allclose(res, qiskit_res, atol=0.05)

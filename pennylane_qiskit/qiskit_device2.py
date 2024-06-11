@@ -365,7 +365,7 @@ class QiskitDevice2(Device):
         )
 
         transform_program.add_transform(broadcast_expand)
-        # missing: split non-commuting, sum_expand, etc. [SC-62047]
+        transform_program.add_transform(split_non_commuting)
 
         transform_program.add_transform(split_execution_types)
 
