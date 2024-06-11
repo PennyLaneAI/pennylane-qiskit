@@ -15,9 +15,12 @@ r"""
 This module contains tests qiskit devices for PennyLane IBMQ devices.
 """
 from unittest.mock import Mock
+from packaging.version import Version
+
 import numpy as np
 import pytest
 
+import qiskit as qk
 from qiskit_aer import noise
 from qiskit.providers import BackendV1, BackendV2
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
@@ -175,14 +178,14 @@ class TestAnalyticWarningHWSimulator:
             dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         assert (
-            record[1].message.args[0] == "The analytic calculation of "
+            record[-1].message.args[0] == "The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
             "device are estimates based on samples."
         )
 
         # Two warnings are being raised: one about analytic calculations and another about deprecation.
-        assert len(record) == 2
+        assert len(record) == 2 if Version("1.0") < Version(qk.__version__) else 1
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
@@ -196,7 +199,7 @@ class TestAnalyticWarningHWSimulator:
         # These simulators are being deprecated. Warning is raised in Qiskit 1.0
         # Migrate to AerSimulator with AerSimulator(method=method) and append
         # run circuits with the `save_state` instruction.
-        assert len(recwarn) == 1
+        assert len(recwarn) == 1 if Version("1.0") < Version(qk.__version__) else 0
 
 
 class TestAerBackendOptions:
