@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Updated `load_qasm` to take the optional kwarg `measurements` which get performed at the end of the loaded circuit and `load_qasm` can now detect mid-circuit measurements from `qasm`.
+[(#555)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/555)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -15,6 +18,8 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Mashhood Khan
 
 ---
 # Release 0.36.0
