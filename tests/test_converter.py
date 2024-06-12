@@ -1185,11 +1185,7 @@ class TestConverterQasm:
     def test_qasm_measure(self):
         """Tests that measurements specified as an argument are added to the converted circuit."""
         qasm_string = (
-            'include "qelib1.inc";'
-            "qreg q[2];"
-            "creg c[2];"
-            "h q[0];"
-            "cx q[0], q[1];"
+            'include "qelib1.inc";' + "qreg q[2];" + "creg c[2];" + "h q[0];" + "cx q[0], q[1];"
         )
         dev = qml.device("default.qubit")
         measurements = [qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))]
