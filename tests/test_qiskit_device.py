@@ -15,12 +15,10 @@ r"""
 This module contains tests qiskit devices for PennyLane IBMQ devices.
 """
 from unittest.mock import Mock
-from packaging.version import Version
 
 import numpy as np
 import pytest
 
-import qiskit as qk
 from qiskit_aer import noise
 from qiskit.providers import BackendV1, BackendV2
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
