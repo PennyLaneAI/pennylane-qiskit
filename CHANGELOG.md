@@ -7,6 +7,9 @@
 * Updated `load_qasm` to take the optional kwarg `measurements` which get performed at the end of the loaded circuit and `load_qasm` can now detect mid-circuit measurements from `qasm`.
 [(#555)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/555)
 
+* Improvements have been made to load circuits with `SwitchCaseOp` gates with default case.
+  [(#514)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/514)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -19,6 +22,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Utkarsh Azad
 Mashhood Khan
 
 ---

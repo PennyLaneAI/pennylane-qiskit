@@ -28,6 +28,7 @@ from qiskit.quantum_info import SparsePauliOp
 
 import pennylane as qml
 from pennylane import numpy as np
+from pennylane.measurements import MidMeasureMP
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
@@ -38,6 +39,7 @@ from pennylane_qiskit.converter import (
     _format_params_dict,
     _check_parameter_bound,
 )
+
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments
 
@@ -1716,16 +1718,16 @@ class TestControlOpIntegration:
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
-        assert all(
-            (
-                op1 == op2
-                if not isinstance(op1, qml.measurements.MidMeasureMP)
-                else op1.wires == op2.wires
-            )
-            for op1, op2 in zip(
-                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
-            )
-        )
+        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        for op1, op2 in zip(
+            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+        ):
+            if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
+                assert op1.wires == op2.wires
+            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
+                assert qml.equal(op1.base, op2.base) and op1.meas_val.wires == op2.meas_val.wires
+            else:
+                assert qml.equal(op1, op2)
 
     # pylint: disable=too-many-statements
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
@@ -1797,22 +1799,27 @@ class TestControlOpIntegration:
                 qml.cond(mint1 >= 2, qml.PauliX)([0])
                 qml.cond(mint1 < 2, qml.PauliX)([1])
             elif cond_type == "expr3":
-                qml.cond(mint1 == mint2, qml.PauliX)([0])
-                qml.cond(mint1 != mint2, qml.PauliX)([1])
+                qml.cond(mint1 <= mint2, qml.PauliX)([0])
+                qml.cond(mint1 > mint2, qml.PauliX)([1])
+
+            qml.Barrier([0, 1, 2, 3, 4])
 
             return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
-        assert all(
-            (
-                op1 == op2
-                if not isinstance(op1, qml.measurements.MidMeasureMP)
-                else op1.wires == op2.wires
-            )
-            for op1, op2 in zip(
-                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
-            )
-        )
+
+        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        for op1, op2 in zip(
+            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+        ):
+            if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
+                assert op1.wires == op2.wires
+            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
+                assert qml.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
+                    op2.meas_val.wires
+                )
+            else:
+                assert qml.equal(op1, op2)
 
     def test_warning_for_non_accessible_classical_info(self):
         """Tests a UserWarning is raised if we do not have access to classical info."""
@@ -1897,14 +1904,16 @@ class TestControlOpIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert qk_circuit() == pl_circuit()
-        assert all(
-            (
-                op1 == op2
-                if not isinstance(op1, qml.measurements.MidMeasureMP)
-                else op1.wires == op2.wires
-            )
-            for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations)
-        )
+        assert len(qk_circuit.tape.operations) == len(pl_circuit.tape.operations)
+        for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations):
+            if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
+                assert op1.wires == op2.wires
+            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
+                assert qml.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
+                    op2.meas_val.wires
+                )
+            else:
+                assert qml.equal(op1, op2)
 
     def test_measurement_are_not_discriminated(self):
         """Test the all measurements are considered mid-circuit measurements when no terminal measurements are given"""
