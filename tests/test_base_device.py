@@ -1162,6 +1162,7 @@ class TestExecution:
         "observable",
         [
             lambda: [qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))],
+            lambda: [qml.var(qml.Hadamard(0)), qml.var(qml.Hadamard(0))],
             lambda: [
                 qml.expval(qml.X(0)),
                 qml.expval(qml.Y(1)),
@@ -1184,27 +1185,30 @@ class TestExecution:
                 )
             ],
             lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
-            # TODO: Investigate why this case lambda: [qml.var(qml.X(0) @ qml.Z(1) + qml.Z(0))] gives incongruent var value
+            lambda: [qml.var(qml.Z(0) + qml.Z(0))],
+            # lambda: [qml.var(qml.X(0) + qml.Z(0))], bugged due to PL
         ],
     )
     def test_observables_that_need_split_non_commuting(self, observable):
-        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=10000)
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
-            qml.RY(np.pi / 4, 0)
-            qml.RX(np.pi / 4, 1)
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi/3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3, shots=10000)
+        dev = qml.device("default.qubit", wires=3, shots=30000)
 
         @qml.qnode(dev)
         def circuit():
-            qml.RY(np.pi / 4, 0)
-            qml.RX(np.pi / 4, 1)
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
             return observable()
 
         qiskit_res = qiskit_circuit()
         res = circuit()
+
+        print(res, qiskit_res)
 
         assert np.allclose(res, qiskit_res, atol=0.05)
