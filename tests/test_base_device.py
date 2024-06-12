@@ -378,6 +378,16 @@ class TestDevicePreprocessing:
         [
             (
                 [
+                    qml.expval(qml.X(0) + qml.Y(0) + qml.Z(0)),
+                ],
+                3,
+            ),
+            (
+                [qml.var(qml.X(0) + qml.Y(0) + qml.Z(0))],  # Var does not split
+                1,
+            ),
+            (
+                [
                     qml.expval(qml.X(0)),
                     qml.expval(qml.Y(1)),
                     qml.expval(qml.Z(0) @ qml.Z(1)),
@@ -385,7 +395,14 @@ class TestDevicePreprocessing:
                 ],
                 3,
             ),
-            ([qml.expval(qml.prod(qml.Y(0), qml.Z(0), qml.Y(0)))], 1),
+            (
+                [
+                    qml.expval(
+                        qml.prod(qml.X(0), qml.Z(0), qml.Z(0)) + 0.35 * qml.X(0) - 0.21 * qml.Z(0)
+                    )
+                ],
+                2,
+            ),
         ],
     )
     def test_preprocess_split_non_commuting(self, measurements, num_tapes):
@@ -1150,18 +1167,27 @@ class TestExecution:
                 qml.expval(qml.Y(1)),
                 qml.expval(qml.Z(0) @ qml.Z(1)),
                 qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                qml.expval(
+                    qml.ops.LinearCombination(
+                        [0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.X(2)]
+                    )
+                ),
+                qml.expval(
+                    qml.ops.LinearCombination(
+                        [1.0, 2.0, 3.0], [qml.X(0), qml.X(1), qml.Z(0)], grouping_type="qwc"
+                    )
+                ),
             ],
             lambda: [
                 qml.expval(
                     qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
                 )
             ],
-            lambda: [
-                qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0)) # qml.var fails here, maybe due to the std error from qiskit?
-            ],
+            lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
+            # TODO: Investigate why this case lambda: [qml.var(qml.X(0) @ qml.Z(1) + qml.Z(0))] gives incongruent var value
         ],
     )
-    def test_diagonalize_works_for_non_commuting(self, observable):
+    def test_observables_that_need_split_non_commuting(self, observable):
         qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=10000)
 
         @qml.qnode(qiskit_dev)
