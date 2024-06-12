@@ -15,9 +15,12 @@ r"""
 This module contains tests qiskit devices for PennyLane IBMQ devices.
 """
 from unittest.mock import Mock
+from packaging.version import Version
+
 import numpy as np
 import pytest
 
+import qiskit as qk
 from qiskit_aer import noise
 from qiskit.providers import BackendV1, BackendV2
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
@@ -175,7 +178,7 @@ class TestAnalyticWarningHWSimulator:
             dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         assert (
-            record[1].message.args[0] == "The analytic calculation of "
+            record[-1].message.args[0] == "The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
             "device are estimates based on samples."
