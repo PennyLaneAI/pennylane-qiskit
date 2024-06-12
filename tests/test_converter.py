@@ -1182,7 +1182,13 @@ class TestConverterQasm:
 
     def test_qasm_measure(self):
         """Tests that measurements specified as an argument are added to the converted circuit."""
-        qasm_string = 'include "qelib1.inc";' "qreg q[2];" "creg c[2];" "h q[0];" "cx q[0], q[1];"
+        qasm_string = (
+            'include "qelib1.inc";'
+            "qreg q[2];"
+            "creg c[2];"
+            "h q[0];"
+            "cx q[0], q[1];"
+        )
         dev = qml.device("default.qubit")
         measurements = [qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))]
         loaded_circuit = load_qasm(qasm_string, measurements=measurements)
@@ -1218,7 +1224,7 @@ class TestConverterQasm:
         # loaded circuit
         @qml.qnode(dev)
         def quantum_circuit1():
-            mid_measure, m0, m1 = loaded_circuit()
+            mid_measure, _, m1 = loaded_circuit()
             qml.cond(mid_measure == 0, qml.RX)(np.pi / 2, 0)
             return qml.expval(mid_measure), qml.expval(m1)
 
@@ -1229,7 +1235,7 @@ class TestConverterQasm:
             mid_measure = qml.measure(0)
             qml.RZ(0.24, 0)
             qml.CNOT([0, 1])
-            m0 = qml.measure([0])
+            qml.measure([0])
             m1 = qml.measure([1])
             qml.cond(mid_measure == 0, qml.RX)(np.pi / 2, 0)
             return qml.expval(mid_measure), qml.expval(m1)

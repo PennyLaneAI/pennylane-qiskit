@@ -587,11 +587,13 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
 def load_qasm(qasm_string: str, measurements=None):
     """Loads a PennyLane template from a QASM string.
+
     Args:
         qasm_string (str): the name of the QASM string
         measurements (None | pennylane.measurements.MeasurementProcess | list[pennylane.measurements.MeasurementProcess]):
             the PennyLane `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
             that override the terminal measurements that may be present in the input circuit
+
     Returns:
         function: the new PennyLane template
     """
