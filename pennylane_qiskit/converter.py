@@ -22,6 +22,7 @@ from functools import partial, reduce
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+import qiskit.qasm2
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit.classical import expr
@@ -583,14 +584,19 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
     return _function
 
 
-def load_qasm(qasm_string: str):
+def load_qasm(qasm_string: str, measurements=None):
     """Loads a PennyLane template from a QASM string.
+
     Args:
         qasm_string (str): the name of the QASM string
+        measurements (None | pennylane.measurements.MeasurementProcess | list[pennylane.measurements.MeasurementProcess]):
+            the PennyLane `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
+            that override the terminal measurements that may be present in the input circuit
+
     Returns:
         function: the new PennyLane template
     """
-    return load(QuantumCircuit.from_qasm_str(qasm_string), measurements=[])
+    return load(qiskit.qasm2.loads(qasm_string), measurements=measurements)
 
 
 def load_qasm_from_file(file: str):
