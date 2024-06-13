@@ -1166,6 +1166,7 @@ class TestExecution:
             lambda: [
                 qml.expval(qml.X(0)),
                 qml.expval(qml.Y(1)),
+                qml.expval(0.5 * qml.Y(1)),
                 qml.expval(qml.Z(0) @ qml.Z(1)),
                 qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
                 qml.expval(
@@ -1185,8 +1186,11 @@ class TestExecution:
                 )
             ],
             lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
-            lambda: [qml.var(qml.Z(0) + qml.Z(0))],
-            # lambda: [qml.var(qml.X(0) + qml.Z(0))], bugged due to PL
+            lambda: [qml.var(qml.X(1) + qml.Z(0))],
+            pytest.param(
+                [qml.var(qml.X(0) + qml.Z(0))],
+                marks=pytest.mark.xfail(reason="Qiskit itself is bugged"),
+            ),
         ],
     )
     def test_observables_that_need_split_non_commuting(self, observable):
@@ -1195,7 +1199,7 @@ class TestExecution:
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
             qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi/3, 0)
+            qml.RZ(np.pi / 3, 0)
             return observable()
 
         dev = qml.device("default.qubit", wires=3, shots=30000)
@@ -1208,7 +1212,5 @@ class TestExecution:
 
         qiskit_res = qiskit_circuit()
         res = circuit()
-
-        print(res, qiskit_res)
 
         assert np.allclose(res, qiskit_res, atol=0.05)
