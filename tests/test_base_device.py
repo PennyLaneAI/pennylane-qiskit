@@ -494,7 +494,6 @@ class TestKwargsHandling:
             match="default_shots was found in the keyword arguments",
         ):
             dev = QiskitDevice2(wires=2, backend=backend, options={"default_shots": 30})
-
         # resets to default since we reinitialize the device
         assert dev._kwargs["default_shots"] == 1024
 
@@ -553,7 +552,7 @@ class TestKwargsHandling:
     def test_no_error_is_raised_if_transpilation_options_are_passed(self):
         """Tests that when transpilation options are passed in, they are properly
         handled without error"""
-
+        
         dev = QiskitDevice2(
             wires=2,
             backend=backend,
