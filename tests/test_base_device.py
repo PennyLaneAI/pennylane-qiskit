@@ -1272,7 +1272,7 @@ class TestExecution:
 
         equals = lambda a, b: abs(a - b) < 300
 
-        for i in range(len(res)):
+        for i in range(len(res)): # pylint: disable=consider-using-enumerate
             for key in set(res[i].keys()) & set(qiskit_res[i].keys()):
                 assert equals(res[i][key], qiskit_res[i][key])
 
@@ -1328,5 +1328,5 @@ class TestExecution:
         qiskit_res = qiskit_circuit()
         res = circuit()
 
-        for i in range(len(res)):
+        for i in range(len(res)): # pylint: disable=consider-using-enumerate
             assert abs(sum(qiskit_res[i]) / 30000 - sum(res[i]) / 30000) < 0.05
