@@ -63,6 +63,10 @@ def qiskit_session(device, **kwargs):
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
+        **kwargs: session keyword arguments to be used for settings for the Session. At the
+        time of writing, the only relevant keyword argument is "max_time", which lets you
+        set the maximum amount of time the sessin is open. For the most up to date information,
+        please refer to <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>
 
     **Example:**
 
@@ -87,7 +91,7 @@ def qiskit_session(device, **kwargs):
 
         angle = 0.1
 
-        with qiskit_session(dev) as session:
+        with qiskit_session(dev, max_time=60) as session:
 
             res = circuit(angle)[0] # you queue for the first execution
 
