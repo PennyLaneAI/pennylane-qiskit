@@ -22,6 +22,7 @@ from functools import partial, reduce
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
+import qiskit.qasm2
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit.classical import expr
@@ -583,14 +584,19 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
     return _function
 
 
-def load_qasm(qasm_string: str):
+def load_qasm(qasm_string: str, measurements=None):
     """Loads a PennyLane template from a QASM string.
+
     Args:
         qasm_string (str): the name of the QASM string
+        measurements (None | pennylane.measurements.MeasurementProcess | list[pennylane.measurements.MeasurementProcess]):
+            the PennyLane `measurements <https://docs.pennylane.ai/en/stable/introduction/measurements.html>`_
+            that override the terminal measurements that may be present in the input circuit
+
     Returns:
         function: the new PennyLane template
     """
-    return load(QuantumCircuit.from_qasm_str(qasm_string), measurements=[])
+    return load(qiskit.qasm2.loads(qasm_string), measurements=measurements)
 
 
 def load_qasm_from_file(file: str):
@@ -977,6 +983,7 @@ def _process_switch_condition(condition, mid_circ_regs):
     Returns:
         meas_pl_ops: list of corresponding mid-circuit measurements to be used in ``qml.cond``
     """
+    use_switch_default = True
     # if the target is not an Expr
     if not isinstance(condition[0], expr.Expr):
         # Prepare the classical bits used for the condition
@@ -987,17 +994,23 @@ def _process_switch_condition(condition, mid_circ_regs):
         if all(clbit in mid_circ_regs for clbit in clbits):
             # Build an integer representation for each switch case
             meas_pl_op = sum(2**idx * mid_circ_regs[clbit] for idx, clbit in enumerate(clbits))
+            # Non Expr-based condition can have 2**#clbits outputs: 0, ..., 2**#clbits - 1
+            # If all of them are already covered in the given cases, skip the default case.
+            use_switch_default = bool(set(condition[1]) ^ set(range(2 ** len(clbits))))
 
     # if the target is an Expr
     else:
         meas_pl_op = _expr_evaluation(condition[0], mid_circ_regs)
+        # Expr-based condition can have two Boolean outputs: 0 and 1
+        # If both of them are already covered in the given cases, skip the default case.
+        use_switch_default = bool(set(condition[1]) ^ {0, 1})
 
     meas_pl_ops = []
     if meas_pl_op is not None:
         # Add a measurement for each of the switch cases
         meas_pl_ops.extend([meas_pl_op == clval for clval in condition[1]])
         # If we have default case, add an additional measurement for it
-        if condition[2] == "SwitchDefault":
+        if condition[2] == "SwitchDefault" and use_switch_default:
             meas_pl_ops.append(
                 reduce(
                     lambda m0, m1: m0 & m1,
