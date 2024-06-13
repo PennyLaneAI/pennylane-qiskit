@@ -1179,7 +1179,7 @@ class TestExecution:
         "observable",
         [
             lambda: [qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))],
-            lambda: [qml.var(qml.Hadamard(0)), qml.var(qml.Hadamard(0))],
+            lambda: [qml.var(qml.Hadamard(0)), qml.var(qml.Hadamard(0))], # Note that Sum would fail
             lambda: [
                 qml.expval(qml.X(0)),
                 qml.expval(qml.Y(1)),
@@ -1203,10 +1203,10 @@ class TestExecution:
                 )
             ],
             lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
-            lambda: [qml.var(qml.X(1) + qml.Z(0))],
+            lambda: [qml.var(qml.X(1) + qml.Z(0))], # This one is not non-commuting, but nice for comparison
             pytest.param(
                 [qml.var(qml.X(0) + qml.Z(0))],
-                marks=pytest.mark.xfail(reason="Qiskit itself is bugged"),
+                marks=pytest.mark.xfail(reason="Qiskit itself is bugged when given Sum"),
             ),
             lambda: [
                 qml.expval(qml.Hadamard(0)),
@@ -1219,6 +1219,9 @@ class TestExecution:
         ],
     )
     def test_observables_that_need_split_non_commuting(self, observable):
+        """Tests that observables that have non-commuting measurements are
+        processed correctly when executed by the Estimator or, in the case of
+        qml.Hadamard, executed by the Sampler via expval() or var"""
         qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
@@ -1251,6 +1254,8 @@ class TestExecution:
         ],
     )
     def test_observables_that_need_split_non_commuting_counts(self, observable):
+        """Tests that observables that have non-commuting measurents are processed
+        correctly when executed by the Sampler via counts()"""
         qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
@@ -1309,6 +1314,8 @@ class TestExecution:
         ],
     )
     def test_observables_that_need_split_non_commuting_samples(self, observable):
+        """Tests that observables that have non-commuting measurents are processed
+        correctly when executed by the Sampler via sample()"""
         qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
