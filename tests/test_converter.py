@@ -30,6 +30,7 @@ import pennylane as qml
 from pennylane import I, X, Y, Z
 from pennylane import numpy as np
 from pennylane.tape.qscript import QuantumScript
+from pennylane.measurements import MidMeasureMP
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
@@ -43,6 +44,7 @@ from pennylane_qiskit.converter import (
     _format_params_dict,
     _check_parameter_bound,
 )
+
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments
 
@@ -1170,8 +1172,8 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit(params={})
 
-        # only X and CNOT queued (not 4 x qml.measure)
-        assert len(recorder.queue) == 2
+        # X and CNOT queued with 4 x qml.measure
+        assert len(recorder.queue) == 6
 
         assert recorder.queue[0].name == "PauliX"
         assert recorder.queue[0].parameters == []
@@ -1180,6 +1182,68 @@ class TestConverterQasm:
         assert recorder.queue[1].name == "CNOT"
         assert recorder.queue[1].parameters == []
         assert recorder.queue[1].wires == Wires([2, 0])
+
+        for i in range(2, 6):
+            assert recorder.queue[i].name == "MidMeasureMP"
+            assert recorder.queue[i].wires == Wires([i - 2])
+
+    def test_qasm_measure(self):
+        """Tests that measurements specified as an argument are added to the converted circuit."""
+        qasm_string = (
+            'include "qelib1.inc";' + "qreg q[2];" + "creg c[2];" + "h q[0];" + "cx q[0], q[1];"
+        )
+        dev = qml.device("default.qubit")
+        measurements = [qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))]
+        loaded_circuit = load_qasm(qasm_string, measurements=measurements)
+
+        # loaded circuit with measurements
+        @qml.qnode(dev)
+        def quantum_circuit1():
+            return loaded_circuit()
+
+        # native pennylane measurements
+        @qml.qnode(dev)
+        def quantum_circuit2():
+            load_qasm(qasm_string)()
+            return [qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))]
+
+        assert quantum_circuit1() == quantum_circuit2()
+
+    def test_qasm_mid_circuit_measure(self):
+        """Tests that the QASM primitive measure is correctly converted."""
+        qasm_string = (
+            'include "qelib1.inc";'
+            "qreg q[2];"
+            "creg c[2];"
+            "h q[0];"
+            "measure q[0] -> c[0];"
+            "rz(0.24) q[0];"
+            "cx q[0], q[1];"
+            "measure q -> c;"
+        )
+        dev = qml.device("default.qubit")
+        loaded_circuit = load_qasm(qasm_string)
+
+        # loaded circuit
+        @qml.qnode(dev)
+        def quantum_circuit1():
+            mid_measure, _, m1 = loaded_circuit()
+            qml.cond(mid_measure == 0, qml.RX)(np.pi / 2, 0)
+            return qml.expval(mid_measure), qml.expval(m1)
+
+        # native pennylane circuit
+        @qml.qnode(dev)
+        def quantum_circuit2():
+            qml.Hadamard(0)
+            mid_measure = qml.measure(0)
+            qml.RZ(0.24, 0)
+            qml.CNOT([0, 1])
+            qml.measure([0])
+            m1 = qml.measure([1])
+            qml.cond(mid_measure == 0, qml.RX)(np.pi / 2, 0)
+            return qml.expval(mid_measure), qml.expval(m1)
+
+        assert quantum_circuit1() == quantum_circuit2()
 
 
 class TestConverterIntegration:
@@ -2000,16 +2064,16 @@ class TestControlOpIntegration:
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
-        assert all(
-            (
-                op1 == op2
-                if not isinstance(op1, qml.measurements.MidMeasureMP)
-                else op1.wires == op2.wires
-            )
-            for op1, op2 in zip(
-                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
-            )
-        )
+        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        for op1, op2 in zip(
+            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+        ):
+            if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
+                assert op1.wires == op2.wires
+            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
+                assert qml.equal(op1.base, op2.base) and op1.meas_val.wires == op2.meas_val.wires
+            else:
+                assert qml.equal(op1, op2)
 
     # pylint: disable=too-many-statements
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
@@ -2081,22 +2145,27 @@ class TestControlOpIntegration:
                 qml.cond(mint1 >= 2, qml.PauliX)([0])
                 qml.cond(mint1 < 2, qml.PauliX)([1])
             elif cond_type == "expr3":
-                qml.cond(mint1 == mint2, qml.PauliX)([0])
-                qml.cond(mint1 != mint2, qml.PauliX)([1])
+                qml.cond(mint1 <= mint2, qml.PauliX)([0])
+                qml.cond(mint1 > mint2, qml.PauliX)([1])
+
+            qml.Barrier([0, 1, 2, 3, 4])
 
             return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
-        assert all(
-            (
-                op1 == op2
-                if not isinstance(op1, qml.measurements.MidMeasureMP)
-                else op1.wires == op2.wires
-            )
-            for op1, op2 in zip(
-                loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
-            )
-        )
+
+        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        for op1, op2 in zip(
+            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+        ):
+            if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
+                assert op1.wires == op2.wires
+            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
+                assert qml.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
+                    op2.meas_val.wires
+                )
+            else:
+                assert qml.equal(op1, op2)
 
     def test_warning_for_non_accessible_classical_info(self):
         """Tests a UserWarning is raised if we do not have access to classical info."""
@@ -2182,14 +2251,16 @@ class TestControlOpIntegration:
             return qml.expval(qml.PauliZ(0))
 
         assert qk_circuit() == pl_circuit()
-        assert all(
-            (
-                op1 == op2
-                if not isinstance(op1, qml.measurements.MidMeasureMP)
-                else op1.wires == op2.wires
-            )
-            for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations)
-        )
+        assert len(qk_circuit.tape.operations) == len(pl_circuit.tape.operations)
+        for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations):
+            if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
+                assert op1.wires == op2.wires
+            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
+                assert qml.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
+                    op2.meas_val.wires
+                )
+            else:
+                assert qml.equal(op1, op2)
 
     def test_measurement_are_not_discriminated(self):
         """Test the all measurements are considered mid-circuit measurements when no terminal measurements are given"""

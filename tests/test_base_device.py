@@ -1088,13 +1088,25 @@ class TestExecution:
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
-            return qml.sample(), qml.sample(qml.Y(0))
+            return (
+                qml.sample(),
+                qml.sample(qml.Y(0)),
+                qml.expval(qml.X(1)),
+                qml.var(qml.Y(0)),
+                qml.counts(),
+            )
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
-            return qml.sample(), qml.sample(qml.Y(0))
+            return (
+                qml.sample(),
+                qml.sample(qml.Y(0)),
+                qml.expval(qml.X(1)),
+                qml.var(qml.Y(0)),
+                qml.counts(),
+            )
 
         res = circuit(np.pi / 2)
         qiskit_res = qiskit_circuit(np.pi / 2)
