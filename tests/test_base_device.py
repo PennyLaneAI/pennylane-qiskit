@@ -1280,7 +1280,7 @@ class TestExecution:
         qiskit_res = qiskit_circuit()
         res = circuit()
 
-        equals = lambda a, b: abs(a - b) < 300
+        equals = lambda a, b: abs(a - b) < 300  # tolerance of 1% of # of shots
 
         for i in range(len(res)):  # pylint: disable=consider-using-enumerate
             for key in set(res[i].keys()) & set(qiskit_res[i].keys()):
