@@ -113,15 +113,8 @@ def qiskit_session(device, **kwargs):
         if k in session_options and k != "max_time":
             warnings.warn(f"Using '{k}' set in device, {getattr(device, k)}", UserWarning)
 
-        # Need "_" since `max_time` attribute on Session is `_max_time`
         # When there is overlap between the Session options on the device and the session options
         # passed in via qiskit_session, we prefer the ones passed in via qiskit_session
-        elif existing_session and getattr(existing_session, "_" + k):
-            warnings.warn(
-                f"`{k}` was also set in the Session passed to the device. Using `{k}` '{v}' set in `qiskit_session`.",
-                UserWarning,
-            )
-            session_options[k] = v
         else:
             session_options[k] = v
 

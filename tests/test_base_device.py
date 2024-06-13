@@ -312,16 +312,11 @@ class TestQiskitSessionManagement:
 
         max_time_session = Session(backend=backend, max_time=60)
         dev = QiskitDevice2(wires=2, backend=backend, session=max_time_session)
-
-        with pytest.warns(
-            UserWarning,
-            match="`max_time` was set in the Session passed to the device. Using `max_time` '30' set in `qiskit_session`.",
-        ):
-            with qiskit_session(dev, max_time=30) as session:
-                assert dev._session == session
-                assert dev._session != initial_session
-                assert dev._session._max_time == 30
-                assert dev._session._max_time != 60
+        with qiskit_session(dev, max_time=30) as session:
+            assert dev._session == session
+            assert dev._session != initial_session
+            assert dev._session._max_time == 30
+            assert dev._session._max_time != 60
 
         assert dev._session == max_time_session
         assert dev._session._max_time == 60
