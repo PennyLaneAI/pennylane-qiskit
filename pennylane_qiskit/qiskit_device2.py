@@ -264,7 +264,6 @@ class QiskitDevice2(Device):
 
         self._service = getattr(backend, "_service", None)
         self._session = session
-        
         kwargs["shots"] = shots
 
         # Perform validation against backend
@@ -421,7 +420,6 @@ class QiskitDevice2(Device):
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
-
         kwargs["default_shots"] = shots
 
         kwargs, transpile_args = self.get_transpile_args(kwargs)
