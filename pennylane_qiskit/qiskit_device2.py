@@ -189,67 +189,64 @@ def split_execution_types(
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
-        Args:
-            wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
-                or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
-                or strings (``['aux_wire', 'q1', 'q2']``).
-            backend (Backend): the initialized Qiskit backend
+    Args:
+        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+            or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
+            or strings (``['aux_wire', 'q1', 'q2']``).
+        backend (Backend): the initialized Qiskit backend
 
-        Keyword Args:
-            shots (int or None): number of circuit evaluations/random samples used
-                to estimate expectation values and variances of observables.
-            session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
-                be created at each device execution.
-            compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
-                sent to the backend device, to be set if the backend desired for compliation differs from the
-                backend used for execution. Defaults to ``None``, which means the primary backend will be used.
-            **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
-                If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
-                with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
-                arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
-                will be passed to the transpiler rather than to the Primitive.
-    <<<<<<< HEAD
+    Keyword Args:
+        shots (int or None): number of circuit evaluations/random samples used
+            to estimate expectation values and variances of observables.
+        session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
+            be created at each device execution.
+        compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
+            sent to the backend device, to be set if the backend desired for compliation differs from the
+            backend used for execution. Defaults to ``None``, which means the primary backend will be used.
+        **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
+            If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
+            with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
+            arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
+            will be passed to the transpiler rather than to the Primitive.
 
-        **Example:**
+    **Example:**
 
-        .. code-block:: python
+    .. code-block:: python
 
-            import pennylane as qml
-            from qiskit_ibm_runtime import QiskitRuntimeService
+        import pennylane as qml
+        from qiskit_ibm_runtime import QiskitRuntimeService
 
-            service = QiskitRuntimeService(channel="ibm_quantum")
-            backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
-            dev = qml.device("qiskit.remote", wires=127, backend=backend)
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
+        dev = qml.device("qiskit.remote", wires=127, backend=backend)
 
-            @qml.qnode(dev)
-            def circuit(x):
-                qml.RX(x, wires=[0])
-                qml.CNOT(wires=[0, 1])
-                return qml.expval(qml.PauliZ(1))
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(1))
 
-        >>> circuit(np.pi/3, shots=1024)
-        0.529296875
+    >>> circuit(np.pi/3, shots=1024)
+    0.529296875
 
-        This device also supports the use of local simulators such as FakeManila or AerSimulator
+    This device also supports the use of local simulators such as FakeManila or AerSimulator
 
-        .. code-block:: python
+    .. code-block:: python
 
-            import pennylane as qml
-            from qiskit_ibm_runtime.fake_provider import FakeManilaV2
+        import pennylane as qml
+        from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
-            backend = FakeManilaV2()
-            dev = qml.device("qiskit.remote", wires=5, backend=backend)
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=5, backend=backend)
 
-            @qml.qnode(dev)
-            def circuit(x):
-                qml.RX(x, wires=[0])
-                qml.CNOT(wires=[0, 1])
-                return qml.expval(qml.PauliZ(1))
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(1))
 
-        >>> circuit(np.pi/3, shots=1024)
-        0.49755859375
-    =======
-    >>>>>>> new_device_feature_branch
+    >>> circuit(np.pi/3, shots=1024)
+    0.49755859375
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
@@ -535,26 +532,16 @@ class QiskitDevice2(Device):
 
     def _execute_sampler(self, circuit, session):
         """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
-        <<<<<<< HEAD
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
 
-                Note that this result has been processed respective to the MeasurementProcess given.
-                E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
+            session (Session): the session that the execution will be performed with
 
-        =======
-                Note that this result has been processed respective to the MeasurementProcess given.
-                E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
+        Returns:
+            result (tuple): the processed result from SamplerV2
 
-        >>>>>>> new_device_feature_branch
-                Args:
-                    circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
-                    session (Session): the session that the execution will be performed with
-
-                Returns:
-                    result (tuple): the processed result from SamplerV2
-        <<<<<<< HEAD
-
-        =======
-        >>>>>>> new_device_feature_branch
         """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
@@ -621,21 +608,18 @@ class QiskitDevice2(Device):
     @staticmethod
     def _process_estimator_job(measurements, job_result):
         """Estimator returns the expectation value and standard error for each observable measured,
-                along with some metadata that contains the precision. Extracts the relevant number for each
-                measurement process and return the requested results from the Estimator executions.
-        <<<<<<< HEAD
+        along with some metadata that contains the precision. Extracts the relevant number for each
+        measurement process and return the requested results from the Estimator executions.
 
-        =======
-        >>>>>>> new_device_feature_branch
-                Note that for variance, we calculate the variance by using the standard error and the
-                precision value.
+        Note that for variance, we calculate the variance by using the standard error and the
+        precision value.
 
-                Args:
-                    measurements (list[MeasurementProcess]): the measurements in the circuit
-                    job_result (Any): the result from EstimatorV2
+        Args:
+            measurements (list[MeasurementProcess]): the measurements in the circuit
+            job_result (Any): the result from EstimatorV2
 
-                Returns:
-                    result (tuple): the processed result from EstimatorV2
+        Returns:
+            result (tuple): the processed result from EstimatorV2
         """
 
         expvals = job_result[0].data.evs
