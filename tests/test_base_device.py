@@ -256,7 +256,7 @@ class TestQiskitSessionManagement:
         assert dev._session is None
 
         with pytest.raises(
-            TypeError, match=r"Session.__init__\(\) got an unexpected keyword argument 'any_kwarg'"
+            TypeError,  # Type error for wrong keyword argument differs across python versions
         ):
             with qiskit_session(dev, any_kwarg=30) as session:
                 assert dev._session == session
