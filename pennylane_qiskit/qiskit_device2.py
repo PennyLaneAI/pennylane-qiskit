@@ -247,6 +247,18 @@ class QiskitDevice2(Device):
 
     >>> circuit(np.pi/3, shots=1024)
     0.49755859375
+
+    To set options for transpilation or runtime (see <https://docs.quantum.ibm.com/run/configure-runtime-compilation>
+    and https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options), simply pass the
+    keyword argument into the device.
+
+    .. code-block:: python
+
+        import pennylane as qml
+        from qiskit_ibm_runtime.fake_provider import FakeManilaV2
+
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=1, seed_transpiler=42)
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
