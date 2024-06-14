@@ -541,7 +541,6 @@ class QiskitDevice2(Device):
 
         Returns:
             result (tuple): the processed result from SamplerV2
-
         """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
@@ -571,7 +570,6 @@ class QiskitDevice2(Device):
 
     def _execute_estimator(self, circuit, session):
         """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
-
         Note that this result has been processed respective to the MeasurementProcess given.
         E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
 
@@ -581,7 +579,6 @@ class QiskitDevice2(Device):
 
         Returns:
             result (tuple): the processed result from EstimatorV2
-
         """
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
