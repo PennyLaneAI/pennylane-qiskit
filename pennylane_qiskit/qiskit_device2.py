@@ -205,10 +205,11 @@ class QiskitDevice2(Device):
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
             sent to the backend device, to be set if the backend desired for compliation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
-        **kwargs: transpilation and runtime kwargs to be used for measurements with Primitives. If `options` is
-            defined amongst the kwargs, and there are settings that overlap with those in kwargs, the settings
-            in `options` will take precedence over kwargs. Kwargs accepted by both the transpiler
-            and at runtime (e.g. optimization_level) will be passed to the transpiler rather than to the Primitive.
+        **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
+            If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
+            with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
+            arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
+            will be passed to the transpiler rather than to the Primitive.
 
     .. details::
         :title: Tracking
@@ -263,9 +264,8 @@ class QiskitDevice2(Device):
 
         self._service = getattr(backend, "_service", None)
         self._session = session
-
-        self._kwargs = kwargs
-        self._kwargs["shots"] = shots
+        
+        kwargs["shots"] = shots
 
         # Perform validation against backend
         available_qubits = (
@@ -277,7 +277,9 @@ class QiskitDevice2(Device):
             raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
         self.reset()
-        self._process_kwargs()  # processes kwargs and separates transpilation arguments to dev._transpile_args
+        self._kwargs, self._transpile_args = self._process_kwargs(
+            kwargs
+        )  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
     def backend(self):
@@ -383,53 +385,70 @@ class QiskitDevice2(Device):
 
         return transform_program, config
 
-    def _process_kwargs(self):
-        """Combine the settings defined in options and the settings passed as kwargs, with
-        the definition in options taking precedence if there is conflicting information.
-        Arguments related to transpilation are separated and saved in `dev._transpile_args`."""
+    def _process_kwargs(self, kwargs):
+        """Processes kwargs given and separates them into kwargs and transpile_args. If given
+        a keyword argument 'options' that is a dictionary, a common practice in
+        Qiskit, the options in said dictionary take precedence over any overlapping keyword
+        arguments defined in the kwargs.
 
-        if "noise_model" in self._kwargs:
-            noise_model = self._kwargs.pop("noise_model")
+        Keyword Args:
+            kwargs (dict): keyword arguments that set either runtime options or transpilation
+            options.
+
+        Returns:
+            kwargs, transpile_args: keyword arguments for the runtime options and keyword
+            arguments for the transpiler
+        """
+
+        if "noise_model" in kwargs:
+            noise_model = kwargs.pop("noise_model")
             self.backend.set_options(noise_model=noise_model)
 
-        if "options" in self._kwargs:
-            for key, val in self._kwargs.pop("options").items():
-                if key in self._kwargs:
+        if "options" in kwargs:
+            for key, val in kwargs.pop("options").items():
+                if key in kwargs:
                     warnings.warn(
                         "An overlap between what was passed in via options and what was passed in via kwargs was found."
                         f"The value set in options {key}={val} will be used."
                     )
-                self._kwargs[key] = val
+                kwargs[key] = val
 
-        shots = self._kwargs.pop("shots")
+        shots = kwargs.pop("shots")
 
-        if "default_shots" in self._kwargs:
+        if "default_shots" in kwargs:
             warnings.warn(
                 f"default_shots was found in the keyword arguments, but it is not supported by {self.name}"
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
-        self._kwargs["default_shots"] = shots
 
-        self._transpile_args = self.get_transpile_args()
+        kwargs["default_shots"] = shots
 
-    def get_transpile_args(self):
-        """The transpile argument setter.
+        kwargs, transpile_args = self.get_transpile_args(kwargs)
+
+        return kwargs, transpile_args
+
+    @staticmethod
+    def get_transpile_args(kwargs):
+        """The transpile argument setter. This separates keyword arguments related to transpilation
+        from the rest of the keyword arguments and removes those keyword arguments from kwargs.
 
         Keyword Args:
-            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
+            kwargs (dict): combined keyword arguments to be parsed for the Qiskit transpiler. For more details, see the
                 `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+
+        Returns:
+            kwargs (dict), transpile_args (dict): keyword arguments for the runtime options and keyword
+            arguments for the transpiler
         """
 
         transpile_sig = inspect.signature(transpile).parameters
 
-        transpile_args = {
-            arg: self._kwargs.pop(arg) for arg in transpile_sig if arg in self._kwargs
-        }
+        transpile_args = {arg: kwargs.pop(arg) for arg in transpile_sig if arg in kwargs}
         transpile_args.pop("circuits", None)
         transpile_args.pop("backend", None)
 
-        return transpile_args
+        return kwargs, transpile_args
 
     def compile_circuits(self, circuits):
         r"""Compiles multiple circuits one after the other.
@@ -488,7 +507,17 @@ class QiskitDevice2(Device):
             return results
 
     def _execute_sampler(self, circuit, session):
-        """Execution for the Sampler primitive"""
+        """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from SamplerV2
+        """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
         sampler = Sampler(session=session)
         compiled_circuits = self.compile_circuits(qcirc)
@@ -502,8 +531,6 @@ class QiskitDevice2(Device):
         classical_register_name = compiled_circuits[0].cregs[0].name
         self._current_job = getattr(result.data, classical_register_name)
 
-        results = []
-
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
         # single_measurement = len(circuit.measurements) == 1
@@ -513,13 +540,24 @@ class QiskitDevice2(Device):
         res = [
             mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
         ]
-        single_measurement = len(circuit.measurements) == 1
-        res = res[0] if single_measurement else res
-        results.append(res)
 
-        return tuple(results)
+        single_measurement = len(circuit.measurements) == 1
+        res = (res[0],) if single_measurement else tuple(res)
+
+        return res
 
     def _execute_estimator(self, circuit, session):
+        """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via EstimatorV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
@@ -544,9 +582,19 @@ class QiskitDevice2(Device):
 
     @staticmethod
     def _process_estimator_job(measurements, job_result):
-        """Estimator returns both expectation value and variance for each observable measured,
-        along with some metadata. Extract the relevant number for each measurement process and
-        return the requested results from the Estimator executions."""
+        """Estimator returns the expectation value and standard error for each observable measured,
+        along with some metadata that contains the precision. Extracts the relevant number for each
+        measurement process and return the requested results from the Estimator executions.
+        Note that for variance, we calculate the variance by using the standard error and the
+        precision value.
+
+        Args:
+            measurements (list[MeasurementProcess]): the measurements in the circuit
+            job_result (Any): the result from EstimatorV2
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
 
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
