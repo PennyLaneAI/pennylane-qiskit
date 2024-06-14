@@ -222,6 +222,7 @@ class QiskitDevice2(Device):
         "Sum",
         "LinearCombination",
         "SProd",
+        # TODO Could support SparseHamiltonian
     }
 
     # pylint:disable = too-many-arguments
