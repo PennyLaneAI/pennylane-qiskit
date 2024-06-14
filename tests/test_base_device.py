@@ -1341,4 +1341,4 @@ class TestExecution:
         res = circuit()
 
         for i in range(len(res)):  # pylint: disable=consider-using-enumerate
-            assert abs(sum(qiskit_res[i]) / 30000 - sum(res[i]) / 30000) < 0.05
+            assert np.abs(np.sum(qiskit_res[i]) / 30000 - np.sum(res[i]) / 30000) < 0.05
