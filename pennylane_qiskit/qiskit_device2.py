@@ -248,9 +248,11 @@ class QiskitDevice2(Device):
     >>> circuit(np.pi/3, shots=1024)
     0.49755859375
 
-    To set options for transpilation or runtime (see <https://docs.quantum.ibm.com/run/configure-runtime-compilation>
+    Internally, the device uses the EstimatorV2 and the SamplerV2 runtime primitives to execute
+    the measurements. To set options for transpilation or runtime (see <https://docs.quantum.ibm.com/run/configure-runtime-compilation>
     and https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options), simply pass the
-    keyword argument into the device.
+    keyword arguments into the device. If you wish to change options other than shots,
+    PennyLane requires you to re-initialize the device to do so.
 
     .. code-block:: python
 
@@ -259,6 +261,8 @@ class QiskitDevice2(Device):
 
         backend = FakeManilaV2()
         dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=1, seed_transpiler=42)
+        # to change options, re-initialize the device
+        dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=2, seed_transpiler=24)
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
