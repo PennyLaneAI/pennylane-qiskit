@@ -16,10 +16,10 @@ This module contains the :class:`~.RemoteDevice` class, a PennyLane device that 
 evaluation and differentiation on any Qiskit backend using Pennylane.
 """
 
-from .qiskit_device import QiskitDevice
+from .qiskit_device2 import QiskitDevice2
 
 
-class RemoteDevice(QiskitDevice):
+class RemoteDevice(QiskitDevice2):
     """A PennyLane device for any Qiskit backend.
 
     Args:
@@ -101,7 +101,7 @@ class RemoteDevice(QiskitDevice):
 
     Internally, the device uses the `EstimatorV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.EstimatorV2/>`_
     and the `SamplerV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.SamplerV2>`_  runtime primitives to execute
-    the measurements. To set options for `transpilation <<https://docs.quantum.ibm.com/run/configure-runtime-compilation>`_
+    the measurements. To set options for `transpilation <https://docs.quantum.ibm.com/run/configure-runtime-compilation>`_
     or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, simply pass the keyword arguments into the device.
     If you wish to change options other than ``shots``, PennyLane requires you to re-initialize the device to do so.
 
