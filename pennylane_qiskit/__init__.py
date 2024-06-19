@@ -18,3 +18,4 @@ from .aer import AerDevice
 from .basic_sim import BasicSimulatorDevice
 from .remote import RemoteDevice
 from .converter import load, load_pauli_op, load_qasm, load_qasm_from_file
+from .qiskit_device2 import qiskit_session
