@@ -229,7 +229,7 @@ class QiskitDevice2(Device):
     >>> circuit(np.pi/3, shots=1024)
     0.529296875
 
-    This device also supports the use of local simulators such as FakeManila or AerSimulator
+    This device also supports the use of local simulators such as ``AerSimulator`` or fake backends such as ``FakeManila``. 
 
     .. code-block:: python
 
