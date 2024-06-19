@@ -268,10 +268,9 @@ class QiskitDevice2(Device):
 
     Internally, the device uses the `EstimatorV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.EstimatorV2/>`_
     and the `SamplerV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.SamplerV2>`_  runtime primitives to execute
-    the measurements. To set options for transpilation or runtime (see <https://docs.quantum.ibm.com/run/configure-runtime-compilation>
-    and https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options), simply pass the
-    keyword arguments into the device. If you wish to change options other than ``shots``,
-    PennyLane requires you to re-initialize the device to do so.
+    the measurements. To set options for `transpilation <<https://docs.quantum.ibm.com/run/configure-runtime-compilation>`_
+    or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, simply pass the keyword arguments into the device.
+    If you wish to change options other than ``shots``, PennyLane requires you to re-initialize the device to do so.
 
     .. code-block:: python
 
