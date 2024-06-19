@@ -53,7 +53,6 @@ info = {
             'qiskit_op = pennylane_qiskit:load_pauli_op',
             'qasm = pennylane_qiskit:load_qasm',
             'qasm_file = pennylane_qiskit:load_qasm_from_file',
-            'qiskit_session = pennylane_qiskit::qiskit_session',
             ],
         },
     'description': 'PennyLane plugin for Qiskit',
