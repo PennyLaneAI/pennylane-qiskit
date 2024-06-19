@@ -218,7 +218,7 @@ class QiskitDevice2(Device):
 
         service = QiskitRuntimeService(channel="ibm_quantum")
         backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
-        dev = qml.device("qiskit.remote", wires=127, backend=backend)
+        dev = QiskitDevice2(wires=127, backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -237,7 +237,7 @@ class QiskitDevice2(Device):
         from qiskit_aer import AerSimulator
 
         backend = AerSimulator()
-        dev = qml.device("qiskit.remote", wires=5, backend=backend)
+        dev = QiskitDevice2(wires=5, backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -254,7 +254,7 @@ class QiskitDevice2(Device):
 
     .. code-block:: python
 
-        dev = qml.device("qiskit.remote", wires=5, backend=backend, shots=4000)
+        dev = QiskitDevice2(wires=5, backend=backend, shots=4000)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -278,9 +278,9 @@ class QiskitDevice2(Device):
         from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
         backend = FakeManilaV2()
-        dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=1, seed_transpiler=42)
+        dev = QiskitDevice2(wires=5, backend=backend, resilience_level=1, optimization_level=1, seed_transpiler=42)
         # to change options, re-initialize the device
-        dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=2, seed_transpiler=24)
+        dev = QiskitDevice2(wires=5, backend=backend, resilience_level=1, optimization_level=2, seed_transpiler=24)
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
