@@ -16,10 +16,10 @@ This module contains the :class:`~.RemoteDevice` class, a PennyLane device that 
 evaluation and differentiation on any Qiskit backend using Pennylane.
 """
 
-from .qiskit_device2 import QiskitDevice2
+from .qiskit_device2 import QiskitDevice
 
 
-class RemoteDevice(QiskitDevice2):
+class RemoteDevice(QiskitDevice):
     """A PennyLane device for any Qiskit backend.
 
     Args:
