@@ -229,14 +229,14 @@ class QiskitDevice2(Device):
     >>> circuit(np.pi/3, shots=1024)
     0.529296875
 
-    This device also supports the use of local simulators such as ``AerSimulator`` or fake backends such as ``FakeManila``. 
+    This device also supports the use of local simulators such as ``AerSimulator`` or fake backends such as ``FakeManila``.
 
     .. code-block:: python
 
         import pennylane as qml
-        from qiskit_ibm_runtime.fake_provider import FakeManilaV2
+        from qiskit_aer import AerSimulator
 
-        backend = FakeManilaV2()
+        backend = AerSimulator()
         dev = qml.device("qiskit.remote", wires=5, backend=backend)
 
         @qml.qnode(dev)
@@ -248,7 +248,26 @@ class QiskitDevice2(Device):
     >>> circuit(np.pi/3, shots=1024)
     0.49755859375
 
-    Internally, the device uses the EstimatorV2 and the SamplerV2 runtime primitives to execute
+    We can also change the number of shots, either when initializing the device or when we execute
+    the circuit. Note that the shots number specified on circuit execution will override whatever
+    was set on device initialization.
+
+    .. code-block:: python
+
+        dev = qml.device("qiskit.remote", wires=5, backend=backend, shots=4000)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.expval(qml.PauliZ(1))
+
+        circuit(np.pi/3) # this will run with 4000 shots
+        circuit(np.pi/3, shots=10000) # this will run with 10000 shots
+        circuit(np.pi/3) # this will run with 4000 shots
+
+    Internally, the device uses the `EstimatorV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.EstimatorV2/>`_
+    and the `SamplerV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.SamplerV2>`_  runtime primitives to execute
     the measurements. To set options for transpilation or runtime (see <https://docs.quantum.ibm.com/run/configure-runtime-compilation>
     and https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options), simply pass the
     keyword arguments into the device. If you wish to change options other than ``shots``,
