@@ -93,7 +93,8 @@ def qiskit_session(device, **kwargs):
 
         with qiskit_session(dev, max_time=60) as session:
 
-            res = circuit(angle)[0] # you queue for the first execution
+            # queue for the first execution
+            res = circuit(angle)[0] 
 
             # then this loop executes immediately after without queueing again
             while res > 0:
