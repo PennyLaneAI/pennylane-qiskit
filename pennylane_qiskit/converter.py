@@ -717,7 +717,7 @@ def mp_to_pauli(mp, register_size):
         register_size(int): total size of the qubit register being measured
 
     Returns:
-        SparsePauliOp: the SparsePauliOp of the given Pauli observable
+        SparsePauliOp: the ``SparsePauliOp`` of the given Pauli observable
     """
     op = mp.obs
 
