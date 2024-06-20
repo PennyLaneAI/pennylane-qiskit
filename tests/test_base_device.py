@@ -1282,9 +1282,9 @@ class TestExecution:
 
         equals = lambda a, b: abs(a - b) < 300  # tolerance of 1% of # of shots
 
-         assert len(qiskit_res) == len(res)
-         for res1, res2 in zip(qiskit_res, res):
-             assert all([res1[key] - res2.get(key, 0) < 300 for key in res1])
+        assert len(qiskit_res) == len(res)
+        for res1, res2 in zip(qiskit_res, res):
+            assert all([res1[key] - res2.get(key, 0) < 300 for key in res1])
 
     @pytest.mark.parametrize(
         "observable",
