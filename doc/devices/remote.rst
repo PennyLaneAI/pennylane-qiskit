@@ -4,7 +4,7 @@ The Remote device
 The ``'qiskit.remote'`` device is a generic adapter to use any Qiskit backend as interface
 for a PennyLane device.
 
-To access Qiskit backends, we recommend using `Qiskit Runtime <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime-from-ibm-provider>`_.
+To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime-from-ibm-provider>`_.
 
 .. code-block:: python
 
