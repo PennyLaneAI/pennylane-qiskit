@@ -1340,4 +1340,4 @@ class TestExecution:
         qiskit_res = qiskit_circuit()
         res = circuit()
 
-        assert np.all(np.abs(np.sum(qiskit_res, axis=1) - np.sum(res, axis=1)) / 30000 < 0.05)
+        assert np.allclose(np.mean(qiskit_res, axis=1), np.mean(res, axis=1), atol=0.05)
