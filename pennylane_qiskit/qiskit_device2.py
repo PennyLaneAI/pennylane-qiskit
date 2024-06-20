@@ -66,7 +66,7 @@ def qiskit_session(device, **kwargs):
         **kwargs: session keyword arguments to be used for settings for the Session. At the
         time of writing, the only relevant keyword argument is "max_time", which lets you
         set the maximum amount of time the sessin is open. For the most up to date information,
-        please refer to `the Qiskit Session documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
+        please refer to the Qiskit Session `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
 
     **Example:**
 
