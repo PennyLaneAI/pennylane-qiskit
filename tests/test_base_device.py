@@ -1280,8 +1280,6 @@ class TestExecution:
         qiskit_res = qiskit_circuit()
         res = circuit()
 
-        equals = lambda a, b: abs(a - b) < 300  # tolerance of 1% of # of shots
-
         assert len(qiskit_res) == len(res)
         for res1, res2 in zip(qiskit_res, res):
             assert all([res1[key] - res2.get(key, 0) < 300 for key in res1])
@@ -1290,6 +1288,7 @@ class TestExecution:
         "observable",
         [
             lambda: [qml.sample(qml.X(0) + qml.Y(0)), qml.sample(qml.X(0))],
+            lambda: [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))],
             lambda: [
                 qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
                 qml.sample(0.5 * qml.Y(1)),

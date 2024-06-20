@@ -1723,6 +1723,28 @@ class TestConverterPennyLaneCircuitToQiskit:
 
         assert len(instructions) == len(expected_gates)
 
+    def test_circuit_to_qiskit_measurements_with_overlapping_wires(self):
+        """Test that diagonalizing gates work even with the circuit for circuits with
+        measurements on overlapping wires"""
+
+        measurements = [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
+        tape = qml.tape.QuantumScript(measurements=measurements)
+
+        qc = circuit_to_qiskit(tape, 2, diagonalize=True, measure=True)
+
+        # get list of instruction names up to the barrier (played right before measurements)
+        instructions = []
+        for instruction in qc.data:
+            if instruction.operation.name == "barrier":
+                break
+            instructions.append(instruction.operation.name)
+
+        # manually diagonalized test case
+        expected_gates = ["ry", "rx"]
+
+        assert len(instructions) == len(expected_gates)
+        assert instructions == expected_gates
+
 
 class TestConverterGatePennyLaneToQiskit:
     def test_non_parameteric_operation_to_qiskit(self):
