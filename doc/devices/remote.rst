@@ -71,7 +71,7 @@ The ``'qiskit.remote'`` device also supports the use of `local simulators <https
     dev = qml.device('qiskit.remote', wires=2, backend=backend)
 
 Device options
-~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``'qiskit.remote'`` device uses the `EstimatorV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.EstimatorV2/>`_
 and the `SamplerV2 <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.SamplerV2>`_  runtime primitives to execute
@@ -89,6 +89,7 @@ The default value of the shots argument is `1024`. You can set the number of sho
 `shots` keyword, or you can choose the number of shots on circuit execution.
 
 .. code-block:: python
+
     dev = qml.device("qiskit.remote", wires=5, backend=backend, shots=4096)
 
     @qml.qnode(dev)
