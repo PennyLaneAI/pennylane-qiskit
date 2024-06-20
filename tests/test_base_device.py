@@ -247,7 +247,7 @@ class TestQiskitSessionManagement:
         assert dev._session is None
 
     def test_error_when_passing_unexpected_kwarg(self):
-        """Test that we accept any keyword argument that the User wants to supply so that if
+        """Test that we accept any keyword argument that the user wants to supply so that if
         Qiskit allows for more customization we can automatically accomodate those needs. Right
         now there are no such keyword arguments, so an error on Qiskit's side is raised."""
 
