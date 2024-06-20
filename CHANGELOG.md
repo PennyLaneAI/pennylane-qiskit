@@ -28,6 +28,9 @@
 ### Deprecations 👋
 
 ### Documentation 📝
+* The Pennylane-Qiskit plugin page has been updated to reflect the changes in both the plugin's 
+capabilities and Qiskit.
+  [#563](https://github.com/PennyLaneAI/pennylane-qiskit/pull/563)
 
 ### Bug fixes 🐛
 
