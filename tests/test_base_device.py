@@ -274,7 +274,7 @@ class TestQiskitSessionManagement:
             assert dev._session == session
             assert dev._session != initial_session
             assert dev._session._max_time == session._max_time
-            assert dev._session._max_time == initial_session._max_time
+            assert dev._session._max_time != initial_session._max_time
 
         assert dev._session == initial_session
         assert dev._session._max_time == initial_session._max_time
