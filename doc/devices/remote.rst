@@ -4,7 +4,22 @@ The Remote device
 The ``'qiskit.remote'`` device is a generic adapter to use any Qiskit backend as interface
 for a PennyLane device.
 
-This device is useful when retrieving backends from providers with complex search options in
+To access Qiskit backends, we recommend using 
+    `Qiskit Runtime <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime-from-ibm-provider>`_.
+
+.. code-block:: python
+
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>", overwrite=True, default=true)
+
+    # To access saved credentials for the IBM quantum channel and select an instance
+    service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
+    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
+
+    dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
+
+This device is also useful when accessing backends from providers with complex search options in
 their ``get_backend()`` method, or for setting options on a backend prior to wrapping it as
 PennyLane device.
 
@@ -22,20 +37,7 @@ PennyLane device.
 .. warning::
 
     Retrieving a backend from a provider has been deprecated and may not be supported 
-    in the future. To access Qiskit backends, we recommend migrating to 
-    `Qiskit Runtime <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime-from-ibm-provider>`_.
-
-    .. code-block:: python
-
-        from qiskit_ibm_runtime import QiskitRuntimeService
-
-        QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>", overwrite=True, default=true)
-
-        # To access saved credentials for the IBM quantum channel and select an instance
-        service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
-        backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
-
-        dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
+    in the future. 
 
 After installing the plugin, this device can be used just like other devices for the definition and evaluation of QNodes within PennyLane.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
