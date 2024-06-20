@@ -35,8 +35,7 @@ PennyLane device.
 
 .. warning::
 
-    Retrieving a backend from a provider has been deprecated and may not be supported 
-    in the future. 
+    Retrieving a backend from a provider has been deprecated and may not be supported. 
 
 After installing the plugin, this device can be used just like other devices for the definition and evaluation of QNodes within PennyLane.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
@@ -69,7 +68,7 @@ The ``'qiskit.remote'`` device also supports the use of `local simulators <https
     # from qiskit_aer import AerSimulator
     # backend = AerSimulator()
 
-    dev = qml.device('qiskit.remote', wires=2, backend=backend)
+    dev = qml.device('qiskit.remote', wires=5, backend=backend)
 
 Device options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
