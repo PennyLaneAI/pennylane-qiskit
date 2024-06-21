@@ -251,7 +251,7 @@ class TestBatchExecution:
         times."""
 
         dev = device(2)
-        spy = mocker.spy(QiskitDeviceLegacyLegacy, "reset")
+        spy = mocker.spy(QiskitDeviceLegacy, "reset")
 
         tapes = [self.tape1] * n_tapes
         dev.batch_execute(tapes)
