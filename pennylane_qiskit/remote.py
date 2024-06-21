@@ -122,20 +122,20 @@ class RemoteDevice(QiskitDevice):
 
         backend = FakeManilaV2()
         dev = qml.device(
-            "qiskit.remote",
-            wires=5,
-            backend=backend,
-            resilience_level=1,
-            optimization_level=1,
+            "qiskit.remote", 
+            wires=5, 
+            backend=backend, 
+            resilience_level=1, 
+            optimization_level=1, 
             seed_transpiler=42,
         )
         # to change options, re-initialize the device
         dev = qml.device(
-            "qiskit.remote",
-            wires=5,
-            backend=backend,
-            resilience_level=1,
-            optimization_level=2,
+            "qiskit.remote", 
+            wires=5, 
+            backend=backend, 
+            resilience_level=1, 
+            optimization_level=2, 
             seed_transpiler=24,
         )
     """
