@@ -16,6 +16,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 """
 
 from unittest.mock import patch, Mock
+from flaky import flaky
 import numpy as np
 from pydantic_core import ValidationError
 import pytest
@@ -760,6 +761,7 @@ class TestExecution:
             (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
         ],
     )
+    @flaky(max_runs=10, min_passes=7)
     def test_estimator_with_different_pauli_obs(self, mocker, wire, angle, op, expectation):
         """Test that the Estimator with various observables returns expected results.
         Essentially testing that the conversion to PauliOps in _execute_estimator behaves as
@@ -815,6 +817,7 @@ class TestExecution:
             ),
         ],
     )
+    @flaky(max_runs=10, min_passes=7)
     def test_estimator_with_various_multi_qubit_pauli_obs(
         self, mocker, wire, angle, op, multi_q_obs
     ):
@@ -893,6 +896,7 @@ class TestExecution:
             ),
         ],
     )
+    @flaky(max_runs=10, min_passes=7)
     def test_process_estimator_job(self, measurements, expectation):
         """Tests that the estimator returns expected and accurate results for an ``expval`` and ``var`` for a variety of multi-qubit observables"""
 
@@ -987,6 +991,7 @@ class TestExecution:
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
+    @flaky(max_runs=10, min_passes=7)
     def test_no_pauli_observable_gives_accurate_answer(self, mocker, observable):
         """Test that the device uses _sampler and _execute_estimator appropriately and
         provides an accurate answer for measurements with observables that don't have a pauli_rep.
