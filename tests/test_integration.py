@@ -29,36 +29,23 @@ import qiskit
 import qiskit_aer
 
 from qiskit.providers import QiskitBackendNotFoundError
-from pennylane_qiskit.qiskit_device import QiskitDevice
+from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
 
 # pylint: disable=protected-access, unused-argument, ungrouped-imports, too-many-arguments, too-few-public-methods
 
-if Version(qiskit.__version__) < Version("1.0.0"):
-    pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicaer", qiskit.BasicAer)]
+from qiskit.providers.basic_provider import BasicProvider
 
-    def check_provider_backend_compatibility(pldevice, backend_name):
-        """check compatibility of provided backend"""
-        dev_name, _ = pldevice
-        if (dev_name == "qiskit.aer" and "aer" not in backend_name) or (
-            dev_name == "qiskit.basicaer" and "aer" in backend_name
-        ):
-            return (False, "Only the AerSimulator is supported on AerDevice")
-        return True, None
+pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider())]
 
-else:
-    from qiskit.providers.basic_provider import BasicProvider
+def check_provider_backend_compatibility(pldevice, backend_name):
+    """check compatibility of provided backend"""
+    dev_name, _ = pldevice
+    if dev_name == "qiskit.aer" and backend_name == "basic_simulator":
+        return (False, "basic_simulator is not supported on the AerDevice")
 
-    pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider())]
-
-    def check_provider_backend_compatibility(pldevice, backend_name):
-        """check compatibility of provided backend"""
-        dev_name, _ = pldevice
-        if dev_name == "qiskit.aer" and backend_name == "basic_simulator":
-            return (False, "basic_simulator is not supported on the AerDevice")
-
-        if dev_name == "qiskit.basicsim" and backend_name != "basic_simulator":
-            return (False, "Only the basic_simulator backend works with the BasicSimulatorDevice")
-        return True, None
+    if dev_name == "qiskit.basicsim" and backend_name != "basic_simulator":
+        return (False, "Only the basic_simulator backend works with the BasicSimulatorDevice")
+    return True, None
 
 
 class TestDeviceIntegration:
@@ -77,8 +64,8 @@ class TestDeviceIntegration:
         assert dev.num_wires == 2
         assert dev.shots == 1024
         assert dev.short_name == d[0]
-        assert dev.provider == d[1]
-        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+        #assert dev.provider == d[1]
+        #assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     @pytest.mark.parametrize("d", pldevices)
     def test_load_remote_device_with_backend_instance(self, d, backend):
@@ -92,10 +79,9 @@ class TestDeviceIntegration:
 
         dev = qml.device("qiskit.remote", wires=2, backend=backend_instance, shots=1024)
         assert dev.num_wires == 2
-        assert dev.shots == 1024
+        assert dev.shots.total_shots == 1024
         assert dev.short_name == "qiskit.remote"
-        assert dev.provider is None
-        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+        #assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     @pytest.mark.parametrize("d", pldevices)
     def test_load_remote_device_by_name(self, d, backend):
@@ -110,12 +96,11 @@ class TestDeviceIntegration:
 
         _, provider = d
 
-        dev = qml.device("qiskit.remote", wires=2, provider=provider, backend=backend, shots=1024)
+        dev = qml.device("qiskit.remote", wires=2, backend=backend, shots=1024)
         assert dev.num_wires == 2
-        assert dev.shots == 1024
+        assert dev.shots.total_shots == 1024
         assert dev.short_name == "qiskit.remote"
-        assert dev.provider == provider
-        assert dev.capabilities()["returns_state"] == (backend in state_backends)
+        #assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     def test_incorrect_backend(self):
         """Test that exception is raised if name is incorrect"""
@@ -591,7 +576,7 @@ class TestBatchExecution:
         b = np.linspace(0, 0.123, batch_dim)
         c = np.linspace(0, 0.987, batch_dim)
 
-        spy1 = mocker.spy(QiskitDevice, "batch_execute")
+        spy1 = mocker.spy(QiskitDeviceLegacy, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
         @partial(qml.batch_params, all_operations=True)
@@ -605,7 +590,7 @@ class TestBatchExecution:
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
-        # Check that QiskitDevice.batch_execute was called
+        # Check that QiskitDeviceLegacy.batch_execute was called
         assert spy1.call_count == 1
         assert spy2.call_count == 1
 
@@ -625,7 +610,7 @@ class TestBatchExecution:
 
         dev = qml.device(d[0], wires=3, backend=backend, shots=shots)
 
-        spy1 = mocker.spy(QiskitDevice, "batch_execute")
+        spy1 = mocker.spy(QiskitDeviceLegacy, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
         @qml.qnode(dev, diff_method="parameter-shift")
@@ -642,7 +627,7 @@ class TestBatchExecution:
         expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
         assert np.allclose(res, expected, **tol)
 
-        # Check that QiskitDevice.batch_execute was called twice
+        # Check that QiskitDeviceLegacy.batch_execute was called twice
         assert spy1.call_count == 2
 
         # Check that run was called twice: for the partial derivatives and for

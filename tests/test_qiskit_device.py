@@ -25,7 +25,7 @@ from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
-from pennylane_qiskit.qiskit_device import QiskitDevice
+from pennylane_qiskit.qiskit_device_legacy import QiskitDevice
 
 # pylint: disable=protected-access, unused-argument, too-few-public-methods
 
