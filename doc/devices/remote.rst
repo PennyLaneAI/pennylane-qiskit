@@ -10,7 +10,12 @@ To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum
 
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>", overwrite=True, default=true)
+    QiskitRuntimeService.save_account(
+        channel="ibm_quantum", 
+        token="<IQP_TOKEN>", 
+        overwrite=True, 
+        default=true
+    )
 
     # To access saved credentials for the IBM quantum channel and select an instance
     service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
@@ -80,9 +85,23 @@ or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, sim
 
 .. code-block:: python
 
-    dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=1, seed_transpiler=42)
+    dev = qml.device(
+        "qiskit.remote", 
+        wires=5, 
+        backend=backend, 
+        resilience_level=1, 
+        optimization_level=1, 
+        seed_transpiler=42
+    )
     # to change options, re-initialize the device
-    dev = qml.device("qiskit.remote", wires=5, backend=backend, resilience_level=1, optimization_level=2, seed_transpiler=24)
+    dev = qml.device(
+        "qiskit.remote", 
+        wires=5, 
+        backend=backend, 
+        resilience_level=1, 
+        optimization_level=2, 
+        seed_transpiler=24
+    )
 
 This device is not compatible with analytic mode, so an error will be raised if ``shots=0`` or ``shots=None``.
 The default value of the shots argument is ``1024``. You can set the number of shots on device initialization using the 
