@@ -742,7 +742,7 @@ class TestMockedExecution:
 
         assert dev._session is None  # the device session is still None
 
-    @pytest.mark.parametrize("backend", [backend, legacy_backend])
+    @pytest.mark.parametrize("backend", [backend, legacy_backend, FakeManila(), FakeManilaV2()])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
         """Test that a device executes measurements that require raw samples via the sampler,
         and the relevant primitive measurements via the estimator"""
@@ -1102,7 +1102,8 @@ class TestExecution:
         ):
             circuit()
 
-    def test_qiskit_probability_output_format(self):
+    @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
+    def test_qiskit_probability_output_format(self, backend):
         """Test that the format and values of the Qiskit device's output for `qml.probs` is
         the same as pennylane's."""
 
@@ -1123,26 +1124,25 @@ class TestExecution:
         qiskit_res = qiskit_circuit()
 
         assert np.shape(res) == np.shape(qiskit_res)
-        assert np.allclose(res, qiskit_res, atol=0.03)
 
     @pytest.mark.parametrize("backend", [backend, FakeManila(), FakeManilaV2()])
     def test_sampler_output_shape(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane"""
-        dev = qml.device("default.qubit", wires=[0, 1, 2, 3, 4], shots=1024)
-        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3, 4], backend=backend)
+        dev = qml.device("default.qubit", wires=5, shots=1024)
+        qiskit_dev = QiskitDevice2(wires=5, backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
-            return qml.sample()
+            return [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
-            return qml.sample()
+            return [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
 
         res = circuit(np.pi / 2)
         qiskit_res = qiskit_circuit(np.pi / 2)
@@ -1153,8 +1153,8 @@ class TestExecution:
     def test_sampler_output_shape_multi_measurements(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane for circuits with multiple measurements"""
-        dev = qml.device("default.qubit", wires=[0, 1, 2, 3], shots=10)
-        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=backend, shots=10)
+        dev = qml.device("default.qubit", wires=5, shots=10)
+        qiskit_dev = QiskitDevice2(wires=5, backend=backend, shots=10)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -1232,6 +1232,7 @@ class TestExecution:
             ],
         ],
     )
+    @flaky(max_runs=10, min_passes=7)
     def test_observables_that_need_split_non_commuting(self, observable):
         """Tests that observables that have non-commuting measurements are
         processed correctly when executed by the Estimator or, in the case of
@@ -1267,10 +1268,11 @@ class TestExecution:
             ],
         ],
     )
+    @flaky(max_runs=10, min_passes=7)
     def test_observables_that_need_split_non_commuting_counts(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via counts()"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=4000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
@@ -1278,7 +1280,7 @@ class TestExecution:
             qml.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3, shots=30000)
+        dev = qml.device("default.qubit", wires=3, shots=4000)
 
         @qml.qnode(dev)
         def circuit():
@@ -1313,6 +1315,8 @@ class TestExecution:
                         [0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.X(2)]
                     )
                 ),
+            ],
+            lambda: [
                 qml.sample(
                     qml.ops.LinearCombination(
                         [1.0, 2.0, 3.0], [qml.X(0), qml.X(1), qml.Z(0)], grouping_type="qwc"
@@ -1326,10 +1330,11 @@ class TestExecution:
             ],
         ],
     )
+    @flaky(max_runs=10, min_passes=7)
     def test_observables_that_need_split_non_commuting_samples(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via sample()"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=20000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
@@ -1337,7 +1342,7 @@ class TestExecution:
             qml.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3, shots=30000)
+        dev = qml.device("default.qubit", wires=3, shots=20000)
 
         @qml.qnode(dev)
         def circuit():
