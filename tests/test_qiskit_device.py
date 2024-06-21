@@ -25,7 +25,7 @@ from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
-from pennylane_qiskit.qiskit_device_legacy import QiskitDevice
+from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
 
 # pylint: disable=protected-access, unused-argument, too-few-public-methods
 
@@ -237,12 +237,12 @@ class TestBatchExecution:
         called and not the general execute method."""
 
         dev = device(2)
-        spy = mocker.spy(QiskitDevice, "execute")
+        spy = mocker.spy(QiskitDeviceLegacy, "execute")
 
         tapes = [self.tape1] * n_tapes
         dev.batch_execute(tapes)
 
-        # Check that QiskitDevice.execute was not called
+        # Check that QiskitDeviceLegacyLegacy.execute was not called
         assert spy.call_count == 0
 
     @pytest.mark.parametrize("n_tapes", [1, 2, 3])
@@ -251,7 +251,7 @@ class TestBatchExecution:
         times."""
 
         dev = device(2)
-        spy = mocker.spy(QiskitDevice, "reset")
+        spy = mocker.spy(QiskitDeviceLegacyLegacy, "reset")
 
         tapes = [self.tape1] * n_tapes
         dev.batch_execute(tapes)
