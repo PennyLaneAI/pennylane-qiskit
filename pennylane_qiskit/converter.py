@@ -357,7 +357,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
     Returns:
         function: The resulting PennyLane template.
     """
-
     # pylint:disable=too-many-branches, fixme, protected-access
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
@@ -578,7 +577,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             if isinstance(measurements, Iterable):
                 return [qml.apply(meas) for meas in measurements]
 
-            return qml.apply(measurements)
+            # return qml.apply(measurements)
+            return None
 
         return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
 
