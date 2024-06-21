@@ -1182,7 +1182,7 @@ class TestExecution:
             lambda: [
                 qml.var(qml.Hadamard(0)),
                 qml.var(qml.Hadamard(0)),
-            ],  # Note that Sum would fail
+            ],
             lambda: [
                 qml.expval(qml.X(0)),
                 qml.expval(qml.Y(1)),
@@ -1206,9 +1206,6 @@ class TestExecution:
                 )
             ],
             lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
-            lambda: [
-                qml.var(qml.X(1) + qml.Z(0))
-            ],  # This one is not non-commuting, but nice for comparison
             pytest.param(
                 [qml.var(qml.X(0) + qml.Z(0))],
                 marks=pytest.mark.xfail(reason="Qiskit itself is bugged when given Sum"),

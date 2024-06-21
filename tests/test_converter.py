@@ -1739,7 +1739,8 @@ class TestConverterPennyLaneCircuitToQiskit:
                 break
             instructions.append(instruction.operation.name)
 
-        # manually diagonalized test case
+        # manually diagonalized test case since Qiskit transpiles whatever we had before
+        # and that results is different from PL's diagonalization
         expected_gates = ["ry", "rx"]
 
         assert len(instructions) == len(expected_gates)
