@@ -35,6 +35,7 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
+from pennylane.tape.tape import rotations_and_diagonal_measurements
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
@@ -652,7 +653,11 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     # rotate the state for measurement in the computational basis
     # ToDo: check this in cases with multiple different bases
     if diagonalize:
-        rotations = circuit.diagonalizing_gates
+        rotations, measurements = rotations_and_diagonal_measurements(circuit)
+        for _, m in enumerate(measurements):
+            if m.obs is not None:
+                rotations.extend(m.obs.diagonalizing_gates())
+
         for rot in rotations:
             qc &= operation_to_qiskit(rot, reg, creg)
 
