@@ -1724,7 +1724,7 @@ class TestConverterPennyLaneCircuitToQiskit:
         assert len(instructions) == len(expected_gates)
 
     def test_circuit_to_qiskit_measurements_with_overlapping_wires(self):
-        """Test that diagonalizing gates work even with the circuit for circuits with
+        """Test that diagonalizing gates work for circuits with
         measurements on overlapping wires"""
 
         measurements = [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
