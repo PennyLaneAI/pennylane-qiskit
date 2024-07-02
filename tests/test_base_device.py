@@ -663,7 +663,7 @@ class TestTrackerFunctionality:
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
 
         # TODO: qiskit_tracker.history["results"] is not accurate due to the postprocessing
-        # of the results. 
+        # of the results.
 
         assert tracker.history["resources"][0] == tracker.history["resources"][0]
 
