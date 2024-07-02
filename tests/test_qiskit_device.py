@@ -25,7 +25,7 @@ from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
-from pennylane_qiskit.qiskit_device import QiskitDevice
+from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
 
 # pylint: disable=protected-access, unused-argument, too-few-public-methods
 
@@ -109,7 +109,7 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_mocked(self, dev_backend):
         """Test that device initializes with no error mocked"""
-        dev = qml.device("qiskit.remote", wires=10, backend=dev_backend, use_primitives=True)
+        dev = qml.device("qiskit.aer", wires=10, backend=dev_backend)
         assert dev._backend == dev_backend
 
     @pytest.mark.parametrize(
@@ -121,7 +121,7 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_manila(self, dev_backend):
         """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = qml.device("qiskit.remote", wires=5, backend=dev_backend, use_primitives=True)
+        dev = qml.device("qiskit.aer", wires=5, backend=dev_backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -237,12 +237,12 @@ class TestBatchExecution:
         called and not the general execute method."""
 
         dev = device(2)
-        spy = mocker.spy(QiskitDevice, "execute")
+        spy = mocker.spy(QiskitDeviceLegacy, "execute")
 
         tapes = [self.tape1] * n_tapes
         dev.batch_execute(tapes)
 
-        # Check that QiskitDevice.execute was not called
+        # Check that QiskitDeviceLegacyLegacy.execute was not called
         assert spy.call_count == 0
 
     @pytest.mark.parametrize("n_tapes", [1, 2, 3])
@@ -251,7 +251,7 @@ class TestBatchExecution:
         times."""
 
         dev = device(2)
-        spy = mocker.spy(QiskitDevice, "reset")
+        spy = mocker.spy(QiskitDeviceLegacy, "reset")
 
         tapes = [self.tape1] * n_tapes
         dev.batch_execute(tapes)

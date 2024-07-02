@@ -17,10 +17,10 @@ evaluation and differentiation of Qiskit Terra's BasicAer simulator
 using PennyLane.
 """
 from qiskit.providers.basic_provider import BasicProvider
-from .qiskit_device import QiskitDevice
+from .qiskit_device_legacy import QiskitDeviceLegacy
 
 
-class BasicSimulatorDevice(QiskitDevice):
+class BasicSimulatorDevice(QiskitDeviceLegacy):
     """A PennyLane device for the native Python Qiskit simulator.
 
     For more information on the ``BasicSimulator`` backend options and transpile options, please visit the
