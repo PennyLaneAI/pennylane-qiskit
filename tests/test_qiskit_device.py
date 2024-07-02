@@ -14,11 +14,14 @@
 r"""
 This module contains tests qiskit devices for PennyLane IBMQ devices.
 """
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 
 from qiskit_aer import noise
+from qiskit.providers import BackendV1, BackendV2
+from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
@@ -38,6 +41,51 @@ class Configuration:
         return getattr(self, attribute, default)
 
 
+class MockedBackend(BackendV2):
+    def __init__(self, num_qubits=10, name="mocked_backend"):
+        self._options = Configuration(num_qubits, name)
+        self._service = "SomeServiceProvider"
+        self.name = name
+        self._target = Mock()
+        self._target.num_qubits = num_qubits
+
+    def set_options(self, noise_model):
+        self.options.noise_model = noise_model
+
+    def _default_options(self):
+        return {}
+
+    def max_circuits(self):
+        return 10
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def target(self):
+        return self._target
+
+
+class MockedBackendLegacy(BackendV1):
+    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
+        self._configuration = Configuration(num_qubits, backend_name=name)
+        self._service = "SomeServiceProvider"
+        self._options = self._default_options()
+
+    def configuration(self):
+        return self._configuration
+
+    def _default_options(self):
+        return {}
+
+    def run(self, *args, **kwargs):
+        return None
+
+    @property
+    def options(self):
+        return self._options
+
+
 test_transpile_options = [
     {},
     {"optimization_level": 2},
@@ -45,6 +93,45 @@ test_transpile_options = [
 ]
 
 test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
+backend = MockedBackend()
+legacy_backend = MockedBackendLegacy()
+
+
+class TestSupportForV1andV2:
+    """Tests compatibility with BackendV1 and BackendV2"""
+
+    @pytest.mark.parametrize(
+        "dev_backend",
+        [
+            legacy_backend,
+            backend,
+        ],
+    )
+    def test_v1_and_v2_mocked(self, dev_backend):
+        """Test that device initializes with no error mocked"""
+        dev = qml.device("qiskit.aer", wires=10, backend=dev_backend)
+        assert dev._backend == dev_backend
+
+    @pytest.mark.parametrize(
+        "dev_backend",
+        [
+            FakeManila(),
+            FakeManilaV2(),
+        ],
+    )
+    def test_v1_and_v2_manila(self, dev_backend):
+        """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
+        dev = qml.device("qiskit.aer", wires=5, backend=dev_backend)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, wires=[0])
+            qml.CNOT(wires=[0, 1])
+            return qml.sample(qml.PauliZ(0))
+
+        res = circuit(np.pi / 2)
+        assert isinstance(res, np.ndarray)
+        assert np.shape(res) == (1024,)
 
 
 class TestProbabilities:
