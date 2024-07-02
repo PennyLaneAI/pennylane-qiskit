@@ -426,7 +426,7 @@ class TestDevicePreprocessing:
     def test_preprocess_split_non_commuting(self, measurements, num_tapes):
         """Test that `split_non_commuting` works as expected in the preprocess function."""
 
-        dev = QiskitDevice2(wires=5, backend=backend)
+        dev = QiskitDevice(wires=5, backend=backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
 
         program, _ = dev.preprocess()
@@ -1225,7 +1225,7 @@ class TestExecution:
         """Tests that observables that have non-commuting measurements are
         processed correctly when executed by the Estimator or, in the case of
         qml.Hadamard, executed by the Sampler via expval() or var"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+        qiskit_dev = QiskitDevice(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
@@ -1259,7 +1259,7 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting_counts(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via counts()"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+        qiskit_dev = QiskitDevice(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
@@ -1318,7 +1318,7 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting_samples(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via sample()"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+        qiskit_dev = QiskitDevice(wires=3, backend=backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
