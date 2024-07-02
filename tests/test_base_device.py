@@ -662,8 +662,12 @@ class TestTrackerFunctionality:
         assert tracker.history.keys() == qiskit_tracker.history.keys()
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
 
-        # TODO: qiskit_tracker.history["results"] is not accurate due to the postprocessing
-        # of the results.
+        print(qiskit_tracker.history["batches"])
+        print(tracker.history["batches"])
+
+        # TODO: qiskit_tracker.history["results"] has a format that is inconsistent
+        # to tracker.history["results"], but this is due to the post processing
+        # that the qiskit device has.
 
         assert tracker.history["resources"][0] == tracker.history["resources"][0]
 
