@@ -43,8 +43,9 @@ from pennylane.devices.preprocess import (
     validate_measurements,
     validate_device_wires,
 )
-from pennylane.measurements import ExpectationMP, VarianceMP
 
+from pennylane.measurements import ExpectationMP, VarianceMP
+from pennylane.devices.modifiers import simulator_tracking
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
@@ -185,6 +186,7 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
+@simulator_tracking
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
@@ -207,6 +209,18 @@ class QiskitDevice2(Device):
             with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
             arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
             will be passed to the transpiler rather than to the Primitive.
+
+    .. details::
+        :title: Tracking
+
+        ``QiskitDevice2`` tracks:
+
+        * ``executions``: the number of unique circuits that would be required on quantum hardware
+        * ``shots``: the number of shots
+        * ``resources``: the :class:`~.resource.Resources` for the executed circuit.
+        * ``simulations``: the number of simulations performed. One simulation can cover multiple QPU executions, such as for non-commuting measurements and batched parameters.
+        * ``batches``: The number of times :meth:`~.execute` is called.
+        * ``results``: The results of each call of :meth:`~.execute`
     """
 
     operations = set(QISKIT_OPERATION_MAP.keys())
@@ -254,7 +268,6 @@ class QiskitDevice2(Device):
 
         self._service = getattr(backend, "_service", None)
         self._session = session
-
         kwargs["shots"] = shots
 
         # Perform validation against backend
