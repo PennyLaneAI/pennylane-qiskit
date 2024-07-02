@@ -1,6 +1,4 @@
-# Release 0.37.0-dev
-
-### New features since last release
+# Release 0.37.0
 
 ### Improvements 🛠
 
@@ -9,14 +7,6 @@
 
 * Improvements have been made to load circuits with `SwitchCaseOp` gates with default case.
   [(#514)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/514)
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 
