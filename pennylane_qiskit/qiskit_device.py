@@ -32,7 +32,7 @@ from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Est
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
-from pennylane.transforms import broadcast_expand
+from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.tape import QuantumTape, QuantumScript
 from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
@@ -62,7 +62,7 @@ def qiskit_session(device):
     completing the tasks.
 
     Args:
-        device (QiskitDevice): the device that will create remote tasks using the session
+        device (QiskitDevice2): the device that will create remote tasks using the session
 
     **Example:**
 
@@ -129,7 +129,6 @@ def split_execution_types(
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
     used, and the raw samples will be processed to give an expectation value."""
-
     estimator = []
     sampler = []
 
@@ -318,11 +317,11 @@ class QiskitDevice(Device):
         self._current_job = None
 
     def stopping_condition(self, op: qml.operation.Operator) -> bool:
-        """Specifies whether or not an Operator is accepted by QiskitDevice."""
+        """Specifies whether or not an Operator is accepted by QiskitDevice2."""
         return op.name in self.operations
 
     def observable_stopping_condition(self, obs: qml.operation.Operator) -> bool:
-        """Specifies whether or not an observable is accepted by QiskitDevice."""
+        """Specifies whether or not an observable is accepted by QiskitDevice2."""
         return obs.name in self.observables
 
     def preprocess(
@@ -370,7 +369,7 @@ class QiskitDevice(Device):
         )
 
         transform_program.add_transform(broadcast_expand)
-        # missing: split non-commuting, sum_expand, etc. [SC-62047]
+        transform_program.add_transform(split_non_commuting)
 
         transform_program.add_transform(split_execution_types)
 
@@ -584,10 +583,8 @@ class QiskitDevice(Device):
         Returns:
             result (tuple): the processed result from EstimatorV2
         """
-
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
-
         result = []
         for i, mp in enumerate(measurements):
             if isinstance(mp, ExpectationMP):
