@@ -632,6 +632,9 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
             a full circuit is represented either as a Qiskit circuit with operations
             and measurements (measure=True), or a Qiskit circuit with only operations,
             paired with a Qiskit Estimator defining the measurement process.
+
+    Returns:
+        QuantumCircuit: the qiskit equivalent of the given circuit
     """
 
     reg = QuantumRegister(register_size)
@@ -717,6 +720,9 @@ def mp_to_pauli(mp, register_size):
     Args:
         mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
         register_size(int): total size of the qubit register being measured
+
+    Returns:
+        SparsePauliOp: the ``SparsePauliOp`` of the given Pauli observable
     """
     op = mp.obs
 

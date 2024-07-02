@@ -440,7 +440,7 @@ class QiskitDevice2(Device):
         return kwargs, transpile_args
 
     def compile_circuits(self, circuits):
-        r"""Compiles multiple circuits one after the other.
+        """Compiles multiple circuits one after the other.
 
         Args:
             circuits (list[QuantumCircuit]): the circuits to be compiled
@@ -522,8 +522,6 @@ class QiskitDevice2(Device):
 
         # needs processing function to convert to the correct format for states, and
         # also handle instances where wires were specified in probs, and for multiple probs measurements
-        # single_measurement = len(circuit.measurements) == 1
-        # res = (res[0], ) if single_measurement else tuple(res)
 
         self._samples = self.generate_samples(0)
         res = [
@@ -574,6 +572,7 @@ class QiskitDevice2(Device):
         """Estimator returns the expectation value and standard error for each observable measured,
         along with some metadata that contains the precision. Extracts the relevant number for each
         measurement process and return the requested results from the Estimator executions.
+
         Note that for variance, we calculate the variance by using the standard error and the
         precision value.
 

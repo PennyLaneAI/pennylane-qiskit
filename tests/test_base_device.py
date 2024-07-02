@@ -369,6 +369,7 @@ class TestDevicePreprocessing:
             (qml.PauliX(0), True),
             (qml.Hadamard(3), True),
             (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
+            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
         ],
     )
     def test_observable_stopping_condition(self, obs, expected):
