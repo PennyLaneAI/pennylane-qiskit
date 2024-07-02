@@ -35,6 +35,7 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
+from pennylane.tape.tape import rotations_and_diagonal_measurements
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
@@ -631,6 +632,9 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
             a full circuit is represented either as a Qiskit circuit with operations
             and measurements (measure=True), or a Qiskit circuit with only operations,
             paired with a Qiskit Estimator defining the measurement process.
+
+    Returns:
+        QuantumCircuit: the qiskit equivalent of the given circuit
     """
 
     reg = QuantumRegister(register_size)
@@ -652,7 +656,11 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     # rotate the state for measurement in the computational basis
     # ToDo: check this in cases with multiple different bases
     if diagonalize:
-        rotations = circuit.diagonalizing_gates
+        rotations, measurements = rotations_and_diagonal_measurements(circuit)
+        for _, m in enumerate(measurements):
+            if m.obs is not None:
+                rotations.extend(m.obs.diagonalizing_gates())
+
         for rot in rotations:
             qc &= operation_to_qiskit(rot, reg, creg)
 
@@ -712,6 +720,9 @@ def mp_to_pauli(mp, register_size):
     Args:
         mp(Union[ExpectationMP, VarianceMP]): MeasurementProcess to be converted to a SparsePauliOp
         register_size(int): total size of the qubit register being measured
+
+    Returns:
+        SparsePauliOp: the ``SparsePauliOp`` of the given Pauli observable
     """
     op = mp.obs
 
