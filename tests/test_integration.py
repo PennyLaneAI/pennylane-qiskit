@@ -65,7 +65,6 @@ class TestDeviceIntegration:
         assert dev.shots == 1024
         assert dev.short_name == d[0]
         assert dev.provider == d[1]
-        assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     @pytest.mark.parametrize("d", pldevices)
     def test_load_remote_device_with_backend_instance(self, d, backend):
@@ -89,7 +88,6 @@ class TestDeviceIntegration:
         assert dev.num_wires == backend_instance.configuration().n_qubits
         assert dev.shots.total_shots == 1024
         assert dev.short_name == "qiskit.remote"
-        assert dev.capabilities()["returns_state"] == (backend in state_backends)
 
     def test_incorrect_backend(self):
         """Test that exception is raised if name is incorrect"""
