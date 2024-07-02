@@ -662,9 +662,8 @@ class TestTrackerFunctionality:
         assert tracker.history.keys() == qiskit_tracker.history.keys()
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
 
-        # ToDo: post processing of results via reorder_fn makes these two tests False
-        # assert np.allclose(tracker.history["results"], qiskit_tracker.history["results"], atol=0.1)
-        # assert qiskit_tracker.totals.keys() == qiskit_tracker.totals.keys()
+        # TODO: qiskit_tracker.history["results"] is not accurate due to the postprocessing
+        # of the results. 
 
         assert tracker.history["resources"][0] == tracker.history["resources"][0]
 
@@ -687,12 +686,6 @@ class TestTrackerFunctionality:
             == dev.tracker.history["resources"][0].shots
         )
         assert np.allclose(pl_out, qiskit_out, atol=0.1)
-
-        # ToDo: should fail due to post processing of results in reorder_fn
-        # doesn't fail due to the comparison being weak
-        assert np.allclose(
-            qiskit_dev.tracker.history["results"], dev.tracker.history["results"], atol=0.1
-        )
 
 
 class TestMockedExecution:
