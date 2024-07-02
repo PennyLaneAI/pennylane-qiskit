@@ -219,6 +219,11 @@ class QiskitDevice(Device):
         "Hadamard",
         "Hermitian",
         "Projector",
+        "Prod",
+        "Sum",
+        "LinearCombination",
+        "SProd",
+        # TODO Could support SparseHamiltonian
     }
 
     # pylint:disable = too-many-arguments
