@@ -8,7 +8,7 @@ PennyLane-Qiskit Plugin
   :end-before: header-end-inclusion-marker-do-not-remove
 
 
-Once the PennyLane-Qiskit plugin is installed, the the Qiskit devices
+Once the PennyLane-Qiskit plugin is installed, the Qiskit devices
 can be accessed straightaway in PennyLane, without the need to import new packages.
 
 Devices

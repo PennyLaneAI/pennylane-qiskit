@@ -19,6 +19,5 @@ This device uses the Qiskit ``BasicSimulator`` backend from the
 
     The `Qiskit Aer <https://qiskit.github.io/qiskit-aer/>`_ device
     provides a fast simulator that is also capable of simulating
-    noise. It is available as :ref:`"qiskit.aer" <aer device page>`, but the backend must be
-    installed separately with ``pip install qiskit-aer``.
+    noise. It is available as :ref:`"qiskit.aer" <aer device page>`.
     

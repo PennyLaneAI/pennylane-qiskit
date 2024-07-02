@@ -33,33 +33,6 @@ You can then execute the circuit like any other function to get the quantum mech
 
     circuit(0.2, 0.1, 0.3)
 
-Backends
-~~~~~~~~
-
-The default backend is the ``AerSimulator``. However, multiple other backends are also available.
-To get a current overview what backends are available you can query
-
-.. code-block:: python
-
-    dev.capabilities()['backend']
-
-or, alternatively,
-
-.. code-block:: python
-
-    from qiskit_aer import Aer
-    Aer.backends()
-
-.. note::
-
-    Currently, PennyLane does not support the ``'pulse_simulator'`` backend.
-
-You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument when creating the ``device``:
-
-.. code-block:: python
-
-    dev = qml.device('qiskit.aer', wires=2, backend='aer_simulator_statevector')
-
 Backend Methods and Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -97,8 +70,7 @@ Noise models
 ~~~~~~~~~~~~
 
 One great feature of the ``'qiskit.aer'`` device is the ability to simulate noise. There are different noise models,
-which you can instantiate and apply to the device as follows
-(adapting `this <https://qiskit.org/documentation/apidoc/aer_noise.html>`_ qiskit tutorial):
+which you can instantiate and apply to the device as follows:
 
 .. code-block:: python
 
@@ -136,4 +108,4 @@ which you can instantiate and apply to the device as follows
     print(circuit(0.2, 0.1, 0.3))
 
 Please refer to the Qiskit documentation for more information on
-`noise models <https://qiskit.org/documentation/tutorials/simulators/3_building_noise_models.html>`_.
+`noise models <https://qiskit.github.io/qiskit-aer/tutorials/3_building_noise_models.html>`_.
