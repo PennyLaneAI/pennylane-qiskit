@@ -365,13 +365,74 @@ class TestDevicePreprocessing:
         [
             (qml.PauliX(0), True),
             (qml.Hadamard(3), True),
-            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), False),
+            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
         ],
     )
     def test_observable_stopping_condition(self, obs, expected):
         """Test that observable_stopping_condition works"""
         res = test_dev.observable_stopping_condition(obs)
         assert res == expected
+
+    @pytest.mark.parametrize(
+        "measurements, num_tapes",
+        [
+            (
+                [
+                    qml.expval(qml.X(0) + qml.Y(0) + qml.Z(0)),
+                ],
+                3,
+            ),
+            (
+                [qml.var(qml.X(0) + qml.Y(0) + qml.Z(0))],  # Var should not split
+                1,
+            ),
+            (
+                [
+                    qml.expval(qml.X(0)),
+                    qml.expval(qml.Y(1)),
+                    qml.expval(qml.Z(0) @ qml.Z(1)),
+                    qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                ],
+                3,
+            ),
+            (
+                [
+                    qml.expval(
+                        qml.prod(qml.X(0), qml.Z(0), qml.Z(0)) + 0.35 * qml.X(0) - 0.21 * qml.Z(0)
+                    )
+                ],
+                2,
+            ),
+            (
+                [
+                    qml.counts(qml.X(0)),
+                    qml.counts(qml.Y(1)),
+                    qml.counts(qml.Z(0) @ qml.Z(1)),
+                    qml.counts(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                ],
+                3,
+            ),
+            (
+                [
+                    qml.sample(qml.X(0)),
+                    qml.sample(qml.Y(1)),
+                    qml.sample(qml.Z(0) @ qml.Z(1)),
+                    qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                ],
+                3,
+            ),
+        ],
+    )
+    def test_preprocess_split_non_commuting(self, measurements, num_tapes):
+        """Test that `split_non_commuting` works as expected in the preprocess function."""
+
+        dev = QiskitDevice2(wires=5, backend=backend)
+        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
+
+        program, _ = dev.preprocess()
+        tapes, _ = program([qs])
+
+        assert len(tapes) == num_tapes
 
     @pytest.mark.parametrize(
         "measurements,num_types",
@@ -1114,3 +1175,166 @@ class TestExecution:
         assert np.shape(res[0]) == np.shape(qiskit_res[0])
         assert np.shape(res[1]) == np.shape(qiskit_res[1])
         assert len(res) == len(qiskit_res)
+
+    @pytest.mark.parametrize(
+        "observable",
+        [
+            lambda: [qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))],
+            lambda: [
+                qml.var(qml.Hadamard(0)),
+                qml.var(qml.Hadamard(0)),
+            ],
+            lambda: [
+                qml.expval(qml.X(0)),
+                qml.expval(qml.Y(1)),
+                qml.expval(0.5 * qml.Y(1)),
+                qml.expval(qml.Z(0) @ qml.Z(1)),
+                qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                qml.expval(
+                    qml.ops.LinearCombination(
+                        [0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.X(2)]
+                    )
+                ),
+                qml.expval(
+                    qml.ops.LinearCombination(
+                        [1.0, 2.0, 3.0], [qml.X(0), qml.X(1), qml.Z(0)], grouping_type="qwc"
+                    )
+                ),
+            ],
+            lambda: [
+                qml.expval(
+                    qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
+                )
+            ],
+            lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
+            pytest.param(
+                [qml.var(qml.X(0) + qml.Z(0))],
+                marks=pytest.mark.xfail(reason="Qiskit itself is bugged when given Sum"),
+            ),
+            lambda: [
+                qml.expval(qml.Hadamard(0)),
+                qml.expval(qml.Hadamard(1)),
+                qml.expval(qml.Hadamard(0) @ qml.Hadamard(1)),
+                qml.expval(
+                    qml.Hadamard(0) @ qml.Hadamard(1) + 0.5 * qml.Hadamard(1) + qml.Hadamard(0)
+                ),
+            ],
+        ],
+    )
+    def test_observables_that_need_split_non_commuting(self, observable):
+        """Tests that observables that have non-commuting measurements are
+        processed correctly when executed by the Estimator or, in the case of
+        qml.Hadamard, executed by the Sampler via expval() or var"""
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
+            return observable()
+
+        dev = qml.device("default.qubit", wires=3, shots=30000)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
+            return observable()
+
+        qiskit_res = qiskit_circuit()
+        res = circuit()
+
+        assert np.allclose(res, qiskit_res, atol=0.05)
+
+    @pytest.mark.parametrize(
+        "observable",
+        [
+            lambda: [qml.counts(qml.X(0) + qml.Y(0)), qml.counts(qml.X(0))],
+            lambda: [
+                qml.counts(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                qml.counts(0.5 * qml.Y(1)),
+            ],
+        ],
+    )
+    def test_observables_that_need_split_non_commuting_counts(self, observable):
+        """Tests that observables that have non-commuting measurents are processed
+        correctly when executed by the Sampler via counts()"""
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
+            return observable()
+
+        dev = qml.device("default.qubit", wires=3, shots=30000)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
+            return observable()
+
+        qiskit_res = qiskit_circuit()
+        res = circuit()
+
+        assert len(qiskit_res) == len(res)
+        for res1, res2 in zip(qiskit_res, res):
+            assert all(res1[key] - res2.get(key, 0) < 300 for key in res1)
+
+    @pytest.mark.parametrize(
+        "observable",
+        [
+            lambda: [qml.sample(qml.X(0) + qml.Y(0)), qml.sample(qml.X(0))],
+            lambda: [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))],
+            lambda: [
+                qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                qml.sample(0.5 * qml.Y(1)),
+            ],
+            lambda: [
+                qml.sample(qml.X(0)),
+                qml.sample(qml.Y(1)),
+                qml.sample(0.5 * qml.Y(1)),
+                qml.sample(qml.Z(0) @ qml.Z(1)),
+                qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                qml.sample(
+                    qml.ops.LinearCombination(
+                        [0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.X(2)]
+                    )
+                ),
+                qml.sample(
+                    qml.ops.LinearCombination(
+                        [1.0, 2.0, 3.0], [qml.X(0), qml.X(1), qml.Z(0)], grouping_type="qwc"
+                    )
+                ),
+            ],
+            lambda: [
+                qml.sample(
+                    qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
+                )
+            ],
+        ],
+    )
+    def test_observables_that_need_split_non_commuting_samples(self, observable):
+        """Tests that observables that have non-commuting measurents are processed
+        correctly when executed by the Sampler via sample()"""
+        qiskit_dev = QiskitDevice2(wires=3, backend=backend, shots=30000)
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit():
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
+            return observable()
+
+        dev = qml.device("default.qubit", wires=3, shots=30000)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.RX(np.pi / 3, 0)
+            qml.RZ(np.pi / 3, 0)
+            return observable()
+
+        qiskit_res = qiskit_circuit()
+        res = circuit()
+
+        assert np.allclose(np.mean(qiskit_res, axis=1), np.mean(res, axis=1), atol=0.05)

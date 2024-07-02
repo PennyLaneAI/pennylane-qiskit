@@ -297,7 +297,7 @@ class TestLoadIntegration:
 
         @qml.qnode(dev)
         def loaded_quantum_circuit():
-            qml.from_qasm(TestLoadIntegration.hadamard_qasm)(wires=[0])
+            qml.from_qasm(TestLoadIntegration.hadamard_qasm, measurements=[])(wires=[0])
             return qml.expval(qml.PauliZ(0))
 
         @qml.qnode(dev)
@@ -316,7 +316,7 @@ class TestLoadIntegration:
             f.write(TestLoadIntegration.hadamard_qasm)
 
         with open(apply_hadamard, "r", encoding="utf") as f:
-            hadamard = qml.from_qasm(f.read())
+            hadamard = qml.from_qasm(f.read(), measurements=[])
 
         dev = qml.device("default.qubit", wires=2)
 
