@@ -21,10 +21,6 @@ The following devices are available:
     :description: Qiskit's staple simulator with great features such as noise models.
     :link: devices/aer.html
 
-.. title-card::
-    :name: 'qiskit.basicaer'
-    :description: A simplified version of the Aer device, which requires fewer dependencies.
-    :link: devices/basicaer.html
 
 .. title-card::
     :name: 'qiskit.basicsim'
@@ -32,25 +28,9 @@ The following devices are available:
     :link: devices/basicsim.html
 
 .. title-card::
-    :name: 'qiskit.ibmq.circuit_runner'
-    :description: Allows integration with Qiskit's circuit runner runtime program.
-    :link: devices/runtime.html
-
-.. title-card::
-    :name: 'qiskit.ibmq.sampler'
-    :description: Allows integration with Qiskit's sampler runtime program.
-    :link: devices/runtime.html
-
-.. title-card::
     :name: 'qiskit.remote'
     :description: Allows integration with any Qiskit backend.
     :link: devices/remote.html
-
-.. title-card::
-    :name: 'qiskit.ibmq'
-    :description: Allows integration with Qiskit's hardware backends, and hardware-specific simulators.
-    :link: devices/ibmq.html
-
 
 .. raw:: html
 
@@ -76,9 +56,9 @@ follows:
 
     dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
-PennyLane chooses the ``qasm_simulator`` as the default backend if no backend is specified.
-For more details on the ``qasm_simulator``, including available backend options, see
-`Qiskit Qasm Simulator documentation <https://qiskit.org/ecosystem/aer/stubs/qiskit_aer.QasmSimulator.html>`_.
+PennyLane chooses the ``aer_simulator`` as the default backend if no backend is specified.
+For more details on the ``aer_simulator``, including available backend options, see
+`Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
 
 Tutorials
 ~~~~~~~~~
@@ -116,7 +96,7 @@ You can also try it out using any of the qubit based `demos from the PennyLane d
 <https://pennylane.ai/qml/demonstrations.html>`_, for example the tutorial on
 `qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_.
 Simply replace ``'default.qubit'`` with any of the available Qiskit devices,
-such as ``'qiskit.aer'``, or ``'qiskit.ibmq'`` if you have an API key for
+such as ``'qiskit.aer'``, or ``'qiskit.remote'`` if you have an API key for
 hardware access.
 
 .. raw:: html
@@ -138,10 +118,7 @@ hardware access.
    :hidden:
 
    devices/aer
-   devices/basicaer
    devices/basicsim
-   devices/ibmq
-   devices/runtime
    devices/remote
 
 .. toctree::

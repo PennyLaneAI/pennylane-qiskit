@@ -11,6 +11,19 @@
   [(#514)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/514)
 
 ### Breaking changes 💔
+* Support has been removed for Qiskit versions below 0.46. The minimum required version for Qiskit is now 1.0. 
+  If you want to continue to use older versions of Qiskit with the plugin, please use version 0.36 of 
+  the Pennylane-Qiskit plugin. 
+  [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
+
+* The test suite no longer runs for Qiskit versions below 0.46.
+  [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
+
+* The ``qiskit.basicaer`` device has been removed because it is not supported for versions of Qiskit above 0.46.
+  [(#546)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
+
+* The IBM quantum devices, ``qiskit.ibmq``, ``qiskit.ibmq.circuit_runner`` and ``qiskit.ibmq.sampler``, have been removed due to deprecations of the IBMProvider and the cloud simulator "ibmq_qasm_simulator".
+  [(#550)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/550)
 
 ### Deprecations 👋
 
@@ -21,6 +34,7 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+Austin Huang
 
 Utkarsh Azad
 Mashhood Khan
