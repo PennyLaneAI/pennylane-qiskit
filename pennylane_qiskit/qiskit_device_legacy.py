@@ -23,7 +23,6 @@ import warnings
 
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit.circuit import library as lib
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
@@ -31,54 +30,10 @@ from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 from pennylane import QubitDevice, DeviceError
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
 
+from .converter import QISKIT_OPERATION_MAP
 from ._version import __version__
 
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
-
-
-QISKIT_OPERATION_MAP = {
-    # native PennyLane operations also native to qiskit
-    "PauliX": lib.XGate,
-    "PauliY": lib.YGate,
-    "PauliZ": lib.ZGate,
-    "Hadamard": lib.HGate,
-    "CNOT": lib.CXGate,
-    "CZ": lib.CZGate,
-    "SWAP": lib.SwapGate,
-    "ISWAP": lib.iSwapGate,
-    "RX": lib.RXGate,
-    "RY": lib.RYGate,
-    "RZ": lib.RZGate,
-    "Identity": lib.IGate,
-    "CSWAP": lib.CSwapGate,
-    "CRX": lib.CRXGate,
-    "CRY": lib.CRYGate,
-    "CRZ": lib.CRZGate,
-    "PhaseShift": lib.PhaseGate,
-    "QubitStateVector": lib.Initialize,
-    "StatePrep": lib.Initialize,
-    "Toffoli": lib.CCXGate,
-    "QubitUnitary": lib.UnitaryGate,
-    "U1": lib.U1Gate,
-    "U2": lib.U2Gate,
-    "U3": lib.U3Gate,
-    "IsingZZ": lib.RZZGate,
-    "IsingYY": lib.RYYGate,
-    "IsingXX": lib.RXXGate,
-    "S": lib.SGate,
-    "T": lib.TGate,
-    "SX": lib.SXGate,
-    "Adjoint(S)": lib.SdgGate,
-    "Adjoint(T)": lib.TdgGate,
-    "Adjoint(SX)": lib.SXdgGate,
-    "CY": lib.CYGate,
-    "CH": lib.CHGate,
-    "CPhase": lib.CPhaseGate,
-    "CCZ": lib.CCZGate,
-    "ECR": lib.ECRGate,
-    "Barrier": lib.Barrier,
-    "Adjoint(GlobalPhase)": lib.GlobalPhaseGate,
-}
 
 
 def _get_backend_name(backend):
