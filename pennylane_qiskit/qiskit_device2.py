@@ -142,7 +142,7 @@ def qiskit_session(device, **kwargs):
 
     for k, v in kwargs.items():
         # Options like service and backend should be tied to the settings set on device
-        if k in session_options and k != "max_time":
+        if k in session_options:
             warnings.warn(f"Using '{k}' set in device, {getattr(device, k)}", UserWarning)
         else:
             session_options[k] = v
