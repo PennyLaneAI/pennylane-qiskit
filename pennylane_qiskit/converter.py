@@ -34,7 +34,11 @@ from sympy import lambdify
 
 import pennylane as qml
 import pennylane.ops as pennylane_ops
+from pennylane.noise.conditionals import WiresIn, _rename
+from pennylane.operation import AnyWires
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
+
+from .noise_models import _build_noise_model
 
 # pylint: disable=too-many-instance-attributes
 
@@ -1042,3 +1046,29 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
         condition_res = expr_func(meas1, clreg2)
 
     return condition_res
+
+
+def load_noise_model(noise_model):
+    """Loads a PennyLane ``NoiseModel`` from a Qiskit `NoiseModel
+    <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_."""
+
+    qerror_dmap, _ = _build_noise_model(noise_model)
+    model_map = {}
+    for error, wires_map in qerror_dmap.items():
+        conditions = []
+        cwires = []
+        for wires, operations in wires_map.items():
+            cond = qml.noise.op_in(operations)
+            if wires != AnyWires:
+                cond &= WiresIn(wires)
+                cwires.append(wires)
+            conditions.append(cond)
+        fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
+
+        noise = qml.noise.partial_wires(error)
+        if isinstance(error, qml.QubitChannel):
+            noise = _rename(f"QubitChannel(Klist=Tensor{qml.math.shape(error.data)})")(noise)
+
+        model_map[fcond] = noise
+
+    return qml.NoiseModel(model_map)

@@ -15,11 +15,14 @@ r"""
 This module contains functions for converting Qiskit NoiseModel objects
 into PennyLane NoiseModels.
 """
+from collections import defaultdict
 import itertools as it
 
-from qiskit.quantum_info.operators.channel import Choi, Kraus
-import pennylane as qml
 import numpy as np
+import pennylane as qml
+from pennylane.operation import AnyWires
+from qiskit.quantum_info.operators.channel import Choi, Kraus
+
 
 # pylint:disable = protected-access
 
@@ -29,6 +32,18 @@ kraus_indice_map = {
     "ThermalRelaxationError": ((0, 0, 1, 2, 3, 3), (0, 3, 1, 2, 0, 3)),
 }
 pauli_error_map = {"X": "BitFlip", "Z": "PhaseFlip", "Y": "PauliError"}
+qiskit_op_map = {
+    "cx": "CNOT",
+    "sx": "SX",
+    "id": "I",
+    "rx": "RX",
+    "ry": "RY",
+    "rz": "RZ",
+    "x": "X",
+    "y": "Y",
+    "z": "Z",
+    "reset": qml.measure(AnyWires, reset=True),
+}
 
 
 def _kraus_to_choi(krau_op):
@@ -229,36 +244,24 @@ def _build_error(error):
 
 
 def _build_noise_model(noise_model):
-    error_list = []
+    qerror_dmap = defaultdict(lambda: defaultdict(list))
 
     # Add default quantum errors
     for name, error in noise_model._default_quantum_errors.items():
         error_dict = _build_error(error)
-        error_list.append(
-            {
-                "operations": [name],
-                "noise_op": getattr(qml.ops, error_dict["name"])(
-                    *error_dict["data"], wires=error_dict["wires"]
-                ),
-            }
-        )
+        noise_op = getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
+        qerror_dmap[noise_op][AnyWires].append(qiskit_op_map[name])
 
     # Add specific qubit errors
     for name, qubit_dict in noise_model._local_quantum_errors.items():
         for qubits, error in qubit_dict.items():
             error_dict = _build_error(error)
-            error_list.append(
-                {
-                    "operations": [name],
-                    "gate_qubits": [qubits],
-                    "noise_op": getattr(qml.ops, error_dict["name"])(
-                        *error_dict["data"], wires=error_dict["wires"]
-                    ),
-                }
-            )
+            noise_op = getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
+            qerror_dmap[noise_op][qubits].append(qiskit_op_map[name])
 
     # TODO: Add support for the readout error
+    rerror_dmap = defaultdict(lambda: defaultdict(list))
     if noise_model._default_readout_error or noise_model._local_readout_errors:
         raise Warning(f"Readout errors {error} are not supported currently and will be skipped.")
 
-    return error_list
+    return qerror_dmap, rerror_dmap
