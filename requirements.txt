@@ -2,7 +2,7 @@ appdirs==1.4.4
 autograd==1.6.2
 autoray==0.6.8
 cachetools==5.3.3
-certifi==2024.2.2
+certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 cryptography==42.0.5
