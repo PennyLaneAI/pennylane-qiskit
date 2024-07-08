@@ -221,7 +221,7 @@ class TestQiskitSessionManagement:
         dev = QiskitDevice(wires=2, backend=backend, session=session)
         assert dev._session == session
 
-    @patch("pennylane_qiskit.qiskit_device2.Session")
+    @patch("pennylane_qiskit.qiskit_device.Session")
     @pytest.mark.parametrize("initial_session", [None, MockSession(aer_backend)])
     def test_using_session_context(self, mock_session, initial_session):
         """Test that you can add a session within a context manager"""
@@ -750,7 +750,7 @@ class TestMockedExecution:
             "seed_transpiler": 42,
         }
 
-    @patch("pennylane_qiskit.qiskit_device2.transpile")
+    @patch("pennylane_qiskit.qiskit_device.transpile")
     @pytest.mark.parametrize("compile_backend", [None, MockedBackend(name="compile_backend")])
     def test_compile_circuits(self, transpile_mock, compile_backend):
         """Tests compile_circuits with a mocked transpile function to avoid calling
@@ -815,7 +815,7 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    @patch("pennylane_qiskit.qiskit_device2.QiskitDevice._execute_estimator")
+    @patch("pennylane_qiskit.qiskit_device.QiskitDevice._execute_estimator")
     def test_execute_pipeline_primitives_no_session(self, mocker):
         """Test that a Primitives-based device initialized with no Session creates one for the
         execution, and then returns the device session to None."""
@@ -826,7 +826,7 @@ class TestMockedExecution:
 
         qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
 
-        with patch("pennylane_qiskit.qiskit_device2.Session") as mock_session:
+        with patch("pennylane_qiskit.qiskit_device.Session") as mock_session:
             dev.execute(qs)
             mock_session.assert_called_once()  # a session was created
 
@@ -865,8 +865,8 @@ class TestMockedExecution:
             "sampler_execute_res",
         ]
 
-    @patch("pennylane_qiskit.qiskit_device2.Estimator")
-    @patch("pennylane_qiskit.qiskit_device2.QiskitDevice._process_estimator_job")
+    @patch("pennylane_qiskit.qiskit_device.Estimator")
+    @patch("pennylane_qiskit.qiskit_device.QiskitDevice._process_estimator_job")
     @pytest.mark.parametrize("session", [None, MockSession(aer_backend)])
     def test_execute_estimator_mocked(self, mocked_estimator, mocked_process_fn, session):
         """Test the _execute_estimator function using a mocked version of Estimator
