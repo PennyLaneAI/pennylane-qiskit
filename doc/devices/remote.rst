@@ -42,7 +42,7 @@ PennyLane device.
 
     Retrieving a backend from a provider has been deprecated and may not be supported. 
 
-After installing the plugin, this device can be used just like other devices for the definition and evaluation of QNodes within PennyLane.
+After installing the plugin, this device can be used just like any other PennyLane device for defining and evaluating QNodes.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
 parameters would look like:
 
