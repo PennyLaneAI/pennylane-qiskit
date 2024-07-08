@@ -15,15 +15,19 @@ r"""
 This module contains functions for converting Qiskit QuantumCircuit objects
 into PennyLane circuit templates.
 """
-from typing import Dict, Any, Iterable, Sequence, Union
 import warnings
 from functools import partial, reduce
+from typing import Any, Dict, Iterable, Sequence, Union
 
 import numpy as np
+import pennylane as qml
+import pennylane.ops as pennylane_ops
 import qiskit.qasm2
+from pennylane.noise.conditionals import WiresIn, _rename
+from pennylane.operation import AnyWires
 from qiskit import QuantumCircuit
+from qiskit.circuit import Barrier, Clbit, ControlFlowOp, Measure
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
-from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit.classical import expr
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
@@ -32,13 +36,9 @@ from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
 
-import pennylane as qml
-import pennylane.ops as pennylane_ops
-from pennylane.noise.conditionals import WiresIn, _rename
-from pennylane.operation import AnyWires
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
 
-from .noise_models import _build_noise_model
+from .noise_models import _build_noise_model_map
 
 # pylint: disable=too-many-instance-attributes
 
@@ -1048,11 +1048,36 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
     return condition_res
 
 
-def load_noise_model(noise_model):
+def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     """Loads a PennyLane ``NoiseModel`` from a Qiskit `NoiseModel
-    <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_."""
+    <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
 
-    qerror_dmap, _ = _build_noise_model(noise_model)
+    Args:
+        noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
+        kwargs: Optional keyword arguments for conversion of the noise model.
+
+    Keyword Arguments:
+        gate_times (Dict[str, float]): gate times for building thermal relaxation error.
+            If not provided, the default value of ``1.0`` will be used for construction.
+        decimals: number of decimal places to round the Kraus matrices for errors to.
+            If not provided, the default value of ``10`` is used.
+        atol: the relative tolerance parameter. Default value is ``1e-05``.
+        rtol: the absolute tolernace parameters. Defualt value is ``1e-08``.
+        optimize: controls if intermediate optimization is used while transforming Kraus
+            operators to a Choi matrix, wherever required. Default is ``False``.
+
+    Returns:
+        qml.NoiseModel: An equivalent noise model constructed in PennyLane
+
+    Raises:
+        ValueError: When an encountered quantum error cannoted be converted.
+
+    .. note::
+
+        Currently, PennyLane noise models does not support readout errors, so those will be skipped during conversion.
+    """
+
+    qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
     model_map = {}
     for error, wires_map in qerror_dmap.items():
         conditions = []

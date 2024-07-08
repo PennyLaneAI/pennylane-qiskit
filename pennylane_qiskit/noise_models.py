@@ -15,15 +15,17 @@ r"""
 This module contains functions for converting Qiskit NoiseModel objects
 into PennyLane NoiseModels.
 """
+import itertools as it
 from collections import defaultdict
 from functools import lru_cache, reduce
-import itertools as it
+from typing import List, Tuple, Union
+from warnings import warn
 
 import numpy as np
 import pennylane as qml
 from pennylane.operation import AnyWires
 from qiskit.quantum_info.operators.channel import Choi, Kraus
-
+from qiskit_aer.noise import NoiseModel, QuantumError
 
 # pylint:disable = protected-access
 
@@ -45,22 +47,52 @@ qiskit_op_map = {
     "z": "Z",
     "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
 }
-default_option_map = [("decimals", 10), ("atol", 1e-8), ("rtol", 1e-5)]
+default_option_map = [("decimals", 10), ("atol", 1e-8), ("rtol", 1e-5), ("optimize", False)]
 
 
-def _kraus_to_choi(krau_op):
-    """Transform Kraus representation of a channel to its Choi representation."""
+def _kraus_to_choi(krau_op: Kraus, optimize=False) -> np.ndarray:
+    r"""Transforms Kraus representation of a channel to its Choi representation.
+
+    Quantum channels are generally defined by Kraus operators :math:`{K_i}`, which
+    unfortunately do not provide a unique description of the channel. In contrast,
+    the Choi matrix (\Lambda) computed from any such Kraus representation will
+    always be unique and can be used unambiguosly to obtain represent a channel.
+
+    .. math::
+
+        \Lambda = \sum_{i, j} \vert i \rangle \langle j \vert \otimes \sum_k K_k \vert i \rangle \langle j K_k^\dagger
+
+    Args:
+        krau_op (Kraus): A Qiskit's Kraus operator that defines a channel.
+        optimize (bool): Use intermediate ``einsum`` optimization.
+
+    Returns:
+        Choi matrix of the quantum channel defined by given Kraus operators.
+
+    For plugin developers: This has a runtime cost of :math:`O(\#K * D^4)`, where :math:`\#K` are the
+    number of Kraus operators, and :math:`D` is the dimensions of the transformed Hilbert space.
+    """
     kraus_l, kraus_r = krau_op._data
     kraus_vecs1 = np.array([kraus.ravel(order="F") for kraus in kraus_l])
     kraus_vecs2 = kraus_vecs1
     if kraus_r is not None:
         kraus_vecs2 = np.array([kraus.ravel(order="F") for kraus in kraus_r])
-    return np.einsum("ij,ik->jk", kraus_vecs1, kraus_vecs2.conj())
+    return np.einsum("ij,ik->jk", kraus_vecs1, kraus_vecs2.conj(), optimize=optimize)
 
 
-def _check_kraus_ops(kraus_mats, **kwargs):
-    """Checks parity for Qiskit's Kraus operations to existing PL channels."""
-    choi_matrix = _kraus_to_choi(Kraus(kraus_mats))  # Kraus-independent Choi matrix
+def _check_kraus_ops(
+    kraus_mats: List[np.ndarray], **kwargs
+) -> Tuple[bool, str, Union[float, np.ndarray, Kraus]]:
+    """Checks parity for Qiskit's Kraus operations to the existing PennyLane channels.
+
+    This helper method constructs an unique representation of the quantum channel via its Choi matrix and
+    then uses it to map them to the following existing PennyLane Channels such as ``PhaseDamping``,
+    ``AmplitudeDamping``, ``ThermalRelaxation`` and ``QubitChannel``.
+
+    Args:
+        kraus_mats (List(tensor)): list of Kraus operators defining a quantum channel
+    """
+    choi_matrix = _kraus_to_choi(Kraus(kraus_mats), optimize=kwargs.get("optimize", False))
 
     if qml.math.shape(choi_matrix) == (4, 4):  # PennyLane channels are single-qubit
         decimals, atol, rtol = tuple(kwargs.get(opt, dflt) for (opt, dflt) in default_option_map)
@@ -112,7 +144,8 @@ def _check_kraus_ops(kraus_mats, **kwargs):
 
 
 @lru_cache
-def _generate_product(items, repeat=1, matrix=False):
+def _generate_product(items: Tuple, repeat: int = 1, matrix: bool = False) -> Tuple:
+    """Helper method to generate product for Pauli terms and matrices efficiently."""
     return tuple(
         it.product(
             (
@@ -125,8 +158,16 @@ def _generate_product(items, repeat=1, matrix=False):
     )  # TODO: Analyze speed gains with sparse matrices
 
 
-def _check_depolarization(error_dict):
-    """Checks parity for Qiskit's depolarization channel to that of PennyLane."""
+def _check_depolarization(error_dict: dict) -> Tuple[bool, float]:
+    """Checks parity for Qiskit's depolarization channel to that of PennyLane.
+
+    Args:
+        error_dict (dict): error dictionary for the quantum error
+
+    Returns:
+        (bool, float): A tuple representing whether the encountered quantum error
+            is a depolarization error and the related probability.
+    """
     error_wires, num_wires = error_dict["wires"], len(error_dict["wires"][0])
 
     if (
@@ -144,11 +185,25 @@ def _check_depolarization(error_dict):
     return (False, 0.0)
 
 
-def _error_dict(error):
-    """Builds error dictionary from error"""
+def _build_qerror_dict(error: QuantumError) -> dict[str, Union[float, int]]:
+    """Builds error dictionary for post-processing from Qiskit's error object.
+
+    Args:
+        error (dict): error dictionary for the quantum error
+
+    Returns:
+        Tuple[bool, float]: A tuple representing whether the encountered quantum error
+            is a depolarization error and the related probability.
+
+    For plugin developers: the build dictionary representation help stores the following:
+        * name - Qiskit's standard name for the encountered quantum error.
+        * wires - Wires on which the error acts.
+        * data - Data from the quantum error required by PennyLane for reconstruction.
+        * probs - Probabilities for the instructions in a quantum error.
+    """
     error_repr = error.to_dict()
     error_insts, error_probs = error_repr["instructions"], error_repr["probabilities"]
-    if len(error_insts) != len(error_probs):
+    if len(error_insts) != len(error_probs):  # pragma: no cover
         raise ValueError(
             f"Mismatch between instructions and provided probabilities, got {error_insts} and {error_probs}"
         )
@@ -179,9 +234,18 @@ def _error_dict(error):
     return error_dict
 
 
-def _build_error(error, **kwargs):
-    """Builds an error tuple from a Qiksit's QuantumError object"""
-    error_dict = _error_dict(error)
+def _build_qerror_op(error: QuantumError, **kwargs) -> qml.operation.Operation:
+    """Builds an PennyLane error operation from a Qiksit's QuantumError object.
+
+    Args:
+        error (QuantumError): Quantum error object
+        kwargs: Optional keyword arguments used during conversion
+
+    Returns:
+        qml.operation.Channel: converted PennyLane quantum channel which is
+            theoretically equivalent to the given Qiksit's QuantumError object
+    """
+    error_dict = _build_qerror_dict(error)
 
     error_wires, num_wires = error_dict["wires"], len(error_dict["wires"][0])
     error_probs = error_dict["probs"]
@@ -192,7 +256,6 @@ def _build_error(error, **kwargs):
         error_dict["name"] = pauli_error_map[sorted_name[1]]
         error_dict["data"] = prob_pauli
         error_dict["probs"] = prob_pauli
-        error_dict["wires"] = error_wires[0]
 
     elif sorted_name == ["I", "X", "Y", "Z"]:
         error_dict["data"] = [["I"], ["X"], ["Y"], ["Z"]]
@@ -210,7 +273,6 @@ def _build_error(error, **kwargs):
             error_dict["data"] = [
                 np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_dict["probs"], kraus_ops)
             ]
-        error_dict["wires"] = error_wires[0]
 
     elif set(sorted_name) == {"pauli"}:
         depol_flag, depol_param = _check_depolarization(error_dict)
@@ -226,7 +288,6 @@ def _build_error(error, **kwargs):
             error_dict["data"] = [
                 np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_dict["probs"], kraus_ops)
             ]
-        error_dict["wires"] = error_wires[0]
 
     elif sorted_name[0] == "I" and sorted_name[-1] == "reset":
         if "Z" not in error_dict["name"]:
@@ -241,13 +302,11 @@ def _build_error(error, **kwargs):
             t1 = -tg / np.log(1 - error_probs[2] / p0)
             t2 = (1 / t1 - np.log(1 - 2 * error_probs[1] / (1 - error_probs[2] / p0)) / tg) ** -1
             error_dict["data"] = list(np.round([1 - p0, t1, t2, tg], kwargs.get("decimals", 10)))
-        error_dict["wires"] = error_wires[0]
 
     elif sorted_name[0] == "kraus" and len(sorted_name) == 1:
         kflag, kname, kdata = _check_kraus_ops(error_dict["data"][0], **kwargs)
         error_dict["name"] = kname if kflag else "QubitChannel"
         error_dict["data"] = kdata
-        error_dict["wires"] = error_wires[0]
 
     elif "unitary" in sorted_name and (
         len(set(sorted_name)) == 1 or set(sorted_name) == {"unitary", "I"}
@@ -259,11 +318,9 @@ def _build_error(error, **kwargs):
         error_dict["data"] = [
             np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_probs, kraus_ops)
         ]
-        error_dict["wires"] = error_wires[0]
 
-    else:
-        error_dict = {"name": [], "wires": [], "data": [], "probs": []}
-        raise Warning(f"Error {error} could not be converted and will be skipped.")
+    else:  # pragma: no cover
+        raise ValueError(f"Error {error} could not be converted.")
 
     if error_dict["name"] == "PauliError":
         error_dict["data"] = [error_dict["data"], error_dict["probs"]]
@@ -274,30 +331,54 @@ def _build_error(error, **kwargs):
     if not hasattr(error_dict["data"], "__iter__"):
         error_dict["data"] = [error_dict["data"]]
 
+    if error_dict["wires"]:
+        error_dict["wires"] = error_wires[0]
+
     error_dict.pop("probs", None)
 
-    return error_dict
+    return getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
 
 
-def _build_noise_model(noise_model, **kwargs):
+def _build_noise_model_map(noise_model: NoiseModel, **kwargs) -> Tuple(dict, dict):
+    """Builds noise model maps from which noise model can be constructed efficiently.
+
+    Args:
+        noise_model (NoiseModel): Qiskit's noise model
+        kwargs: Optional keyword arguments for providing extra information
+
+    Keyword Arguments:
+        gate_times (Dict[str, float]): gate times for building thermal relaxation error.
+            If not provided, the default value of ``1.0`` will be used for construction.
+        decimals: number of decimal places to round the Kraus matrices for errors to.
+            If not provided, the default value of ``10`` is used.
+        atol: the relative tolerance parameter. Default value is ``1e-05``.
+        rtol: the absolute tolernace parameters. Defualt value is ``1e-08``.
+        optimize: controls if intermediate optimization is used while transforming Kraus
+            operators to a Choi matrix, wherever required. Default is ``False``.
+
+    Returns:
+        (dict, dict): returns mappings for ecountered quantum errors and readout errors.
+
+    For plugin developers: noise model map tuple consists of following two mappings:
+        * qerror_dmap: noise_operation -> wires -> target_gate
+        * rerror_dmap: noise_operation -> wires -> target_measurement
+    """
     qerror_dmap = defaultdict(lambda: defaultdict(list))
 
     # Add default quantum errors
     for gate_name, error in noise_model._default_quantum_errors.items():
-        error_dict = _build_error(error, gate_name=gate_name, **kwargs)
-        noise_op = getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
+        noise_op = _build_qerror_op(error, gate_name=gate_name, **kwargs)
         qerror_dmap[noise_op][AnyWires].append(qiskit_op_map[gate_name])
 
     # Add specific qubit errors
     for gate_name, qubit_dict in noise_model._local_quantum_errors.items():
         for qubits, error in qubit_dict.items():
-            error_dict = _build_error(error, gate_name=gate_name, **kwargs)
-            noise_op = getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
+            noise_op = _build_qerror_op(error, gate_name=gate_name, **kwargs)
             qerror_dmap[noise_op][qubits].append(qiskit_op_map[gate_name])
 
     # TODO: Add support for the readout error
     rerror_dmap = defaultdict(lambda: defaultdict(list))
     if noise_model._default_readout_error or noise_model._local_readout_errors:
-        raise Warning(f"Readout errors {error} are not supported currently and will be skipped.")
+        warn(f"Readout errors {error} are not supported currently and will be skipped.")
 
     return qerror_dmap, rerror_dmap
