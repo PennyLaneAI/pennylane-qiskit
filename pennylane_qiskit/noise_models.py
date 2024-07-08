@@ -25,7 +25,6 @@ import numpy as np
 import pennylane as qml
 from pennylane.operation import AnyWires
 from qiskit.quantum_info.operators.channel import Choi, Kraus
-from qiskit_aer.noise import NoiseModel, QuantumError
 
 # pylint:disable = protected-access
 
@@ -185,11 +184,11 @@ def _check_depolarization(error_dict: dict) -> Tuple[bool, float]:
     return (False, 0.0)
 
 
-def _build_qerror_dict(error: QuantumError) -> dict[str, Union[float, int]]:
+def _build_qerror_dict(error) -> dict[str, Union[float, int]]:
     """Builds error dictionary for post-processing from Qiskit's error object.
 
     Args:
-        error (dict): error dictionary for the quantum error
+        error (QuantumError): Quantum error object
 
     Returns:
         Tuple[bool, float]: A tuple representing whether the encountered quantum error
@@ -234,7 +233,7 @@ def _build_qerror_dict(error: QuantumError) -> dict[str, Union[float, int]]:
     return error_dict
 
 
-def _build_qerror_op(error: QuantumError, **kwargs) -> qml.operation.Operation:
+def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     """Builds an PennyLane error operation from a Qiksit's QuantumError object.
 
     Args:
@@ -339,11 +338,11 @@ def _build_qerror_op(error: QuantumError, **kwargs) -> qml.operation.Operation:
     return getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
 
 
-def _build_noise_model_map(noise_model: NoiseModel, **kwargs) -> Tuple(dict, dict):
+def _build_noise_model_map(noise_model, **kwargs) -> Tuple(dict, dict):
     """Builds noise model maps from which noise model can be constructed efficiently.
 
     Args:
-        noise_model (NoiseModel): Qiskit's noise model
+        noise_model (qiskit_aer.noise.NoiseModel): Qiskit's noise model
         kwargs: Optional keyword arguments for providing extra information
 
     Keyword Arguments:
