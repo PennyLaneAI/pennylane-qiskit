@@ -79,7 +79,7 @@ def _kraus_to_choi(krau_op: Kraus, optimize=False) -> np.ndarray:
     return np.einsum("ij,ik->jk", kraus_vecs1, kraus_vecs2.conj(), optimize=optimize)
 
 
-def _check_kraus_ops(
+def _process_kraus_ops(
     kraus_mats: List[np.ndarray], **kwargs
 ) -> Tuple[bool, str, Union[float, np.ndarray, Kraus]]:
     """Checks parity for Qiskit's Kraus operations to the existing PennyLane channels.
@@ -157,15 +157,14 @@ def _generate_product(items: Tuple, repeat: int = 1, matrix: bool = False) -> Tu
     )  # TODO: Analyze speed gains with sparse matrices
 
 
-def _check_depolarization(error_dict: dict) -> Tuple[bool, float]:
+def _process_depolarization(error_dict: dict) -> dict:
     """Checks parity for Qiskit's depolarization channel to that of PennyLane.
 
     Args:
         error_dict (dict): error dictionary for the quantum error
 
     Returns:
-        (bool, float): A tuple representing whether the encountered quantum error
-            is a depolarization error and the related probability.
+        dict: An updated error dictionary based on parity with depolarization channel.
     """
     error_wires, num_wires = error_dict["wires"], len(error_dict["wires"][0])
 
@@ -179,9 +178,46 @@ def _check_depolarization(error_dict: dict) -> Tuple[bool, float]:
         id_factor = num_terms / (num_terms - 1)
         prob_iden = error_dict["probs"][error_dict["data"].index(["I" * num_wires])]
         param = id_factor * (1 - prob_iden)
-        return (True, param)
+        error_dict["name"] = "DepolarizingChannel"
+        error_dict["data"] = param * 3 / 4
+        error_dict["probs"] = param
+        return error_dict
 
-    return (False, 0.0)
+    error_dict["name"] = "QubitChannel"
+    kraus_ops = [
+        reduce(lambda mat1, mat2: mat1 @ mat2, prod, np.eye(int(2**num_wires)))
+        for prod in _generate_product(("I", "X", "Y", "Z"), repeat=num_wires, matrix=True)
+    ]
+    error_dict["data"] = [
+        np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_dict["probs"], kraus_ops)
+    ]
+    return error_dict
+
+
+def _process_reset(error_dict: dict, **kwargs) -> dict:
+    """Checks parity of a qunatum error with ``Reset`` instruction to a PennyLane Channel.
+
+    Args:
+        error_dict (dict): error dictionary for the quantum error
+        **kwargs: optional keyword arguments
+
+    Returns:
+        dict: An updated error dictionary based on parity with existing PennyLane channel.
+    """
+    error_probs = error_dict["probs"]
+
+    if "Z" not in error_dict["name"]:
+        error_dict["name"] = "ResetError"
+        error_dict["data"] = error_probs[1:]
+    else:  # uses t1 > t2
+        error_dict["name"] = "ThermalRelaxationError"
+        tg = kwargs.get("gate_times", {}).get(kwargs["gate_name"], 1.0)
+        p0 = 1.0 if len(error_probs) == 3 else error_probs[2] / (error_probs[2] + error_probs[3])
+        t1 = -tg / np.log(1 - error_probs[2] / p0)
+        t2 = (1 / t1 - np.log(1 - 2 * error_probs[1] / (1 - error_probs[2] / p0)) / tg) ** -1
+        error_dict["data"] = list(np.round([1 - p0, t1, t2, tg], kwargs.get("decimals", 10)))
+
+    return error_dict
 
 
 def _build_qerror_dict(error) -> dict[str, Union[float, int]]:
@@ -233,6 +269,25 @@ def _build_qerror_dict(error) -> dict[str, Union[float, int]]:
     return error_dict
 
 
+def _process_qerror_dict(error_dict: dict) -> dict[str, Union[float, int]]:
+    """Helper method for post processing error dictionary for constructing PennyLane Channel."""
+    if error_dict["name"] == "PauliError":
+        error_dict["data"] = [error_dict["data"], error_dict["probs"]]
+
+    if error_dict["name"] == "QubitChannel":
+        error_dict["data"] = [error_dict["data"]]
+
+    if not hasattr(error_dict["data"], "__iter__"):
+        error_dict["data"] = [error_dict["data"]]
+
+    if error_dict["wires"]:
+        error_dict["wires"] = error_dict["wires"][0]
+
+    error_dict.pop("probs", None)
+
+    return error_dict
+
+
 def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     """Builds an PennyLane error operation from a Qiksit's QuantumError object.
 
@@ -246,7 +301,6 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     """
     error_dict = _build_qerror_dict(error)
 
-    error_wires, num_wires = error_dict["wires"], len(error_dict["wires"][0])
     error_probs = error_dict["probs"]
     sorted_name = sorted(error_dict["name"])
 
@@ -258,52 +312,16 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
 
     elif sorted_name == ["I", "X", "Y", "Z"]:
         error_dict["data"] = [["I"], ["X"], ["Y"], ["Z"]]
-        depol_flag, depol_param = _check_depolarization(error_dict)
-        if depol_flag:
-            error_dict["name"] = "DepolarizingChannel"
-            error_dict["data"] = depol_param * 3 / 4
-            error_dict["probs"] = depol_param
-        else:
-            error_dict["name"] = "QubitChannel"
-            kraus_ops = [
-                reduce(lambda mat1, mat2: mat1 @ mat2, prod, np.eye(int(2**num_wires)))
-                for prod in _generate_product(("I", "X", "Y", "Z"), repeat=num_wires, matrix=True)
-            ]
-            error_dict["data"] = [
-                np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_dict["probs"], kraus_ops)
-            ]
+        error_dict = _process_depolarization(error_dict)
 
     elif set(sorted_name) == {"pauli"}:
-        depol_flag, depol_param = _check_depolarization(error_dict)
-        if depol_flag and len(error_wires[0]) == 1:
-            error_dict["name"] = "DepolarizingChannel"
-            error_dict["probs"] = depol_param
-        else:
-            error_dict["name"] = "QubitChannel"  # TODO: Make PauliError multi-qubit channel
-            kraus_ops = [
-                reduce(lambda mat1, mat2: mat1 @ mat2, prod, np.eye(int(2**num_wires)))
-                for prod in _generate_product(("I", "X", "Y", "Z"), repeat=num_wires, matrix=True)
-            ]
-            error_dict["data"] = [
-                np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_dict["probs"], kraus_ops)
-            ]
+        error_dict = _process_depolarization(error_dict)
 
     elif sorted_name[0] == "I" and sorted_name[-1] == "reset":
-        if "Z" not in error_dict["name"]:
-            error_dict["name"] = "ResetError"
-            error_dict["data"] = error_probs[1:]
-        else:  # uses t1 > t2
-            error_dict["name"] = "ThermalRelaxationError"
-            tg = kwargs.get("gate_times", {}).get(kwargs["gate_name"], 1.0)
-            p0 = (
-                1.0 if len(error_probs) == 3 else error_probs[2] / (error_probs[2] + error_probs[3])
-            )
-            t1 = -tg / np.log(1 - error_probs[2] / p0)
-            t2 = (1 / t1 - np.log(1 - 2 * error_probs[1] / (1 - error_probs[2] / p0)) / tg) ** -1
-            error_dict["data"] = list(np.round([1 - p0, t1, t2, tg], kwargs.get("decimals", 10)))
+        error_dict = _process_reset(error_dict, **kwargs)
 
     elif sorted_name[0] == "kraus" and len(sorted_name) == 1:
-        kflag, kname, kdata = _check_kraus_ops(error_dict["data"][0], **kwargs)
+        kflag, kname, kdata = _process_kraus_ops(error_dict["data"][0], **kwargs)
         error_dict["name"] = kname if kflag else "QubitChannel"
         error_dict["data"] = kdata
 
@@ -321,19 +339,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     else:  # pragma: no cover
         raise ValueError(f"Error {error} could not be converted.")
 
-    if error_dict["name"] == "PauliError":
-        error_dict["data"] = [error_dict["data"], error_dict["probs"]]
-
-    if error_dict["name"] == "QubitChannel":
-        error_dict["data"] = [error_dict["data"]]
-
-    if not hasattr(error_dict["data"], "__iter__"):
-        error_dict["data"] = [error_dict["data"]]
-
-    if error_dict["wires"]:
-        error_dict["wires"] = error_wires[0]
-
-    error_dict.pop("probs", None)
+    error_dict = _process_qerror_dict(error_dict=error_dict)
 
     return getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
 
