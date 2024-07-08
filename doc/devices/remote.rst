@@ -43,8 +43,8 @@ PennyLane device.
     Retrieving a backend from a provider has been deprecated and may not be supported. 
 
 After installing the plugin, this device can be used just like any other PennyLane device for defining and evaluating QNodes.
-A simple quantum function that returns the expectation value of a measurement and depends on three classical input
-parameters would look like:
+For example, a simple quantum function that returns the expectation value of a measurement and depends on
+three classical input parameters can be decorated with `qml.qnode` as usual  to construct a ``QNode``:
 
 .. code-block:: python
 
