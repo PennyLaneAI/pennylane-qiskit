@@ -23,8 +23,7 @@ import pytest
 
 import pennylane as qml
 from pennylane.tape.qscript import QuantumScript
-
-from qiskit_ibm_runtime import Session, EstimatorV2 as Estimator
+from qiskit_ibm_runtime import EstimatorV2 as Estimator, Session
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 from qiskit_aer import AerSimulator
 
@@ -105,8 +104,10 @@ class MockedBackendLegacy(BackendV1):
 # pylint: disable=too-few-public-methods
 class MockSession:
     def __init__(self, backend, max_time=None):
-        self.backend = backend
-        self.max_time = max_time
+        self._backend = backend
+        self._max_time = max_time
+        self._args = "random"  # this is to satisfy a mock
+        self._kwargs = "random"  # this is to satisfy a mock
         self.session_id = "123"
 
     def close(self):  # This is just to appease a test
@@ -234,6 +235,94 @@ class TestQiskitSessionManagement:
             assert dev._session != initial_session
 
         assert dev._session == initial_session
+
+    def test_using_session_context_options(self):
+        """Test that you can set session options using qiskit_session"""
+        dev = QiskitDevice2(wires=2, backend=aer_backend)
+
+        assert dev._session is None
+
+        with qiskit_session(dev, max_time=30) as session:
+            assert dev._session == session
+            assert dev._session is not None
+            assert dev._session._max_time == 30
+
+        assert dev._session is None
+
+    def test_error_when_passing_unexpected_kwarg(self):
+        """Test that we accept any keyword argument that the user wants to supply so that if
+        Qiskit allows for more customization we can automatically accomodate those needs. Right
+        now there are no such keyword arguments, so an error on Qiskit's side is raised."""
+
+        dev = QiskitDevice2(wires=2, backend=aer_backend)
+
+        assert dev._session is None
+
+        with pytest.raises(
+            TypeError,  # Type error for wrong keyword argument differs across python versions
+        ):
+            with qiskit_session(dev, any_kwarg=30) as session:
+                assert dev._session == session
+                assert dev._session is not None
+
+        assert dev._session is None
+
+    def test_no_warning_when_using_initial_session_options(self):
+        initial_session = Session(backend=aer_backend, max_time=30)
+        dev = QiskitDevice2(wires=2, backend=aer_backend, session=initial_session)
+
+        assert dev._session == initial_session
+
+        with qiskit_session(dev) as session:
+            assert dev._session == session
+            assert dev._session != initial_session
+            assert dev._session._max_time == session._max_time
+            assert dev._session._max_time != initial_session._max_time
+
+        assert dev._session == initial_session
+        assert dev._session._max_time == initial_session._max_time
+
+    def test_warnings_when_overriding_session_context_options(self, recorder):
+        """Test that warnings are raised when the session options try to override either the
+        device's `backend` or `service`. Also ensures that the session options, even the
+        default options, passed in from the `qiskit_session` take precedence, barring
+        `backend` or `service`"""
+        initial_session = Session(backend=aer_backend)
+        dev = QiskitDevice2(wires=2, backend=aer_backend, session=initial_session)
+
+        assert dev._session == initial_session
+
+        with pytest.warns(
+            UserWarning,
+            match="Using 'backend' set in device",
+        ):
+            with qiskit_session(dev, max_time=30, backend=FakeManilaV2()) as session:
+                assert dev._session == session
+                assert dev._session != initial_session
+                assert dev._session._backend.name == "aer_simulator"
+
+        with pytest.warns(
+            UserWarning,
+            match="Using 'service' set in device",
+        ):
+            with qiskit_session(dev, max_time=30, service="placeholder") as session:
+                assert dev._session == session
+                assert dev._session != initial_session
+                assert dev._session._service != "placeholder"
+
+        # device session should be unchanged by qiskit_session
+        assert dev._session == initial_session
+
+        max_time_session = Session(backend=aer_backend, max_time=60)
+        dev = QiskitDevice2(wires=2, backend=aer_backend, session=max_time_session)
+        with qiskit_session(dev, max_time=30) as session:
+            assert dev._session == session
+            assert dev._session != initial_session
+            assert dev._session._max_time == 30
+            assert dev._session._max_time != 60
+
+        assert dev._session == max_time_session
+        assert dev._session._max_time == 60
 
     @pytest.mark.parametrize("initial_session", [None, MockSession(aer_backend)])
     def test_update_session(self, initial_session):
