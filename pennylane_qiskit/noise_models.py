@@ -46,7 +46,7 @@ qiskit_op_map = {
     "z": "Z",
     "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
 }
-default_option_map = [("decimals", 10), ("atol", 1e-8), ("rtol", 1e-5), ("optimize", False)]
+default_option_map = [("decimals", 10), ("atol", 1e-8), ("rtol", 1e-5)]
 
 
 def _kraus_to_choi(krau_op: Kraus, optimize=False) -> np.ndarray:
@@ -105,7 +105,9 @@ def _process_kraus_ops(
             rtol=rtol,
             atol=atol,
         ):
-            if np.allclose(nz_values[[0, 3]], np.ones(2)) and np.isclose(*nz_values[[1, 2]]):
+            if np.allclose(nz_values[[0, 3]], np.ones(2), rtol=rtol, atol=atol) and np.allclose(
+                *nz_values[[1, 2]], rtol=rtol, atol=atol
+            ):
                 return (True, "PhaseDamping", np.round(1 - nz_values[1] ** 2, decimals).real)
 
         if len(nz_values) == 5 and np.allclose(
@@ -116,7 +118,7 @@ def _process_kraus_ops(
         ):
             if np.allclose(
                 [nz_values[0], sum(nz_values[[2, 4]])], np.ones(2), rtol=rtol, atol=atol
-            ) and np.isclose(*nz_values[[1, 3]], rtol=rtol, atol=atol):
+            ) and np.allclose(nz_values[[1, 3]], np.sqrt(nz_values[4]), rtol=rtol, atol=atol):
                 return (True, "AmplitudeDamping", np.round(nz_values[2], decimals).real)
 
         if len(nz_values) == 6 and np.allclose(
@@ -133,7 +135,7 @@ def _process_kraus_ops(
             ) and np.isclose(
                 *nz_values[[1, 4]], rtol=rtol, atol=atol
             ):  # uses t2 > t1
-                tg = kwargs.get("gate_times", {}).get(kwargs["gate_name"], 1.0)
+                tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
                 pe = nz_values[2] / (nz_values[2] + nz_values[3])
                 t1 = -tg / np.log(1 - nz_values[2] / pe)
                 t2 = -tg / np.log(nz_values[1])
@@ -157,11 +159,12 @@ def _generate_product(items: Tuple, repeat: int = 1, matrix: bool = False) -> Tu
     )  # TODO: Analyze speed gains with sparse matrices
 
 
-def _process_depolarization(error_dict: dict) -> dict:
+def _process_depolarization(error_dict: dict, multi_pauli: bool = False) -> dict:
     """Checks parity for Qiskit's depolarization channel to that of PennyLane.
 
     Args:
         error_dict (dict): error dictionary for the quantum error
+        multi_pauli (bool): accept multi-qubit Pauli errors
 
     Returns:
         dict: An updated error dictionary based on parity with depolarization channel.
@@ -171,6 +174,7 @@ def _process_depolarization(error_dict: dict) -> dict:
     if (
         len(set(error_dict["probs"])) == 2
         and set(error_wires) == {error_wires[0]}
+        and (num_wires == 1 or multi_pauli)
         and list(it.chain(*error_dict["data"]))
         == ["".join(pauli) for pauli in _generate_product(("I", "X", "Y", "Z"), repeat=num_wires)]
     ):
@@ -179,13 +183,13 @@ def _process_depolarization(error_dict: dict) -> dict:
         prob_iden = error_dict["probs"][error_dict["data"].index(["I" * num_wires])]
         param = id_factor * (1 - prob_iden)
         error_dict["name"] = "DepolarizingChannel"
-        error_dict["data"] = param * 3 / 4
+        error_dict["data"] = param / id_factor
         error_dict["probs"] = param
         return error_dict
 
     error_dict["name"] = "QubitChannel"
     kraus_ops = [
-        reduce(lambda mat1, mat2: mat1 @ mat2, prod, np.eye(int(2**num_wires)))
+        reduce(np.kron, prod, 1.0)
         for prod in _generate_product(("I", "X", "Y", "Z"), repeat=num_wires, matrix=True)
     ]
     error_dict["data"] = [
@@ -208,10 +212,10 @@ def _process_reset(error_dict: dict, **kwargs) -> dict:
 
     if "Z" not in error_dict["name"]:
         error_dict["name"] = "ResetError"
-        error_dict["data"] = error_probs[1:]
+        error_dict["data"] = error_probs[1:] + ([0.0] if len(error_probs[1:]) == 1 else [])
     else:  # uses t1 > t2
         error_dict["name"] = "ThermalRelaxationError"
-        tg = kwargs.get("gate_times", {}).get(kwargs["gate_name"], 1.0)
+        tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
         p0 = 1.0 if len(error_probs) == 3 else error_probs[2] / (error_probs[2] + error_probs[3])
         t1 = -tg / np.log(1 - error_probs[2] / p0)
         t2 = (1 / t1 - np.log(1 - 2 * error_probs[1] / (1 - error_probs[2] / p0)) / tg) ** -1
@@ -300,7 +304,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
             theoretically equivalent to the given Qiksit's QuantumError object
     """
     error_dict = _build_qerror_dict(error)
-
+    print(error_dict)
     error_probs = error_dict["probs"]
     sorted_name = sorted(error_dict["name"])
 
@@ -330,7 +334,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     ):
         error_dict["name"] = "QubitChannel"
         kraus_ops = [
-            op[0] if isinstance(op, list) else qml.I(0).matrix() * op for op in error_dict["data"]
+            op[0] if isinstance(op, list) else qml.I(0).matrix() for op in error_dict["data"]
         ]
         error_dict["data"] = [
             np.sqrt(prob) * kraus_op for prob, kraus_op in zip(error_probs, kraus_ops)
@@ -344,7 +348,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     return getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
 
 
-def _build_noise_model_map(noise_model, **kwargs) -> Tuple(dict, dict):
+def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     """Builds noise model maps from which noise model can be constructed efficiently.
 
     Args:
