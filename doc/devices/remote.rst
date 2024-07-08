@@ -62,7 +62,7 @@ You can then execute the above quantum circuit to get the quantum mechanical exp
 
     circuit(0.2, 0.1, 0.3)
 
-The ``'qiskit.remote'`` device also supports the use of `local simulators <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/fake_provider>`_ such as FakeManila.
+The ``'qiskit.remote'`` device also supports the use of `local simulators <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/fake_provider>`_ such as ``FakeManila``.
 
 .. code-block:: python
     
