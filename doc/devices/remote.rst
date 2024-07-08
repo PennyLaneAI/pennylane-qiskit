@@ -10,12 +10,7 @@ To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum
 
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    QiskitRuntimeService.save_account(
-        channel="ibm_quantum", 
-        token="<IQP_TOKEN>", 
-        overwrite=True, 
-        default=true
-    )
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>")
 
     # To access saved credentials for the IBM quantum channel and select an instance
     service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
@@ -23,24 +18,23 @@ To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum
 
     dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
 
-This device is also useful when accessing backends from providers with complex search options in
-their ``get_backend()`` method, or for setting options on a backend prior to wrapping it as
-PennyLane device.
 
-.. code-block:: python
+.. note:: 
 
-    import pennylane as qml
+    Certain third-party backends may be using the deprecated Provider interface, in which case
+    you can get the backend instance from providers with complex search options using their 
+    ``get_backend()`` method. For example:
 
-    def configured_backend():
-        backend = SomeProvider.get_backend(...)
-	backend.options.update_options(...)
-	return backend
+    .. code-block:: python
 
-    dev = qml.device('qiskit.remote', wires=2, backend=configured_backend())
+        import pennylane as qml
 
-.. warning::
+        def configured_backend():
+            backend = SomeProvider.get_backend(...)
+        backend.options.update_options(...) # Set backend options this way
+        return backend
 
-    Retrieving a backend from a provider has been deprecated and may not be supported. 
+        dev = qml.device('qiskit.remote', wires=2, backend=configured_backend())
 
 After installing the plugin, this device can be used just like any other PennyLane device for defining and evaluating QNodes.
 For example, a simple quantum function that returns the expectation value of a measurement and depends on
