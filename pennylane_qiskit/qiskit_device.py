@@ -234,7 +234,7 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
-class QiskitDevice2(Device):
+class QiskitDevice(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
     Args:
