@@ -1,4 +1,4 @@
-pennylane>=0.32
+pennylane>=0.37
 qiskit<0.46
 qiskit-ibm-runtime<0.21
 numpy
