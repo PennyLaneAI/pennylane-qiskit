@@ -52,7 +52,7 @@ from pennylane.devices.modifiers.simulator_tracking import (
     _track_execute_and_compute_jvp,
     _track_execute_and_compute_vjp,
     _track_compute_vjp,
-    _track_compute_jvp
+    _track_compute_jvp,
 )
 from pennylane.devices.qubit.sampling import get_num_shots_and_executions
 from ._version import __version__
