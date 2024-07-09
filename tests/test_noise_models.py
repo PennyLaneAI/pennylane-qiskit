@@ -67,6 +67,10 @@ class TestLoadNoiseChannels:
                 noise.depolarizing_error(0.3264, 1),
                 qml.DepolarizingChannel(0.3264 * 3 / 4, wires=AnyWires),
             ),
+            (
+                noise.pauli_error([("X", 0.1), ("I", 0.9)]),
+                qml.BitFlip(0.1, wires=AnyWires),
+            ),
         ],
     )
     def test_build_qerror_op(self, qiskit_error, pl_channel):

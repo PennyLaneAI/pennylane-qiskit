@@ -101,7 +101,7 @@ def _kraus_to_choi(krau_op: Kraus, optimize=False) -> np.ndarray:
     kraus_l, kraus_r = krau_op._data
     kraus_vecs1 = np.array([kraus.ravel(order="F") for kraus in kraus_l])
     kraus_vecs2 = kraus_vecs1
-    if kraus_r is not None:
+    if kraus_r is not None:  # pragma: no cover
         kraus_vecs2 = np.array([kraus.ravel(order="F") for kraus in kraus_r])
     return np.einsum("ij,ik->jk", kraus_vecs1, kraus_vecs2.conj(), optimize=optimize)
 
@@ -335,7 +335,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     error_probs = error_dict["probs"]
     sorted_name = sorted(error_dict["name"])
 
-    if sorted_name[0] == "I" and sorted_name[1:] in ["X", "Y", "Z"] and len(sorted_name) == 2:
+    if sorted_name[0] == "I" and len(sorted_name) == 2 and sorted_name[1] in ["X", "Y", "Z"]:
         prob_pauli = error_dict["probs"][error_dict["name"].index(sorted_name[1])]
         error_dict["name"] = pauli_error_map[sorted_name[1]]
         error_dict["data"] = prob_pauli

@@ -2209,6 +2209,7 @@ class TestLoadPauliOp:
             load_pauli_op(123)
 
 
+# pylint:disable = import-outside-toplevel, too-few-public-methods
 class TestLoadNoiseModel:
     """Tests for :func:`load_noise_models()` function."""
 
@@ -2217,7 +2218,6 @@ class TestLoadNoiseModel:
     def test_build_noise_model(self):
         """Tests that _build_noise_model_map constructs correct model map for a noise model"""
 
-        # pylint:disable = import-outside-toplevel
         from qiskit.providers.fake_provider import FakeOpenPulse2Q
         from qiskit_aer.noise import NoiseModel
         from pennylane.noise import op_in, wires_in, partial_wires
@@ -2371,4 +2371,4 @@ class TestLoadNoiseModel:
             if "QubitChannel" not in pl_v.__name__:
                 assert pl_v.__name__ == qk_v.__name__
             else:
-                assert "QubitChannel(Klist=Tensor(16, 4, 4))" == qk_v.__name__
+                assert qk_v.__name__ == "QubitChannel(Klist=Tensor(16, 4, 4))"
