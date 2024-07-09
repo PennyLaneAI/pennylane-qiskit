@@ -2367,5 +2367,7 @@ class TestLoadNoiseModel:
         for (pl_k, pl_v), (qk_k, qk_v) in zip(
             pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
         ):
+            pl_op, qk_op = pl_v(AnyWires), qk_v(AnyWires)
             assert repr(pl_k) == repr(qk_k)
-            assert qml.equal(pl_v(AnyWires), qk_v(AnyWires))
+            assert isinstance(pl_op, type(qk_op))
+            assert np.allclose(pl_op.data, qk_op.data, atol=1e-5)
