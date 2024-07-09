@@ -145,11 +145,19 @@ class TestLoadNoiseChannels:
         choi_mat2 = _kraus_to_choi(Kraus(list(pl_channel.data)))
         assert np.allclose(choi_mat1, choi_mat2)
 
-    def test_build_model_map(self):
+    @pytest.mark.parametrize(
+        "depol1, depol2, exc_pop",
+        [
+            (0.123, 0.456, 0.414),
+            (0.631, 0.729, 0.128),
+            (0.384, 0.657, 0.902),
+        ],
+    )
+    def test_build_model_map(self, depol1, depol2, exc_pop):
         """Tests that _build_noise_model_map constructs correct model map for a noise model"""
-        error_1 = noise.depolarizing_error(0.123, 1)
-        error_2 = noise.depolarizing_error(0.456, 2)
-        error_3 = noise.phase_amplitude_damping_error(0.14, 0.24, excited_state_population=0.414)
+        error_1 = noise.depolarizing_error(depol1, 1)
+        error_2 = noise.depolarizing_error(depol2, 2)
+        error_3 = noise.phase_amplitude_damping_error(0.14, 0.24, excited_state_population=exc_pop)
 
         # Add errors to noise model
         noise_model = noise.NoiseModel()
@@ -160,18 +168,18 @@ class TestLoadNoiseChannels:
         model_map, _ = _build_noise_model_map(noise_model)
 
         assert list(model_map.keys()) == [
-            qml.DepolarizingChannel(0.09225, wires=AnyWires),
+            qml.DepolarizingChannel(depol1 * 0.75, wires=AnyWires),
             qml.QubitChannel(
                 [
                     np.sqrt(prob) * reduce(np.kron, prod, 1.0)
                     for prob, prod in zip(
-                        [1 - 15 * 0.456 / 16, *([0.456 / 16] * 15)],
+                        [1 - 15 * depol2 / 16, *([depol2 / 16] * 15)],
                         _generate_product(("I", "X", "Y", "Z"), repeat=2, matrix=True),
                     )
                 ],
                 wires=AnyWires,
             ),
-            qml.ThermalRelaxationError(0.414, 6.6302933312, 4.1837870638, 1.0, wires=AnyWires),
+            qml.ThermalRelaxationError(exc_pop, 6.6302933312, 4.1837870638, 1.0, wires=AnyWires),
         ]
         assert list(model_map.values()) == [
             {AnyWires: ["RZ", "SX", "X"]},

@@ -32,6 +32,7 @@ from pennylane.measurements import MidMeasureMP
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
+    load_noise_model,
     load_pauli_op,
     load_qasm,
     load_qasm_from_file,
@@ -2206,3 +2207,168 @@ class TestLoadPauliOp:
         match = "The operator 123 is not a valid Qiskit SparsePauliOp."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)
+
+
+class TestLoadNoiseModel:
+    """Tests for :func:`load_noise_models()` function."""
+
+    qiksit = pytest.importorskip("qiskit", "1.0.0")
+
+    def test_build_noise_model(self):
+        """Tests that _build_noise_model_map constructs correct model map for a noise model"""
+
+        # pylint:disable = import-outside-toplevel
+        from qiskit.providers.fake_provider import FakeOpenPulse2Q
+        from qiskit_aer.noise import NoiseModel
+        from pennylane.noise import op_in, wires_in, partial_wires
+        from pennylane.operation import AnyWires
+
+        loaded_noise_model = load_noise_model(NoiseModel.from_backend(FakeOpenPulse2Q()))
+
+        pl_model_map = {
+            op_in("Identity")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.0, t1=26981.9403362283, t2=26034.6676428009, tq=1.0, wires=AnyWires
+            ),
+            op_in("Identity")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.0, t1=30732.034088541, t2=28335.6514829973, tq=1.0, wires=AnyWires
+            ),
+            (op_in("U1") & wires_in(0))
+            | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
+                p=0.08999999999999997, wires=AnyWires
+            ),
+            op_in("U2")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.4998455776, t1=7.8227384666, t2=7.8226559459, tq=1.0, wires=AnyWires
+            ),
+            op_in("U2")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.4998644198, t1=7.8227957211, t2=7.8226273195, tq=1.0, wires=AnyWires
+            ),
+            op_in("U3")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.4996911588, t1=7.8227934813, t2=7.8226284393, tq=1.0, wires=AnyWires
+            ),
+            op_in("U3")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.4997288404, t1=7.8229079927, t2=7.8225711871, tq=1.0, wires=AnyWires
+            ),
+            op_in("CNOT")
+            & wires_in([0, 1]): qml.QubitChannel(
+                np.array(
+                    [
+                        [
+                            [-0.00630187 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.00630572 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.00630526 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, -0.00630911 + 0.0j],
+                        ],
+                        [
+                            [-0.43615418 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.17440094 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, 0.20809143 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, 0.05338186 + 0.0j],
+                        ],
+                        [
+                            [-0.09661797 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.18973192 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.15719968 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, 0.44324055 + 0.0j],
+                        ],
+                        [
+                            [0.02447349 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.36545892 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, 0.36329539 + 0.0j, 0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, -0.02225592 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.5163849 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.51620014 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.51659541 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.51356736 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.05566075 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [-0.0 + 0.0j, -0.51161899 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.07136846 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                        ],
+                        [
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.03615696 + 0.0j, -0.51514324 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.51514324 + 0.0j, -0.03615696 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, 0.07134191 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.51142865 + 0.0j],
+                            [0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, 0.0 + 0.0j, -0.05563753 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.51335309 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.5163849 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, 0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.14620844 + 0.0j, 0.49506128 + 0.0j, 0.0 + 0.0j],
+                        ],
+                        [
+                            [0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [-0.0 + 0.0j, 0.0 + 0.0j, -0.0 + 0.0j, -0.0 + 0.0j],
+                            [0.0 + 0.0j, -0.49506128 + 0.0j, -0.14620844 + 0.0j, 0.0 + 0.0j],
+                        ],
+                    ]
+                ),
+                wires=AnyWires,
+            ),
+        }
+
+        pl_noise_model = qml.NoiseModel(
+            {fcond: partial_wires(noise) for fcond, noise in pl_model_map.items()}
+        )
+
+        for (pl_k, pl_v), (qk_k, qk_v) in zip(
+            pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
+        ):
+            assert repr(pl_k) == repr(qk_k)
+            if "QubitChannel" not in pl_v.__name__:
+                assert pl_v.__name__ == qk_v.__name__
+            else:
+                assert "QubitChannel(Klist=Tensor(16, 4, 4))" == qk_v.__name__

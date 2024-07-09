@@ -1059,12 +1059,14 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     Keyword Arguments:
         gate_times (Dict[str, float]): gate times for building thermal relaxation error.
             If not provided, the default value of ``1.0`` will be used for construction.
-        decimals: number of decimal places to round the Kraus matrices for errors to.
+        decimals (int): number of decimal places to round the Kraus matrices for errors to.
             If not provided, the default value of ``10`` is used.
-        atol: the relative tolerance parameter. Default value is ``1e-05``.
-        rtol: the absolute tolernace parameters. Defualt value is ``1e-08``.
-        optimize: controls if intermediate optimization is used while transforming Kraus
+        atol (float): the relative tolerance parameter. Default value is ``1e-05``.
+        rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
+        optimize (bool): controls if intermediate optimization is used while transforming Kraus
             operators to a Choi matrix, wherever required. Default is ``False``.
+        kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``.
+            Default is ``True``.
 
     Returns:
         qml.NoiseModel: An equivalent noise model constructed in PennyLane
@@ -1091,7 +1093,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
 
         noise = qml.noise.partial_wires(error)
-        if isinstance(error, qml.QubitChannel):
+        if isinstance(error, qml.QubitChannel) and kwargs.get("kraus_shape", True):
             noise = _rename(f"QubitChannel(Klist=Tensor{qml.math.shape(error.data)})")(noise)
 
         model_map[fcond] = noise

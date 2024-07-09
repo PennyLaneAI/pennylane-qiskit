@@ -35,15 +35,42 @@ kraus_indice_map = {
 }
 pauli_error_map = {"X": "BitFlip", "Z": "PhaseFlip", "Y": "PauliError"}
 qiskit_op_map = {
-    "cx": "CNOT",
-    "sx": "SX",
-    "id": "I",
-    "rx": "RX",
-    "ry": "RY",
-    "rz": "RZ",
     "x": "X",
     "y": "Y",
     "z": "Z",
+    "h": "Hadamard",
+    "cx": "CNOT",
+    "cz": "CZ",
+    "swap": "SWAP",
+    "iswap": "ISWAP",
+    "rx": "RX",
+    "ry": "RY",
+    "rz": "RZ",
+    "id": "Identity",
+    "cswap": "CSWAP",
+    "crx": "CRX",
+    "cry": "CRY",
+    "crz": "CRZ",
+    "p": "PhaseShift",
+    "ccx": "Toffoli",
+    "qubitunitary": "QubitUnitary",
+    "u1": "U1",
+    "u2": "U2",
+    "u3": "U3",
+    "rzz": "IsingZZ",
+    "ryy": "IsingYY",
+    "rxx": "IsingXX",
+    "s": "S",
+    "t": "T",
+    "sx": "SX",
+    "cy": "CY",
+    "ch": "CH",
+    "cp": "CPhase",
+    "ccz": "CCZ",
+    "ecr": "ECR",
+    "sdg": qml.adjoint(qml.S),
+    "tdg": qml.adjoint(qml.T),
+    "sxdg": qml.adjoint(qml.SX),
     "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
 }
 default_option_map = [("decimals", 10), ("atol", 1e-8), ("rtol", 1e-5)]
@@ -304,7 +331,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
             theoretically equivalent to the given Qiksit's QuantumError object
     """
     error_dict = _build_qerror_dict(error)
-    print(error_dict)
+
     error_probs = error_dict["probs"]
     sorted_name = sorted(error_dict["name"])
 
@@ -319,7 +346,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
         error_dict = _process_depolarization(error_dict)
 
     elif set(sorted_name) == {"pauli"}:
-        error_dict = _process_depolarization(error_dict)
+        error_dict = _process_depolarization(error_dict, kwargs.get("multi_pauli", False))
 
     elif sorted_name[0] == "I" and sorted_name[-1] == "reset":
         error_dict = _process_reset(error_dict, **kwargs)
@@ -358,12 +385,14 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     Keyword Arguments:
         gate_times (Dict[str, float]): gate times for building thermal relaxation error.
             If not provided, the default value of ``1.0`` will be used for construction.
-        decimals: number of decimal places to round the Kraus matrices for errors to.
+        decimals (int): number of decimal places to round the Kraus matrices for errors to.
             If not provided, the default value of ``10`` is used.
-        atol: the relative tolerance parameter. Default value is ``1e-05``.
-        rtol: the absolute tolernace parameters. Defualt value is ``1e-08``.
-        optimize: controls if intermediate optimization is used while transforming Kraus
+        atol (float): the relative tolerance parameter. Default value is ``1e-05``.
+        rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
+        optimize (bool): controls if intermediate optimization is used while transforming Kraus
             operators to a Choi matrix, wherever required. Default is ``False``.
+        multi_pauli (bool): assume depolarization channel to be multi-qubit. This is currently not
+            supported with ``qml.DepolarizationChannel``, which is a single qubit channel.
 
     Returns:
         (dict, dict): returns mappings for ecountered quantum errors and readout errors.
@@ -388,6 +417,6 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     # TODO: Add support for the readout error
     rerror_dmap = defaultdict(lambda: defaultdict(list))
     if noise_model._default_readout_error or noise_model._local_readout_errors:
-        warn(f"Readout errors {error} are not supported currently and will be skipped.")
+        warn("Readout errors are not supported currently and will be skipped.")
 
     return qerror_dmap, rerror_dmap
