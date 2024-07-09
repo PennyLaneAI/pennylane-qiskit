@@ -1,8 +1,8 @@
 appdirs==1.4.4
 autograd==1.6.2
-autoray==0.6.8
+autoray==0.6.11
 cachetools==5.3.3
-certifi==2024.2.2
+certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 cryptography==42.0.5
@@ -17,8 +17,8 @@ ntlm-auth==1.5.0
 numpy==1.26.4
 orjson==3.9.15
 pbr==6.0.0
-pennylane==0.34
-PennyLane-Lightning==0.34
+pennylane==0.37
+PennyLane-Lightning==0.37
 ply==3.11
 psutil==5.9.8
 pycparser==2.21
@@ -29,7 +29,7 @@ qiskit-aer==0.13.3
 qiskit-ibm-runtime==0.20.0
 qiskit-ibm-provider==0.10.0
 qiskit-ignis==0.7.1
-qiskit-terra==0.46.0
+qiskit-terra==0.45.3
 requests==2.31.0
 requests-ntlm==1.2.0
 retworkx==0.14.1
