@@ -520,6 +520,9 @@ class QiskitDevice(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
         session = self._session or Session(backend=self.backend)
+        """
+        Execute a circuit or a batch of circuits and turn it into results.
+        """
 
         results = []
 
