@@ -225,11 +225,6 @@ def split_execution_types(
         flattened_indices = [i for group in order_indices for i in group]
         flattened_results = [r for group in res for r in group]
 
-        if len(flattened_indices) != len(flattened_results):
-            raise ValueError(
-                "The lengths of flattened_indices and flattened_results do not match."
-            )  # pragma: no cover
-
         result = dict(zip(flattened_indices, flattened_results))
 
         result = tuple(result[i] for i in sorted(result.keys()))
@@ -239,7 +234,7 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
-class QiskitDevice(Device):
+class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
     Args:
