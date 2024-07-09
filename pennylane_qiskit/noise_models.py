@@ -315,7 +315,6 @@ def _process_qerror_dict(error_dict: dict) -> dict[str, Union[float, int]]:
         error_dict["wires"] = error_dict["wires"][0]
 
     error_dict.pop("probs", None)
-
     return error_dict
 
 
@@ -338,7 +337,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
     if sorted_name[0] == "I" and len(sorted_name) == 2 and sorted_name[1] in ["X", "Y", "Z"]:
         prob_pauli = error_dict["probs"][error_dict["name"].index(sorted_name[1])]
         error_dict["name"] = pauli_error_map[sorted_name[1]]
-        error_dict["data"] = prob_pauli
+        error_dict["data"] = prob_pauli if error_dict["name"] != "PauliError" else sorted_name[1]
         error_dict["probs"] = prob_pauli
 
     elif sorted_name == ["I", "X", "Y", "Z"]:

@@ -71,12 +71,21 @@ class TestLoadNoiseChannels:
                 noise.pauli_error([("X", 0.1), ("I", 0.9)]),
                 qml.BitFlip(0.1, wires=AnyWires),
             ),
+            (
+                noise.pauli_error([("Y", 0.178), ("I", 0.822)]),
+                qml.PauliError("Y", 0.178, wires=AnyWires),
+            ),
         ],
     )
     def test_build_qerror_op(self, qiskit_error, pl_channel):
         """Tests that a quantum error can be correctly converted into a PennyLane channel."""
         pl_op_from_qiskit = _build_qerror_op(qiskit_error)
-        assert qml.equal(pl_op_from_qiskit, pl_channel)
+        # TODO: Remove when qml.equal works with PauliError
+        if not isinstance(pl_op_from_qiskit, qml.PauliError):
+            assert qml.equal(pl_op_from_qiskit, pl_channel)
+        else:
+            assert isinstance(pl_op_from_qiskit, type(pl_channel))
+            assert all([x1 == x2 for x1, x2 in zip(pl_op_from_qiskit.data, pl_channel.data)])
 
     @pytest.mark.parametrize(
         "qiskit_error, pl_channel",
