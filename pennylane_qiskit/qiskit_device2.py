@@ -27,7 +27,6 @@ import numpy as np
 import pennylane as qml
 from qiskit.compiler import transpile
 from qiskit.providers import BackendV2
-
 from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 
 from pennylane import transform
@@ -45,7 +44,18 @@ from pennylane.devices.preprocess import (
 )
 
 from pennylane.measurements import ExpectationMP, VarianceMP
-from pennylane.devices.modifiers import simulator_tracking
+from pennylane.devices.modifiers.simulator_tracking import (
+    simulator_tracking,
+    _track_compute_derivatives,
+    _track_execute_and_compute_derivatives,
+    _track_compute_jvp,
+    _track_execute_and_compute_jvp,
+    _track_compute_vjp,
+    _track_execute_and_compute_vjp,
+    _track_compute_vjp,
+)
+from pennylane.devices.qubit.sampling import get_num_shots_and_executions
+from functools import wraps
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
@@ -54,16 +64,153 @@ QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
+def _track_execute(untracked_execute):
+    """Adds tracking to the execute method for Qiskit."""
+
+    @wraps(untracked_execute)
+    def execute(self, circuits, execution_config=DefaultExecutionConfig):
+        results = untracked_execute(self, circuits, execution_config)
+        if isinstance(circuits, QuantumScript):
+            batch = (circuits,)
+            batch_results = (results,)
+        else:
+            batch = circuits
+            batch_results = results
+        if self.tracker.active:
+            self.tracker.update(batches=1)
+            self.tracker.record()
+            for r, c in zip(batch_results, batch):
+                qpu_executions, shots = get_num_shots_and_executions(c)
+                if c.shots:
+                    self.tracker.update(
+                        simulations=1,
+                        executions=qpu_executions,
+                        results=r[0],
+                        shots=shots,
+                        resources=c.specs["resources"],
+                        errors=c.specs["errors"],
+                    )
+                else:
+                    self.tracker.update(
+                        simulations=1,
+                        executions=qpu_executions,
+                        results=r[0],
+                        resources=c.specs["resources"],
+                        errors=c.specs["errors"],
+                    )
+                self.tracker.record()
+        return results
+
+    return execute
+
+
+# pylint: disable=protected-access
+def qiskit_simulator_tracking(cls: type) -> type:
+    """Modifies all methods to add default simulator style tracking. Specifically for Qiskit devices.
+
+    Args:
+        cls (type): a subclass of :class:`pennylane.devices.Device`
+
+    Returns
+        type: The inputted class that has now been modified to update the tracker upon function calls.
+
+    Simulator style tracking updates:
+
+    * ``executions``: the number of unique circuits that would be required on quantum hardware
+    * ``shots``: the number of shots
+    * ``resources``: the :class:`~.resource.Resources` for the executed circuit.
+    * ``"errors"``: combined algorithmic errors from the quantum operations executed by the qnode.
+    * ``simulations``: the number of simulations performed. One simulation can cover multiple QPU executions,
+      such as for non-commuting measurements and batched parameters.
+    * ``batches``: The number of times :meth:`~pennylane.devices.Device.execute` is called.
+    * ``results``: The results of each call of :meth:`~pennylane.devices.Device.execute`
+    * ``derivative_batches``: How many times :meth:`~pennylane.devices.Device.compute_derivatives` is called.
+    * ``execute_and_derivative_batches``: How many times :meth:`~pennylane.devices.Device.execute_and_compute_derivatives`
+      is called
+    * ``vjp_batches``: How many times :meth:`~pennylane.devices.Device.compute_vjp` is called
+    * ``execute_and_vjp_batches``: How many times :meth:`~pennylane.devices.Device.execute_and_compute_vjp` is called
+    * ``jvp_batches``: How many times :meth:`~pennylane.devices.Device.compute_jvp` is called
+    * ``execute_and_jvp_batches``: How many times :meth:`~pennylane.devices.Device.execute_and_compute_jvp` is called
+    * ``derivatives``: How many circuits are submitted to :meth:`~pennylane.devices.Device.compute_derivatives`
+      or :meth:`~pennylane.devices.Device.execute_and_compute_derivatives`.
+    * ``vjps``: How many circuits are submitted to :meth:`pennylane.devices.Device.compute_vjp`
+      or :meth:`~pennylane.devices.Device.execute_and_compute_vjp`
+    * ``jvps``: How many circuits are submitted to :meth:`~pennylane.devices.Device.compute_jvp`
+      or :meth:`~pennylane.devices.Device.execute_and_compute_jvp`
+
+
+    .. code-block:: python
+
+        @simulator_tracking
+        @single_tape_support
+        class MyDevice(qml.devices.Device):
+
+            def execute(self, circuits, execution_config = qml.devices.DefaultExecutionConfig):
+                return tuple(0.0 for c in circuits)
+
+    >>> dev = MyDevice()
+    >>> ops = [qml.S(0)]
+    >>> measurements = [qml.expval(qml.X(0)), qml.expval(qml.Z(0))]
+    >>> t = qml.tape.QuantumScript(ops, measurements,shots=50)
+    >>> with dev.tracker:
+    ...     dev.execute((t, ) )
+    >>> dev.tracker.history
+    {'batches': [1],
+    'simulations': [1],
+    'executions': [2],
+    'results': [0.0],
+    'shots': [100],
+    'resources': [Resources(num_wires=1, num_gates=1, gate_types=defaultdict(<class 'int'>, {'S': 1}),
+    gate_sizes=defaultdict(<class 'int'>, {1: 1}), depth=1, shots=Shots(total_shots=50,
+    shot_vector=(ShotCopies(50 shots x 1),)))],
+    'errors': {}}
+
+    """
+    if not issubclass(cls, Device):
+        raise ValueError("simulator_tracking only accepts subclasses of pennylane.devices.Device")
+
+    if hasattr(cls, "_applied_modifiers"):
+        cls._applied_modifiers.append(simulator_tracking)
+    else:
+        cls._applied_modifiers = [simulator_tracking]
+
+    # execute must be defined
+    cls.execute = _track_execute(cls.execute)
+
+    modifier_map = {
+        "compute_derivatives": _track_compute_derivatives,
+        "execute_and_compute_derivatives": _track_execute_and_compute_derivatives,
+        "compute_jvp": _track_compute_jvp,
+        "execute_and_compute_jvp": _track_execute_and_compute_jvp,
+        "compute_vjp": _track_compute_vjp,
+        "execute_and_compute_vjp": _track_execute_and_compute_vjp,
+    }
+
+    for name, modifier in modifier_map.items():
+        if getattr(cls, name) != getattr(Device, name):
+            original = getattr(cls, name)
+            setattr(cls, name, modifier(original))
+
+    return cls
+
+
 # pylint: disable=protected-access
 @contextmanager
-def qiskit_session(device):
+def qiskit_session(device, **kwargs):
     """A context manager that creates a Qiskit Session and sets it as a session
     on the device while the context manager is active. Using the context manager
     will ensure the Session closes properly and is removed from the device after
-    completing the tasks.
+    completing the tasks. Any Session that was initialized and passed into the
+    device will be overwritten by the Qiskit Session created by this context
+    manager.
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
+        **kwargs: session keyword arguments to be used for settings for the Session. At the
+        time of writing, the only relevant keyword argument is "max_time", which lets you
+        set the maximum amount of time the sessin is open. For the most up to date information,
+        please refer to the Qiskit Session
+        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
 
     **Example:**
 
@@ -88,18 +235,60 @@ def qiskit_session(device):
 
         angle = 0.1
 
-        with qiskit_session(dev) as session:
-
-            res = circuit(angle)[0] # you queue for the first execution
+        with qiskit_session(dev, max_time=60) as session:
+            # queue for the first execution
+            res = circuit(angle)[0]
 
             # then this loop executes immediately after without queueing again
+            while res > 0:
+                angle += 0.3
+                res = circuit(angle)[0]
+
+    Note that if you passed in a session to your device, that session will be overwritten
+    by `qiskit_session`.
+
+    .. code-block:: python
+
+        import pennylane as qml
+        from pennylane_qiskit import qiskit_session
+        from qiskit_ibm_runtime import QiskitRuntimeService, Session
+
+        # get backend
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.least_busy(simulator=False, operational=True)
+
+        # initialize device
+        dev = qml.device('qiskit.remote', wires=2, backend=backend, session=Session(backend=backend, max_time=30))
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, 0)
+            qml.CNOT([0, 1])
+            return qml.expval(qml.PauliZ(1))
+
+        angle = 0.1
+
+        # This session will have the Qiskit default settings max_time=900
+        with qiskit_session(dev) as session:
+            res = circuit(angle)[0]
+
             while res > 0:
                 angle += 0.3
                 res = circuit(angle)[0]
     """
     # Code to acquire session:
     existing_session = device._session
-    session = Session(backend=device.backend)
+
+    session_options = {"backend": device.backend, "service": device.service}
+
+    for k, v in kwargs.items():
+        # Options like service and backend should be tied to the settings set on device
+        if k in session_options:
+            warnings.warn(f"Using '{k}' set in device, {getattr(device, k)}", UserWarning)
+        else:
+            session_options[k] = v
+
+    session = Session(**session_options)
     device._session = session
     try:
         yield session
@@ -186,7 +375,7 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
-@simulator_tracking
+@qiskit_simulator_tracking
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
