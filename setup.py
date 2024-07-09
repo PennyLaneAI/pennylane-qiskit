@@ -25,6 +25,7 @@ requirements = [
     "qiskit>=0.32",
     "qiskit-aer",
     "qiskit-ibm-runtime",
+    "qiskit-ibm-provider",
     "pennylane>=0.37",
     "numpy",
     "sympy<1.13",
