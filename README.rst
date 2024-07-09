@@ -68,6 +68,12 @@ To test that the PennyLane-Qiskit plugin is working correctly you can run
 
 in the source folder.
 
+.. warning::
+    
+    When installing the Pennylane-Qiskit plugin, we recommend starting with a clean environment.
+    This is especially pertinent when upgrading from a pre-1.0 version of Qiskit, as described
+    in `Qiskit's migration guide <https://docs.quantum.ibm.com/api/migration-guides/qiskit-1.0-installation>`_. 
+
 .. installation-end-inclusion-marker-do-not-remove
 
 Please refer to the `plugin documentation <https://pennylaneqiskit.readthedocs.io/>`_ as
