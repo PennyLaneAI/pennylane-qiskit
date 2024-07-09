@@ -52,10 +52,6 @@ Qiskit devices have different **backends**, which define which actual simulator 
 used by the device. We recommend passing in a backend instance rather than a string with the 
 backend name to the devices. 
 
-For ``'qiskit.aer'``, PennyLane chooses the ``aer_simulator`` as the default backend if no 
-backend is specified. For more details on the ``aer_simulator``, including available backend 
-options, see `Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
-
 Different simulator backends are optimized for different purposes. To change what backend is used, 
 a simulator backend can be defined as follows:
 
@@ -67,14 +63,18 @@ a simulator backend can be defined as follows:
 
 .. note::
 
-    For ``'qiskit.aer'``, it is possible to pass in a string as a backend e.g.
+    For ``'qiskit.aer'``, PennyLane chooses the ``aer_simulator`` as the default backend if no 
+    backend is specified. For more details on the ``aer_simulator``, including available backend 
+    options, see `Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
+
+    Occassionally, you may see others pass in a string as a backend. For example:
 
     .. code-block:: python
 
         dev = qml.device('qiskit.aer', wires=<num_qubits>, backend='unitary_simulator')
 
-    however, this will soon be deprecated and may not function as intened. To ensure accurate 
-    results, we recommend passing in a backend instance.
+    At the time of writing, this is still functional. However, this will soon be deprecated and may 
+    not function as intended. To ensure accurate results, we recommend passing in a backend instance.
 
 To access a real device, we can use the ``'qiskit.remote'`` device. A real hardware backend can 
 be defined as follows:
