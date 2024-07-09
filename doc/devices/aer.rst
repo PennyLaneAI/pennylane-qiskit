@@ -89,7 +89,7 @@ Noise models
 
 One great feature of the ``'qiskit.aer'`` device is the ability to simulate noise. There are 
 different noise models, which you can instantiate and apply to the device as follows (adapted 
-from `Qiskit's tutorial <https://qiskit.github.io/qiskit-aer/tutorials/4_custom_gate_noise.html>_`.):
+from a `Qiskit tutorial <https://qiskit.github.io/qiskit-aer/tutorials/4_custom_gate_noise.html>`_.):
 
 .. code-block:: python
 
