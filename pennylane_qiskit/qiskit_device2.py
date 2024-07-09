@@ -22,6 +22,7 @@ import warnings
 import inspect
 from typing import Union, Callable, Tuple, Sequence
 from contextlib import contextmanager
+from functools import wraps
 
 import numpy as np
 import pennylane as qml
@@ -48,14 +49,10 @@ from pennylane.devices.modifiers.simulator_tracking import (
     simulator_tracking,
     _track_compute_derivatives,
     _track_execute_and_compute_derivatives,
-    _track_compute_jvp,
     _track_execute_and_compute_jvp,
-    _track_compute_vjp,
-    _track_execute_and_compute_vjp,
     _track_compute_vjp,
 )
 from pennylane.devices.qubit.sampling import get_num_shots_and_executions
-from functools import wraps
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
