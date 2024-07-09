@@ -85,7 +85,7 @@ class TestLoadNoiseChannels:
             assert qml.equal(pl_op_from_qiskit, pl_channel)
         else:
             assert isinstance(pl_op_from_qiskit, type(pl_channel))
-            assert all([x1 == x2 for x1, x2 in zip(pl_op_from_qiskit.data, pl_channel.data)])
+            assert all(x1 == x2 for x1, x2 in zip(pl_op_from_qiskit.data, pl_channel.data))
 
     @pytest.mark.parametrize(
         "qiskit_error, pl_channel",
