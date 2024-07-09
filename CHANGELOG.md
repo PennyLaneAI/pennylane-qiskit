@@ -1,6 +1,4 @@
-# Release 0.37.0-dev
-
-### New features since last release
+# Release 0.37.0
 
 ### Improvements 🛠
 
@@ -10,6 +8,7 @@
 * Improvements have been made to load circuits with `SwitchCaseOp` gates with default case.
   [(#514)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/514)
 
+<<<<<<< HEAD
 ### Breaking changes 💔
 * Support has been removed for Qiskit versions below 0.46. The minimum required version for Qiskit is now 1.0. 
   If you want to continue to use older versions of Qiskit with the plugin, please use version 0.36 of 
@@ -34,6 +33,8 @@ capabilities and Qiskit.
 
 ### Bug fixes 🐛
 
+=======
+>>>>>>> master
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):

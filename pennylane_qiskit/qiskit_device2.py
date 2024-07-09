@@ -32,7 +32,7 @@ from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Est
 
 from pennylane import transform
 from pennylane.transforms.core import TransformProgram
-from pennylane.transforms import broadcast_expand
+from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.tape import QuantumTape, QuantumScript
 from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
@@ -55,14 +55,21 @@ Result_or_ResultBatch = Union[Result, ResultBatch]
 
 # pylint: disable=protected-access
 @contextmanager
-def qiskit_session(device):
+def qiskit_session(device, **kwargs):
     """A context manager that creates a Qiskit Session and sets it as a session
     on the device while the context manager is active. Using the context manager
     will ensure the Session closes properly and is removed from the device after
-    completing the tasks.
+    completing the tasks. Any Session that was initialized and passed into the
+    device will be overwritten by the Qiskit Session created by this context
+    manager.
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
+        **kwargs: session keyword arguments to be used for settings for the Session. At the
+        time of writing, the only relevant keyword argument is "max_time", which lets you
+        set the maximum amount of time the sessin is open. For the most up to date information,
+        please refer to the Qiskit Session
+        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
 
     **Example:**
 
@@ -87,18 +94,60 @@ def qiskit_session(device):
 
         angle = 0.1
 
-        with qiskit_session(dev) as session:
-
-            res = circuit(angle)[0] # you queue for the first execution
+        with qiskit_session(dev, max_time=60) as session:
+            # queue for the first execution
+            res = circuit(angle)[0]
 
             # then this loop executes immediately after without queueing again
+            while res > 0:
+                angle += 0.3
+                res = circuit(angle)[0]
+
+    Note that if you passed in a session to your device, that session will be overwritten
+    by `qiskit_session`.
+
+    .. code-block:: python
+
+        import pennylane as qml
+        from pennylane_qiskit import qiskit_session
+        from qiskit_ibm_runtime import QiskitRuntimeService, Session
+
+        # get backend
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.least_busy(simulator=False, operational=True)
+
+        # initialize device
+        dev = qml.device('qiskit.remote', wires=2, backend=backend, session=Session(backend=backend, max_time=30))
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, 0)
+            qml.CNOT([0, 1])
+            return qml.expval(qml.PauliZ(1))
+
+        angle = 0.1
+
+        # This session will have the Qiskit default settings max_time=900
+        with qiskit_session(dev) as session:
+            res = circuit(angle)[0]
+
             while res > 0:
                 angle += 0.3
                 res = circuit(angle)[0]
     """
     # Code to acquire session:
     existing_session = device._session
-    session = Session(backend=device.backend)
+
+    session_options = {"backend": device.backend, "service": device.service}
+
+    for k, v in kwargs.items():
+        # Options like service and backend should be tied to the settings set on device
+        if k in session_options:
+            warnings.warn(f"Using '{k}' set in device, {getattr(device, k)}", UserWarning)
+        else:
+            session_options[k] = v
+
+    session = Session(**session_options)
     device._session = session
     try:
         yield session
@@ -129,7 +178,6 @@ def split_execution_types(
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
     used, and the raw samples will be processed to give an expectation value."""
-
     estimator = []
     sampler = []
 
@@ -219,6 +267,11 @@ class QiskitDevice2(Device):
         "Hadamard",
         "Hermitian",
         "Projector",
+        "Prod",
+        "Sum",
+        "LinearCombination",
+        "SProd",
+        # TODO Could support SparseHamiltonian
     }
 
     # pylint:disable = too-many-arguments
@@ -365,7 +418,7 @@ class QiskitDevice2(Device):
         )
 
         transform_program.add_transform(broadcast_expand)
-        # missing: split non-commuting, sum_expand, etc. [SC-62047]
+        transform_program.add_transform(split_non_commuting)
 
         transform_program.add_transform(split_execution_types)
 
@@ -579,10 +632,8 @@ class QiskitDevice2(Device):
         Returns:
             result (tuple): the processed result from EstimatorV2
         """
-
         expvals = job_result[0].data.evs
         variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
-
         result = []
         for i, mp in enumerate(measurements):
             if isinstance(mp, ExpectationMP):
