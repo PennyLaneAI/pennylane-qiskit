@@ -2368,7 +2368,4 @@ class TestLoadNoiseModel:
             pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
         ):
             assert repr(pl_k) == repr(qk_k)
-            if "QubitChannel" not in pl_v.__name__:
-                assert pl_v.__name__ == qk_v.__name__
-            else:
-                assert qk_v.__name__ == "QubitChannel(Klist=Tensor(16, 4, 4))"
+            assert qml.equal(pl_v(AnyWires), qk_v(AnyWires))
