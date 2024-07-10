@@ -1065,8 +1065,8 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
         optimize (bool): controls if intermediate optimization is used while transforming Kraus
             operators to a Choi matrix, wherever required. Default is ``False``.
-        kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``.
-            Default is ``True``.
+        kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
+            instead of the complete list of matrices. Default is ``True``.
 
     Returns:
         qml.NoiseModel: An equivalent noise model constructed in PennyLane
