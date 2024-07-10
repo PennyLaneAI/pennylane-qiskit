@@ -57,52 +57,52 @@ Result_or_ResultBatch = Union[Result, ResultBatch]
 
 def custom_simulator_tracking(cls):
     """Decorator that adds custom tracking to the device class."""
-    
+
     def track_execute(untracked_execute):
         """Adds tracking to the execute method for Qiskit."""
 
         @wraps(untracked_execute)
         def execute(self, circuits, execution_config=DefaultExecutionConfig):
             results = untracked_execute(self, circuits, execution_config)
-            
+
             # Ensure circuits and results are iterable
             batch, batch_results = (circuits,), (results,)
             if not isinstance(circuits, QuantumScript):
                 batch, batch_results = circuits, results
-            
+
             if self.tracker.active:
                 self.tracker.update(batches=1)
                 self.tracker.record()
-                
+
                 for r, c in zip(batch_results, batch):
                     qpu_executions, shots = get_num_shots_and_executions(c)
-                    
+
                     # Flatten the results if nested
                     while isinstance(r, (list, tuple)) and len(r) == 1:
                         r = r[0]
-                    
+
                     # Update tracker based on the presence of shots
                     update_params = {
                         "simulations": 1,
                         "executions": qpu_executions,
                         "results": r,
                         "resources": c.specs["resources"],
-                        "errors": c.specs["errors"]
+                        "errors": c.specs["errors"],
                     }
                     if c.shots:
                         update_params["shots"] = shots
-                    
+
                     self.tracker.update(**update_params)
                     self.tracker.record()
-            
+
             return results
 
         return execute
-    
+
     original_execute = cls.execute
     cls = simulator_tracking(cls)
     cls.execute = track_execute(original_execute)
-    
+
     return cls
 
 
