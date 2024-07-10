@@ -758,12 +758,13 @@ class TestTrackerFunctionality:
         assert tracker.history.keys() == qiskit_tracker.history.keys()
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
         assert np.allclose(qiskit_tracker.history["results"], tracker.history["results"], atol=0.1)
+        assert np.shape(qiskit_tracker.history["results"]) == np.shape(tracker.history["results"])
         assert tracker.history["resources"][0] == tracker.history["resources"][0]
 
     def test_tracker_single_tape(self):
         """Test that the tracker works for a single tape"""
-        dev = qml.device("default.qubit", wires=1, shots=157)
-        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator(), shots=157)
+        dev = qml.device("default.qubit", wires=1, shots=10000)
+        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator(), shots=10000)
 
         tape = qml.tape.QuantumTape([qml.S(0)], [qml.expval(qml.X(0))])
         with qiskit_dev.tracker:
@@ -781,6 +782,9 @@ class TestTrackerFunctionality:
         assert np.allclose(pl_out, qiskit_out, atol=0.1)
         assert np.allclose(
             qiskit_dev.tracker.history["results"], dev.tracker.history["results"], atol=0.1
+        )
+        assert np.shape(qiskit_dev.tracker.history["results"]) == np.shape(
+            dev.tracker.history["results"]
         )
 
 

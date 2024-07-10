@@ -72,11 +72,13 @@ def _track_execute(untracked_execute):
             self.tracker.record()
             for r, c in zip(batch_results, batch):
                 qpu_executions, shots = get_num_shots_and_executions(c)
+                while isinstance(r, (list, tuple)) and len(r) == 1:
+                    r = r[0]
                 if c.shots:
                     self.tracker.update(
                         simulations=1,
                         executions=qpu_executions,
-                        results=r[0],
+                        results=r,
                         shots=shots,
                         resources=c.specs["resources"],
                         errors=c.specs["errors"],
@@ -85,7 +87,7 @@ def _track_execute(untracked_execute):
                     self.tracker.update(
                         simulations=1,
                         executions=qpu_executions,
-                        results=r[0],
+                        results=r,
                         resources=c.specs["resources"],
                         errors=c.specs["errors"],
                     )
