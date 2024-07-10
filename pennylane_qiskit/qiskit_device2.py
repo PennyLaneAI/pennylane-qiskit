@@ -96,15 +96,9 @@ def _track_execute(untracked_execute):
 
 def custom_simulator_tracking(cls):
     """Decorator that adds custom tracking to the device class."""
+    original_execute = cls.__dict__.get('execute')
     cls = simulator_tracking(cls)
-    
-    original_init = cls.__init__
-    
-    def new_init(self, *args, **kwargs):
-        original_init(self, *args, **kwargs)
-        self.execute = _track_execute(self.execute)
-    
-    cls.__init__ = new_init
+    cls.execute = _track_execute(original_execute)
     return cls
 
 # pylint: disable=protected-access
@@ -288,7 +282,7 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
-@qiskit_simulator_tracking
+@custom_simulator_tracking
 class QiskitDevice2(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
