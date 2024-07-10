@@ -732,8 +732,8 @@ class TestDeviceProperties:
 class TestTrackerFunctionality:
     def test_tracker_batched(self):
         """Test that the tracker works for batched circuits"""
-        dev = qml.device("default.qubit", wires=1, shots=100)
-        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator(), shots=100)
+        dev = qml.device("default.qubit", wires=1, shots=10000)
+        qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator(), shots=10000)
 
         x = np.array(0.1, requires_grad=True)
 
