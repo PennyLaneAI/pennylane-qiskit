@@ -94,12 +94,14 @@ def _track_execute(untracked_execute):
 
     return execute
 
+
 def custom_simulator_tracking(cls):
     """Decorator that adds custom tracking to the device class."""
     original_execute = cls.execute
     cls = simulator_tracking(cls)
     cls.execute = _track_execute(original_execute)
     return cls
+
 
 # pylint: disable=protected-access
 @contextmanager
