@@ -96,7 +96,7 @@ def _track_execute(untracked_execute):
 
 def custom_simulator_tracking(cls):
     """Decorator that adds custom tracking to the device class."""
-    original_execute = cls.__dict__.get('execute')
+    original_execute = cls.execute
     cls = simulator_tracking(cls)
     cls.execute = _track_execute(original_execute)
     return cls
