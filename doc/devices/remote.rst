@@ -10,7 +10,7 @@ To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum
 
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>")
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<YOUR_IBMQ_TOKEN>")
 
     # To access saved credentials for the IBM quantum channel and select an instance
     service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
