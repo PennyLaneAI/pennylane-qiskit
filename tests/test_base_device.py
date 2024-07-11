@@ -759,7 +759,7 @@ class TestTrackerFunctionality:
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
         assert np.allclose(qiskit_tracker.history["results"], tracker.history["results"], atol=0.1)
         assert np.shape(qiskit_tracker.history["results"]) == np.shape(tracker.history["results"])
-        assert tracker.history["resources"][0] == tracker.history["resources"][0]
+        assert qiskit_tracker.history["resources"][0] == tracker.history["resources"][0]
 
     def test_tracker_single_tape(self):
         """Test that the tracker works for a single tape"""
