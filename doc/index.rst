@@ -66,15 +66,6 @@ a simulator backend can be defined as follows:
     backend is specified. For more details on the ``aer_simulator``, including available backend 
     options, see `Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
 
-    Occassionally, you may see others pass in a string as a backend. For example:
-
-    .. code-block:: python
-
-        dev = qml.device('qiskit.aer', wires=<num_qubits>, backend='unitary_simulator')
-
-    At the time of writing, this is still functional. However, this will soon be deprecated and may 
-    not function as intended. To ensure accurate results, we recommend passing in a backend instance.
-
 To access a real device, we can use the ``'qiskit.remote'`` device. A real hardware backend can 
 be defined as follows:
 
