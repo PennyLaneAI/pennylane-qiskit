@@ -48,8 +48,8 @@ For example, the ``'qiskit.aer'`` device with two wires is called like this:
 Backends
 ~~~~~~~~
 
-Qiskit devices have different **backends**, which define which actual simulator or hardware is 
-used by the device. A backend instance should be and passed to the device when initializing.
+Qiskit devices have different **backends**, which define the actual simulator or hardware 
+used by the device. A backend instance should be initalized and passed to the device.
 
 Different simulator backends are optimized for different purposes. To change what backend is used, 
 a simulator backend can be defined as follows:
