@@ -38,7 +38,7 @@ pldevices = [("qiskit.aer", qiskit_aer.Aer), ("qiskit.basicsim", BasicProvider()
 
 
 def check_provider_backend_compatibility(pldevice, backend_name):
-    """check compatibility of provided backend"""
+    """Check the compatibility of provided backend"""
     dev_name, _ = pldevice
     if dev_name == "qiskit.aer" and backend_name == "basic_simulator":
         return (False, "basic_simulator is not supported on the AerDevice")
