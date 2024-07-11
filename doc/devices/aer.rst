@@ -52,15 +52,27 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='aer_simulator_statevector')
+    from qiskit_aer import AerSimulator
+    dev = qml.device('qiskit.aer', wires=2, backend=AerSimulator())
 
-This ``AerSimulator`` backend has several available methods, which
+.. note::
+
+    Occassionally, you may see others pass in a string as a backend. For example:
+
+    .. code-block:: python
+
+        dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+
+    At the time of writing, this is still functional. However, this will soon be deprecated and may 
+    not function as intended. To ensure accurate results, we recommend passing in a backend instance.
+
+The ``AerSimulator`` backend has several available methods, which
 can be passed via the ``method`` keyword argument. For example
 ``'automatic'``, ``'statevector'``, and ``'unitary'``.
 
 .. code-block:: python
 
-    dev = qml.device("qiskit.aer", wires=2, method="automatic")
+    dev = qml.device("qiskit.aer", wires=2, backend=AerSimulator(), method="automatic")
 
 Each of these methods can take different *run options*, for example to specify the numerical
 precision of the simulation.
@@ -72,7 +84,7 @@ The options are set via additional keyword arguments:
     dev = qml.device(
         'qiskit.aer',
         wires=2,
-        backend='unitary_simulator',
+        backend=AerSimulator(),
         validation_threshold=1e-6
     )
 
