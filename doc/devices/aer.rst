@@ -27,7 +27,8 @@ parameters would look like:
         qml.CNOT(wires=[0, 1])
         return qml.expval(qml.PauliZ(wires=1))
 
-You can then execute the circuit like any other function to get the quantum mechanical expectation value.
+You can then execute the circuit like any other function to get the expectation value of a Pauli 
+operator.
 
 .. code-block:: python
 
