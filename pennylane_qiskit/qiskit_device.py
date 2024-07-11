@@ -15,7 +15,7 @@ r"""
 This module contains a prototype base class for constructing Qiskit devices
 for PennyLane with the new device API.
 """
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init, missing-function-docstring
+# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 
 
 import warnings
@@ -362,12 +362,23 @@ class QiskitDevice(Device):
 
     @property
     def num_wires(self):
+        """Get the number of wires.
+
+        Returns:
+            int: The number of wires.
+        """
         return len(self.wires)
 
     def update_session(self, session):
+        """Update the session attribute.
+
+        Args:
+            session: The new session to be set.
+        """
         self._session = session
 
     def reset(self):
+        """Reset the current job to None."""
         self._current_job = None
 
     def stopping_condition(self, op: qml.operation.Operator) -> bool:
