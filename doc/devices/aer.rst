@@ -63,8 +63,9 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
         dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
-    At the time of writing, this is still functional. However, this will soon be deprecated and may 
-    not function as intended. To ensure accurate results, we recommend passing in a backend instance.
+    At the time of writing, this is still functional for the Aer devices. However, this will soon be 
+    deprecated and may not function as intended. To ensure accurate results, we recommend passing in 
+    a backend instance.
 
 The ``AerSimulator`` backend has several available methods, which
 can be passed via the ``method`` keyword argument. For example
