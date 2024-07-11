@@ -38,7 +38,7 @@ To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum
 
 After installing the plugin, this device can be used just like any other PennyLane device for defining and evaluating QNodes.
 For example, a simple quantum function that returns the expectation value of a measurement and depends on
-three classical input parameters can be decorated with ``qml.qnode`` as usual  to construct a ``QNode``:
+three classical input parameters can be decorated with ``qml.qnode`` as usual to construct a ``QNode``:
 
 .. code-block:: python
 
