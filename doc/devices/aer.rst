@@ -52,8 +52,8 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
 .. code-block:: python
 
-    from qiskit_aer import AerSimulator
-    dev = qml.device('qiskit.aer', wires=2, backend=AerSimulator())
+    from qiskit_aer import UnitarySimulator
+    dev = qml.device('qiskit.aer', wires=2, backend=UnitarySimulator())
 
 .. note::
 
