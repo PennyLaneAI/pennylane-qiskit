@@ -49,8 +49,7 @@ Backends
 ~~~~~~~~
 
 Qiskit devices have different **backends**, which define which actual simulator or hardware is 
-used by the device. We recommend passing in a backend instance rather than a string with the 
-backend name to the devices. 
+used by the device. A backend instance should be and passed to the device when initializing.
 
 Different simulator backends are optimized for different purposes. To change what backend is used, 
 a simulator backend can be defined as follows:
