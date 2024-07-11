@@ -50,7 +50,7 @@ three classical input parameters can be decorated with ``qml.qnode`` as usual to
         qml.CNOT(wires=[0, 1])
         return qml.expval(qml.PauliZ(wires=1))
 
-You can then execute the above quantum circuit to get the quantum mechanical expectation value.
+You can then execute the above quantum circuit to get the expectation value of a Pauli operator.
 
 .. code-block:: python
 
