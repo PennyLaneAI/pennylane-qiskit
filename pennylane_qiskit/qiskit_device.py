@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Xanadu Quantum Technologies Inc.
+# Copyright 2019-2024 Xanadu Quantum Technologies Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,124 +12,284 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""
-This module contains a base class for constructing Qiskit devices for PennyLane.
+This module contains a prototype base class for constructing Qiskit devices
+for PennyLane with the new device API.
 """
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 
 
-import abc
-import inspect
 import warnings
+import inspect
+from typing import Union, Callable, Tuple, Sequence
+from contextlib import contextmanager
+from functools import wraps
 
 import numpy as np
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit.circuit import library as lib
+import pennylane as qml
 from qiskit.compiler import transpile
-from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
+from qiskit.providers import BackendV2
 
-from pennylane import QubitDevice, DeviceError
-from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
+from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 
+from pennylane import transform
+from pennylane.transforms.core import TransformProgram
+from pennylane.transforms import broadcast_expand, split_non_commuting
+from pennylane.tape import QuantumTape, QuantumScript
+from pennylane.typing import Result, ResultBatch
+from pennylane.devices import Device
+from pennylane.devices.execution_config import ExecutionConfig, DefaultExecutionConfig
+from pennylane.devices.preprocess import (
+    decompose,
+    validate_observables,
+    validate_measurements,
+    validate_device_wires,
+)
+
+from pennylane.measurements import ExpectationMP, VarianceMP
+from pennylane.devices.modifiers.simulator_tracking import simulator_tracking
 from ._version import __version__
+from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
-SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
-
-
-QISKIT_OPERATION_MAP = {
-    # native PennyLane operations also native to qiskit
-    "PauliX": lib.XGate,
-    "PauliY": lib.YGate,
-    "PauliZ": lib.ZGate,
-    "Hadamard": lib.HGate,
-    "CNOT": lib.CXGate,
-    "CZ": lib.CZGate,
-    "SWAP": lib.SwapGate,
-    "ISWAP": lib.iSwapGate,
-    "RX": lib.RXGate,
-    "RY": lib.RYGate,
-    "RZ": lib.RZGate,
-    "Identity": lib.IGate,
-    "CSWAP": lib.CSwapGate,
-    "CRX": lib.CRXGate,
-    "CRY": lib.CRYGate,
-    "CRZ": lib.CRZGate,
-    "PhaseShift": lib.PhaseGate,
-    "QubitStateVector": lib.Initialize,
-    "StatePrep": lib.Initialize,
-    "Toffoli": lib.CCXGate,
-    "QubitUnitary": lib.UnitaryGate,
-    "U1": lib.U1Gate,
-    "U2": lib.U2Gate,
-    "U3": lib.U3Gate,
-    "IsingZZ": lib.RZZGate,
-    "IsingYY": lib.RYYGate,
-    "IsingXX": lib.RXXGate,
-    "S": lib.SGate,
-    "T": lib.TGate,
-    "SX": lib.SXGate,
-    "Adjoint(S)": lib.SdgGate,
-    "Adjoint(T)": lib.TdgGate,
-    "Adjoint(SX)": lib.SXdgGate,
-    "CY": lib.CYGate,
-    "CH": lib.CHGate,
-    "CPhase": lib.CPhaseGate,
-    "CCZ": lib.CCZGate,
-    "ECR": lib.ECRGate,
-    "Barrier": lib.Barrier,
-    "Adjoint(GlobalPhase)": lib.GlobalPhaseGate,
-}
+QuantumTapeBatch = Sequence[QuantumTape]
+QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
+Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
-def _get_backend_name(backend):
+def custom_simulator_tracking(cls):
+    """Decorator that adds custom tracking to the device class."""
+
+    cls = simulator_tracking(cls)
+    tracked_execute = cls.execute
+
+    @wraps(tracked_execute)
+    def execute(self, circuits, execution_config=DefaultExecutionConfig):
+        results = tracked_execute(self, circuits, execution_config)
+        if self.tracker.active:
+            res = []
+            for r in self.tracker.history["results"]:
+                while isinstance(r, (list, tuple)) and len(r) == 1:
+                    r = r[0]
+                res.append(r)
+            self.tracker.history["results"] = res
+        return results
+
+    cls.execute = execute
+
+    return cls
+
+
+# pylint: disable=protected-access
+@contextmanager
+def qiskit_session(device, **kwargs):
+    """A context manager that creates a Qiskit Session and sets it as a session
+    on the device while the context manager is active. Using the context manager
+    will ensure the Session closes properly and is removed from the device after
+    completing the tasks. Any Session that was initialized and passed into the
+    device will be overwritten by the Qiskit Session created by this context
+    manager.
+
+    Args:
+        device (QiskitDevice2): the device that will create remote tasks using the session
+        **kwargs: session keyword arguments to be used for settings for the Session. At the
+        time of writing, the only relevant keyword argument is "max_time", which lets you
+        set the maximum amount of time the sessin is open. For the most up to date information,
+        please refer to the Qiskit Session
+        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
+
+    **Example:**
+
+    .. code-block:: python
+
+        import pennylane as qml
+        from pennylane_qiskit import qiskit_session
+        from qiskit_ibm_runtime import QiskitRuntimeService
+
+        # get backend
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.least_busy(simulator=False, operational=True)
+
+        # initialize device
+        dev = qml.device('qiskit.remote', wires=2, backend=backend)
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, 0)
+            qml.CNOT([0, 1])
+            return qml.expval(qml.PauliZ(1))
+
+        angle = 0.1
+
+        with qiskit_session(dev, max_time=60) as session:
+            # queue for the first execution
+            res = circuit(angle)[0]
+
+            # then this loop executes immediately after without queueing again
+            while res > 0:
+                angle += 0.3
+                res = circuit(angle)[0]
+
+    Note that if you passed in a session to your device, that session will be overwritten
+    by `qiskit_session`.
+
+    .. code-block:: python
+
+        import pennylane as qml
+        from pennylane_qiskit import qiskit_session
+        from qiskit_ibm_runtime import QiskitRuntimeService, Session
+
+        # get backend
+        service = QiskitRuntimeService(channel="ibm_quantum")
+        backend = service.least_busy(simulator=False, operational=True)
+
+        # initialize device
+        dev = qml.device('qiskit.remote', wires=2, backend=backend, session=Session(backend=backend, max_time=30))
+
+        @qml.qnode(dev)
+        def circuit(x):
+            qml.RX(x, 0)
+            qml.CNOT([0, 1])
+            return qml.expval(qml.PauliZ(1))
+
+        angle = 0.1
+
+        # This session will have the Qiskit default settings max_time=900
+        with qiskit_session(dev) as session:
+            res = circuit(angle)[0]
+
+            while res > 0:
+                angle += 0.3
+                res = circuit(angle)[0]
+    """
+    # Code to acquire session:
+    existing_session = device._session
+
+    session_options = {"backend": device.backend, "service": device.service}
+
+    for k, v in kwargs.items():
+        # Options like service and backend should be tied to the settings set on device
+        if k in session_options:
+            warnings.warn(f"Using '{k}' set in device, {getattr(device, k)}", UserWarning)
+        else:
+            session_options[k] = v
+
+    session = Session(**session_options)
+    device._session = session
     try:
-        return backend.name()  # BackendV1
-    except TypeError:  # pragma: no cover
-        return backend.name  # BackendV2
+        yield session
+    finally:
+        # Code to release session:
+        session.close()
+        device._session = existing_session
 
 
-class QiskitDevice(QubitDevice, abc.ABC):
-    r"""Abstract Qiskit device for PennyLane.
+def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
+    """Specifies whether or not a measurement is accepted when sampling."""
+
+    return isinstance(
+        m,
+        (
+            qml.measurements.SampleMeasurement,
+            qml.measurements.ClassicalShadowMP,
+            qml.measurements.ShadowExpvalMP,
+        ),
+    )
+
+
+@transform
+def split_execution_types(
+    tape: qml.tape.QuantumTape,
+) -> (Sequence[qml.tape.QuantumTape], Callable):
+    """Split into separate tapes based on measurement type. Counts and sample-based measurements
+    will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
+    when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
+    used, and the raw samples will be processed to give an expectation value."""
+    estimator = []
+    sampler = []
+
+    for i, mp in enumerate(tape.measurements):
+        if isinstance(mp, (ExpectationMP, VarianceMP)):
+            if mp.obs.pauli_rep:
+                estimator.append((mp, i))
+            else:
+                warnings.warn(
+                    f"The observable measured {mp.obs} does not have a `pauli_rep` "
+                    "and will be run without using the Estimator primitive. Instead, "
+                    "raw samples from the Sampler will be used."
+                )
+                sampler.append((mp, i))
+        else:
+            sampler.append((mp, i))
+
+    order_indices = [[i for mp, i in group] for group in [estimator, sampler]]
+
+    tapes = []
+    if estimator:
+        tapes.extend(
+            [
+                qml.tape.QuantumScript(
+                    tape.operations,
+                    measurements=[mp for mp, i in estimator],
+                    shots=tape.shots,
+                )
+            ]
+        )
+    if sampler:
+        tapes.extend(
+            [
+                qml.tape.QuantumScript(
+                    tape.operations,
+                    measurements=[mp for mp, i in sampler],
+                    shots=tape.shots,
+                )
+            ]
+        )
+
+    def reorder_fn(res):
+        """re-order the output to the original shape and order"""
+
+        flattened_indices = [i for group in order_indices for i in group]
+        flattened_results = [r for group in res for r in group]
+
+        if len(flattened_indices) != len(flattened_results):
+            raise ValueError(
+                "The lengths of flattened_indices and flattened_results do not match."
+            )  # pragma: no cover
+
+        result = dict(zip(flattened_indices, flattened_results))
+
+        result = tuple(result[i] for i in sorted(result.keys()))
+
+        return result[0] if len(result) == 1 else result
+
+    return tapes, reorder_fn
+
+
+@custom_simulator_tracking
+class QiskitDevice(Device):
+    r"""Hardware/simulator Qiskit device for PennyLane.
 
     Args:
         wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
-            or strings (``['ancilla', 'q1', 'q2']``).
-        provider (Provider | None): The Qiskit backend provider.
-        backend (str | Backend): the desired backend. If a string, a provider must be given.
-        shots (int or None): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables. For state vector backends,
-            setting to ``None`` results in computing statistics like expectation values and variances analytically.
+            or strings (``['aux_wire', 'q1', 'q2']``).
+        backend (Backend): the initialized Qiskit backend
 
     Keyword Args:
-        name (str): The name of the circuit. Default ``'circuit'``.
-        compile_backend (BaseBackend): The backend used for compilation. If you wish
-            to simulate a device compliant circuit, you can specify a backend here.
+        shots (int or None): number of circuit evaluations/random samples used
+            to estimate expectation values and variances of observables.
+        session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
+            be created at each device execution.
+        compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
+            sent to the backend device, to be set if the backend desired for compliation differs from the
+            backend used for execution. Defaults to ``None``, which means the primary backend will be used.
+        **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
+            If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
+            with those in kwargs, the settings in `options` will take precedence over kwargs. Keyword
+            arguments accepted by both the transpiler and at runtime (e.g. ``optimization_level``)
+            will be passed to the transpiler rather than to the Primitive.
     """
 
-    name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.37.0"
-    version = __version__
-    plugin_version = __version__
-    author = "Xanadu"
-
-    _capabilities = {
-        "model": "qubit",
-        "tensor_observables": True,
-        "inverse_operations": True,
-    }
-    _operation_map = QISKIT_OPERATION_MAP
-    _state_backends = {
-        "statevector_simulator",
-        "simulator_statevector",
-        "unitary_simulator",
-        "aer_simulator_statevector",
-        "aer_simulator_unitary",
-    }
-    """set[str]: Set of backend names that define the backends
-    that support returning the underlying quantum statevector"""
-
-    operations = set(_operation_map.keys())
+    operations = set(QISKIT_OPERATION_MAP.keys())
     observables = {
         "PauliX",
         "PauliY",
@@ -138,292 +298,396 @@ class QiskitDevice(QubitDevice, abc.ABC):
         "Hadamard",
         "Hermitian",
         "Projector",
+        "Prod",
+        "Sum",
+        "LinearCombination",
+        "SProd",
+        # TODO Could support SparseHamiltonian
     }
 
-    analytic_warning_message = (
-        "The analytic calculation of expectations, variances and "
-        "probabilities is only supported on statevector backends, not on the {}. "
-        "Such statistics obtained from this device are estimates based on samples."
-    )
+    # pylint:disable = too-many-arguments
+    def __init__(
+        self,
+        wires,
+        backend,
+        shots=1024,
+        session=None,
+        compile_backend=None,
+        **kwargs,
+    ):
 
-    _eigs = {}
+        if shots is None:
+            warnings.warn(
+                "Expected an integer number of shots, but received shots=None. Defaulting "
+                "to 1024 shots. The analytic calculation of results is not supported on "
+                "this device. All statistics obtained from this device are estimates based "
+                "on samples.",
+                UserWarning,
+            )
 
-    def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+            shots = 1024
 
         super().__init__(wires=wires, shots=shots)
 
-        self.provider = provider
+        self._backend = backend
+        self._compile_backend = compile_backend if compile_backend else backend
 
-        if isinstance(backend, Backend):
-            self._backend = backend
-            self.backend_name = _get_backend_name(backend)
-        elif provider is None:
-            raise ValueError("Must pass a provider if the backend is not a Backend instance.")
-        else:
-            try:
-                self._backend = provider.get_backend(backend)
-            except QiskitBackendNotFoundError as e:
-                available_backends = list(map(_get_backend_name, provider.backends()))
-                raise ValueError(
-                    f"Backend '{backend}' does not exist. Available backends "
-                    f"are:\n {available_backends}"
-                ) from e
+        self._service = getattr(backend, "_service", None)
+        self._session = session
 
-            self.backend_name = _get_backend_name(self._backend)
-
-        # Keep track if the user specified analytic to be True
-        if shots is None and not self._is_state_backend:
-            # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
-
-            self.shots = 1024
-
-        self._capabilities["returns_state"] = self._is_state_backend
+        kwargs["shots"] = shots
 
         # Perform validation against backend
-        backend_qubits = (
+        available_qubits = (
             backend.num_qubits
             if isinstance(backend, BackendV2)
-            else self.backend.configuration().n_qubits
+            else backend.configuration().n_qubits
         )
-        if backend_qubits and len(self.wires) > int(backend_qubits):
-            raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
+        if len(self.wires) > int(available_qubits):
+            raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
 
-        # Initialize inner state
         self.reset()
-
-        self.process_kwargs(kwargs)
-
-    def process_kwargs(self, kwargs):
-        """Processing the keyword arguments that were provided upon device initialization.
-
-        Args:
-            kwargs (dict): keyword arguments to be set for the device
-        """
-        self.compile_backend = None
-        if "compile_backend" in kwargs:
-            self.compile_backend = kwargs.pop("compile_backend")
-
-        if "noise_model" in kwargs:
-            noise_model = kwargs.pop("noise_model")
-            self.backend.set_options(noise_model=noise_model)
-
-        # set transpile_args
-        self.set_transpile_args(**kwargs)
-
-        # Get further arguments for run
-        self.run_args = {}
-
-        # Specify to have a memory for hw/hw simulators
-        compile_backend = self.compile_backend or self.backend
-        memory = str(compile_backend) not in self._state_backends
-
-        if memory:
-            kwargs["memory"] = True
-
-        # Consider the remaining kwargs as keyword arguments to run
-        self.run_args.update(kwargs)
-
-    @property
-    def _is_state_backend(self):
-        """Returns whether this device has a state backend."""
-        return self.backend_name in self._state_backends or self.backend.options.get("method") in {
-            "unitary",
-            "statevector",
-        }
-
-    @property
-    def _is_statevector_backend(self):
-        """Returns whether this device has a statevector backend."""
-        method = "statevector"
-        return method in self.backend_name or self.backend.options.get("method") == method
-
-    @property
-    def _is_unitary_backend(self):
-        """Returns whether this device has a unitary backend."""
-        method = "unitary"
-        return method in self.backend_name or self.backend.options.get("method") == method
-
-    def set_transpile_args(self, **kwargs):
-        """The transpile argument setter.
-
-        Keyword Args:
-            kwargs (dict): keyword arguments to be set for the Qiskit transpiler. For more details, see the
-                `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
-        """
-        transpile_sig = inspect.signature(transpile).parameters
-        self.transpile_args = {arg: kwargs[arg] for arg in transpile_sig if arg in kwargs}
-        self.transpile_args.pop("circuits", None)
-        self.transpile_args.pop("backend", None)
+        self._kwargs, self._transpile_args = self._process_kwargs(
+            kwargs
+        )  # processes kwargs and separates transpilation arguments to dev._transpile_args
 
     @property
     def backend(self):
         """The Qiskit backend object.
 
         Returns:
-            qiskit.providers.backend: Qiskit backend object.
+            qiskit.providers.Backend: Qiskit backend object.
         """
         return self._backend
 
-    def reset(self):
-        """Reset the Qiskit backend device"""
-        # Reset only internal data, not the options that are determined on
-        # device creation
-        self._reg = QuantumRegister(self.num_wires, "q")
-        self._creg = ClassicalRegister(self.num_wires, "c")
-        self._circuit = QuantumCircuit(self._reg, self._creg, name="temp")
-
-        self._current_job = None
-        self._state = None  # statevector of a simulator backend
-
-    def create_circuit_object(self, operations, **kwargs):
-        """Builds the circuit objects based on the operations and measurements
-        specified to apply.
-
-        Args:
-            operations (list[~.Operation]): operations to apply to the device
-
-        Keyword args:
-            rotations (list[~.Operation]): Operations that rotate the circuit
-                pre-measurement into the eigenbasis of the observables.
+    @property
+    def compile_backend(self):
+        """The ``compile_backend`` is a Qiskit backend object to be used for transpilation.
+        Returns:
+            qiskit.providers.backend: Qiskit backend object.
         """
-        rotations = kwargs.get("rotations", [])
+        return self._compile_backend
 
-        applied_operations = self.apply_operations(operations)
-
-        # Rotating the state for measurement in the computational basis
-        rotation_circuits = self.apply_operations(rotations)
-        applied_operations.extend(rotation_circuits)
-
-        for circuit in applied_operations:
-            self._circuit &= circuit
-
-        if not self._is_state_backend:
-            # Add measurements if they are needed
-            for qr, cr in zip(self._reg, self._creg):
-                self._circuit.measure(qr, cr)
-        elif "aer" in self.backend_name:
-            self._circuit.save_state()
-
-    def apply(self, operations, **kwargs):
-        """Build the circuit object and apply the operations"""
-        self.create_circuit_object(operations, **kwargs)
-
-        # These operations need to run for all devices
-        compiled_circuit = self.compile()
-        self.run(compiled_circuit)
-
-    def apply_operations(self, operations):
-        """Apply the circuit operations.
-
-        This method serves as an auxiliary method to :meth:`~.QiskitDevice.apply`.
-
-        Args:
-            operations (List[pennylane.Operation]): operations to be applied
+    @property
+    def service(self):
+        """The QiskitRuntimeService service.
 
         Returns:
-            list[QuantumCircuit]: a list of quantum circuit objects that
-                specify the corresponding operations
+            qiskit.qiskit_ibm_runtime.QiskitRuntimeService
         """
-        circuits = []
+        return self._service
 
-        for operation in operations:
-            # Apply the circuit operations
-            device_wires = self.map_wires(operation.wires)
-            par = operation.parameters
+    @property
+    def session(self):
+        """The QiskitRuntimeService session.
 
-            for idx, p in enumerate(par):
-                if isinstance(p, np.ndarray):
-                    # Convert arrays so that Qiskit accepts the parameter
-                    par[idx] = p.tolist()
+        Returns:
+            qiskit.qiskit_ibm_runtime.Session
+        """
+        return self._session
 
-            operation = operation.name
+    @property
+    def num_wires(self):
+        """Get the number of wires.
 
-            mapped_operation = self._operation_map[operation]
+        Returns:
+            int: The number of wires.
+        """
+        return len(self.wires)
 
-            self.qubit_state_vector_check(operation)
-
-            qregs = [self._reg[i] for i in device_wires.labels]
-
-            if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
-                # Need to revert the order of the quantum registers used in
-                # Qiskit such that it matches the PennyLane ordering
-                qregs = list(reversed(qregs))
-
-            if operation in ("Barrier",):
-                # Need to add the num_qubits for instantiating Barrier in Qiskit
-                par = [len(self._reg)]
-
-            dag = circuit_to_dag(QuantumCircuit(self._reg, self._creg, name=""))
-
-            gate = mapped_operation(*par)
-
-            dag.apply_operation_back(gate, qargs=qregs)
-            circuit = dag_to_circuit(dag)
-            circuits.append(circuit)
-
-        return circuits
-
-    def qubit_state_vector_check(self, operation):
-        """Input check for the StatePrepBase operations.
+    def update_session(self, session):
+        """Update the session attribute.
 
         Args:
-            operation (pennylane.Operation): operation to be checked
-
-        Raises:
-            DeviceError: If the operation is QubitStateVector or StatePrep
+            session: The new session to be set.
         """
-        if operation in ("QubitStateVector", "StatePrep"):
-            if self._is_unitary_backend:
-                raise DeviceError(
-                    f"The {operation} operation "
-                    "is not supported on the unitary simulator backend."
-                )
+        self._session = session
 
-    def compile(self):
-        """Compile the quantum circuit to target the provided compile_backend.
+    def reset(self):
+        """Reset the current job to None."""
+        self._current_job = None
 
-        If compile_backend is None, then the target is simply the
-        backend.
+    def stopping_condition(self, op: qml.operation.Operator) -> bool:
+        """Specifies whether or not an Operator is accepted by QiskitDevice2."""
+        return op.name in self.operations
+
+    def observable_stopping_condition(self, obs: qml.operation.Operator) -> bool:
+        """Specifies whether or not an observable is accepted by QiskitDevice2."""
+        return obs.name in self.observables
+
+    def preprocess(
+        self,
+        execution_config: ExecutionConfig = DefaultExecutionConfig,
+    ) -> Tuple[TransformProgram, ExecutionConfig]:
+        """This function defines the device transform program to be applied and an updated device configuration.
+
+        Args:
+            execution_config (Union[ExecutionConfig, Sequence[ExecutionConfig]]): A data structure describing the
+                parameters needed to fully describe the execution.
+
+        Returns:
+            TransformProgram, ExecutionConfig: A transform program that when called returns QuantumTapes that the device
+            can natively execute as well as a postprocessing function to be called after execution, and a configuration with
+            unset specifications filled in.
+
+        This device:
+
+        * Supports any operations with explicit PennyLane to Qiskit gate conversions defined in the plugin
+        * Does not intrinsically support parameter broadcasting
+
         """
-        compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
+        config = execution_config
+        config.use_device_gradient = False
+
+        transform_program = TransformProgram()
+
+        transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
+        transform_program.add_transform(
+            decompose,
+            stopping_condition=self.stopping_condition,
+            name=self.name,
+            skip_initial_state_prep=False,
+        )
+        transform_program.add_transform(
+            validate_measurements,
+            sample_measurements=accepted_sample_measurement,
+            name=self.name,
+        )
+        transform_program.add_transform(
+            validate_observables,
+            stopping_condition=self.observable_stopping_condition,
+            name=self.name,
+        )
+
+        transform_program.add_transform(broadcast_expand)
+        transform_program.add_transform(split_non_commuting)
+
+        transform_program.add_transform(split_execution_types)
+
+        return transform_program, config
+
+    def _process_kwargs(self, kwargs):
+        """Processes kwargs given and separates them into kwargs and transpile_args. If given
+        a keyword argument 'options' that is a dictionary, a common practice in
+        Qiskit, the options in said dictionary take precedence over any overlapping keyword
+        arguments defined in the kwargs.
+
+        Keyword Args:
+            kwargs (dict): keyword arguments that set either runtime options or transpilation
+            options.
+
+        Returns:
+            kwargs, transpile_args: keyword arguments for the runtime options and keyword
+            arguments for the transpiler
+        """
+
+        if "noise_model" in kwargs:
+            noise_model = kwargs.pop("noise_model")
+            self.backend.set_options(noise_model=noise_model)
+
+        if "options" in kwargs:
+            for key, val in kwargs.pop("options").items():
+                if key in kwargs:
+                    warnings.warn(
+                        "An overlap between what was passed in via options and what was passed in via kwargs was found."
+                        f"The value set in options {key}={val} will be used."
+                    )
+                kwargs[key] = val
+
+        shots = kwargs.pop("shots")
+
+        if "default_shots" in kwargs:
+            warnings.warn(
+                f"default_shots was found in the keyword arguments, but it is not supported by {self.name}"
+                "Please use the `shots` keyword argument instead. The number of shots "
+                f"{shots} will be used instead."
+            )
+        kwargs["default_shots"] = shots
+
+        kwargs, transpile_args = self.get_transpile_args(kwargs)
+
+        return kwargs, transpile_args
+
+    @staticmethod
+    def get_transpile_args(kwargs):
+        """The transpile argument setter. This separates keyword arguments related to transpilation
+        from the rest of the keyword arguments and removes those keyword arguments from kwargs.
+
+        Keyword Args:
+            kwargs (dict): combined keyword arguments to be parsed for the Qiskit transpiler. For more details, see the
+                `Qiskit transpiler documentation <https://qiskit.org/documentation/stubs/qiskit.compiler.transpile.html>`_
+
+        Returns:
+            kwargs (dict), transpile_args (dict): keyword arguments for the runtime options and keyword
+            arguments for the transpiler
+        """
+
+        transpile_sig = inspect.signature(transpile).parameters
+
+        transpile_args = {arg: kwargs.pop(arg) for arg in transpile_sig if arg in kwargs}
+        transpile_args.pop("circuits", None)
+        transpile_args.pop("backend", None)
+
+        return kwargs, transpile_args
+
+    def compile_circuits(self, circuits):
+        """Compiles multiple circuits one after the other.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be compiled
+
+        Returns:
+             list[QuantumCircuit]: the list of compiled circuits
+        """
+        # Compile each circuit object
+        compiled_circuits = []
+        transpile_args = self._transpile_args
+
+        for i, circuit in enumerate(circuits):
+            compiled_circ = transpile(circuit, backend=self.compile_backend, **transpile_args)
+            compiled_circ.name = f"circ{i}"
+            compiled_circuits.append(compiled_circ)
+
         return compiled_circuits
 
-    def run(self, qcirc):
-        """Run the compiled circuit and query the result.
+    # pylint: disable=unused-argument, no-member
+    def execute(
+        self,
+        circuits: QuantumTape_or_Batch,
+        execution_config: ExecutionConfig = DefaultExecutionConfig,
+    ) -> Result_or_ResultBatch:
+        """Execute a circuit or a batch of circuits and turn it into results."""
+        session = self._session or Session(backend=self.backend)
+
+        results = []
+
+        if isinstance(circuits, QuantumScript):
+            circuits = [circuits]
+
+        @contextmanager
+        def execute_circuits(session):
+            try:
+                for circ in circuits:
+                    if circ.shots and len(circ.shots.shot_vector) > 1:
+                        raise ValueError(
+                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
+                            "Please use a single integer instead when specifying the number of shots."
+                        )
+                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                        circ.measurements[0].obs, "pauli_rep", None
+                    ):
+                        execute_fn = self._execute_estimator
+                    else:
+                        execute_fn = self._execute_sampler
+                    results.append(execute_fn(circ, session))
+                yield results
+            finally:
+                session.close()
+
+        with execute_circuits(session) as results:
+            return results
+
+    def _execute_sampler(self, circuit, session):
+        """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
 
         Args:
-            qcirc (qiskit.QuantumCircuit): the quantum circuit to be run on the backend
-        """
-        self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
-        result = self._current_job.result()
-
-        if self._is_state_backend:
-            self._state = self._get_state(result)
-
-    def _get_state(self, result, experiment=None):
-        """Returns the statevector for state simulator backends.
-
-        Args:
-            result (qiskit.Result): result object
-            experiment (str or None): the name of the experiment to get the state for.
+            circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
+            session (Session): the session that the execution will be performed with
 
         Returns:
-            array[float]: size ``(2**num_wires,)`` statevector
+            result (tuple): the processed result from SamplerV2
         """
-        if self._is_statevector_backend:
-            state = np.asarray(result.get_statevector(experiment))
+        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
+        sampler = Sampler(session=session)
+        compiled_circuits = self.compile_circuits(qcirc)
+        sampler.options.update(**self._kwargs)
 
-        elif self._is_unitary_backend:
-            unitary = np.asarray(result.get_unitary(experiment))
-            initial_state = np.zeros([2**self.num_wires])
-            initial_state[0] = 1
+        # len(compiled_circuits) is always 1 so the indexing does not matter.
+        result = sampler.run(
+            compiled_circuits,
+            shots=circuit.shots.total_shots if circuit.shots.total_shots else None,
+        ).result()[0]
+        classical_register_name = compiled_circuits[0].cregs[0].name
+        self._current_job = getattr(result.data, classical_register_name)
 
-            state = unitary @ initial_state
+        # needs processing function to convert to the correct format for states, and
+        # also handle instances where wires were specified in probs, and for multiple probs measurements
 
-        # reverse qubit order to match PennyLane convention
-        return state.reshape([2] * self.num_wires).T.flatten()
+        self._samples = self.generate_samples(0)
+        res = [
+            mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
+        ]
+
+        single_measurement = len(circuit.measurements) == 1
+        res = (res[0],) if single_measurement else tuple(res)
+
+        return res
+
+    def _execute_estimator(self, circuit, session):
+        """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
+        Note that this result has been processed respective to the MeasurementProcess given.
+        E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
+
+        Args:
+            circuits (list[QuantumCircuit]): the circuits to be executed via EstimatorV2
+            session (Session): the session that the execution will be performed with
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
+        # the Estimator primitive takes care of diagonalization and measurements itself,
+        # so diagonalizing gates and measurements are not included in the circuit
+        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
+        estimator = Estimator(session=session)
+
+        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
+        compiled_circuits = self.compile_circuits(qcirc)
+        estimator.options.update(**self._kwargs)
+        # split into one call per measurement
+        # could technically be more efficient if there are some observables where we ask
+        # for expectation value and variance on the same observable, but spending time on
+        # that right now feels excessive
+        circ_and_obs = [(compiled_circuits[0], pauli_observables)]
+        result = estimator.run(
+            circ_and_obs,
+            precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
+        ).result()
+        self._current_job = result
+        result = self._process_estimator_job(circuit.measurements, result)
+
+        return result
+
+    @staticmethod
+    def _process_estimator_job(measurements, job_result):
+        """Estimator returns the expectation value and standard error for each observable measured,
+        along with some metadata that contains the precision. Extracts the relevant number for each
+        measurement process and return the requested results from the Estimator executions.
+
+        Note that for variance, we calculate the variance by using the standard error and the
+        precision value.
+
+        Args:
+            measurements (list[MeasurementProcess]): the measurements in the circuit
+            job_result (Any): the result from EstimatorV2
+
+        Returns:
+            result (tuple): the processed result from EstimatorV2
+        """
+        expvals = job_result[0].data.evs
+        variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
+        result = []
+        for i, mp in enumerate(measurements):
+            if isinstance(mp, ExpectationMP):
+                result.append(expvals[i])
+            elif isinstance(mp, VarianceMP):
+                result.append(variances[i])
+
+        single_measurement = len(measurements) == 1
+        result = (result[0],) if single_measurement else tuple(result)
+
+        return result
 
     def generate_samples(self, circuit=None):
         r"""Returns the computational basis samples generated for all wires.
@@ -432,105 +696,17 @@ class QiskitDevice(QubitDevice, abc.ABC):
         :math:`q_0` is the most significant bit.
 
         Args:
-            circuit (str or None): the name of the circuit to get the state for
+            circuit (int): position of the circuit in the batch.
 
         Returns:
              array[complex]: array of samples in the shape ``(dev.shots, dev.num_wires)``
         """
+        counts = self._current_job.get_counts()
+        # Batch of circuits
+        if not isinstance(counts, dict):
+            counts = self._current_job.get_counts()[circuit]
 
-        # branch out depending on the type of backend
-        if self._is_state_backend:
-            # software simulator: need to sample from probabilities
-            return super().generate_samples()
-
-        # hardware or hardware simulator
-        samples = self._current_job.result().get_memory(circuit)
-        # reverse qubit order to match PennyLane convention
+        samples = []
+        for key, value in counts.items():
+            samples.extend([key] * value)
         return np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
-
-    @property
-    def state(self):
-        """Get state of the device"""
-        return self._state
-
-    def analytic_probability(self, wires=None):
-        """Get the analytic probability of the device"""
-        if self._state is None:
-            return None
-
-        prob = self.marginal_prob(np.abs(self._state) ** 2, wires)
-        return prob
-
-    def compile_circuits(self, circuits):
-        r"""Compiles multiple circuits one after the other.
-
-        Args:
-            circuits (list[.tapes.QuantumTape]): the circuits to be compiled
-
-        Returns:
-             list[QuantumCircuit]: the list of compiled circuits
-        """
-        # Compile each circuit object
-        compiled_circuits = []
-
-        for circuit in circuits:
-            # We need to reset the device here, else it will
-            # not start the next computation in the zero state
-            self.reset()
-            self.create_circuit_object(circuit.operations, rotations=circuit.diagonalizing_gates)
-
-            compiled_circ = self.compile()
-            compiled_circ.name = f"circ{len(compiled_circuits)}"
-            compiled_circuits.append(compiled_circ)
-
-        return compiled_circuits
-
-    def batch_execute(self, circuits, timeout: int = None):
-        """Batch execute the circuits on the device"""
-
-        compiled_circuits = self.compile_circuits(circuits)
-
-        if not compiled_circuits:
-            # At least one circuit must always be provided to the backend.
-            return []
-
-        # Send the batch of circuit objects using backend.run
-        self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
-
-        try:
-            result = self._current_job.result(timeout=timeout)
-        except TypeError:  # pragma: no cover
-            # timeout not supported
-            result = self._current_job.result()
-
-        # increment counter for number of executions of qubit device
-        # pylint: disable=no-member
-        self._num_executions += 1
-
-        # Compute statistics using the state and/or samples
-        results = []
-        for circuit, circuit_obj in zip(circuits, compiled_circuits):
-            # Update the tracker
-            if self.tracker.active:
-                self.tracker.update(executions=1, shots=self.shots)
-                self.tracker.record()
-
-            if self._is_state_backend:
-                self._state = self._get_state(result, experiment=circuit_obj)
-
-            # generate computational basis samples
-            if self.shots is not None or any(
-                isinstance(m, SAMPLE_TYPES) for m in circuit.measurements
-            ):
-                self._samples = self.generate_samples(circuit_obj)
-
-            res = self.statistics(circuit)
-            single_measurement = len(circuit.measurements) == 1
-            res = res[0] if single_measurement else tuple(res)
-            results.append(res)
-
-        if self.tracker.active:
-            self.tracker.update(batches=1, batch_len=len(circuits))
-            self.tracker.record()
-
-        return results
