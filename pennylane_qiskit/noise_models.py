@@ -29,9 +29,9 @@ from qiskit.quantum_info.operators.channel import Choi, Kraus
 # pylint:disable = protected-access
 
 kraus_indice_map = {
-    "PhaseDamping": ((0, 0, 3, 3), (0, 3, 0, 3)),
-    "AmplitudeDamping": ((0, 0, 2, 3, 3), (0, 3, 2, 0, 3)),
-    "ThermalRelaxationError": ((0, 0, 1, 2, 3, 3), (0, 3, 1, 2, 0, 3)),
+    "PhaseDamping": {(0, 0), (0, 3), (3, 0), (3, 3)},
+    "AmplitudeDamping": {(0, 0), (0, 3), (2, 2), (3, 0), (3, 3)},
+    "ThermalRelaxation": {(0, 0), (0, 3), (1, 1), (2, 2), (3, 0), (3, 3)},
 }
 pauli_error_map = {"X": "BitFlip", "Z": "PhaseFlip", "Y": "PauliError"}
 qiskit_op_map = {
@@ -73,7 +73,7 @@ qiskit_op_map = {
     "sxdg": qml.adjoint(qml.SX),
     "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
 }
-default_option_map = [("decimals", 10), ("atol", 1e-8), ("rtol", 1e-5)]
+default_option_map = {"decimals":10, "atol":1e-8, "rtol":1e-5}
 
 
 def _kraus_to_choi(krau_op: Kraus, optimize=False) -> np.ndarray:
@@ -120,55 +120,50 @@ def _process_kraus_ops(
     """
     choi_matrix = _kraus_to_choi(Kraus(kraus_mats), optimize=kwargs.get("optimize", False))
 
+    kdata = None
     if qml.math.shape(choi_matrix) == (4, 4):  # PennyLane channels are single-qubit
-        decimals, atol, rtol = tuple(kwargs.get(opt, dflt) for (opt, dflt) in default_option_map)
+        decimals, atol, rtol = tuple(
+            kwargs.get("options", dict()).get(opt, dflt) for (opt, dflt) in default_option_map.items()
+        )
 
         non_zero_indices = np.nonzero(choi_matrix.round(decimals))
+        nz_indice = set(map(tuple, zip(*non_zero_indices)))
         nz_values = choi_matrix[non_zero_indices]
 
-        if len(nz_values) == 4 and np.allclose(
-            non_zero_indices,
-            kraus_indice_map["PhaseDamping"],
-            rtol=rtol,
-            atol=atol,
-        ):
-            if np.allclose(nz_values[[0, 3]], np.ones(2), rtol=rtol, atol=atol) and np.allclose(
-                *nz_values[[1, 2]], rtol=rtol, atol=atol
+        # Note: Inequality here is to priortize thermal-relaxation errors over damping errors.
+        if len(nz_values) <= 6 and nz_indice.issubset(kraus_indice_map["ThermalRelaxation"]):
+            nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
+            if (
+                np.allclose(nt_values[[(0, 2), (3, 5)]].sum(axis=1), 1.0, rtol=rtol, atol=atol)
+                and np.isclose(*nt_values[[1, 4]], rtol=rtol, atol=atol)
             ):
-                return (True, "PhaseDamping", np.round(1 - nz_values[1] ** 2, decimals).real)
+                tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
+                if np.isclose(nt_values[[2, 3]].sum(), 0.0, rtol=rtol, atol=atol):
+                    pe, t1 =  0.0, np.inf
+                else:
+                    pe = nt_values[2] / (nt_values[2] + nt_values[3])
+                    t1 = -tg / np.log(1 - (nt_values[3] + nt_values[2]))
+                t2 = np.inf if np.isclose(nt_values[1], 1.0, rtol=rtol, atol=atol) else (
+                    -tg / np.log(nt_values[1])
+                )
+                kdata = (True, "ThermalRelaxationError", np.round([pe, t1, t2, tg], decimals).real)
 
-        if len(nz_values) == 5 and np.allclose(
-            non_zero_indices,
-            kraus_indice_map["AmplitudeDamping"],
-            rtol=rtol,
-            atol=atol,
-        ):
+        if kwargs.get("thermal_relaxation", True) and kdata is not None:
+            return kdata
+
+        if len(nz_values) == 5 and nz_indice.issubset(kraus_indice_map["AmplitudeDamping"]):
             if np.allclose(
                 [nz_values[0], sum(nz_values[[2, 4]])], np.ones(2), rtol=rtol, atol=atol
             ) and np.allclose(nz_values[[1, 3]], np.sqrt(nz_values[4]), rtol=rtol, atol=atol):
                 return (True, "AmplitudeDamping", np.round(nz_values[2], decimals).real)
 
-        if len(nz_values) == 6 and np.allclose(
-            non_zero_indices,
-            kraus_indice_map["ThermalRelaxationError"],
-            rtol=rtol,
-            atol=atol,
-        ):
-            if np.allclose(
-                [sum(nz_values[[0, 2]]), sum(nz_values[[3, 5]])],
-                np.ones(2),
-                rtol=rtol,
-                atol=atol,
-            ) and np.isclose(
-                *nz_values[[1, 4]], rtol=rtol, atol=atol
-            ):  # uses t2 > t1
-                tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
-                pe = nz_values[2] / (nz_values[2] + nz_values[3])
-                t1 = -tg / np.log(1 - nz_values[2] / pe)
-                t2 = -tg / np.log(nz_values[1])
-                return (True, "ThermalRelaxationError", np.round([pe, t1, t2, tg], decimals).real)
+        if len(nz_values) == 4 and nz_indice.issubset(kraus_indice_map["PhaseDamping"]):
+            if np.allclose(nz_values[[0, 3]], np.ones(2), rtol=rtol, atol=atol) and np.allclose(
+                *nz_values[[1, 2]], rtol=rtol, atol=atol
+            ):
+                return (True, "PhaseDamping", np.round(1 - nz_values[1] ** 2, decimals).real)
 
-    return (False, "QubitChannel", Kraus(Choi(choi_matrix)).data)
+    return (False, "QubitChannel", Kraus(Choi(choi_matrix)).data) if not kdata else kdata
 
 
 @lru_cache
@@ -246,7 +241,8 @@ def _process_reset(error_dict: dict, **kwargs) -> dict:
         p0 = 1.0 if len(error_probs) == 3 else error_probs[2] / (error_probs[2] + error_probs[3])
         t1 = -tg / np.log(1 - error_probs[2] / p0)
         t2 = (1 / t1 - np.log(1 - 2 * error_probs[1] / (1 - error_probs[2] / p0)) / tg) ** -1
-        error_dict["data"] = list(np.round([1 - p0, t1, t2, tg], kwargs.get("decimals", 10)))
+        decimals = kwargs.get("options", {}).get("decimals", default_option_map["decimals"])
+        error_dict["data"] = list(np.round([1 - p0, t1, t2, tg], decimals=decimals))
 
     return error_dict
 
@@ -370,7 +366,6 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
         raise ValueError(f"Error {error} could not be converted.")
 
     error_dict = _process_qerror_dict(error_dict=error_dict)
-
     return getattr(qml.ops, error_dict["name"])(*error_dict["data"], wires=AnyWires)
 
 
@@ -382,16 +377,21 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
         kwargs: Optional keyword arguments for providing extra information
 
     Keyword Arguments:
+        thermal_relaxation (bool): prefer conversion of ``QiskitErrors`` to thermal relaxation errors
+            over damping errors. Default is ``False``.
         gate_times (Dict[str, float]): gate times for building thermal relaxation error.
-            If not provided, the default value of ``1.0`` will be used for construction.
-        decimals (int): number of decimal places to round the Kraus matrices for errors to.
-            If not provided, the default value of ``10`` is used.
-        atol (float): the relative tolerance parameter. Default value is ``1e-05``.
-        rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
-        optimize (bool): controls if intermediate optimization is used while transforming Kraus
-            operators to a Choi matrix, wherever required. Default is ``False``.
+            If not provided, the default value of ``1.0 s`` will be used for construction.
         multi_pauli (bool): assume depolarization channel to be multi-qubit. This is currently not
             supported with ``qml.DepolarizationChannel``, which is a single qubit channel.
+        readout_error (bool): include readout error in the converted noise model. Default is ``True``.
+        optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
+            transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
+        options (dict[str, Union[int, float]]): optional parameters related to tolerance and rounding:
+
+            - decimals (int): number of decimal places to round the Kraus matrices for errors to.
+                If not provided, the default value of ``10`` is used.
+            - atol (float): the relative tolerance parameter. Default value is ``1e-05``.
+            - rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
 
     Returns:
         (dict, dict): returns mappings for ecountered quantum errors and readout errors.

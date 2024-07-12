@@ -79,7 +79,7 @@ class TestLoadNoiseChannels:
     )
     def test_build_qerror_op(self, qiskit_error, pl_channel):
         """Tests that a quantum error can be correctly converted into a PennyLane channel."""
-        pl_op_from_qiskit = _build_qerror_op(qiskit_error)
+        pl_op_from_qiskit = _build_qerror_op(qiskit_error, thermal_relaxation=False)
         # TODO: Remove when qml.equal works with PauliError
         if not isinstance(pl_op_from_qiskit, qml.PauliError):
             assert qml.equal(pl_op_from_qiskit, pl_channel)
@@ -154,7 +154,7 @@ class TestLoadNoiseChannels:
     def test_build_kraus_error_ops(self, qiskit_error, pl_channel):
         """Tests that a quantum error can be correctly converted into a PennyLane QubitChannel."""
         pl_op_from_qiskit = _build_qerror_op(qiskit_error)
-        choi_mat1 = _kraus_to_choi(Kraus(list(pl_op_from_qiskit.data)))
+        choi_mat1 = _kraus_to_choi(Kraus(list(pl_op_from_qiskit.compute_kraus_matrices(*pl_op_from_qiskit.data))))
         choi_mat2 = _kraus_to_choi(Kraus(list(pl_channel.data)))
         assert np.allclose(choi_mat1, choi_mat2)
 
