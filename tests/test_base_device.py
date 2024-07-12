@@ -789,6 +789,40 @@ class TestTrackerFunctionality:
             dev.tracker.history["results"]
         )
 
+    def test_tracker_split_by_measurement_type(self):
+        """Test that the tracker works for as intended for circuits split by measurement type"""
+        qiskit_dev = QiskitDevice2(wires=5, backend=AerSimulator(), shots=10000)
+
+        x = 0.1
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit(x):
+            qml.RX(x, wires=0)
+            return qml.expval(qml.Z(0)), qml.counts(qml.X(1))
+
+        with qml.Tracker(qiskit_dev) as qiskit_tracker:
+            qiskit_circuit(x)
+
+        assert qiskit_tracker.totals["executions"] == 2
+        assert qiskit_tracker.totals["shots"] == 20000
+
+    def test_tracker_split_by_non_commute(self):
+        """Test that the tracker works for as intended for circuits split by non commute"""
+        qiskit_dev = QiskitDevice2(wires=5, backend=AerSimulator(), shots=10000)
+
+        x = 0.1
+
+        @qml.qnode(qiskit_dev)
+        def qiskit_circuit(x):
+            qml.RX(x, wires=0)
+            return qml.expval(qml.Z(0)), qml.expval(qml.X(0))
+
+        with qml.Tracker(qiskit_dev) as qiskit_tracker:
+            qiskit_circuit(x)
+
+        assert qiskit_tracker.totals["executions"] == 2
+        assert qiskit_tracker.totals["shots"] == 20000
+
 
 class TestMockedExecution:
     def test_get_transpile_args(self):
