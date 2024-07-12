@@ -417,7 +417,8 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
 
     # TODO: Add support for the readout error
     rerror_dmap = defaultdict(lambda: defaultdict(list))
-    if noise_model._default_readout_error or noise_model._local_readout_errors:
-        warn("Readout errors are not supported currently and will be skipped.")
+    if kwargs.get("readout_error", True):
+        if noise_model._default_readout_error or noise_model._local_readout_errors:
+            warn("Readout errors are not supported currently and will be skipped.")
 
     return qerror_dmap, rerror_dmap
