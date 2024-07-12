@@ -8,7 +8,7 @@ PennyLane-Qiskit Plugin
   :end-before: header-end-inclusion-marker-do-not-remove
 
 
-Once the PennyLane-Qiskit plugin is installed, the the Qiskit devices
+Once the PennyLane-Qiskit plugin is installed, the Qiskit devices
 can be accessed straightaway in PennyLane, without the need to import new packages.
 
 Devices
@@ -48,17 +48,39 @@ For example, the ``'qiskit.aer'`` device with two wires is called like this:
 Backends
 ~~~~~~~~
 
-Qiskit devices have different **backends**, which define which actual simulator or hardware is used by the
-device. Different simulator backends are optimized for different types of circuits. A backend can be defined as
-follows:
+Qiskit devices have different **backends**, which define the actual simulator or hardware 
+used by the device. A backend instance should be initalized and passed to the device.
+
+Different simulator backends are optimized for different purposes. To change what backend is used, 
+a simulator backend can be defined as follows:
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+    from qiskit_aer import UnitarySimulator
 
-PennyLane chooses the ``aer_simulator`` as the default backend if no backend is specified.
-For more details on the ``aer_simulator``, including available backend options, see
-`Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
+    dev = qml.device('qiskit.aer', wires=<num_qubits>, backend=UnitarySimulator())
+
+.. note::
+
+    For ``'qiskit.aer'``, PennyLane chooses the ``aer_simulator`` as the default backend if no 
+    backend is specified. For more details on the ``aer_simulator``, including available backend 
+    options, see `Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
+
+To access a real device, we can use the ``'qiskit.remote'`` device. A real hardware backend can 
+be defined as follows:
+
+.. code-block:: python
+
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>")
+
+    # To access saved credentials for the IBM quantum channel and select an instance
+    service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
+    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
+
+    # passing a string in backend would result in an error
+    dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
 
 Tutorials
 ~~~~~~~~~
