@@ -66,6 +66,9 @@ def custom_simulator_tracking(cls):
         results = tracked_execute(self, circuits, execution_config)
         if self.tracker.active:
             res = []
+            del self.tracker.totals["simulations"]
+            del self.tracker.history["simulations"]
+            del self.tracker.latest["simulations"]
             for r in self.tracker.history["results"]:
                 while isinstance(r, (list, tuple)) and len(r) == 1:
                     r = r[0]

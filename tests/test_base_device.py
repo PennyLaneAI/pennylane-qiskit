@@ -755,12 +755,13 @@ class TestTrackerFunctionality:
             qml.grad(qiskit_circuit)(x)
 
         assert qiskit_tracker.history["batches"] == tracker.history["batches"]
-        assert tracker.latest.keys() == qiskit_tracker.latest.keys()
-        assert tracker.history.keys() == qiskit_tracker.history.keys()
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
         assert np.allclose(qiskit_tracker.history["results"], tracker.history["results"], atol=0.1)
         assert np.shape(qiskit_tracker.history["results"]) == np.shape(tracker.history["results"])
         assert qiskit_tracker.history["resources"][0] == tracker.history["resources"][0]
+        assert "simulations" not in qiskit_dev.tracker.history
+        assert "simulations" not in qiskit_dev.tracker.latest
+        assert "simulations" not in qiskit_dev.tracker.totals
 
     def test_tracker_single_tape(self):
         """Test that the tracker works for a single tape"""
@@ -774,8 +775,6 @@ class TestTrackerFunctionality:
         with dev.tracker:
             pl_out = dev.execute(tape)
 
-        assert qiskit_dev.tracker.latest.keys() == dev.tracker.latest.keys()
-        assert qiskit_dev.tracker.history.keys() == dev.tracker.history.keys()
         assert (
             qiskit_dev.tracker.history["resources"][0].shots
             == dev.tracker.history["resources"][0].shots
@@ -788,6 +787,10 @@ class TestTrackerFunctionality:
         assert np.shape(qiskit_dev.tracker.history["results"]) == np.shape(
             dev.tracker.history["results"]
         )
+
+        assert "simulations" not in qiskit_dev.tracker.history
+        assert "simulations" not in qiskit_dev.tracker.latest
+        assert "simulations" not in qiskit_dev.tracker.totals
 
     def test_tracker_split_by_measurement_type(self):
         """Test that the tracker works for as intended for circuits split by measurement type"""
@@ -805,6 +808,9 @@ class TestTrackerFunctionality:
 
         assert qiskit_tracker.totals["executions"] == 2
         assert qiskit_tracker.totals["shots"] == 20000
+        assert "simulations" not in qiskit_dev.tracker.history
+        assert "simulations" not in qiskit_dev.tracker.latest
+        assert "simulations" not in qiskit_dev.tracker.totals
 
     def test_tracker_split_by_non_commute(self):
         """Test that the tracker works for as intended for circuits split by non commute"""
@@ -822,6 +828,9 @@ class TestTrackerFunctionality:
 
         assert qiskit_tracker.totals["executions"] == 2
         assert qiskit_tracker.totals["shots"] == 20000
+        assert "simulations" not in qiskit_dev.tracker.history
+        assert "simulations" not in qiskit_dev.tracker.latest
+        assert "simulations" not in qiskit_dev.tracker.totals
 
 
 class TestMockedExecution:
