@@ -326,3 +326,15 @@ class TestBatchExecution:
         res = barrier_func()
         assert barrier_func.tape.operations[0] == qml.Barrier([0, 1])
         assert np.allclose(res, dev.batch_execute([barrier_func.tape]), atol=0)
+
+def test_aer_device_shots_value_error():
+    """Tests that aer device raises an error when given a shot vector"""
+    with pytest.raises(
+        ValueError, match="Shots needs to be an integer value. Shot vectors are not supported"
+    ):
+        AerDevice(backend="aer_simulator", wires=1, shots=(1, 1, 1))
+
+    with pytest.raises(
+        ValueError, match="Shots needs to be an integer value. Shot vectors are not supported"
+    ):
+        AerDevice(backend="aer_simulator", wires=1, shots=[1, 1, 1])
