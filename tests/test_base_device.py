@@ -17,7 +17,8 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 
 from unittest.mock import patch, Mock
 from flaky import flaky
-from pennylane import numpy as np
+import numpy as np
+from pennylane import numpy as pnp
 from pydantic_core import ValidationError
 import pytest
 
