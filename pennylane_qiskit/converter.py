@@ -1082,6 +1082,50 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     .. note::
 
         Currently, PennyLane noise models does not support readout errors, so those will be skipped during conversion.
+
+    **Example**
+
+    Consider the following noise model constructed in Qiskit:
+
+    .. code-block:: python
+
+        >>> import qiskit.providers.aer.noise as noise
+        >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
+        >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
+        >>> noise_model = noise.NoiseModel()
+        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry']) # rz and ry gates get error_1
+        >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx']) # cx gates get error_2
+        >>> load_noise_model(noise_model)
+        NoiseModel({
+            OpIn(['RZ', 'RY']): DepolarizingChannel(p=0.0007499999999999174)
+            OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
+        })
+
+    Equivalently, in PennyLane this will be:
+
+    .. code-block:: python
+
+        import numpy as np
+        import pennylane as qml
+        import itertools as it
+        import functools as ft
+
+        pauli_mats = [
+            ft.reduce(np.kron, prod, 1.0)
+            for prod in it.product(
+                (tuple(map(qml.matrix, tuple(getattr(qml, i)(0) for i in ["I", "X", "Y", "Z"])))), repeat=2,
+            )
+        ]
+        pauli_prob = error_2.probabilities
+        kraus_dops = [np.sqrt(prob) * kraus_op for prob, kraus_op in zip(pauli_prob, kraus_ops)]
+
+        c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY) 
+        c1 = qml.noise.op_eq(qml.CNOT)
+
+        n0 = qml.noise.partial_wires(qml.DepolarizingChannel, 0.001)
+        n1 = qml.noise.partial_wires(qml.QubitChanel(kraus_dops))
+
+        equivalent_pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
     """
 
     qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
