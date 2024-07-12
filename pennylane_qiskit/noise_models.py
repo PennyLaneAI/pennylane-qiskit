@@ -123,8 +123,7 @@ def _process_kraus_ops(
     kdata = None
     if qml.math.shape(choi_matrix) == (4, 4):  # PennyLane channels are single-qubit
         decimals, atol, rtol = tuple(
-            kwargs.get("options", dict()).get(opt, dflt)
-            for (opt, dflt) in default_option_map.items()
+            kwargs.get("options", {}).get(opt, dflt) for (opt, dflt) in default_option_map.items()
         )
 
         non_zero_indices = np.nonzero(choi_matrix.round(decimals))
