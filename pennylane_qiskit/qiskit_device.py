@@ -178,6 +178,11 @@ class QiskitDevice(QubitDevice, abc.ABC):
 
             self.shots = 1024
 
+        if shots and not isinstance(shots, int):
+            raise ValueError(
+                f"Shots needs to be an integer value. Shot vectors are not supported for {self.name}."
+            )
+
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
