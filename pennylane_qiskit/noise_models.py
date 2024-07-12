@@ -73,7 +73,7 @@ qiskit_op_map = {
     "sxdg": qml.adjoint(qml.SX),
     "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
 }
-default_option_map = {"decimals":10, "atol":1e-8, "rtol":1e-5}
+default_option_map = {"decimals": 10, "atol": 1e-8, "rtol": 1e-5}
 
 
 def _kraus_to_choi(krau_op: Kraus, optimize=False) -> np.ndarray:
@@ -123,7 +123,8 @@ def _process_kraus_ops(
     kdata = None
     if qml.math.shape(choi_matrix) == (4, 4):  # PennyLane channels are single-qubit
         decimals, atol, rtol = tuple(
-            kwargs.get("options", dict()).get(opt, dflt) for (opt, dflt) in default_option_map.items()
+            kwargs.get("options", dict()).get(opt, dflt)
+            for (opt, dflt) in default_option_map.items()
         )
 
         non_zero_indices = np.nonzero(choi_matrix.round(decimals))
@@ -133,18 +134,19 @@ def _process_kraus_ops(
         # Note: Inequality here is to priortize thermal-relaxation errors over damping errors.
         if len(nz_values) <= 6 and nz_indice.issubset(kraus_indice_map["ThermalRelaxation"]):
             nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
-            if (
-                np.allclose(nt_values[[(0, 2), (3, 5)]].sum(axis=1), 1.0, rtol=rtol, atol=atol)
-                and np.isclose(*nt_values[[1, 4]], rtol=rtol, atol=atol)
-            ):
+            if np.allclose(
+                nt_values[[(0, 2), (3, 5)]].sum(axis=1), 1.0, rtol=rtol, atol=atol
+            ) and np.isclose(*nt_values[[1, 4]], rtol=rtol, atol=atol):
                 tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
                 if np.isclose(nt_values[[2, 3]].sum(), 0.0, rtol=rtol, atol=atol):
-                    pe, t1 =  0.0, np.inf
+                    pe, t1 = 0.0, np.inf
                 else:
                     pe = nt_values[2] / (nt_values[2] + nt_values[3])
                     t1 = -tg / np.log(1 - (nt_values[3] + nt_values[2]))
-                t2 = np.inf if np.isclose(nt_values[1], 1.0, rtol=rtol, atol=atol) else (
-                    -tg / np.log(nt_values[1])
+                t2 = (
+                    np.inf
+                    if np.isclose(nt_values[1], 1.0, rtol=rtol, atol=atol)
+                    else (-tg / np.log(nt_values[1]))
                 )
                 kdata = (True, "ThermalRelaxationError", np.round([pe, t1, t2, tg], decimals).real)
 
