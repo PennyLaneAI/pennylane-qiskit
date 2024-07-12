@@ -1057,16 +1057,21 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         kwargs: Optional keyword arguments for conversion of the noise model.
 
     Keyword Arguments:
+        thermal_relaxation (bool): prefer conversion of ``QiskitErrors`` to thermal relaxation errors
+            over damping errors. Default is ``False``.
         gate_times (Dict[str, float]): gate times for building thermal relaxation error.
-            If not provided, the default value of ``1.0`` will be used for construction.
-        decimals (int): number of decimal places to round the Kraus matrices for errors to.
-            If not provided, the default value of ``10`` is used.
-        atol (float): the relative tolerance parameter. Default value is ``1e-05``.
-        rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
-        optimize (bool): controls if intermediate optimization is used while transforming Kraus
-            operators to a Choi matrix, wherever required. Default is ``False``.
+            If not provided, the default value of ``1.0 s`` will be used for construction.
+        readout_error (bool): include readout error in the converted noise model. Default is ``True``.
+        optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
+            transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
         kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
             instead of the complete list of matrices. Default is ``True``.
+        options (dict[str, Union[int, float]]): optional parameters related to tolerance and rounding:
+
+            - decimals (int): number of decimal places to round the Kraus matrices for errors to.
+                If not provided, the default value of ``10`` is used.
+            - atol (float): the relative tolerance parameter. Default value is ``1e-05``.
+            - rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
 
     Returns:
         qml.NoiseModel: An equivalent noise model constructed in PennyLane

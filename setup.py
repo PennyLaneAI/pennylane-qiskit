@@ -57,6 +57,7 @@ info = {
             'qiskit_op = pennylane_qiskit:load_pauli_op',
             'qasm = pennylane_qiskit:load_qasm',
             'qasm_file = pennylane_qiskit:load_qasm_from_file',
+            'qiskit_noise = pennylane_qiskit:load_noise_model',
             ],
         },
     'description': 'PennyLane plugin for Qiskit',
