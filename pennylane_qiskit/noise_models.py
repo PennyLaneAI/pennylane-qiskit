@@ -389,8 +389,7 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
             transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
         options (dict[str, Union[int, float]]): optional parameters related to tolerance and rounding:
 
-            - decimals (int): number of decimal places to round the Kraus matrices for errors to.
-                If not provided, the default value of ``10`` is used.
+            - decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
             - atol (float): the relative tolerance parameter. Default value is ``1e-05``.
             - rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
 

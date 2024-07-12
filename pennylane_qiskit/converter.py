@@ -1068,8 +1068,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
             instead of the complete list of matrices. Default is ``True``.
         options (dict[str, Union[int, float]]): optional parameters related to tolerance and rounding:
 
-            - decimals (int): number of decimal places to round the Kraus matrices for errors to.
-                If not provided, the default value of ``10`` is used.
+            - decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
             - atol (float): the relative tolerance parameter. Default value is ``1e-05``.
             - rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
 
@@ -1093,7 +1092,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
         >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
         >>> noise_model = noise.NoiseModel()
-        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry']) # rz and ry gates get error_1
+        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry']) # rz/ry gates get error_1
         >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx']) # cx gates get error_2
         >>> load_noise_model(noise_model)
         NoiseModel({
@@ -1113,17 +1112,18 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         pauli_mats = [
             ft.reduce(np.kron, prod, 1.0)
             for prod in it.product(
-                (tuple(map(qml.matrix, tuple(getattr(qml, i)(0) for i in ["I", "X", "Y", "Z"])))), repeat=2,
+                map(qml.matrix, tuple(getattr(qml, i)(0) for i in ["I", "X", "Y", "Z"]))
+                repeat=2
             )
         ]
         pauli_prob = error_2.probabilities
-        kraus_dops = [np.sqrt(prob) * kraus_op for prob, kraus_op in zip(pauli_prob, kraus_ops)]
+        kraus_ops = [np.sqrt(prob) * kraus_op for prob, kraus_op in zip(pauli_prob, pauli_mats)]
 
         c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY)
         c1 = qml.noise.op_eq(qml.CNOT)
 
         n0 = qml.noise.partial_wires(qml.DepolarizingChannel, 0.001)
-        n1 = qml.noise.partial_wires(qml.QubitChanel(kraus_dops))
+        n1 = qml.noise.partial_wires(qml.QubitChanel(kraus_ops))
 
         equivalent_pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
     """
