@@ -1119,7 +1119,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         pauli_prob = error_2.probabilities
         kraus_dops = [np.sqrt(prob) * kraus_op for prob, kraus_op in zip(pauli_prob, kraus_ops)]
 
-        c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY) 
+        c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY)
         c1 = qml.noise.op_eq(qml.CNOT)
 
         n0 = qml.noise.partial_wires(qml.DepolarizingChannel, 0.001)
