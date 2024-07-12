@@ -736,7 +736,7 @@ class TestTrackerFunctionality:
         dev = qml.device("default.qubit", wires=1, shots=10000)
         qiskit_dev = QiskitDevice2(wires=1, backend=AerSimulator(), shots=10000)
 
-        x = np.array(0.1, requires_grad=True)
+        x = pnp.array(0.1, requires_grad=True)
 
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
