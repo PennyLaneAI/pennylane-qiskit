@@ -25,6 +25,7 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 import qiskit.qasm2
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
+from qiskit.circuit import library as lib
 from qiskit.circuit.classical import expr
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
@@ -36,7 +37,50 @@ from sympy import lambdify
 import pennylane as qml
 import pennylane.ops as pennylane_ops
 from pennylane.tape.tape import rotations_and_diagonal_measurements
-from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
+
+QISKIT_OPERATION_MAP = {
+    # native PennyLane operations also native to qiskit
+    "PauliX": lib.XGate,
+    "PauliY": lib.YGate,
+    "PauliZ": lib.ZGate,
+    "Hadamard": lib.HGate,
+    "CNOT": lib.CXGate,
+    "CZ": lib.CZGate,
+    "SWAP": lib.SwapGate,
+    "ISWAP": lib.iSwapGate,
+    "RX": lib.RXGate,
+    "RY": lib.RYGate,
+    "RZ": lib.RZGate,
+    "Identity": lib.IGate,
+    "CSWAP": lib.CSwapGate,
+    "CRX": lib.CRXGate,
+    "CRY": lib.CRYGate,
+    "CRZ": lib.CRZGate,
+    "PhaseShift": lib.PhaseGate,
+    "QubitStateVector": lib.Initialize,
+    "StatePrep": lib.Initialize,
+    "Toffoli": lib.CCXGate,
+    "QubitUnitary": lib.UnitaryGate,
+    "U1": lib.U1Gate,
+    "U2": lib.U2Gate,
+    "U3": lib.U3Gate,
+    "IsingZZ": lib.RZZGate,
+    "IsingYY": lib.RYYGate,
+    "IsingXX": lib.RXXGate,
+    "S": lib.SGate,
+    "T": lib.TGate,
+    "SX": lib.SXGate,
+    "Adjoint(S)": lib.SdgGate,
+    "Adjoint(T)": lib.TdgGate,
+    "Adjoint(SX)": lib.SXdgGate,
+    "CY": lib.CYGate,
+    "CH": lib.CHGate,
+    "CPhase": lib.CPhaseGate,
+    "CCZ": lib.CCZGate,
+    "ECR": lib.ECRGate,
+    "Barrier": lib.Barrier,
+    "Adjoint(GlobalPhase)": lib.GlobalPhaseGate,
+}
 
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 

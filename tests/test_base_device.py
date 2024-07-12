@@ -34,8 +34,8 @@ from qiskit_aer import AerSimulator
 from qiskit.providers import BackendV1, BackendV2
 
 from qiskit import QuantumCircuit, transpile
-from pennylane_qiskit.qiskit_device2 import (
-    QiskitDevice2,
+from pennylane_qiskit.qiskit_device import (
+    QiskitDevice,
     qiskit_session,
     split_execution_types,
 )
@@ -117,7 +117,7 @@ class MockSession:
 mocked_backend = MockedBackend()
 legacy_backend = MockedBackendLegacy()
 aer_backend = AerSimulator()
-test_dev = QiskitDevice2(wires=5, backend=aer_backend)
+test_dev = QiskitDevice(wires=5, backend=aer_backend)
 
 
 class TestSupportForV1andV2:
@@ -129,7 +129,7 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_mocked(self, backend):
         """Test that device initializes with no error mocked"""
-        dev = QiskitDevice2(wires=10, backend=backend)
+        dev = QiskitDevice(wires=10, backend=backend)
         assert dev._backend == backend
 
     @pytest.mark.parametrize(
@@ -141,7 +141,7 @@ class TestSupportForV1andV2:
     )
     def test_v1_and_v2_manila(self, backend, shape):
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
-        dev = QiskitDevice2(wires=5, backend=backend)
+        dev = QiskitDevice(wires=5, backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -163,8 +163,8 @@ class TestDeviceInitialization:
         compile_backend = MockedBackend(name="compile_backend")
         main_backend = MockedBackend(name="main_backend")
 
-        dev1 = QiskitDevice2(wires=5, backend=main_backend)
-        dev2 = QiskitDevice2(wires=5, backend=main_backend, compile_backend=compile_backend)
+        dev1 = QiskitDevice(wires=5, backend=main_backend)
+        dev2 = QiskitDevice(wires=5, backend=main_backend, compile_backend=compile_backend)
 
         assert dev1._compile_backend == dev1._backend == main_backend
 
@@ -179,7 +179,7 @@ class TestDeviceInitialization:
             UserWarning,
             match="Expected an integer number of shots, but received shots=None",
         ):
-            dev = QiskitDevice2(wires=2, backend=aer_backend, shots=None)
+            dev = QiskitDevice(wires=2, backend=aer_backend, shots=None)
 
         assert dev.shots.total_shots == 1024
 
@@ -189,15 +189,15 @@ class TestDeviceInitialization:
         the number of wires available on the backend, for both backend versions"""
 
         with pytest.raises(ValueError, match="supports maximum"):
-            QiskitDevice2(wires=500, backend=backend)
+            QiskitDevice(wires=500, backend=backend)
 
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
         object is used to set the backend noise model"""
 
         new_backend = MockedBackend()
-        dev1 = QiskitDevice2(wires=3, backend=aer_backend)
-        dev2 = QiskitDevice2(wires=3, backend=new_backend, noise_model={"placeholder": 1})
+        dev1 = QiskitDevice(wires=3, backend=aer_backend)
+        dev2 = QiskitDevice(wires=3, backend=new_backend, noise_model={"placeholder": 1})
 
         assert dev1.backend.options.noise_model is None
         assert dev2.backend.options.noise_model == {"placeholder": 1}
@@ -210,7 +210,7 @@ class TestQiskitSessionManagement:
     def test_default_no_session_on_initialization(self, backend):
         """Test that the default behaviour is no session at initialization"""
 
-        dev = QiskitDevice2(wires=2, backend=backend)
+        dev = QiskitDevice(wires=2, backend=backend)
         assert dev._session is None
 
     @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
@@ -218,15 +218,15 @@ class TestQiskitSessionManagement:
         """Test that you can initialize a device with an existing Qiskit session"""
 
         session = MockSession(backend=backend, max_time="1m")
-        dev = QiskitDevice2(wires=2, backend=backend, session=session)
+        dev = QiskitDevice(wires=2, backend=backend, session=session)
         assert dev._session == session
 
-    @patch("pennylane_qiskit.qiskit_device2.Session")
+    @patch("pennylane_qiskit.qiskit_device.Session")
     @pytest.mark.parametrize("initial_session", [None, MockSession(aer_backend)])
     def test_using_session_context(self, mock_session, initial_session):
         """Test that you can add a session within a context manager"""
 
-        dev = QiskitDevice2(wires=2, backend=aer_backend, session=initial_session)
+        dev = QiskitDevice(wires=2, backend=aer_backend, session=initial_session)
 
         assert dev._session == initial_session
 
@@ -238,7 +238,7 @@ class TestQiskitSessionManagement:
 
     def test_using_session_context_options(self):
         """Test that you can set session options using qiskit_session"""
-        dev = QiskitDevice2(wires=2, backend=aer_backend)
+        dev = QiskitDevice(wires=2, backend=aer_backend)
 
         assert dev._session is None
 
@@ -254,7 +254,7 @@ class TestQiskitSessionManagement:
         Qiskit allows for more customization we can automatically accomodate those needs. Right
         now there are no such keyword arguments, so an error on Qiskit's side is raised."""
 
-        dev = QiskitDevice2(wires=2, backend=aer_backend)
+        dev = QiskitDevice(wires=2, backend=aer_backend)
 
         assert dev._session is None
 
@@ -269,7 +269,7 @@ class TestQiskitSessionManagement:
 
     def test_no_warning_when_using_initial_session_options(self):
         initial_session = Session(backend=aer_backend, max_time=30)
-        dev = QiskitDevice2(wires=2, backend=aer_backend, session=initial_session)
+        dev = QiskitDevice(wires=2, backend=aer_backend, session=initial_session)
 
         assert dev._session == initial_session
 
@@ -288,7 +288,7 @@ class TestQiskitSessionManagement:
         default options, passed in from the `qiskit_session` take precedence, barring
         `backend` or `service`"""
         initial_session = Session(backend=aer_backend)
-        dev = QiskitDevice2(wires=2, backend=aer_backend, session=initial_session)
+        dev = QiskitDevice(wires=2, backend=aer_backend, session=initial_session)
 
         assert dev._session == initial_session
 
@@ -314,7 +314,7 @@ class TestQiskitSessionManagement:
         assert dev._session == initial_session
 
         max_time_session = Session(backend=aer_backend, max_time=60)
-        dev = QiskitDevice2(wires=2, backend=aer_backend, session=max_time_session)
+        dev = QiskitDevice(wires=2, backend=aer_backend, session=max_time_session)
         with qiskit_session(dev, max_time=30) as session:
             assert dev._session == session
             assert dev._session != initial_session
@@ -328,7 +328,7 @@ class TestQiskitSessionManagement:
     def test_update_session(self, initial_session):
         """Test that you can update the session stored on the device"""
 
-        dev = QiskitDevice2(wires=2, backend=aer_backend, session=initial_session)
+        dev = QiskitDevice(wires=2, backend=aer_backend, session=initial_session)
         assert dev._session == initial_session
 
         new_session = MockSession(backend=aer_backend, max_time="1m")
@@ -519,7 +519,7 @@ class TestDevicePreprocessing:
     def test_preprocess_split_non_commuting(self, measurements, num_tapes):
         """Test that `split_non_commuting` works as expected in the preprocess function."""
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
 
         program, _ = dev.preprocess()
@@ -542,7 +542,7 @@ class TestDevicePreprocessing:
         on measurement type. Expval and Variance are one type (Estimator), Probs and raw-sample based measurements
         are another type (Sampler)."""
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
         qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
 
         program, _ = dev.preprocess()
@@ -591,20 +591,20 @@ class TestKwargsHandling:
             UserWarning,
             match="default_shots was found in the keyword arguments",
         ):
-            dev = QiskitDevice2(wires=2, backend=aer_backend, default_shots=333)
+            dev = QiskitDevice(wires=2, backend=aer_backend, default_shots=333)
 
         # Qiskit takes in `default_shots` to define the # of shots, therefore we use
         # the kwarg "default_shots" rather than shots to pass it to Qiskit.
         assert dev._kwargs["default_shots"] == 1024
 
-        dev = QiskitDevice2(wires=2, backend=aer_backend, shots=200)
+        dev = QiskitDevice(wires=2, backend=aer_backend, shots=200)
         assert dev._kwargs["default_shots"] == 200
 
         with pytest.warns(
             UserWarning,
             match="default_shots was found in the keyword arguments",
         ):
-            dev = QiskitDevice2(wires=2, backend=aer_backend, options={"default_shots": 30})
+            dev = QiskitDevice(wires=2, backend=aer_backend, options={"default_shots": 30})
         # resets to default since we reinitialize the device
         assert dev._kwargs["default_shots"] == 1024
 
@@ -615,7 +615,7 @@ class TestKwargsHandling:
             UserWarning,
             match="An overlap between",
         ):
-            dev = QiskitDevice2(
+            dev = QiskitDevice(
                 wires=2,
                 backend=aer_backend,
                 options={"resilience_level": 1, "optimization_level": 1},
@@ -642,7 +642,7 @@ class TestKwargsHandling:
         """Test that options set via the keyword argument options and options set via kwargs
         will combine into a single unified kwargs that is passed to the device"""
 
-        dev = QiskitDevice2(
+        dev = QiskitDevice(
             wires=5,
             backend=backend,
             options={"resilience_level": 1},
@@ -666,7 +666,7 @@ class TestKwargsHandling:
         """Tests that when transpilation options are passed in, they are properly
         handled without error"""
 
-        dev = QiskitDevice2(
+        dev = QiskitDevice(
             wires=5,
             backend=backend,
             options={"resilience_level": 1, "optimization_level": 1},
@@ -692,7 +692,7 @@ class TestKwargsHandling:
 class TestDeviceProperties:
     def test_name_property(self):
         """Test the backend property"""
-        assert test_dev.name == "QiskitDevice2"
+        assert test_dev.name == "QiskitDevice"
 
     def test_backend_property(self):
         """Test the backend property"""
@@ -704,7 +704,7 @@ class TestDeviceProperties:
         """Test the compile_backend property"""
 
         compile_backend = MockedBackend(name="compile_backend")
-        dev = QiskitDevice2(wires=5, backend=backend, compile_backend=compile_backend)
+        dev = QiskitDevice(wires=5, backend=backend, compile_backend=compile_backend)
 
         assert dev.compile_backend == dev._compile_backend
         assert dev.compile_backend == compile_backend
@@ -717,7 +717,7 @@ class TestDeviceProperties:
         """Test the session property"""
 
         session = MockSession(backend=aer_backend)
-        dev = QiskitDevice2(wires=2, backend=aer_backend, session=session)
+        dev = QiskitDevice(wires=2, backend=aer_backend, session=session)
         assert dev.session == dev._session
         assert dev.session == session
 
@@ -725,7 +725,7 @@ class TestDeviceProperties:
         """Test the num_wires property"""
 
         wires = [1, 2, 3]
-        dev = QiskitDevice2(wires=wires, backend=aer_backend)
+        dev = QiskitDevice(wires=wires, backend=aer_backend)
         assert dev.num_wires == len(wires)
 
 
@@ -742,7 +742,7 @@ class TestMockedExecution:
             "circuits": [],
         }
         compile_backend = MockedBackend(name="compile_backend")
-        dev = QiskitDevice2(
+        dev = QiskitDevice(
             wires=5, backend=aer_backend, compile_backend=compile_backend, **transpile_args
         )
         assert dev._transpile_args == {
@@ -750,14 +750,14 @@ class TestMockedExecution:
             "seed_transpiler": 42,
         }
 
-    @patch("pennylane_qiskit.qiskit_device2.transpile")
+    @patch("pennylane_qiskit.qiskit_device.transpile")
     @pytest.mark.parametrize("compile_backend", [None, MockedBackend(name="compile_backend")])
     def test_compile_circuits(self, transpile_mock, compile_backend):
         """Tests compile_circuits with a mocked transpile function to avoid calling
         a remote backend. Confirm compile_backend and transpile_args are used."""
 
         transpile_args = {"seed_transpiler": 42, "optimization_level": 2}
-        dev = QiskitDevice2(
+        dev = QiskitDevice(
             wires=5, backend=aer_backend, compile_backend=compile_backend, **transpile_args
         )
 
@@ -815,18 +815,18 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._execute_estimator")
+    @patch("pennylane_qiskit.qiskit_device.QiskitDevice._execute_estimator")
     def test_execute_pipeline_primitives_no_session(self, mocker):
         """Test that a Primitives-based device initialized with no Session creates one for the
         execution, and then returns the device session to None."""
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend, session=None)
+        dev = QiskitDevice(wires=5, backend=aer_backend, session=None)
 
         assert dev._session is None
 
         qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
 
-        with patch("pennylane_qiskit.qiskit_device2.Session") as mock_session:
+        with patch("pennylane_qiskit.qiskit_device.Session") as mock_session:
             dev.execute(qs)
             mock_session.assert_called_once()  # a session was created
 
@@ -837,7 +837,7 @@ class TestMockedExecution:
         """Test that a device executes measurements that require raw samples via the sampler,
         and the relevant primitive measurements via the estimator"""
 
-        dev = QiskitDevice2(wires=5, backend=backend, session=MockSession(backend))
+        dev = QiskitDevice(wires=5, backend=backend, session=MockSession(backend))
 
         qs = QuantumScript(
             [qml.PauliX(0), qml.PauliY(1)],
@@ -865,8 +865,8 @@ class TestMockedExecution:
             "sampler_execute_res",
         ]
 
-    @patch("pennylane_qiskit.qiskit_device2.Estimator")
-    @patch("pennylane_qiskit.qiskit_device2.QiskitDevice2._process_estimator_job")
+    @patch("pennylane_qiskit.qiskit_device.Estimator")
+    @patch("pennylane_qiskit.qiskit_device.QiskitDevice._process_estimator_job")
     @pytest.mark.parametrize("session", [None, MockSession(aer_backend)])
     def test_execute_estimator_mocked(self, mocked_estimator, mocked_process_fn, session):
         """Test the _execute_estimator function using a mocked version of Estimator
@@ -885,7 +885,7 @@ class TestMockedExecution:
     def test_shot_vector_error_mocked(self):
         """Test that a device that executes a circuit with an array of shots raises the appropriate ValueError"""
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend, session=MockSession(aer_backend))
+        dev = QiskitDevice(wires=5, backend=aer_backend, session=MockSession(aer_backend))
         qs = QuantumScript(
             measurements=[
                 qml.expval(qml.PauliX(0)),
@@ -919,7 +919,7 @@ class TestExecution:
         correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
         """
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
@@ -978,7 +978,7 @@ class TestExecution:
         """
 
         pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
-        dev = QiskitDevice2(wires=[0, 1, 2, 3], backend=aer_backend)
+        dev = QiskitDevice(wires=[0, 1, 2, 3], backend=aer_backend)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
@@ -1002,7 +1002,7 @@ class TestExecution:
 
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
-        dev = QiskitDevice2(wires=5, backend=aer_backend, shots=2)
+        dev = QiskitDevice(wires=5, backend=aer_backend, shots=2)
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -1068,7 +1068,7 @@ class TestExecution:
 
         assert isinstance(result[0].metadata, dict)
 
-        processed_result = QiskitDevice2._process_estimator_job(qs.measurements, result)
+        processed_result = QiskitDevice._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
 
@@ -1076,7 +1076,7 @@ class TestExecution:
     @pytest.mark.parametrize("num_shots", [50, 100])
     def test_generate_samples(self, num_wires, num_shots):
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
-        dev = QiskitDevice2(wires=num_wires, backend=aer_backend, shots=num_shots)
+        dev = QiskitDevice(wires=num_wires, backend=aer_backend, shots=num_shots)
         dev._execute_sampler(circuit=qs, session=Session(backend=aer_backend))
 
         samples = dev.generate_samples(0)
@@ -1099,7 +1099,7 @@ class TestExecution:
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
-        dev = QiskitDevice2(wires=5, backend=aer_backend, shots=2)
+        dev = QiskitDevice(wires=5, backend=aer_backend, shots=2)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
@@ -1119,7 +1119,7 @@ class TestExecution:
 
     def test_error_for_shot_vector(self):
         """Tests that a ValueError is raised if a shot vector is passed."""
-        dev = QiskitDevice2(wires=5, backend=aer_backend, shots=2)
+        dev = QiskitDevice(wires=5, backend=aer_backend, shots=2)
 
         @qml.qnode(dev)
         def circuit():
@@ -1147,7 +1147,7 @@ class TestExecution:
         provides an accurate answer for measurements with observables that don't have a pauli_rep.
         """
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
 
         pl_dev = qml.device("default.qubit", wires=5)
 
@@ -1178,7 +1178,7 @@ class TestExecution:
         """Test that a warning is raised when device is passed a measurement on
         an observable that does not have a pauli_rep."""
 
-        dev = QiskitDevice2(wires=5, backend=aer_backend)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
 
         @qml.qnode(dev)
         def circuit():
@@ -1198,7 +1198,7 @@ class TestExecution:
         the same as pennylane's."""
 
         dev = qml.device("default.qubit", wires=[0, 1, 2, 3, 4])
-        qiskit_dev = QiskitDevice2(wires=[0, 1, 2, 3, 4], backend=backend)
+        qiskit_dev = QiskitDevice(wires=[0, 1, 2, 3, 4], backend=backend)
 
         @qml.qnode(dev)
         def circuit():
@@ -1220,7 +1220,7 @@ class TestExecution:
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane"""
         dev = qml.device("default.qubit", wires=5, shots=1024)
-        qiskit_dev = QiskitDevice2(wires=5, backend=backend)
+        qiskit_dev = QiskitDevice(wires=5, backend=backend)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -1244,7 +1244,7 @@ class TestExecution:
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane for circuits with multiple measurements"""
         dev = qml.device("default.qubit", wires=5, shots=10)
-        qiskit_dev = QiskitDevice2(wires=5, backend=backend, shots=10)
+        qiskit_dev = QiskitDevice(wires=5, backend=backend, shots=10)
 
         @qml.qnode(dev)
         def circuit(x):
@@ -1327,7 +1327,7 @@ class TestExecution:
         """Tests that observables that have non-commuting measurements are
         processed correctly when executed by the Estimator or, in the case of
         qml.Hadamard, executed by the Sampler via expval() or var"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=aer_backend, shots=30000)
+        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend, shots=30000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
@@ -1362,7 +1362,7 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting_counts(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via counts()"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=aer_backend, shots=4000)
+        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend, shots=4000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
@@ -1424,7 +1424,7 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting_samples(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via sample()"""
-        qiskit_dev = QiskitDevice2(wires=3, backend=aer_backend, shots=20000)
+        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend, shots=20000)
 
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
