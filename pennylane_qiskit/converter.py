@@ -1049,8 +1049,8 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
 
 
 def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
-    """Loads a PennyLane ``NoiseModel`` from a Qiskit `NoiseModel
-    <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
+    """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
+    from a Qiskit `NoiseModel <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
@@ -1059,9 +1059,11 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     Keyword Arguments:
         thermal_relaxation (bool): prefer conversion of ``QiskitErrors`` to thermal relaxation errors
             over damping errors. Default is ``False``.
-        gate_times (Dict[str, float]): gate times for building thermal relaxation error.
-            If not provided, the default value of ``1.0 s`` will be used for construction.
         readout_error (bool): include readout error in the converted noise model. Default is ``True``.
+        gate_times (Dict[str, Tuple[Tuple[int], float]]): a dictionary to provide gate times for building
+            thermal relaxation error. Each key will be the instruction name and the corresponding values
+            will be tuple of qubit indices and the time in seconds. If it is not provided or a gate/qubit
+            is missing, then a default value of `1.0 s`` will be used for the specific constructions.
         optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
             transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
         kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``

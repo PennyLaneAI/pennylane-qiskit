@@ -132,25 +132,11 @@ def _process_kraus_ops(
 
         # Note: Inequality here is to priortize thermal-relaxation errors over damping errors.
         if len(nz_values) <= 6 and nz_indice.issubset(kraus_indice_map["ThermalRelaxation"]):
-            nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
-            if np.allclose(
-                nt_values[[(0, 2), (3, 5)]].sum(axis=1), 1.0, rtol=rtol, atol=atol
-            ) and np.isclose(*nt_values[[1, 4]], rtol=rtol, atol=atol):
-                tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
-                if np.isclose(nt_values[[2, 3]].sum(), 0.0, rtol=rtol, atol=atol):
-                    pe, t1 = 0.0, np.inf
-                else:
-                    pe = nt_values[2] / (nt_values[2] + nt_values[3])
-                    t1 = -tg / np.log(1 - (nt_values[3] + nt_values[2]))
-                t2 = (
-                    np.inf
-                    if np.isclose(nt_values[1], 1.0, rtol=rtol, atol=atol)
-                    else (-tg / np.log(nt_values[1]))
-                )
-                kdata = (True, "ThermalRelaxationError", np.round([pe, t1, t2, tg], decimals).real)
-
-        if kwargs.get("thermal_relaxation", True) and kdata is not None:
-            return kdata
+            kdata = _process_thermal_relaxation(
+                choi_matrix, decimals=decimals, atol=atol, rtol=rtol, **kwargs
+            )
+            if kwargs.get("thermal_relaxation", True) and kdata is not None:
+                return kdata
 
         if len(nz_values) == 5 and nz_indice.issubset(kraus_indice_map["AmplitudeDamping"]):
             if np.allclose(
@@ -165,6 +151,43 @@ def _process_kraus_ops(
                 return (True, "PhaseDamping", np.round(1 - nz_values[1] ** 2, decimals).real)
 
     return (False, "QubitChannel", Kraus(Choi(choi_matrix)).data) if not kdata else kdata
+
+
+def _extract_gate_time(gate_data: tuple[tuple[int], float], gate_wires: int) -> float:
+    """Helper method to extract gate time for a quantum error"""
+    tg = 1.0
+    if gate_data is not None:
+        gate_data[0] = (gate_data[0],) if isinstance(int, gate_data[0]) else gate_data[0]
+        if gate_wires in gate_data[0]:
+            tg = gate_data[1]
+    return tg
+
+def _process_thermal_relaxation(choi_matrix, **kwargs):
+    """Computes parameters for thermal relaxation error from a Choi matrix of Kraus matrices"""
+    nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
+    decimals, atol, rtol = tuple(map(kwargs.get, default_option_map))
+
+    kdata = None
+    if np.allclose(
+        nt_values[[(0, 2), (3, 5)]].sum(axis=1), 1.0, rtol=rtol, atol=atol
+    ) and np.isclose(*nt_values[[1, 4]], rtol=rtol, atol=atol):
+        tg = _extract_gate_time(
+            gate_data=kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), None),
+            gate_wires=kwargs.get("gate_wires", None)
+        )
+        if np.isclose(nt_values[[2, 3]].sum(), 0.0, rtol=rtol, atol=atol):
+            pe, t1 = 0.0, np.inf
+        else:
+            pe = nt_values[2] / (nt_values[2] + nt_values[3])
+            t1 = -tg / np.log(1 - (nt_values[3] + nt_values[2]))
+        t2 = (
+            np.inf
+            if np.isclose(nt_values[1], 1.0, rtol=rtol, atol=atol)
+            else (-tg / np.log(nt_values[1]))
+        )
+        kdata = (True, "ThermalRelaxationError", np.round([pe, t1, t2, tg], decimals).real)
+
+    return kdata
 
 
 @lru_cache
@@ -238,7 +261,10 @@ def _process_reset(error_dict: dict, **kwargs) -> dict:
         error_dict["data"] = error_probs[1:] + ([0.0] if len(error_probs[1:]) == 1 else [])
     else:  # uses t1 > t2
         error_dict["name"] = "ThermalRelaxationError"
-        tg = kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), 1.0)
+        tg = _extract_gate_time(
+            gate_data=kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), None),
+            gate_wires=kwargs.get("gate_wires", None)
+        )
         p0 = 1.0 if len(error_probs) == 3 else error_probs[2] / (error_probs[2] + error_probs[3])
         t1 = -tg / np.log(1 - error_probs[2] / p0)
         t2 = (1 / t1 - np.log(1 - 2 * error_probs[1] / (1 - error_probs[2] / p0)) / tg) ** -1
@@ -380,8 +406,10 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     Keyword Arguments:
         thermal_relaxation (bool): prefer conversion of ``QiskitErrors`` to thermal relaxation errors
             over damping errors. Default is ``False``.
-        gate_times (Dict[str, float]): gate times for building thermal relaxation error.
-            If not provided, the default value of ``1.0 s`` will be used for construction.
+        gate_times (Dict[Tuple(str, Tuple[int]), float]): a dictionary to provide gate times for building
+            thermal relaxation error. Each key will be a tuple of instruction name and qubit indices and
+            the corresponding value will be the time in seconds. If it is not provided or is incomplete,
+            a default value of `1.0 s`` will be used for the specific constructions.
         multi_pauli (bool): assume depolarization channel to be multi-qubit. This is currently not
             supported with ``qml.DepolarizationChannel``, which is a single qubit channel.
         readout_error (bool): include readout error in the converted noise model. Default is ``True``.
@@ -410,7 +438,7 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     # Add specific qubit errors
     for gate_name, qubit_dict in noise_model._local_quantum_errors.items():
         for qubits, error in qubit_dict.items():
-            noise_op = _build_qerror_op(error, gate_name=gate_name, **kwargs)
+            noise_op = _build_qerror_op(error, gate_name=gate_name, gate_wires=qubits, **kwargs)
             qerror_dmap[noise_op][qubits].append(qiskit_op_map[gate_name])
 
     # TODO: Add support for the readout error
