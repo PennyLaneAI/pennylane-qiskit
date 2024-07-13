@@ -162,6 +162,7 @@ def _extract_gate_time(gate_data: tuple[tuple[int], float], gate_wires: int) -> 
             tg = gate_data[1]
     return tg
 
+
 def _process_thermal_relaxation(choi_matrix, **kwargs):
     """Computes parameters for thermal relaxation error from a Choi matrix of Kraus matrices"""
     nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
@@ -173,7 +174,7 @@ def _process_thermal_relaxation(choi_matrix, **kwargs):
     ) and np.isclose(*nt_values[[1, 4]], rtol=rtol, atol=atol):
         tg = _extract_gate_time(
             gate_data=kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), None),
-            gate_wires=kwargs.get("gate_wires", None)
+            gate_wires=kwargs.get("gate_wires", None),
         )
         if np.isclose(nt_values[[2, 3]].sum(), 0.0, rtol=rtol, atol=atol):
             pe, t1 = 0.0, np.inf
@@ -263,7 +264,7 @@ def _process_reset(error_dict: dict, **kwargs) -> dict:
         error_dict["name"] = "ThermalRelaxationError"
         tg = _extract_gate_time(
             gate_data=kwargs.get("gate_times", {}).get(kwargs.get("gate_name", None), None),
-            gate_wires=kwargs.get("gate_wires", None)
+            gate_wires=kwargs.get("gate_wires", None),
         )
         p0 = 1.0 if len(error_probs) == 3 else error_probs[2] / (error_probs[2] + error_probs[3])
         t1 = -tg / np.log(1 - error_probs[2] / p0)
