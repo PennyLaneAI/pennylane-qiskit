@@ -202,13 +202,13 @@ class TestLoadNoiseChannels:
         ]
 
     @pytest.mark.parametrize(
-        "gate_times",
+        "t_times, gate_times",
         [
-            {("sx", (0, 1)): 2.0, ("rx", (0,)): 2.5, ("rx", (1,)): 3.0},
-            {("sx", (0,)): 2.0, ("sx", (1,)): 2.5, ("rx", (0, 1)): 3.0},
+            ((0.14, 0.24), {("sx", (0, 1)): 2.0, ("rx", (0,)): 2.5, ("rx", (1,)): 3.0}),
+            ((0.53, 0.22), {("sx", (0,)): 2.0, ("sx", (1,)): 2.5, ("rx", (0, 1)): 3.0}),
         ],
     )
-    def test_thermal_gate_times(self, gate_times):
+    def test_thermal_gate_times(self, t_times, gate_times):
         """Tests that a quantum error can be correctly converted into a PennyLane QubitChannel."""
 
         pl_channels, pl_vals = [], []
@@ -217,12 +217,14 @@ class TestLoadNoiseChannels:
             gate, wires = gate_wires
             for wire in wires:
                 noise_model.add_quantum_error(
-                    noise.thermal_relaxation_error(0.14, 0.24, time, 0.02), gate, (wire,)
+                    noise.thermal_relaxation_error(*t_times, time, 0.02), gate, (wire,)
                 )
-            pl_channels.append(qml.ThermalRelaxationError(0.02, 0.14, 0.24, time, wires=AnyWires))
+            pl_channels.append(qml.ThermalRelaxationError(0.02, *t_times, time, wires=AnyWires))
             pl_vals.append({(wire,): [gate.upper()] for wire in wires})
 
-        model_map, _ = _build_noise_model_map(noise_model, gate_times=gate_times)
+        model_map, _ = _build_noise_model_map(
+            noise_model, gate_times=gate_times, options={"decimals": 8, "atol": 1e-8}
+        )
 
         assert list(model_map.keys()) == pl_channels
         assert list(model_map.values()) == pl_vals
