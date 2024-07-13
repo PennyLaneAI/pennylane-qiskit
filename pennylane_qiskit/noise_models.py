@@ -156,17 +156,35 @@ def _process_kraus_ops(
 def _extract_gate_time(gate_data: dict, gate_name: str, gate_wires: int) -> float:
     """Helper method to extract gate time for a quantum error"""
     tg = 1.0
-    if fgates := dict(filter(lambda item: item[0][0] == gate_name, gate_data)):
-        for g_d, g_t in fgates.items():
-            g_d[1] = (g_d[1],) if isinstance(int, g_d[1]) else g_d[1]
-            if gate_wires in g_d:
+    if fgates := dict(filter(lambda item: item[0][0] == gate_name, gate_data.items())):
+        for (_, w_r), g_t in fgates.items():
+            if w_r in gate_wires if isinstance(w_r, int) else set(gate_wires).issubset(w_r):
                 tg = g_t
                 break
     return tg
 
 
-def _process_thermal_relaxation(choi_matrix, **kwargs):
-    """Computes parameters for thermal relaxation error from a Choi matrix of Kraus matrices"""
+def _process_thermal_relaxation(choi_matrix, **kwargs) -> Tuple[bool, str, np.ndarray] or None:
+    r"""Computes the parameters for thermal relaxation error from a Choi matrix of Kraus matrices.
+    
+    Args:
+        choi_matrix (ndarray): Choi matrix of the channel to be processed.
+
+    For plugin developers: This assumes :math:`T_1 < T_2 \leq 2 T_1`, where the error is expressed 
+    as a general non-unitary Kraus error channel.
+
+    .. math::
+
+        \begin{bmatrix}
+            1 - p_e p_{r} & 0 & 0 & \exp{-T_g/T_2} \\
+            0 & p_e p_{r} & 0 & 0 \\
+            0 & 0 & (1 - p_e) p_{r} & 0 \\
+            \exp{-T_g/T_2} & 0 & 0 & 1 - (1 - p_e) p_{r}
+        \end{bmatrix}
+
+        Parameters :math:`p_e` is the excited-state population and :math:`p_r = 1 - \exp{-T_g/T_1}`
+        with :math:`T_g` as gate time and :math:`T_1\ (T_2)` as the relaxation (dephasing) constants. 
+    """
     nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
     decimals, atol, rtol = tuple(map(kwargs.get, default_option_map))
 
@@ -249,7 +267,7 @@ def _process_depolarization(error_dict: dict, multi_pauli: bool = False) -> dict
 
 
 def _process_reset(error_dict: dict, **kwargs) -> dict:
-    """Checks parity of a qunatum error with ``Reset`` instruction to a PennyLane Channel.
+    r"""Checks parity of a qunatum error with ``Reset`` instruction to a PennyLane Channel.
 
     Args:
         error_dict (dict): error dictionary for the quantum error
@@ -257,6 +275,9 @@ def _process_reset(error_dict: dict, **kwargs) -> dict:
 
     Returns:
         dict: An updated error dictionary based on parity with existing PennyLane channel.
+
+    For plugin developers: second branch of the condition assumes reset error expressed
+        from a thermal relaxation error with :math:`T_2 \leq T_1`.
     """
     error_probs = error_dict["probs"]
 
@@ -351,7 +372,7 @@ def _build_qerror_op(error, **kwargs) -> qml.operation.Operation:
 
     Args:
         error (QuantumError): Quantum error object
-        kwargs: Optional keyword arguments used during conversion
+        kwargs: Optional keyword arguments used during conversion.
 
     Returns:
         qml.operation.Channel: converted PennyLane quantum channel which is
@@ -411,15 +432,15 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     Keyword Arguments:
         thermal_relaxation (bool): prefer conversion of ``QiskitErrors`` to thermal relaxation errors
             over damping errors. Default is ``False``.
+        readout_error (bool): include readout error in the converted noise model. Default is ``True``.
         gate_times (Dict[Tuple(str, Tuple[int]), float]): a dictionary to provide gate times for building
             thermal relaxation error. Each key will be a tuple of instruction name and qubit indices and
             the corresponding value will be the time in seconds. If it is not provided or a gate/qubit
             is missing, then a default value of `1.0 s`` will be used for the specific constructions.
-        multi_pauli (bool): assume depolarization channel to be multi-qubit. This is currently not
-            supported with ``qml.DepolarizationChannel``, which is a single qubit channel.
-        readout_error (bool): include readout error in the converted noise model. Default is ``True``.
         optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
             transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
+        multi_pauli (bool): assume depolarization channel to be multi-qubit. This is currently not
+            supported with ``qml.DepolarizationChannel``, which is a single qubit channel.
         options (dict[str, Union[int, float]]): optional parameters related to tolerance and rounding:
 
             - decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
