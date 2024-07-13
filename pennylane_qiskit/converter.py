@@ -1060,9 +1060,9 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         thermal_relaxation (bool): prefer conversion of ``QiskitErrors`` to thermal relaxation errors
             over damping errors. Default is ``False``.
         readout_error (bool): include readout error in the converted noise model. Default is ``True``.
-        gate_times (Dict[str, Tuple[Tuple[int], float]]): a dictionary to provide gate times for building
-            thermal relaxation error. Each key will be the instruction name and the corresponding values
-            will be tuple of qubit indices and the time in seconds. If it is not provided or a gate/qubit
+        gate_times (Dict[Tuple(str, Tuple[int]), float]): a dictionary to provide gate times for building
+            thermal relaxation error. Each key will be a tuple of instruction name and qubit indices and
+            the corresponding value will be the time in seconds. If it is not provided or a gate/qubit
             is missing, then a default value of `1.0 s`` will be used for the specific constructions.
         optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
             transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
