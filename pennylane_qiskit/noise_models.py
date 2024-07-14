@@ -436,7 +436,7 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
         gate_times (Dict[Tuple(str, Tuple[int]), float]): a dictionary to provide gate times for building
             thermal relaxation error. Each key will be a tuple of instruction name and qubit indices and
             the corresponding value will be the time in seconds. If it is not provided or a gate/qubit
-            is missing, then a default value of `1.0 s`` will be used for the specific constructions.
+            is missing, then a default value of ``1.0 s`` will be used for the specific constructions.
         optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
             transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
         multi_pauli (bool): assume depolarization channel to be multi-qubit. This is currently not

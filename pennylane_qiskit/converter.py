@@ -1063,7 +1063,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         gate_times (Dict[Tuple(str, Tuple[int]), float]): a dictionary to provide gate times for building
             thermal relaxation error. Each key will be a tuple of instruction name and qubit indices and
             the corresponding value will be the time in seconds. If it is not provided or a gate/qubit
-            is missing, then a default value of `1.0 s`` will be used for the specific constructions.
+            is missing, then a default value of ``1.0 s`` will be used for the specific constructions.
         optimize (bool): controls if a contraction order optimization is used for ``einsum`` while
             transforming Kraus operators to a Choi matrix, wherever required. Default is ``False``.
         kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
