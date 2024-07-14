@@ -1094,11 +1094,11 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
         >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
         >>> noise_model = noise.NoiseModel()
-        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry']) # rz/ry gates get error_1
-        >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx']) # cx gates get error_2
+        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry'])
+        >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
         >>> load_noise_model(noise_model)
         NoiseModel({
-            OpIn(['RZ', 'RY']): DepolarizingChannel(p=0.0007499999999999174)
+            OpIn(['RZ', 'RY']): DepolarizingChannel(p=0.00075)
             OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
         })
 
@@ -1129,17 +1129,14 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
         equivalent_pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
     """
-
     qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
     model_map = {}
     for error, wires_map in qerror_dmap.items():
         conditions = []
-        cwires = []
         for wires, operations in wires_map.items():
             cond = qml.noise.op_in(operations)
             if wires != AnyWires:
                 cond &= WiresIn(wires)
-                cwires.append(wires)
             conditions.append(cond)
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
 

@@ -209,7 +209,7 @@ class TestLoadNoiseChannels:
         ],
     )
     def test_thermal_gate_times(self, t_times, gate_times):
-        """Tests that a quantum error can be correctly converted into a PennyLane QubitChannel."""
+        """Tests that thermal relaxation computation uses provided gate times."""
 
         pl_channels, pl_vals = [], []
         noise_model = noise.NoiseModel()
@@ -228,3 +228,26 @@ class TestLoadNoiseChannels:
 
         assert list(model_map.keys()) == pl_channels
         assert list(model_map.values()) == pl_vals
+
+    @pytest.mark.parametrize(
+        "combination, p_error",
+        [
+            (lambda err1, err2: err1.compose(err2), 0.052),
+            (lambda err1, err2: err1.tensor(err2), 0.037),
+            (lambda err1, err2: err1.expand(err2), 0.094),
+        ],
+    )
+    def test_composition_error_ops(self, combination, p_error):
+        """Tests that combination of quantum errors can be correctly converted into a PennyLane QubitChannel."""
+
+        bit_flip = noise.pauli_error([("X", p_error), ("I", 1 - p_error)])
+        phase_flip = noise.pauli_error([("Z", p_error), ("I", 1 - p_error)])
+
+        combined_error = combination(bit_flip, phase_flip)
+        pl_op_from_qiskit = _build_qerror_op(combined_error)
+
+        choi_mat1 = _kraus_to_choi(Kraus(combined_error))
+        choi_mat2 = _kraus_to_choi(
+            Kraus(list(pl_op_from_qiskit.compute_kraus_matrices(*pl_op_from_qiskit.data)))
+        )
+        assert np.allclose(choi_mat1, choi_mat2)
