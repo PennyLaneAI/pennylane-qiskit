@@ -1070,9 +1070,9 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
             instead of the complete list of matrices. Default is ``True``.
         options (dict[str, Union[int, float]]): optional parameters related to tolerance and rounding:
 
-            - decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
-            - atol (float): the relative tolerance parameter. Default value is ``1e-05``.
-            - rtol (float): the absolute tolernace parameters. Defualt value is ``1e-08``.
+            - **decimals** (*int*): number of decimal places to round the Kraus matrices. Default is ``10``.
+            - **atol** (*float*): the relative tolerance parameter. Default value is ``1e-05``.
+            - **rtol** (*float*): the absolute tolernace parameters. Defualt value is ``1e-08``.
 
     Returns:
         qml.NoiseModel: An equivalent noise model constructed in PennyLane

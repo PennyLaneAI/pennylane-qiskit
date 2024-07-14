@@ -249,10 +249,9 @@ def _process_depolarization(error_dict: dict, multi_pauli: bool = False) -> dict
         num_terms = 4**num_wires
         id_factor = num_terms / (num_terms - 1)
         prob_iden = error_dict["probs"][error_dict["data"].index(["I" * num_wires])]
-        param = id_factor * (1 - prob_iden)
         error_dict["name"] = "DepolarizingChannel"
-        error_dict["data"] = param / id_factor
-        error_dict["probs"] = param
+        error_dict["data"] = 1 - prob_iden
+        error_dict["probs"] = id_factor * (1 - prob_iden)
         return error_dict
 
     error_dict["name"] = "QubitChannel"
