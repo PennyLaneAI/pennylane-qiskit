@@ -33,6 +33,7 @@ from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
     load_pauli_op,
+    load_noise_model,
     load_qasm,
     load_qasm_from_file,
     map_wires,
@@ -2206,3 +2207,79 @@ class TestLoadPauliOp:
         match = "The operator 123 is not a valid Qiskit SparsePauliOp."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)
+
+
+# pylint:disable = import-outside-toplevel, too-few-public-methods
+class TestLoadNoiseModel:
+    """Tests for :func:`load_noise_models()` function."""
+
+    qiksit = pytest.importorskip("qiskit", "1.0.0")
+
+    @staticmethod
+    def _kraus_to_choi(krau_mats, optimize=False) -> np.ndarray:
+        r"""Transforms Kraus representation of a channel to its Choi representation."""
+        kraus_vecs = np.array([kraus.ravel(order="F") for kraus in krau_mats])
+        return np.einsum("ij,ik->jk", kraus_vecs, kraus_vecs.conj(), optimize=optimize)
+
+    def test_build_noise_model(self):
+        """Tests that _build_noise_model_map constructs correct model map for a noise model"""
+
+        from qiskit.providers.fake_provider import FakeOpenPulse2Q
+        from qiskit_aer.noise import NoiseModel
+        from qiskit.quantum_info.operators.channel import Kraus
+        from pennylane.noise import op_in, wires_in, partial_wires
+        from pennylane.operation import AnyWires
+
+        noise_model = NoiseModel.from_backend(FakeOpenPulse2Q())
+        loaded_noise_model = load_noise_model(noise_model)
+
+        pl_model_map = {
+            op_in("Identity")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.0, t1=26981.9403362283, t2=26034.6676428009, tq=1.0, wires=AnyWires
+            ),
+            op_in("Identity")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.0, t1=30732.034088541, t2=28335.6514829973, tq=1.0, wires=AnyWires
+            ),
+            (op_in("U1") & wires_in(0))
+            | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
+                p=0.08999999999999997, wires=AnyWires
+            ),
+            op_in("U2")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.4998455776, t1=7.8227384666, t2=7.8226559459, tq=1.0, wires=AnyWires
+            ),
+            op_in("U2")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.4998644198, t1=7.8227957211, t2=7.8226273195, tq=1.0, wires=AnyWires
+            ),
+            op_in("U3")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.4996911588, t1=7.8227934813, t2=7.8226284393, tq=1.0, wires=AnyWires
+            ),
+            op_in("U3")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.4997288404, t1=7.8229079927, t2=7.8225711871, tq=1.0, wires=AnyWires
+            ),
+            op_in("CNOT")
+            & wires_in([0, 1]): qml.QubitChannel(
+                Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
+                wires=AnyWires,
+            ),
+        }
+
+        pl_noise_model = qml.NoiseModel(
+            {fcond: partial_wires(noise) for fcond, noise in pl_model_map.items()}
+        )
+
+        for (pl_k, pl_v), (qk_k, qk_v) in zip(
+            pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
+        ):
+            pl_op, qk_op = pl_v(AnyWires), qk_v(AnyWires)
+            assert repr(pl_k) == repr(qk_k)
+            assert isinstance(qk_op, qml.QubitChannel)
+
+            choi_mat1 = self._kraus_to_choi(qk_op.data)
+            choi_mat2 = self._kraus_to_choi(pl_op.compute_kraus_matrices(*pl_op.data))
+            assert np.allclose(choi_mat1, choi_mat2)

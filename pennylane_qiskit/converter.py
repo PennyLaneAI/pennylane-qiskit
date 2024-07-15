@@ -21,6 +21,8 @@ from functools import partial, reduce
 
 import numpy as np
 import qiskit.qasm2
+from pennylane.noise.conditionals import WiresIn, _rename
+from pennylane.operation import AnyWires
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
@@ -35,6 +37,8 @@ from sympy import lambdify
 import pennylane as qml
 import pennylane.ops as pennylane_ops
 from pennylane_qiskit.qiskit_device import QISKIT_OPERATION_MAP
+
+from .noise_models import _build_noise_model_map
 
 # pylint: disable=too-many-instance-attributes
 
@@ -1042,3 +1046,94 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
         condition_res = expr_func(meas1, clreg2)
 
     return condition_res
+
+
+def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
+    """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
+    from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
+
+    Args:
+        noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
+        kwargs: Optional keyword arguments for conversion of the noise model.
+
+    Keyword Arguments:
+        quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``.
+        readout_error (bool): include readout errors in the converted noise model. Default is ``True``.
+        kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
+            instead of the complete list of matrices. Default is ``True``.
+        decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
+
+    Returns:
+        pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
+
+    Raises:
+        ValueError: When an encountered quantum error cannoted be converted.
+
+    .. note::
+
+        Currently, PennyLane noise models does not support readout errors, so those will be skipped during conversion.
+
+    **Example**
+
+    Consider the following noise model constructed in Qiskit:
+
+    .. code-block:: python
+
+        >>> import qiskit.providers.aer.noise as noise
+        >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
+        >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
+        >>> noise_model = noise.NoiseModel()
+        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry'])
+        >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
+        >>> load_noise_model(noise_model)
+        NoiseModel({
+            OpIn(['RZ', 'RY']): QubitChannel(Klist=Tensor(4, 4, 4))
+            OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
+        })
+
+    Equivalently, in PennyLane this will be:
+
+    .. code-block:: python
+
+        import numpy as np
+        import pennylane as qml
+        import itertools as it
+        import functools as ft
+
+        pauli_mats1 = list(map(qml.matrix, [qml.I(0), qml.X(0), qml.Y(0), qml.Z(0)]))
+        pauli_mats2 = list(
+            ft.reduce(np.kron, prod, 1.0) for prod in it.product(pauli_mats1, repeat=2)
+        )
+
+        pauli_prob1 = np.sqrt(error_1.probabilities)
+        pauli_prob2 = np.sqrt(error_2.probabilities)
+
+        kraus_ops1 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob1, pauli_mats1)]
+        kraus_ops2 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2)]
+
+        c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY)
+        c1 = qml.noise.op_eq(qml.CNOT)
+
+        n0 = qml.noise.partial_wires(qml.QubitChanel(kraus_ops1))
+        n1 = qml.noise.partial_wires(qml.QubitChanel(kraus_ops2))
+
+        equivalent_pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
+    """
+    qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
+    model_map = {}
+    for error, wires_map in qerror_dmap.items():
+        conditions = []
+        for wires, operations in wires_map.items():
+            cond = qml.noise.op_in(operations)
+            if wires != AnyWires:
+                cond &= WiresIn(wires)
+            conditions.append(cond)
+        fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
+
+        noise = qml.noise.partial_wires(error)
+        if isinstance(error, qml.QubitChannel) and kwargs.get("kraus_shape", True):
+            noise = _rename(f"QubitChannel(Klist=Tensor{qml.math.shape(error.data)})")(noise)
+
+        model_map[fcond] = noise
+
+    return qml.NoiseModel(model_map)
