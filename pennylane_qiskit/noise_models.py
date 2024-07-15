@@ -166,11 +166,11 @@ def _extract_gate_time(gate_data: dict, gate_name: str, gate_wires: int) -> floa
 
 def _process_thermal_relaxation(choi_matrix, **kwargs) -> Tuple[bool, str, np.ndarray] or None:
     r"""Computes the parameters for thermal relaxation error from a Choi matrix of Kraus matrices.
-    
+
     Args:
         choi_matrix (ndarray): Choi matrix of the channel to be processed.
 
-    For plugin developers: This assumes :math:`T_1 < T_2 \leq 2 T_1`, where the error is expressed 
+    For plugin developers: This assumes :math:`T_1 < T_2 \leq 2 T_1`, where the error is expressed
     as a general non-unitary Kraus error channel.
 
     .. math::
@@ -183,7 +183,7 @@ def _process_thermal_relaxation(choi_matrix, **kwargs) -> Tuple[bool, str, np.nd
         \end{bmatrix}
 
         Parameters :math:`p_e` is the excited-state population and :math:`p_r = 1 - \exp{-T_g/T_1}`
-        with :math:`T_g` as gate time and :math:`T_1\ (T_2)` as the relaxation (dephasing) constants. 
+        with :math:`T_g` as gate time and :math:`T_1\ (T_2)` as the relaxation (dephasing) constants.
     """
     nt_values = choi_matrix[tuple(zip(*sorted(kraus_indice_map["ThermalRelaxation"])))]
     decimals, atol, rtol = tuple(map(kwargs.get, default_option_map))
