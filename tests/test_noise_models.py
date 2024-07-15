@@ -16,9 +16,9 @@ This module contains tests for converting Qiskit NoiseModels to PennyLane NoiseM
 """
 from functools import reduce
 
+import itertools as it
 import pytest
 import numpy as np
-import itertools as it
 import pennylane as qml
 from pennylane.operation import AnyWires
 
