@@ -1118,8 +1118,8 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
                 repeat=2
             )
         ]
-        pauli_prob = error_2.probabilities
-        kraus_ops = [np.sqrt(prob) * kraus_op for prob, kraus_op in zip(pauli_prob, pauli_mats)]
+        pauli_prob = np.sqrt(error_2.probabilities)
+        kraus_ops = [prob * kraus_op for prob, kraus_op in zip(pauli_prob, pauli_mats)]
 
         c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY)
         c1 = qml.noise.op_eq(qml.CNOT)
