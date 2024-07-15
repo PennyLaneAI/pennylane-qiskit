@@ -22,6 +22,7 @@ import warnings
 import inspect
 from typing import Union, Callable, Tuple, Sequence
 from contextlib import contextmanager
+from functools import wraps
 
 import numpy as np
 import pennylane as qml
@@ -43,14 +44,41 @@ from pennylane.devices.preprocess import (
     validate_measurements,
     validate_device_wires,
 )
-from pennylane.measurements import ExpectationMP, VarianceMP
 
+from pennylane.measurements import ExpectationMP, VarianceMP
+from pennylane.devices.modifiers.simulator_tracking import simulator_tracking
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
 QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
+
+
+def custom_simulator_tracking(cls):
+    """Decorator that adds custom tracking to the device class."""
+
+    cls = simulator_tracking(cls)
+    tracked_execute = cls.execute
+
+    @wraps(tracked_execute)
+    def execute(self, circuits, execution_config=DefaultExecutionConfig):
+        results = tracked_execute(self, circuits, execution_config)
+        if self.tracker.active:
+            res = []
+            del self.tracker.totals["simulations"]
+            del self.tracker.history["simulations"]
+            del self.tracker.latest["simulations"]
+            for r in self.tracker.history["results"]:
+                while isinstance(r, (list, tuple)) and len(r) == 1:
+                    r = r[0]
+                res.append(r)
+            self.tracker.history["results"] = res
+        return results
+
+    cls.execute = execute
+
+    return cls
 
 
 # pylint: disable=protected-access
@@ -239,6 +267,7 @@ def split_execution_types(
     return tapes, reorder_fn
 
 
+@custom_simulator_tracking
 class QiskitDevice(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 

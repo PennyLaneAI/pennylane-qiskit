@@ -142,5 +142,5 @@ class RemoteDevice(QiskitDevice):
 
     short_name = "qiskit.remote"
 
-    def __init__(self, wires, backend, provider=None, shots=1024, **kwargs):
-        super().__init__(wires, provider=provider, backend=backend, shots=shots, **kwargs)
+    def __init__(self, wires, backend, shots=1024, **kwargs):
+        super().__init__(wires, backend=backend, shots=shots, **kwargs)
