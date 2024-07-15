@@ -1050,7 +1050,7 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
 
 def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
-    from a Qiskit `NoiseModel <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
+    from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
@@ -1075,7 +1075,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
             - **rtol** (*float*): the absolute tolernace parameters. Defualt value is ``1e-08``.
 
     Returns:
-        qml.NoiseModel: An equivalent noise model constructed in PennyLane
+        pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
 
     Raises:
         ValueError: When an encountered quantum error cannoted be converted.
