@@ -64,7 +64,6 @@ qiskit_op_map = {
     "sxdg": qml.adjoint(qml.SX),
     "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
 }
-default_option_map = {"decimals": 10, "atol": 1e-8, "rtol": 1e-5}
 
 
 def _build_qerror_op(error, **kwargs) -> qml.QubitChannel:
