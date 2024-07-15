@@ -2,6 +2,10 @@
 
 ### New features since last release
 
+* Added the support for converting Qiskit noise models to
+  PennyLane ``NoiseModels`` using ``load_noise_model``.
+  [(#569)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/569)
+
 ### Improvements 🛠
 
 ### Breaking changes 💔
@@ -15,6 +19,9 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Utkarsh Azad
+
 
 ---
 # Release 0.37.0
