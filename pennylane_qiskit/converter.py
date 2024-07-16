@@ -1054,7 +1054,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
-        kwargs: Optional keyword arguments for conversion of the noise model
+        kwargs: Optional keyword arguments for the conversion of the noise model
 
     Keyword Arguments:
         quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``
@@ -1071,7 +1071,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
     .. note::
 
-        Currently, PennyLane noise models does not support readout errors, so those will be skipped during conversion.
+        Currently, PennyLane noise models do not support readout errors, so those will be skipped during conversion.
 
     **Example**
 

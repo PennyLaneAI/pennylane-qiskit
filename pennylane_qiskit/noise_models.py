@@ -85,7 +85,8 @@ def _build_qerror_op(error, **kwargs) -> qml.QubitChannel:
 
 
 def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
-    """Builds a noise model map from which a PennyLane noise model can be constructed efficiently.
+    """Builds a noise model map from a Qiskit noise model. This noise model map can be used
+    to efficiently construct a PennyLane noise model.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): Qiskit's noise model
@@ -97,7 +98,7 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
         decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``
 
     Returns:
-        (dict, dict): returns mappings for ecountered quantum errors and readout errors.
+        (dict, dict): returns mappings for the given quantum errors and readout errors in the ``noise_model``.
 
     For plugin developers: noise model map tuple consists of following two (nested) mappings:
         * qerror_dmap: noise_operation -> wires -> target_gate
