@@ -159,7 +159,7 @@ class TestLoadNoiseChannels:
         ],
     )
     def test_build_model_map(self, depol1, depol2, exc_pop):
-        """Tests that _build_noise_model_map constructs correct model map for a noise model"""
+        """Tests that _build_noise_model_map constructs correct model map for a Qiskit noise model"""
         error_1 = noise.depolarizing_error(depol1, 1)
         error_2 = noise.depolarizing_error(depol2, 2)
         error_3 = noise.phase_amplitude_damping_error(0.14, 0.24, excited_state_population=exc_pop)
@@ -215,7 +215,7 @@ class TestLoadNoiseChannels:
         ],
     )
     def test_composition_error_ops(self, combination, p_error):
-        """Tests that combination of quantum errors can be correctly converted into a PennyLane QubitChannel."""
+        """Tests that a combination of quantum errors can be correctly converted into a PennyLane QubitChannel."""
 
         bit_flip = noise.pauli_error([("X", p_error), ("I", 1 - p_error)])
         phase_flip = noise.pauli_error([("Z", p_error), ("I", 1 - p_error)])

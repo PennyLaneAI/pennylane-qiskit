@@ -2222,7 +2222,7 @@ class TestLoadNoiseModel:
         return np.einsum("ij,ik->jk", kraus_vecs, kraus_vecs.conj(), optimize=optimize)
 
     def test_build_noise_model(self):
-        """Tests that _build_noise_model_map constructs correct model map for a noise model"""
+        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
 
         from qiskit.providers.fake_provider import FakeOpenPulse2Q
         from qiskit_aer.noise import NoiseModel

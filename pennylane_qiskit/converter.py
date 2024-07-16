@@ -1057,11 +1057,9 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         kwargs: Optional keyword arguments for the conversion of the noise model
 
     Keyword Arguments:
-        quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``
-        readout_error (bool): include readout errors in the converted noise model. Default is ``True``
         kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
             instead of the complete list of matrices. Default is ``True``
-        decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``
+        decimal_places (int): number of decimal places to round the Kraus matrices. Default is ``10``
 
     Returns:
         pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
@@ -1077,47 +1075,25 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
     Consider the following noise model constructed in Qiskit:
 
-    .. code-block:: python
+    >>> import qiskit.providers.aer.noise as noise
+    >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
+    >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
+    >>> noise_model = noise.NoiseModel()
+    >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry'])
+    >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
+    >>> load_noise_model(noise_model)
+    NoiseModel({
+        OpIn(['RZ', 'RY']): QubitChannel(Klist=Tensor(4, 4, 4))
+        OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
+    })
 
-        >>> import qiskit.providers.aer.noise as noise
-        >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
-        >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
-        >>> noise_model = noise.NoiseModel()
-        >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry'])
-        >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
-        >>> load_noise_model(noise_model)
-        NoiseModel({
-            OpIn(['RZ', 'RY']): QubitChannel(Klist=Tensor(4, 4, 4))
-            OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
-        })
+    This noise model can be converted into PennyLane using:
 
-    Equivalently, in PennyLane this will be:
-
-    .. code-block:: python
-
-        import numpy as np
-        import pennylane as qml
-        import itertools as it
-        import functools as ft
-
-        pauli_mats1 = list(map(qml.matrix, [qml.I(0), qml.X(0), qml.Y(0), qml.Z(0)]))
-        pauli_mats2 = list(
-            ft.reduce(np.kron, prod, 1.0) for prod in it.product(pauli_mats1, repeat=2)
-        )
-
-        pauli_prob1 = np.sqrt(error_1.probabilities)
-        pauli_prob2 = np.sqrt(error_2.probabilities)
-
-        kraus_ops1 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob1, pauli_mats1)]
-        kraus_ops2 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2)]
-
-        c0 = qml.noise.op_eq(qml.RZ) | qml.noise.op_eq(qml.RY)
-        c1 = qml.noise.op_eq(qml.CNOT)
-
-        n0 = qml.noise.partial_wires(qml.QubitChanel(kraus_ops1))
-        n1 = qml.noise.partial_wires(qml.QubitChanel(kraus_ops2))
-
-        equivalent_pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
+    >>> load_noise_model(noise_model)
+    NoiseModel({
+        OpIn(['RZ', 'RY']): QubitChannel(Klist=Tensor(4, 4, 4))
+        OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
+    })
     """
     qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
     model_map = {}
