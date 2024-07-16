@@ -1054,14 +1054,14 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
-        kwargs: Optional keyword arguments for conversion of the noise model.
+        kwargs: Optional keyword arguments for conversion of the noise model
 
     Keyword Arguments:
-        quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``.
-        readout_error (bool): include readout errors in the converted noise model. Default is ``True``.
+        quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``
+        readout_error (bool): include readout errors in the converted noise model. Default is ``True``
         kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
-            instead of the complete list of matrices. Default is ``True``.
-        decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
+            instead of the complete list of matrices. Default is ``True``
+        decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``
 
     Returns:
         pennylane.NoiseModel: An equivalent noise model constructed in PennyLane

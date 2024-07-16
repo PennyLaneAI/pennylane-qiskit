@@ -67,15 +67,14 @@ qiskit_op_map = {
 
 
 def _build_qerror_op(error, **kwargs) -> qml.QubitChannel:
-    """Builds an PennyLane error operation from a Qiksit's QuantumError object.
+    """Builds a PennyLane error channel from a Qiksit's QuantumError object.
 
     Args:
         error (QuantumError): Quantum error object
-        kwargs: Optional keyword arguments used for conversion.
+        kwargs: Optional keyword arguments used for conversion
 
     Returns:
-        qml.QubitChannel: converted PennyLane quantum channel which is
-            equivalent to the given Qiksit's ``QuantumError`` object
+        qml.QubitChannel: an equivalent PennyLane channel operation
     """
     try:
         kraus_matrices = np.round(Kraus(error).data, decimals=kwargs.get("decimals", 10))
@@ -86,21 +85,21 @@ def _build_qerror_op(error, **kwargs) -> qml.QubitChannel:
 
 
 def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
-    """Builds noise model maps from which noise model can be constructed efficiently.
+    """Builds a noise model map from which a PennyLane noise model can be constructed efficiently.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): Qiskit's noise model
         kwargs: Optional keyword arguments for providing extra information
 
     Keyword Arguments:
-        quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``.
-        readout_error (bool): include readout errors in the converted noise model. Default is ``True``.
-        decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``.
+        quantum_error (bool): include quantum errors in the converted noise model. Default is ``True``
+        readout_error (bool): include readout errors in the converted noise model. Default is ``True``
+        decimals (int): number of decimal places to round the Kraus matrices. Default is ``10``
 
     Returns:
         (dict, dict): returns mappings for ecountered quantum errors and readout errors.
 
-    For plugin developers: noise model map tuple consists of following two mappings:
+    For plugin developers: noise model map tuple consists of following two (nested) mappings:
         * qerror_dmap: noise_operation -> wires -> target_gate
         * rerror_dmap: noise_operation -> wires -> target_measurement
     """
