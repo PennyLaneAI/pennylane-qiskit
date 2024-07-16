@@ -98,7 +98,8 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
     Returns:
         (dict, dict): returns mappings for the given quantum errors and readout errors in the ``noise_model``.
 
-    For plugin developers: noise model map tuple consists of following two (nested) mappings:
+    For plugin developers: noise model map tuple consists of following two (nested) mappings for
+    quantum errors (qerror_dmap) and readout errors (rerror_dmap):
         * qerror_dmap: noise_operation -> wires -> target_gate
 
             .. code-block:: python
@@ -115,7 +116,7 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
                     }
                 }
 
-        * rerror_dmap: noise_operation -> wires -> target_measurement (TODO)
+        * rerror_dmap: noise_operation -> wires -> target_measurement
     """
     qerror_dmap = defaultdict(lambda: defaultdict(list))
 

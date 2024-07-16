@@ -1095,6 +1095,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
     })
     """
+    # Build model maps for quantum error and readout errors in the noise model
     qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
     model_map = {}
     for error, wires_map in qerror_dmap.items():

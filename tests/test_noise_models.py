@@ -169,7 +169,7 @@ class TestLoadNoiseChannels:
         noise_model.add_all_qubit_quantum_error(error_2, ["cx"])
         noise_model.add_all_qubit_quantum_error(error_3, ["ry", "rx"])
 
-        model_map, _ = _build_noise_model_map(noise_model)
+        qerror_dmap, _ = _build_noise_model_map(noise_model)
 
         pl_channels = [
             qml.QubitChannel(
@@ -195,12 +195,12 @@ class TestLoadNoiseChannels:
                 wires=AnyWires,
             ),
         ]
-        for key, channel in zip(list(model_map.keys()), pl_channels):
+        for key, channel in zip(list(qerror_dmap.keys()), pl_channels):
             choi_mat1 = self._kraus_to_choi(key.data)
             choi_mat2 = self._kraus_to_choi(channel.data)
             assert np.allclose(choi_mat1, choi_mat2)
 
-        assert list(model_map.values()) == [
+        assert list(qerror_dmap.values()) == [
             {AnyWires: ["RZ", "SX", "X"]},
             {AnyWires: ["CNOT"]},
             {AnyWires: ["RY", "RX"]},
