@@ -1081,11 +1081,6 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     >>> noise_model = noise.NoiseModel()
     >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry'])
     >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
-    >>> load_noise_model(noise_model)
-    NoiseModel({
-        OpIn(['RZ', 'RY']): QubitChannel(Klist=Tensor(4, 4, 4))
-        OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
-    })
 
     This noise model can be converted into PennyLane using:
 
