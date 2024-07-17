@@ -74,7 +74,7 @@ def _build_qerror_op(error, **kwargs) -> qml.QubitChannel:
         kwargs: Optional keyword arguments used for conversion
 
     Returns:
-        qml.QubitChannel: an equivalent PennyLane channel operation
+        qml.QubitChannel: an equivalent PennyLane error channel
     """
     try:
         kraus_matrices = np.round(Kraus(error).data, decimals=kwargs.get("decimals", 10))
