@@ -2236,11 +2236,11 @@ class TestLoadNoiseModel:
         pl_model_map = {
             op_in("Identity")
             & wires_in(0): qml.ThermalRelaxationError(
-                pe=0.0, t1=26981.9403362283, t2=26034.6676428009, tq=1.0, wires=AnyWires
+                pe=0.0, t1=26981.9403362283, t2=26034.6676428009, tg=1.0, wires=AnyWires
             ),
             op_in("Identity")
             & wires_in(1): qml.ThermalRelaxationError(
-                pe=0.0, t1=30732.034088541, t2=28335.6514829973, tq=1.0, wires=AnyWires
+                pe=0.0, t1=30732.034088541, t2=28335.6514829973, tg=1.0, wires=AnyWires
             ),
             (op_in("U1") & wires_in(0))
             | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
@@ -2248,19 +2248,19 @@ class TestLoadNoiseModel:
             ),
             op_in("U2")
             & wires_in(0): qml.ThermalRelaxationError(
-                pe=0.4998455776, t1=7.8227384666, t2=7.8226559459, tq=1.0, wires=AnyWires
+                pe=0.4998455776, t1=7.8227384666, t2=7.8226559459, tg=1.0, wires=AnyWires
             ),
             op_in("U2")
             & wires_in(1): qml.ThermalRelaxationError(
-                pe=0.4998644198, t1=7.8227957211, t2=7.8226273195, tq=1.0, wires=AnyWires
+                pe=0.4998644198, t1=7.8227957211, t2=7.8226273195, tg=1.0, wires=AnyWires
             ),
             op_in("U3")
             & wires_in(0): qml.ThermalRelaxationError(
-                pe=0.4996911588, t1=7.8227934813, t2=7.8226284393, tq=1.0, wires=AnyWires
+                pe=0.4996911588, t1=7.8227934813, t2=7.8226284393, tg=1.0, wires=AnyWires
             ),
             op_in("U3")
             & wires_in(1): qml.ThermalRelaxationError(
-                pe=0.4997288404, t1=7.8229079927, t2=7.8225711871, tq=1.0, wires=AnyWires
+                pe=0.4997288404, t1=7.8229079927, t2=7.8225711871, tg=1.0, wires=AnyWires
             ),
             op_in("CNOT")
             & wires_in([0, 1]): qml.QubitChannel(
