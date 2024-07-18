@@ -1053,13 +1053,14 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
     from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
 
     Args:
-        noise_model (qiskit_aer.noise.NoiseModel): A Qiskit noise model object
-        kwargs: Optional keyword arguments for the conversion of the noise model
+        noise_model (qiskit_aer.noise.NoiseModel): a Qiskit noise model object
+        kwargs: optional keyword arguments for the conversion of the noise model
 
     Keyword Arguments:
-        kraus_shape (bool): use shape of the Kraus operators to display ``qml.QubitChannel``
-            instead of the complete list of matrices. Default is ``True``
-        decimal_places (int): number of decimal places to round the Kraus matrices. Default is ``10``
+        verbose (bool): show a complete list of Kraus matrices for ``qml.QubitChannel`` instead of
+            number of Kraus matrices and the number of qubits they act on. The default is ``False``
+        decimal_places (int): number of decimal places to round the Kraus matrices when they are
+            being displayed for each ``qml.QubitChannel`` with ``verbose=False``.
 
     Returns:
         pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
@@ -1075,7 +1076,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
     Consider the following noise model constructed in Qiskit:
 
-    >>> import qiskit.providers.aer.noise as noise
+    >>> import qiskit_aer.noise as noise
     >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
     >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
     >>> noise_model = noise.NoiseModel()
@@ -1086,12 +1087,12 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
 
     >>> load_noise_model(noise_model)
     NoiseModel({
-        OpIn(['RZ', 'RY']): QubitChannel(Klist=Tensor(4, 4, 4))
-        OpIn(['CNOT']): QubitChannel(Klist=Tensor(16, 4, 4))
+        OpIn(['RZ', 'RY']): QubitChannel(num_kraus=4, num_wires=1)
+        OpIn(['CNOT']): QubitChannel(num_kraus=16, num_wires=2)
     })
     """
     # Build model maps for quantum error and readout errors in the noise model
-    qerror_dmap, _ = _build_noise_model_map(noise_model, **kwargs)
+    qerror_dmap, _ = _build_noise_model_map(noise_model)
     model_map = {}
     for error, wires_map in qerror_dmap.items():
         conditions = []
@@ -1103,8 +1104,15 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
 
         noise = qml.noise.partial_wires(error)
-        if isinstance(error, qml.QubitChannel) and kwargs.get("kraus_shape", True):
-            noise = _rename(f"QubitChannel(Klist=Tensor{qml.math.shape(error.data)})")(noise)
+        if isinstance(error, qml.QubitChannel) and kwargs.get("verbose", False):
+            kraus_shape = qml.math.shape(error.data)
+            num_kraus, num_wires = kraus_shape[0], int(np.log2(kraus_shape[1]))
+            noise = _rename(f"QubitChannel(num_kraus={num_kraus}, num_wires={num_wires})")(noise)
+
+        if isinstance(error, qml.QubitChannel) and not kwargs.get("verbose", False):
+            if decimals := kwargs.get("decimal_places", None):
+                kraus_matrices = list(np.round(error.data, decimals=decimals))
+                noise = _rename(f"QubitChannel(Klist={kraus_matrices})")(noise)
 
         model_map[fcond] = noise
 

@@ -19,7 +19,6 @@ from collections import defaultdict
 from typing import Tuple
 from warnings import warn
 
-import numpy as np
 import pennylane as qml
 from pennylane.operation import AnyWires
 from qiskit.quantum_info.operators.channel import Kraus
@@ -66,34 +65,29 @@ qiskit_op_map = {
 }
 
 
-def _build_qerror_op(error, **kwargs) -> qml.QubitChannel:
+def _build_qerror_op(error) -> qml.QubitChannel:
     """Builds a PennyLane error channel from a Qiksit ``QuantumError`` object.
 
     Args:
         error (QuantumError): Quantum error object
-        kwargs: Optional keyword arguments used for conversion
 
     Returns:
         qml.QubitChannel: an equivalent PennyLane error channel
     """
     try:
-        kraus_matrices = np.round(Kraus(error).data, decimals=kwargs.get("decimals", 10))
+        kraus_matrices = Kraus(error).data
     except Exception as exc:  # pragma: no cover
         raise ValueError(f"Error {error} could not be converted.") from exc
 
     return qml.QubitChannel(K_list=kraus_matrices, wires=AnyWires)
 
 
-def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
+def _build_noise_model_map(noise_model) -> Tuple[dict, dict]:
     """Builds a noise model map from a Qiskit noise model. This noise model map can be used
     to efficiently construct a PennyLane noise model.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): Qiskit's noise model
-        kwargs: Optional keyword arguments for providing extra information
-
-    Keyword Arguments:
-        decimal_places (int): number of decimal places to round the Kraus matrices. Default is ``10``
 
     Returns:
         (dict, dict): returns mappings for the given quantum errors and readout errors in the ``noise_model``.
@@ -122,13 +116,13 @@ def _build_noise_model_map(noise_model, **kwargs) -> Tuple[dict, dict]:
 
     # Add default quantum errors
     for gate_name, error in noise_model._default_quantum_errors.items():
-        noise_op = _build_qerror_op(error, **kwargs)
+        noise_op = _build_qerror_op(error)
         qerror_dmap[noise_op][AnyWires].append(qiskit_op_map[gate_name])
 
     # Add specific qubit errors
     for gate_name, qubit_dict in noise_model._local_quantum_errors.items():
         for qubits, error in qubit_dict.items():
-            noise_op = _build_qerror_op(error, **kwargs)
+            noise_op = _build_qerror_op(error)
             qerror_dmap[noise_op][qubits].append(qiskit_op_map[gate_name])
 
     # TODO: Add support for the readout error
