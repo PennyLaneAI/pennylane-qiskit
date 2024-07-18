@@ -1066,7 +1066,7 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
 
     Raises:
-        ValueError: When an encountered quantum error cannoted be converted.
+        ValueError: When an encountered quantum error cannot be converted.
 
     .. note::
 
