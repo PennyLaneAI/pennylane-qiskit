@@ -48,9 +48,9 @@ This release contains contributions from (in alphabetical order):
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
-Austin Huang
-
 Utkarsh Azad
+Lillian M. A. Frederiksen
+Austin Huang
 Mashhood Khan
 
 ---
