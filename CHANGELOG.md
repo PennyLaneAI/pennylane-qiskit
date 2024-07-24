@@ -2,7 +2,15 @@
 
 ### New features since last release
 
+* Qiskit Sessions can now be used for the ``qiskit.remote`` device with the ``qiskit_session`` context
+  manager.
+  [(#551)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/551)
+
 ### Improvements 🛠
+
+* Qiskit Runtime Primitives are supported by the ``qiskit.remote`` device. Circuits ran using the ``qiskit.remote``
+  device will automatically call the SamplerV2 and EstimatorV2 primitives appropriately. Additionally, runtime options can be passed as keyword arguments directly to the ``qiskit.remote`` device.
+  [(#513)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/513)
 
 ### Breaking changes 💔
 
