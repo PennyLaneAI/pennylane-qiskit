@@ -2590,8 +2590,6 @@ class TestLoadPauliOp:
 class TestLoadNoiseModel:
     """Tests for :func:`load_noise_models()` function."""
 
-    qiksit = pytest.importorskip("qiskit", "1.0.0")
-
     @staticmethod
     def _kraus_to_choi(krau_mats, optimize=False) -> np.ndarray:
         r"""Transforms Kraus representation of a channel to its Choi representation."""
