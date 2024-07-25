@@ -35,9 +35,14 @@ from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
 
 import pennylane as qml
+from pennylane.noise.conditionals import WiresIn, _rename
+from pennylane.operation import AnyWires
 import pennylane.ops as pennylane_ops
 from pennylane.tape.tape import rotations_and_diagonal_measurements
 
+from .noise_models import _build_noise_model_map
+
+# pylint: disable=too-many-instance-attributes
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": lib.XGate,
@@ -1218,3 +1223,74 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
         condition_res = expr_func(meas1, clreg2)
 
     return condition_res
+
+
+def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
+    """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
+    from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
+
+    Args:
+        noise_model (qiskit_aer.noise.NoiseModel): a Qiskit noise model object
+        kwargs: optional keyword arguments for the conversion of the noise model
+
+    Keyword Arguments:
+        verbose (bool): show a complete list of Kraus matrices for ``qml.QubitChannel`` instead of
+            number of Kraus matrices and the number of qubits they act on. The default is ``False``
+        decimal_places (int): number of decimal places to round the Kraus matrices when they are
+            being displayed for each ``qml.QubitChannel`` with ``verbose=False``.
+
+    Returns:
+        pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
+
+    Raises:
+        ValueError: When an encountered quantum error cannot be converted.
+
+    .. note::
+
+        Currently, PennyLane noise models do not support readout errors, so those will be skipped during conversion.
+
+    **Example**
+
+    Consider the following noise model constructed in Qiskit:
+
+    >>> import qiskit_aer.noise as noise
+    >>> error_1 = noise.depolarizing_error(0.001, 1) # 1-qubit noise
+    >>> error_2 = noise.depolarizing_error(0.01, 2) # 2-qubit noise
+    >>> noise_model = noise.NoiseModel()
+    >>> noise_model.add_all_qubit_quantum_error(error_1, ['rz', 'ry'])
+    >>> noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
+
+    This noise model can be converted into PennyLane using:
+
+    >>> load_noise_model(noise_model)
+    NoiseModel({
+        OpIn(['RZ', 'RY']): QubitChannel(num_kraus=4, num_wires=1)
+        OpIn(['CNOT']): QubitChannel(num_kraus=16, num_wires=2)
+    })
+    """
+    # Build model maps for quantum error and readout errors in the noise model
+    qerror_dmap, _ = _build_noise_model_map(noise_model)
+    model_map = {}
+    for error, wires_map in qerror_dmap.items():
+        conditions = []
+        for wires, operations in wires_map.items():
+            cond = qml.noise.op_in(operations)
+            if wires != AnyWires:
+                cond &= WiresIn(wires)
+            conditions.append(cond)
+        fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
+
+        noise = qml.noise.partial_wires(error)
+        if isinstance(error, qml.QubitChannel) and not kwargs.get("verbose", False):
+            kraus_shape = qml.math.shape(error.data)
+            num_kraus, num_wires = kraus_shape[0], int(np.log2(kraus_shape[1]))
+            noise = _rename(f"QubitChannel(num_kraus={num_kraus}, num_wires={num_wires})")(noise)
+
+        if isinstance(error, qml.QubitChannel) and kwargs.get("verbose", False):
+            if (decimals := kwargs.get("decimal_places", None)) is not None:
+                kraus_matrices = list(np.round(error.data, decimals=decimals))
+                noise = _rename(f"QubitChannel(Klist={kraus_matrices})")(noise)
+
+        model_map[fcond] = noise
+
+    return qml.NoiseModel(model_map)

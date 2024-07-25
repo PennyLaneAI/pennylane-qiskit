@@ -2,6 +2,10 @@
 
 ### New features since last release
 
+* Added support for converting Qiskit noise models to
+  PennyLane ``NoiseModels`` using ``load_noise_model``.
+  [(#577)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/577)
+
 * Qiskit Sessions can now be used for the ``qiskit.remote`` device with the ``qiskit_session`` context
   manager.
   [(#551)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/551)
@@ -41,6 +45,10 @@ capabilities and Qiskit.
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Utkarsh Azad
+Lillian M. A. Frederiksen
+Austin Huang
 
 ---
 # Release 0.37.0
