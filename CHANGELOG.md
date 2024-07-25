@@ -50,7 +50,6 @@ Utkarsh Azad
 Lillian M. A. Frederiksen
 Austin Huang
 
-
 ---
 # Release 0.37.0
 

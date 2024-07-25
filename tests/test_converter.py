@@ -28,12 +28,15 @@ from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info.operators.channel import Kraus
 
 import pennylane as qml
 from pennylane import I, X, Y, Z
 from pennylane import numpy as np
-from pennylane.tape.qscript import QuantumScript
 from pennylane.measurements import MidMeasureMP
+from pennylane.noise import op_in, wires_in, partial_wires
+from pennylane.operation import AnyWires
+from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
@@ -2598,13 +2601,10 @@ class TestLoadNoiseModel:
 
     def test_build_noise_model(self):
         """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
+        from qiskit_aer import noise
         from qiskit.providers.fake_provider import FakeOpenPulse2Q
-        from qiskit_aer.noise import NoiseModel
-        from qiskit.quantum_info.operators.channel import Kraus
-        from pennylane.noise import op_in, wires_in, partial_wires
-        from pennylane.operation import AnyWires
 
-        noise_model = NoiseModel.from_backend(FakeOpenPulse2Q())
+        noise_model = noise.NoiseModel.from_backend(FakeOpenPulse2Q())
         loaded_noise_model = load_noise_model(noise_model)
 
         pl_model_map = {
@@ -2664,8 +2664,7 @@ class TestLoadNoiseModel:
     )
     def test_build_noise_model_with_kwargs(self, verbose, decimal):
         """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel with kwargs"""
-        import qiskit_aer.noise as noise
-        from pennylane.operation import AnyWires
+        from qiskit_aer import noise
 
         error_1 = noise.depolarizing_error(0.001, 1)
         error_2 = noise.depolarizing_error(0.01, 2)
