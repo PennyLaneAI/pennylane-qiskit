@@ -18,10 +18,10 @@ using PennyLane.
 """
 import qiskit_aer
 
-from .qiskit_device import QiskitDevice
+from .qiskit_device_legacy import QiskitDeviceLegacy
 
 
-class AerDevice(QiskitDevice):
+class AerDevice(QiskitDeviceLegacy):
     """A PennyLane device for the C++ Qiskit Aer simulator.
 
     Please refer to the `Qiskit documentation <https://qiskit.org/documentation/>`_ for

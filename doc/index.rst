@@ -8,7 +8,7 @@ PennyLane-Qiskit Plugin
   :end-before: header-end-inclusion-marker-do-not-remove
 
 
-Once the PennyLane-Qiskit plugin is installed, the the Qiskit devices
+Once the PennyLane-Qiskit plugin is installed, the Qiskit devices
 can be accessed straightaway in PennyLane, without the need to import new packages.
 
 Devices
@@ -21,10 +21,6 @@ The following devices are available:
     :description: Qiskit's staple simulator with great features such as noise models.
     :link: devices/aer.html
 
-.. title-card::
-    :name: 'qiskit.basicaer'
-    :description: A simplified version of the Aer device, which requires fewer dependencies.
-    :link: devices/basicaer.html
 
 .. title-card::
     :name: 'qiskit.basicsim'
@@ -32,25 +28,9 @@ The following devices are available:
     :link: devices/basicsim.html
 
 .. title-card::
-    :name: 'qiskit.ibmq.circuit_runner'
-    :description: Allows integration with Qiskit's circuit runner runtime program.
-    :link: devices/runtime.html
-
-.. title-card::
-    :name: 'qiskit.ibmq.sampler'
-    :description: Allows integration with Qiskit's sampler runtime program.
-    :link: devices/runtime.html
-
-.. title-card::
     :name: 'qiskit.remote'
     :description: Allows integration with any Qiskit backend.
     :link: devices/remote.html
-
-.. title-card::
-    :name: 'qiskit.ibmq'
-    :description: Allows integration with Qiskit's hardware backends, and hardware-specific simulators.
-    :link: devices/ibmq.html
-
 
 .. raw:: html
 
@@ -68,17 +48,39 @@ For example, the ``'qiskit.aer'`` device with two wires is called like this:
 Backends
 ~~~~~~~~
 
-Qiskit devices have different **backends**, which define which actual simulator or hardware is used by the
-device. Different simulator backends are optimized for different types of circuits. A backend can be defined as
-follows:
+Qiskit devices have different **backends**, which define the actual simulator or hardware 
+used by the device. A backend instance should be initalized and passed to the device.
+
+Different simulator backends are optimized for different purposes. To change what backend is used, 
+a simulator backend can be defined as follows:
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+    from qiskit_aer import UnitarySimulator
 
-PennyLane chooses the ``qasm_simulator`` as the default backend if no backend is specified.
-For more details on the ``qasm_simulator``, including available backend options, see
-`Qiskit Qasm Simulator documentation <https://qiskit.org/ecosystem/aer/stubs/qiskit_aer.QasmSimulator.html>`_.
+    dev = qml.device('qiskit.aer', wires=<num_qubits>, backend=UnitarySimulator())
+
+.. note::
+
+    For ``'qiskit.aer'``, PennyLane chooses the ``aer_simulator`` as the default backend if no 
+    backend is specified. For more details on the ``aer_simulator``, including available backend 
+    options, see `Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
+
+To access a real device, we can use the ``'qiskit.remote'`` device. A real hardware backend can 
+be defined as follows:
+
+.. code-block:: python
+
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>")
+
+    # To access saved credentials for the IBM quantum channel and select an instance
+    service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
+    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
+
+    # passing a string in backend would result in an error
+    dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
 
 Tutorials
 ~~~~~~~~~
@@ -116,7 +118,7 @@ You can also try it out using any of the qubit based `demos from the PennyLane d
 <https://pennylane.ai/qml/demonstrations.html>`_, for example the tutorial on
 `qubit rotation <https://pennylane.ai/qml/demos/tutorial_qubit_rotation.html>`_.
 Simply replace ``'default.qubit'`` with any of the available Qiskit devices,
-such as ``'qiskit.aer'``, or ``'qiskit.ibmq'`` if you have an API key for
+such as ``'qiskit.aer'``, or ``'qiskit.remote'`` if you have an API key for
 hardware access.
 
 .. raw:: html
@@ -138,10 +140,7 @@ hardware access.
    :hidden:
 
    devices/aer
-   devices/basicaer
    devices/basicsim
-   devices/ibmq
-   devices/runtime
    devices/remote
 
 .. toctree::
