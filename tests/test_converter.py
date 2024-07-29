@@ -2662,8 +2662,8 @@ class TestLoadNoiseModel:
         "verbose, decimal",
         [(True, 8), (False, None)],
     )
-    def test_build_noise_model_with_kwargs(self, verbose, decimal):
-        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel with kwargs"""
+    def test_build_noise_model_with_args(self, verbose, decimal):
+        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel with args"""
         from qiskit_aer import noise
 
         error_1 = noise.depolarizing_error(0.001, 1)

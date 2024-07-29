@@ -1225,19 +1225,19 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
     return condition_res
 
 
-def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
+def load_noise_model(
+    noise_model, verbose: bool = False, decimal_places: Union[int, None] = None
+) -> qml.NoiseModel:
     """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
     from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): a Qiskit noise model object
-        kwargs: optional keyword arguments for the conversion of the noise model
-
-    Keyword Arguments:
-        verbose (bool): show a complete list of Kraus matrices for ``qml.QubitChannel`` instead of
-            number of Kraus matrices and the number of qubits they act on. The default is ``False``
-        decimal_places (int): number of decimal places to round the Kraus matrices when they are
-            being displayed for each ``qml.QubitChannel`` with ``verbose=False``.
+        verbose (bool): when printing a ``NoiseModel``, a complete list of Kraus matrices for each ``qml.QubitChannel``
+            is displayed with ``verbose=True``. By default, ``verbose=False`` and only the number of Kraus matrices and
+            the number of qubits they act on is displayed for brevity.
+        decimal_places (int): number of decimal places to round the elements of Kraus matrices when they are being
+            displayed for each ``qml.QubitChannel`` when ``verbose=True``.
 
     Returns:
         pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
@@ -1281,14 +1281,14 @@ def load_noise_model(noise_model, **kwargs) -> qml.NoiseModel:
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
 
         noise = qml.noise.partial_wires(error)
-        if isinstance(error, qml.QubitChannel) and not kwargs.get("verbose", False):
+        if isinstance(error, qml.QubitChannel) and not verbose:
             kraus_shape = qml.math.shape(error.data)
             num_kraus, num_wires = kraus_shape[0], int(np.log2(kraus_shape[1]))
             noise = _rename(f"QubitChannel(num_kraus={num_kraus}, num_wires={num_wires})")(noise)
 
-        if isinstance(error, qml.QubitChannel) and kwargs.get("verbose", False):
-            if (decimals := kwargs.get("decimal_places", None)) is not None:
-                kraus_matrices = list(np.round(error.data, decimals=decimals))
+        if isinstance(error, qml.QubitChannel) and verbose:
+            if decimal_places is not None:
+                kraus_matrices = list(np.round(error.data, decimals=decimal_places))
                 noise = _rename(f"QubitChannel(Klist={kraus_matrices})")(noise)
 
         model_map[fcond] = noise
