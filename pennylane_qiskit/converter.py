@@ -1281,13 +1281,12 @@ def load_noise_model(
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
 
         noise = qml.noise.partial_wires(error)
-        if isinstance(error, qml.QubitChannel) and not verbose:
-            kraus_shape = qml.math.shape(error.data)
-            num_kraus, num_wires = kraus_shape[0], int(np.log2(kraus_shape[1]))
-            noise = _rename(f"QubitChannel(num_kraus={num_kraus}, num_wires={num_wires})")(noise)
-
-        if isinstance(error, qml.QubitChannel) and verbose:
-            if decimal_places is not None:
+        if isinstance(error, qml.QubitChannel):
+            if not verbose:
+                kraus_shape = qml.math.shape(error.data)
+                n_kraus, n_wires = kraus_shape[0], int(np.log2(kraus_shape[1]))
+                noise = _rename(f"QubitChannel(num_kraus={n_kraus}, num_wires={n_wires})")(noise)
+            elif verbose and decimal_places is not None:
                 kraus_matrices = list(np.round(error.data, decimals=decimal_places))
                 noise = _rename(f"QubitChannel(Klist={kraus_matrices})")(noise)
 
