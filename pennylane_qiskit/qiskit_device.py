@@ -338,6 +338,7 @@ class QiskitDevice(Device):
         self._service = getattr(backend, "_service", None)
         self._session = session
 
+        kwargs["shots"] = shots
         if shots and not isinstance(shots, int):
             raise ValueError(
                 f"Shots needs to be an integer value. Shot vectors are not supported for {self.name}."
