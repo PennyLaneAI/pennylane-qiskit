@@ -2,19 +2,54 @@
 
 ### New features since last release
 
+* Added support for converting Qiskit noise models to
+  PennyLane ``NoiseModels`` using ``load_noise_model``.
+  [(#577)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/577)
+  [(#578)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/578)
+
+* Qiskit Sessions can now be used for the ``qiskit.remote`` device with the ``qiskit_session`` context
+  manager.
+  [(#551)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/551)
+
 ### Improvements 🛠
 
+* Qiskit Runtime Primitives are supported by the ``qiskit.remote`` device. Circuits ran using the ``qiskit.remote``
+  device will automatically call the SamplerV2 and EstimatorV2 primitives appropriately. Additionally, runtime options can be passed as keyword arguments directly to the ``qiskit.remote`` device.
+  [(#513)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/513)
+
 ### Breaking changes 💔
+
+* Support has been removed for Qiskit versions below 0.46. The minimum required version for Qiskit is now 1.0. 
+  If you want to continue to use older versions of Qiskit with the plugin, please use version 0.36 of 
+  the Pennylane-Qiskit plugin. 
+  [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
+
+* The test suite no longer runs for Qiskit versions below 0.46.
+  [(#536)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/536)
+
+* The ``qiskit.basicaer`` device has been removed because it is not supported for versions of Qiskit above 0.46.
+  [(#546)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/546)
+
+* The IBM quantum devices, ``qiskit.ibmq``, ``qiskit.ibmq.circuit_runner`` and ``qiskit.ibmq.sampler``, have been removed due to deprecations of the IBMProvider and the cloud simulator "ibmq_qasm_simulator".
+  [(#550)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/550)
 
 ### Deprecations 👋
 
 ### Documentation 📝
+
+* The Pennylane-Qiskit plugin page has been updated to reflect the changes in both the plugin's 
+capabilities and Qiskit.
+  [#563](https://github.com/PennyLaneAI/pennylane-qiskit/pull/563)
 
 ### Bug fixes 🐛
 
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Utkarsh Azad
+Lillian M. A. Frederiksen
+Austin Huang
 
 ---
 # Release 0.37.0
@@ -30,8 +65,9 @@ This release contains contributions from (in alphabetical order):
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
-
 Utkarsh Azad
+Lillian M. A. Frederiksen
+Austin Huang
 Mashhood Khan
 
 ---

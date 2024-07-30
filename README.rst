@@ -68,21 +68,11 @@ To test that the PennyLane-Qiskit plugin is working correctly you can run
 
 in the source folder.
 
-.. note::
-
-    Tests on the `IBMQ device <https://pennylaneqiskit.readthedocs.io/en/latest/devices/ibmq.html>`_ can
-    only be run if a ``ibmqx_token`` for the
-    `IBM Q experience <https://quantum-computing.ibm.com/>`_ is
-    configured in the `PennyLane configuration file
-    <https://pennylane.readthedocs.io/en/latest/introduction/configuration.html>`_, if the token is
-    exported in your environment under the name ``IBMQX_TOKEN``, or if you have previously saved your
-    account credentials using the
-    `new IBMProvider <https://qiskit.org/ecosystem/ibm-provider/stubs/qiskit_ibm_provider.IBMProvider.html>`_
-
-    If this is the case, running ``make test`` also executes tests on the ``ibmq`` device.
-    By default, tests on the ``ibmq`` device run with ``ibmq_qasm_simulator`` backend. At
-    the time of writing this means that the test are "free".
-    Please verify that this is also the case for your account.
+.. warning::
+    
+    When installing the Pennylane-Qiskit plugin, we recommend starting with a clean environment.
+    This is especially pertinent when upgrading from a pre-1.0 version of Qiskit, as described
+    in `Qiskit's migration guide <https://docs.quantum.ibm.com/api/migration-guides/qiskit-1.0-installation>`_. 
 
 .. installation-end-inclusion-marker-do-not-remove
 

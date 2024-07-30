@@ -17,6 +17,9 @@ This module contains tests for converting circuits for PennyLane IBMQ devices.
 import sys
 from typing import cast
 
+import itertools as it
+import functools as ft
+
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import library as lib
@@ -25,17 +28,26 @@ from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info.operators.channel import Kraus
 
 import pennylane as qml
+from pennylane import I, X, Y, Z
 from pennylane import numpy as np
 from pennylane.measurements import MidMeasureMP
+from pennylane.noise import op_in, wires_in, partial_wires
+from pennylane.operation import AnyWires
+from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
     load,
     load_pauli_op,
+    load_noise_model,
     load_qasm,
     load_qasm_from_file,
     map_wires,
+    circuit_to_qiskit,
+    operation_to_qiskit,
+    mp_to_pauli,
     _format_params_dict,
     _check_parameter_bound,
 )
@@ -48,7 +60,7 @@ PHI = np.linspace(0.32, 3, 5)
 VARPHI = np.linspace(0.02, 3, 5)
 
 
-class TestConverter:
+class TestConverterQiskitToPennyLane:
     """Tests the converter function that allows converting QuantumCircuit objects
     to Pennylane templates."""
 
@@ -419,7 +431,7 @@ class TestConverter:
         assert recorder.queue[0].wires == Wires(three_wires)
 
 
-class TestConverterGates:
+class TestConverterGatesQiskitToPennyLane:
     """Tests over specific gate related tests"""
 
     @pytest.mark.parametrize(
@@ -1641,6 +1653,374 @@ class TestConverterIntegration:
         assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
 
 
+class TestConverterPennyLaneCircuitToQiskit:
+    def test_circuit_to_qiskit(self):
+        """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
+
+        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0])])
+        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+
+        operation_names = [instruction.operation.name for instruction in qc.data]
+
+        assert operation_names == ["h", "cx"]
+
+    def test_circuit_to_qiskit_with_parameterized_gate(self):
+        """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
+        angle = 1.2
+
+        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0]), qml.RX(angle, 2)])
+        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+
+        operation_names = [instruction.operation.name for instruction in qc.data]
+        operation_params = [instruction.operation.params for instruction in qc.data]
+
+        assert operation_names == ["h", "cx", "rx"]
+        assert operation_params == [[], [], [angle]]
+
+    @pytest.mark.parametrize("operations", [[], [qml.PauliX(0), qml.PauliY(1)], [qml.Hadamard(0)]])
+    @pytest.mark.parametrize("register_size", [2, 5])
+    def test_circuit_to_qiskit_register_size(self, operations, register_size):
+        """Test that the regsiter_size determines the shape of the Qiskit
+        QuantumCircuit register"""
+
+        qc = circuit_to_qiskit(QuantumScript(operations), register_size)
+
+        # there is a single classical and a single quantum register
+        assert len(qc.cregs) == len(qc.qregs) == 1
+
+        # the register contains qubits equal to the register size
+        assert len(qc.qubits) == register_size
+
+    @pytest.mark.parametrize(
+        "operations, final_op_name",
+        [([qml.PauliX(0), qml.PauliY(1)], "y"), ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"])],
+    )
+    @pytest.mark.parametrize("measure", [True, False])
+    def test_circuit_to_qiskit_measure_kwarg(self, operations, final_op_name, measure):
+        """Test that measurements are added to the circuit if and only if measure=True"""
+
+        qc = circuit_to_qiskit(QuantumScript(operations), 2, measure=measure)
+        final_instruction = qc.data[-1]
+
+        if measure:
+            assert final_instruction.operation.name == "measure"
+
+    @pytest.mark.parametrize("diagonalize", [True, False])
+    def test_circuit_to_qiskit_diagonalize_kwarg(self, diagonalize):
+        """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
+
+        qscript = QuantumScript(
+            [qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))]
+        )
+        assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
+
+        qc = circuit_to_qiskit(qscript, 2, diagonalize=diagonalize, measure=True)
+
+        # get list of instruction names up to the barrier (played right before measurements)
+        instructions = []
+        for instruction in qc.data:
+            if instruction.operation.name == "barrier":
+                break
+            instructions.append(instruction.operation.name)
+
+        # check length of instructions matches length of expected gates
+        expected_gates = qscript.operations
+        if diagonalize:
+            expected_gates += qscript.diagonalizing_gates
+
+        assert len(instructions) == len(expected_gates)
+
+    def test_circuit_to_qiskit_measurements_with_overlapping_wires(self):
+        """Test that diagonalizing gates work for circuits with
+        measurements on overlapping wires"""
+
+        measurements = [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
+        tape = qml.tape.QuantumScript(measurements=measurements)
+
+        qc = circuit_to_qiskit(tape, 2, diagonalize=True, measure=True)
+
+        # get list of instruction names up to the barrier (played right before measurements)
+        instructions = []
+        for instruction in qc.data:
+            if instruction.operation.name == "barrier":
+                break
+            instructions.append(instruction.operation.name)
+
+        # manually diagonalized test case since Qiskit transpiles whatever we had before
+        # and that results is different from PL's diagonalization
+        expected_gates = ["ry", "rx"]
+
+        assert len(instructions) == len(expected_gates)
+        assert instructions == expected_gates
+
+
+class TestConverterGatePennyLaneToQiskit:
+    def test_non_parameteric_operation_to_qiskit(self):
+        """Test that a non-parameteric operation is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.PauliX(0)
+
+        qc = operation_to_qiskit(op, QuantumRegister(1))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        wires = [qc.find_bit(q).index for q in qubits]
+
+        assert ops == ["x"]
+        assert wires == [0]
+
+    def test_parameteric_operation_to_qiskit(self):
+        """Test that a parameteric operation is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.RX(1.23, 2)
+
+        qc = operation_to_qiskit(op, QuantumRegister(3))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        wires = [qc.find_bit(q).index for q in qubits]
+        params = [instruction.operation.params for instruction in qc.data]
+
+        assert ops == ["rx"]
+        assert wires == [2]
+        assert params == [[1.23]]
+
+    # ToDo: add custom wire label support? Or have we already mapped to integers here? Story #55168
+    @pytest.mark.parametrize("op_wires", ([0, 1], [2, 4]))
+    def test_multi_wire_operation_to_qiskit(self, op_wires):
+        """Test that an operation with multiple wires is correctly converted to a
+        Qiskit circuit with a single operation"""
+
+        op = qml.CNOT(op_wires)
+
+        qc = operation_to_qiskit(op, QuantumRegister(5))
+        ops = [instruction.operation.name for instruction in qc.data]
+        qubits = [instruction.qubits for instruction in qc.data][0]
+        qc_wires = [qc.find_bit(q).index for q in qubits]
+
+        assert ops == ["cx"]
+        assert qc_wires == op_wires
+
+    @pytest.mark.parametrize(
+        "op",
+        [
+            qml.QubitUnitary(
+                [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], wires=[0, 1]
+            ),
+            qml.StatePrep(np.array([1, 0, 0, 0]), wires=[0, 1]),
+            qml.QubitStateVector(np.array([1, 0, 0, 0]), wires=[0, 1]),
+        ],
+    )
+    def test_state_prep_ops_have_reversed_register(self, op):
+        """Tests that the wire order is reversed when applying matrix-based operators from PennyLane,
+        because the Qiskit convention for inferring wire order for matrices is the reverse of the
+        PennyLane convention"""
+
+        qc = operation_to_qiskit(op, reg=QuantumRegister(3))
+        qubits = qc[0].qubits
+        wires = [qc.find_bit(q).index for q in qubits]
+
+        # wires on the qiskit circuit are the PL wires reversed
+        assert Wires(wires) == op.wires[::-1]
+
+    def test_with_predefined_creg(self):
+        """Test that it also works if passing in an already existing classical register"""
+
+        creg = ClassicalRegister(3)
+
+        op = qml.RX(1.23, 2)
+
+        qc1 = operation_to_qiskit(op, QuantumRegister(3), creg=creg)
+        qc2 = operation_to_qiskit(op, QuantumRegister(3), creg=None)
+
+        ops1 = [instruction.operation.name for instruction in qc1.data]
+        params1 = [instruction.operation.params for instruction in qc1.data]
+        ops2 = [instruction.operation.name for instruction in qc2.data]
+        params2 = [instruction.operation.params for instruction in qc2.data]
+
+        qubits1 = [instruction.qubits for instruction in qc1.data][0]
+        wires1 = [qc1.find_bit(q).index for q in qubits1]
+        qubits2 = [instruction.qubits for instruction in qc2.data][0]
+        wires2 = [qc2.find_bit(q).index for q in qubits2]
+
+        assert ops1 == ops2 == ["rx"]
+        assert wires1 == wires2 == [2]
+        assert params1 == params2 == [[1.23]]
+
+
+# pylint:disable=too-few-public-methods
+class TestConverterUtilsPennyLaneToQiskit:
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize(
+        "operator, expected",
+        [
+            (qml.X(0), SparsePauliOp("IIIIX")),
+            (qml.I(1), SparsePauliOp("IIIII")),
+            (Y(0), SparsePauliOp("IIIIY")),
+            (qml.PauliZ(0), SparsePauliOp("IIIIZ")),
+            (
+                X(0) + I(0) + 2 * Y(1) + I(1),
+                SparsePauliOp("IIIIX")
+                + SparsePauliOp("IIIII")
+                + 2 * SparsePauliOp("IIIYI")
+                + SparsePauliOp("IIIII"),
+            ),
+            (
+                qml.X(0) + qml.X(0) + qml.Y(1) + qml.Z(2),
+                SparsePauliOp("IIIIX")
+                + SparsePauliOp("IIIIX")
+                + SparsePauliOp("IIIYI")
+                + SparsePauliOp("IIZII"),
+            ),
+            (
+                qml.sum(X(0) + X(0) + Y(1) + Z(2)),
+                SparsePauliOp("IIIIX")
+                + SparsePauliOp("IIIIX")
+                + SparsePauliOp("IIIYI")
+                + SparsePauliOp("IIZII"),
+            ),
+            (
+                (qml.X(0) + 2 * qml.Y(1)),
+                SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI"),
+            ),
+            (
+                qml.sum(X(0) + qml.s_prod(2, Y(1))),
+                SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI"),
+            ),
+            (qml.X(0) + qml.Y(0), SparsePauliOp("IIIIX") + SparsePauliOp("IIIIY")),
+            (
+                0.5 * X(0) + 3 * (X(2) + qml.PauliY(1)),
+                0.5 * SparsePauliOp("IIIIX")
+                + 3 * (SparsePauliOp("IIXII") + SparsePauliOp("IIIYI")),
+            ),
+            (
+                0.5 * X(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0),
+                0.5 * SparsePauliOp("IIIIX")
+                + 0.5 * SparsePauliOp("IIIIY")
+                - 1.5 * SparsePauliOp("IIIIX")
+                - 0.5 * SparsePauliOp("IIIIY"),
+            ),
+            (
+                qml.ops.LinearCombination(
+                    [1, 3, 4],
+                    [X(3) @ Y(2), Y(4) - X(2), Z(2) * 3],
+                )
+                + qml.X(4),
+                1 * SparsePauliOp("IXIII") @ SparsePauliOp("IIYII")
+                + 3 * (SparsePauliOp("YIIII") - SparsePauliOp("IIXII"))
+                + 3 * 4 * SparsePauliOp("IIZII")
+                + SparsePauliOp("XIIII"),
+            ),
+        ],
+    )
+    def test_mp_to_pauli_for_general_operator(self, measurement_type, operator, expected):
+        """Tests that a SparsePauliOp is created given any general operator that has a Pauli representation, and that it has the expected format"""
+        obs = measurement_type(operator)
+        register_size = 5
+        pauli_op = mp_to_pauli(obs, register_size)
+        assert isinstance(pauli_op, SparsePauliOp)
+
+        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
+        # all qubits in register are accounted for
+        assert len(pauli_op_list) == register_size
+        assert pauli_op.equiv(expected.simplify())
+
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize(
+        "operator, expected",
+        [
+            (X(0) @ Y(1), SparsePauliOp("IIX") @ (SparsePauliOp("IYI"))),
+            (
+                (X(0) + Y(1)) @ Y(1),
+                (SparsePauliOp("IIX") + SparsePauliOp("IYI")) @ (SparsePauliOp("IYI")),
+            ),
+            (
+                (X(0) + Y(1)) @ (Z(0) + Z(1)),
+                (SparsePauliOp("IIX") + SparsePauliOp("IYI"))
+                @ (SparsePauliOp("IIZ") + SparsePauliOp("IZI")),
+            ),
+            (
+                2 * (X(0) + Y(1)) @ ((Z(0) + Z(1)) @ Z(2)),
+                2
+                * (SparsePauliOp("IIX") + SparsePauliOp("IYI"))
+                @ (SparsePauliOp("IIZ") + SparsePauliOp("IZI"))
+                @ SparsePauliOp("ZII"),
+            ),
+            (
+                0.5 * (X(0) @ X(1)) + 0.7 * (X(1) @ X(2)) + 0.8 * (X(2) @ X(1)),
+                0.5 * (SparsePauliOp("IIX") @ SparsePauliOp("IXI"))
+                + 0.7 * (SparsePauliOp("IXI") @ SparsePauliOp("XII"))
+                + 0.8 * (SparsePauliOp("XII") @ SparsePauliOp("IXI")),
+            ),
+        ],
+    )
+    def test_mp_to_pauli_tensor_products(self, measurement_type, operator, expected):
+        """Tests that a SparsePauliOp is created given any general operator that has a Pauli representation, and that it is accurate"""
+        obs = measurement_type(operator)
+        register_size = 3
+
+        pauli_op = mp_to_pauli(obs, register_size)
+        assert isinstance(pauli_op, SparsePauliOp)
+
+        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
+        # all qubits in register are accounted for
+        assert len(pauli_op_list) == register_size
+        assert pauli_op.equiv(expected.simplify())
+
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize(
+        "hamiltonian, expected",
+        [
+            (
+                qml.Hamiltonian([1, 2], [qml.X(0), qml.X(1)]),
+                SparsePauliOp(["IIIIX", "IIIXI"], [1, 2]),
+            ),
+            (
+                qml.Hamiltonian([3, -2], [qml.X(0), qml.X(0)]),
+                SparsePauliOp(["IIIIX", "IIIIX"], [3, -2]),
+            ),
+            (
+                qml.Hamiltonian([-3, 3, 0.5, 5], [qml.X(0), qml.X(0), qml.Z(1), qml.Y(2)]),
+                SparsePauliOp(["IIIIX", "IIIIX", "IIIZI", "IIYII"], [-3, 3, 0.5, 5]),
+            ),
+            (
+                qml.Hamiltonian([1], [qml.X(0)]) + 2 * qml.Z(0) @ qml.Z(1),
+                SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIIZ") @ SparsePauliOp("IIIZI"),
+            ),
+            (
+                qml.Hamiltonian([1], [qml.X(0) @ Y(2)]) - 3 * qml.Z(4) @ qml.Z(1),
+                (SparsePauliOp("IIIIX") @ SparsePauliOp("IIYII"))
+                - 3 * SparsePauliOp("ZIIII") @ SparsePauliOp("IIIZI"),
+            ),
+        ],
+    )
+    def test_mp_to_pauli_for_hamiltonian(self, measurement_type, hamiltonian, expected):
+        """Tests that a SparsePauliOp is created from a Hamiltonian, and that
+        it has the expected format"""
+
+        obs = measurement_type(hamiltonian)
+        register_size = 5
+
+        pauli_op = mp_to_pauli(obs, register_size)
+        assert isinstance(pauli_op, SparsePauliOp)
+
+        pauli_op_list = list(pauli_op.paulis.to_labels()[0])
+        # all qubits in register are accounted for
+        assert len(pauli_op_list) == register_size
+        assert pauli_op.equiv(expected.simplify())
+
+    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    def test_mp_to_pauli_error_for_no_pauli_rep(self, measurement_type):
+        """Tests that an error is raised when mp_to_pauli is given an operator that does not have a pauli representation"""
+
+        obs = measurement_type(qml.X(0) @ qml.Hadamard(2))
+
+        assert not obs.obs.pauli_rep
+        with pytest.raises(ValueError, match="The operator"):
+            mp_to_pauli(obs, 5)
+
+
+# pylint:disable=not-context-manager
 class TestControlOpIntegration:
     """Test the controlled flows integration with PennyLane"""
 
@@ -1861,6 +2241,7 @@ class TestControlOpIntegration:
 
         assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
 
+    # pylint:disable=unused-variable
     def test_mid_circuit_as_terminal(self):
         """Test the control workflows where mid-circuit measurements disguise as terminal ones"""
 
@@ -2206,3 +2587,120 @@ class TestLoadPauliOp:
         match = "The operator 123 is not a valid Qiskit SparsePauliOp."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)
+
+
+# pylint:disable = import-outside-toplevel, too-few-public-methods
+class TestLoadNoiseModel:
+    """Tests for :func:`load_noise_models()` function."""
+
+    @staticmethod
+    def _kraus_to_choi(krau_mats, optimize=False) -> np.ndarray:
+        r"""Transforms Kraus representation of a channel to its Choi representation."""
+        kraus_vecs = np.array([kraus.ravel(order="F") for kraus in krau_mats])
+        return np.einsum("ij,ik->jk", kraus_vecs, kraus_vecs.conj(), optimize=optimize)
+
+    def test_build_noise_model(self):
+        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
+        from qiskit_aer import noise
+        from qiskit.providers.fake_provider import FakeOpenPulse2Q
+
+        noise_model = noise.NoiseModel.from_backend(FakeOpenPulse2Q())
+        loaded_noise_model = load_noise_model(noise_model)
+
+        pl_model_map = {
+            op_in("Identity")
+            & wires_in(0): qml.ThermalRelaxationError(
+                0.0, 26981.9403362283, 26034.6676428009, 1.0, wires=AnyWires
+            ),
+            op_in("Identity")
+            & wires_in(1): qml.ThermalRelaxationError(
+                0.0, 30732.034088541, 28335.6514829973, 1.0, wires=AnyWires
+            ),
+            (op_in("U1") & wires_in(0))
+            | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
+                p=0.08999999999999997, wires=AnyWires
+            ),
+            op_in("U2")
+            & wires_in(0): qml.ThermalRelaxationError(
+                0.4998455776, 7.8227384666, 7.8226559459, 1.0, wires=AnyWires
+            ),
+            op_in("U2")
+            & wires_in(1): qml.ThermalRelaxationError(
+                0.4998644198, 7.8227957211, 7.8226273195, 1.0, wires=AnyWires
+            ),
+            op_in("U3")
+            & wires_in(0): qml.ThermalRelaxationError(
+                0.4996911588, 7.8227934813, 7.8226284393, 1.0, wires=AnyWires
+            ),
+            op_in("U3")
+            & wires_in(1): qml.ThermalRelaxationError(
+                0.4997288404, 7.8229079927, 7.8225711871, 1.0, wires=AnyWires
+            ),
+            op_in("CNOT")
+            & wires_in([0, 1]): qml.QubitChannel(
+                Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
+                wires=AnyWires,
+            ),
+        }
+
+        pl_noise_model = qml.NoiseModel(
+            {fcond: partial_wires(noise) for fcond, noise in pl_model_map.items()}
+        )
+
+        for (pl_k, pl_v), (qk_k, qk_v) in zip(
+            pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
+        ):
+            pl_op, qk_op = pl_v(AnyWires), qk_v(AnyWires)
+            assert repr(pl_k) == repr(qk_k)
+            assert isinstance(qk_op, qml.QubitChannel)
+
+            choi_mat1 = self._kraus_to_choi(qk_op.data)
+            choi_mat2 = self._kraus_to_choi(pl_op.compute_kraus_matrices(*pl_op.data))
+            assert np.allclose(choi_mat1, choi_mat2)
+
+    @pytest.mark.parametrize(
+        "verbose, decimal",
+        [(True, 8), (False, None)],
+    )
+    def test_build_noise_model_with_args(self, verbose, decimal):
+        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel with args"""
+        from qiskit_aer import noise
+
+        error_1 = noise.depolarizing_error(0.001, 1)
+        error_2 = noise.depolarizing_error(0.01, 2)
+
+        noise_model = noise.NoiseModel()
+        noise_model.add_all_qubit_quantum_error(error_1, ["rz", "ry"])
+        noise_model.add_all_qubit_quantum_error(error_2, ["cx"])
+        loaded_noise_model = load_noise_model(noise_model, verbose=verbose, decimal_places=decimal)
+
+        pauli_mats1 = list(map(qml.matrix, [qml.I(0), qml.X(0), qml.Y(0), qml.Z(0)]))
+        pauli_mats2 = list(
+            ft.reduce(np.kron, prod, 1.0) for prod in it.product(pauli_mats1, repeat=2)
+        )
+        pauli_prob1 = np.sqrt(error_1.probabilities)
+        pauli_prob2 = np.sqrt(error_2.probabilities)
+        kraus_ops1 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob1, pauli_mats1)]
+        kraus_ops2 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2)]
+
+        c0 = qml.noise.op_in([qml.RZ, qml.RY])
+        c1 = qml.noise.op_in(qml.CNOT)
+        n0 = qml.noise.partial_wires(qml.QubitChannel(kraus_ops1, wires=[0]))
+        n1 = qml.noise.partial_wires(qml.QubitChannel(kraus_ops2, wires=[0, 1]))
+        pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
+
+        for (pl_k, pl_v), (qk_k, qk_v) in zip(
+            pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
+        ):
+            assert repr(pl_k) == repr(qk_k)
+
+            pl_data = np.array(pl_v(AnyWires).data)
+            if verbose:
+                choi_mat1 = self._kraus_to_choi(qk_v(AnyWires).data)
+                choi_mat2 = self._kraus_to_choi(pl_data)
+                assert np.allclose(choi_mat1, choi_mat2)
+            else:
+                num_kraus, num_wires = pl_data.shape[0], int(np.log2(pl_data.shape[1]))
+                assert (
+                    qk_v.__name__ == f"QubitChannel(num_kraus={num_kraus}, num_wires={num_wires})"
+                )

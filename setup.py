@@ -24,8 +24,8 @@ with open("README.rst", "r") as fh:
 requirements = [
     "qiskit>=0.32",
     "qiskit-aer",
-    "qiskit-ibm-provider",
     "qiskit-ibm-runtime",
+    "qiskit-ibm-provider",
     "pennylane>=0.37",
     "numpy",
     "sympy<1.13",
@@ -48,13 +48,11 @@ info = {
             'qiskit.aer = pennylane_qiskit:AerDevice',
             'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
             'qiskit.basicsim = pennylane_qiskit:BasicSimulatorDevice',
-            'qiskit.ibmq = pennylane_qiskit:IBMQDevice',
-            'qiskit.ibmq.circuit_runner = pennylane_qiskit:IBMQCircuitRunnerDevice',
-            'qiskit.ibmq.sampler = pennylane_qiskit:IBMQSamplerDevice'
             ],
         'pennylane.io': [
             'qiskit = pennylane_qiskit:load',
             'qiskit_op = pennylane_qiskit:load_pauli_op',
+            'qiskit_noise = pennylane_qiskit:load_noise_model',
             'qasm = pennylane_qiskit:load_qasm',
             'qasm_file = pennylane_qiskit:load_qasm_from_file',
             ],

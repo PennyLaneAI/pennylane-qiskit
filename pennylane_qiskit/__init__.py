@@ -15,9 +15,6 @@
 
 from ._version import __version__
 from .aer import AerDevice
-from .basic_aer import BasicAerDevice, BasicSimulatorDevice
-from .ibmq import IBMQDevice
+from .basic_sim import BasicSimulatorDevice
 from .remote import RemoteDevice
-from .converter import load, load_pauli_op, load_qasm, load_qasm_from_file
-from .runtime_devices import IBMQCircuitRunnerDevice
-from .runtime_devices import IBMQSamplerDevice
+from .converter import load, load_pauli_op, load_qasm, load_qasm_from_file, load_noise_model

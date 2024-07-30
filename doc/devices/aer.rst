@@ -27,23 +27,18 @@ parameters would look like:
         qml.CNOT(wires=[0, 1])
         return qml.expval(qml.PauliZ(wires=1))
 
-You can then execute the circuit like any other function to get the quantum mechanical expectation value.
+You can then execute the circuit like any other function to get the expectation value of a Pauli 
+operator.
 
 .. code-block:: python
 
     circuit(0.2, 0.1, 0.3)
 
-Backends
-~~~~~~~~
+Backend Methods and Options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The default backend is the ``AerSimulator``. However, multiple other backends are also available.
 To get a current overview what backends are available you can query
-
-.. code-block:: python
-
-    dev.capabilities()['backend']
-
-or, alternatively,
 
 .. code-block:: python
 
@@ -58,18 +53,28 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
 .. code-block:: python
 
-    dev = qml.device('qiskit.aer', wires=2, backend='aer_simulator_statevector')
+    from qiskit_aer import UnitarySimulator
+    dev = qml.device('qiskit.aer', wires=2, backend=UnitarySimulator())
 
-Backend Methods and Options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. note::
 
-This ``AerSimulator`` backend has several available methods, which
+    Occassionally, you may see others pass in a string as a backend. For example:
+
+    .. code-block:: python
+
+        dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+
+    At the time of writing, this is still functional for the Aer devices. However, this will soon be 
+    deprecated and may not function as intended. To ensure accurate results, we recommend passing in 
+    a backend instance.
+
+The ``AerSimulator`` backend has several available methods, which
 can be passed via the ``method`` keyword argument. For example
 ``'automatic'``, ``'statevector'``, and ``'unitary'``.
 
 .. code-block:: python
 
-    dev = qml.device("qiskit.aer", wires=2, method="automatic")
+    dev = qml.device("qiskit.aer", wires=2, backend=AerSimulator(), method="automatic")
 
 Each of these methods can take different *run options*, for example to specify the numerical
 precision of the simulation.
@@ -81,7 +86,7 @@ The options are set via additional keyword arguments:
     dev = qml.device(
         'qiskit.aer',
         wires=2,
-        backend='unitary_simulator',
+        backend=AerSimulator(),
         validation_threshold=1e-6
     )
 
@@ -96,9 +101,9 @@ documentation <https://qiskit.org/ecosystem/aer/stubs/qiskit_aer.AerSimulator.ht
 Noise models
 ~~~~~~~~~~~~
 
-One great feature of the ``'qiskit.aer'`` device is the ability to simulate noise. There are different noise models,
-which you can instantiate and apply to the device as follows
-(adapting `this <https://qiskit.org/documentation/apidoc/aer_noise.html>`_ qiskit tutorial):
+One great feature of the ``'qiskit.aer'`` device is the ability to simulate noise. There are 
+different noise models, which you can instantiate and apply to the device as follows (adapted 
+from a `Qiskit tutorial <https://qiskit.github.io/qiskit-aer/tutorials/4_custom_gate_noise.html>`_.):
 
 .. code-block:: python
 
@@ -136,4 +141,4 @@ which you can instantiate and apply to the device as follows
     print(circuit(0.2, 0.1, 0.3))
 
 Please refer to the Qiskit documentation for more information on
-`noise models <https://qiskit.org/documentation/tutorials/simulators/3_building_noise_models.html>`_.
+`noise models <https://qiskit.github.io/qiskit-aer/tutorials/3_building_noise_models.html>`_.
