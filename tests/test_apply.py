@@ -245,7 +245,7 @@ class TestNonAnalyticApply:
         state = np.array([0, 123.432])
         wires = [0, 1]
 
-        with pytest.raises(ValueError, match=r"State vector must have shape"):
+        with pytest.raises(ValueError, match=r"State must be of length 4"):
             dev.apply([op(state, wires=wires)])
 
     @pytest.mark.parametrize("mat", [U, U2])
