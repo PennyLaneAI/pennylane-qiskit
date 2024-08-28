@@ -182,7 +182,7 @@ class TestAnalyticWarningHWSimulator:
             "device are estimates based on samples."
         )
 
-        # Three warnings are being raised: one about analytic calculations.
+        # One warning raised about analytic calculations.
         assert len(record) == 1
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
