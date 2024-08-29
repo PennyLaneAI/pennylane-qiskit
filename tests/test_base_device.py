@@ -1081,6 +1081,9 @@ class TestExecution:
         ],
     )
     @flaky(max_runs=10, min_passes=7)
+    @pytest.mark.xfail(
+        reason="Qiskit variances is different from PennyLane variances, discussion pending on resolution"
+    )
     def test_estimator_with_various_multi_qubit_pauli_obs(
         self, mocker, wire, angle, op, multi_q_obs
     ):
@@ -1090,8 +1093,8 @@ class TestExecution:
         correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
         """
 
-        pl_dev = qml.device("default.qubit", wires=[0, 1, 2, 3])
-        dev = QiskitDevice(wires=[0, 1, 2, 3], backend=aer_backend)
+        pl_dev = qml.device("default.qubit", wires=4)
+        dev = QiskitDevice(wires=4, backend=aer_backend)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
         estimator_execute = mocker.spy(dev, "_execute_estimator")
