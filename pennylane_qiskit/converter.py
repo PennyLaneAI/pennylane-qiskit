@@ -22,7 +22,6 @@ from functools import partial, reduce
 import numpy as np
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-import qiskit.qasm2
 from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
 from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
 from qiskit.circuit import library as lib
@@ -646,7 +645,7 @@ def load_qasm(qasm_string: str, measurements=None):
     Returns:
         function: the new PennyLane template
     """
-    return load(qiskit.qasm2.loads(qasm_string), measurements=measurements)
+    return load(QuantumCircuit.from_qasm_str(qasm_string), measurements=measurements)
 
 
 def load_qasm_from_file(file: str):
