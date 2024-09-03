@@ -1,4 +1,4 @@
-# Release 0.38.0-dev
+# Release 0.38.0
 
 ### New features since last release
 
@@ -33,15 +33,11 @@
 * The IBM quantum devices, ``qiskit.ibmq``, ``qiskit.ibmq.circuit_runner`` and ``qiskit.ibmq.sampler``, have been removed due to deprecations of the IBMProvider and the cloud simulator "ibmq_qasm_simulator".
   [(#550)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/550)
 
-### Deprecations 👋
-
 ### Documentation 📝
 
 * The Pennylane-Qiskit plugin page has been updated to reflect the changes in both the plugin's 
 capabilities and Qiskit.
   [#563](https://github.com/PennyLaneAI/pennylane-qiskit/pull/563)
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 
