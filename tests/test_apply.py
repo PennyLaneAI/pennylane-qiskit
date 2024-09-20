@@ -122,9 +122,7 @@ class TestAnalyticApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
-    def test_single_qubit_operations_no_parameters(
-        self, init_state, device, operation, tol
-    ):
+    def test_single_qubit_operations_no_parameters(self, init_state, device, operation, tol):
         """Test that single qubit operations that take no parameters work fine
         with the apply method."""
         dev = device(1)
@@ -140,9 +138,7 @@ class TestAnalyticApply:
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", single_qubit_operations_param)
-    def test_single_qubit_operations_parameters(
-        self, init_state, device, operation, theta, tol
-    ):
+    def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
         """Test that single qubit parametrized operations work fine with the
         apply method."""
         dev = device(1)
@@ -156,9 +152,7 @@ class TestAnalyticApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", two_qubit)
-    def test_two_qubit_operations_no_parameters(
-        self, init_state, device, operation, tol
-    ):
+    def test_two_qubit_operations_no_parameters(self, init_state, device, operation, tol):
         """Test that two qubit operations that take no parameters work fine
         with the apply method."""
         dev = device(2)
@@ -175,9 +169,7 @@ class TestAnalyticApply:
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", two_qubit_param)
-    def test_two_qubit_operations_parameters(
-        self, init_state, device, operation, theta, tol
-    ):
+    def test_two_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
         """Test that two qubit parametrized operations work fine with the
         apply method."""
         dev = device(2)
@@ -192,9 +184,7 @@ class TestAnalyticApply:
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", three_qubit)
-    def test_three_qubit_operations_no_parameters(
-        self, init_state, device, operation, tol
-    ):
+    def test_three_qubit_operations_no_parameters(self, init_state, device, operation, tol):
         """Test that three qubit operations that take no parameters work fine
         with the apply method."""
         dev = device(3)
@@ -265,9 +255,7 @@ class TestNonAnalyticApply:
         state = init_state(N)
         wires = list(range(N))
 
-        dev.apply(
-            [qml.StatePrep(state, wires=wires), qml.QubitUnitary(mat, wires=wires)]
-        )
+        dev.apply([qml.StatePrep(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -284,9 +272,7 @@ class TestNonAnalyticApply:
             dev.apply([qml.QubitUnitary(state, wires=[0, 1])])
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
-    def test_single_qubit_operations_no_parameters(
-        self, init_state, device, operation, tol
-    ):
+    def test_single_qubit_operations_no_parameters(self, init_state, device, operation, tol):
         """Test that single qubit operations that take no parameters work fine
         with the apply method."""
         dev = device(1)
@@ -303,9 +289,7 @@ class TestNonAnalyticApply:
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", single_qubit_operations_param)
-    def test_single_qubit_operations_parameters(
-        self, init_state, device, operation, theta, tol
-    ):
+    def test_single_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
         """Test that single qubit parametrized operations work fine with the
         apply method."""
         dev = device(1)
@@ -339,9 +323,7 @@ class TestNonAnalyticApply:
 
     @pytest.mark.parametrize("theta", [0.5432, -0.232])
     @pytest.mark.parametrize("operation", two_qubit_param)
-    def test_two_qubit_operations_parameters(
-        self, init_state, device, operation, theta, tol
-    ):
+    def test_two_qubit_operations_parameters(self, init_state, device, operation, theta, tol):
         """Test that two qubit parametrized operations work fine with the
         apply method."""
         dev = device(2)
