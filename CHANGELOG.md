@@ -1,3 +1,29 @@
+# Release 0.38.1
+
+### New features since last release
+
+### Improvements 🛠
+
+### Breaking changes 💔
+
+### Deprecations 👋
+
+### Documentation 📝
+
+### Bug fixes 🐛
+
+* Due to the removal of the `Session` and `Backend` keywords in the 0.30 release of `qiskit-ibm-runtime`, the PennyLane-Qiskit
+  plugin now pins to `qiskit-ibm-runtime<=0.29`.
+  [(#587)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/587)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Austin Huang
+Mudit Pandey
+
+---
 # Release 0.38.0
 
 ### New features since last release
