@@ -1808,7 +1808,6 @@ class TestConverterGatePennyLaneToQiskit:
                 [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], wires=[0, 1]
             ),
             qml.StatePrep(np.array([1, 0, 0, 0]), wires=[0, 1]),
-            qml.QubitStateVector(np.array([1, 0, 0, 0]), wires=[0, 1]),
         ],
     )
     def test_state_prep_ops_have_reversed_register(self, op):

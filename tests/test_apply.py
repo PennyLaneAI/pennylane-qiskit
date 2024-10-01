@@ -109,14 +109,13 @@ three_qubit = [qml.Toffoli, qml.CSWAP]
 class TestAnalyticApply:
     """Test application of PennyLane operations with analytic calculation."""
 
-    @pytest.mark.parametrize("op", [qml.QubitStateVector, qml.StatePrep])
-    def test_qubit_state_vector(self, op, init_state, device, tol):
-        """Test that the QubitStateVector and StatePrep operations produce the expected
-        results with the apply method."""
+    def test_qubit_state_vector(self, init_state, device, tol):
+        """Test that the StatePrep operation produces the expected
+        result with the apply method."""
         dev = device(1)
         state = init_state(1)
 
-        dev.apply([op(state, wires=[0])])
+        dev.apply([qml.StatePrep(state, wires=[0])])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(state) ** 2
@@ -222,31 +221,30 @@ class TestStateApplyUnitarySimulator:
 class TestNonAnalyticApply:
     """Test application of PennyLane operations with non-analytic calculation."""
 
-    @pytest.mark.parametrize("op", [qml.QubitStateVector, qml.StatePrep])
-    def test_qubit_state_vector(self, op, init_state, device, tol):
-        """Test that the QubitStateVector and StatePrep operations produces the expected
+    def test_qubit_state_vector(self, init_state, device, tol):
+        """Test that the StatePrep operation produces the expected
         result with the apply method."""
+
         dev = device(1)
         state = init_state(1)
         wires = [0]
 
-        dev.apply([op(state, wires=wires)])
+        dev.apply([qml.StatePrep(state, wires=wires)])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
         expected = np.abs(state) ** 2
         assert np.allclose(res, expected, **tol)
 
-    @pytest.mark.parametrize("op", [qml.QubitStateVector, qml.StatePrep])
-    def test_invalid_qubit_state_vector(self, op, device):
+    def test_invalid_qubit_state_vector(self, device):
         """Test that an exception is raised if the state
         vector is the wrong size"""
         dev = device(2)
         state = np.array([0, 123.432])
         wires = [0, 1]
 
-        with pytest.raises(ValueError, match=r"State vector must have shape"):
-            dev.apply([op(state, wires=wires)])
+        with pytest.raises(ValueError, match=r"State must be of length 4"):
+            dev.apply([qml.StatePrep(state, wires=wires)])
 
     @pytest.mark.parametrize("mat", [U, U2])
     def test_qubit_unitary(self, init_state, device, mat, tol):

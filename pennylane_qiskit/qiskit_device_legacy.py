@@ -27,7 +27,8 @@ from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 
-from pennylane import QubitDevice, DeviceError
+from pennylane import DeviceError
+from pennylane.devices import QubitDevice
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
 
 from .converter import QISKIT_OPERATION_MAP
