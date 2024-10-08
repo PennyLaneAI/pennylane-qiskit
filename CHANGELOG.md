@@ -1,15 +1,5 @@
 # Release 0.38.1
 
-### New features since last release
-
-### Improvements 🛠
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
-
 ### Bug fixes 🐛
 
 * Due to the removal of the `Session` and `Backend` keywords in the 0.30 release of `qiskit-ibm-runtime`, the PennyLane-Qiskit
