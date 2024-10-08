@@ -12,6 +12,15 @@
 
 ### Bug fixes 🐛
 
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+---
+# Release 0.38.1
+
+### Bug fixes 🐛
+
 * Due to the removal of the `Session` and `Backend` keywords in the 0.30 release of `qiskit-ibm-runtime`, the PennyLane-Qiskit
   plugin now pins to `qiskit-ibm-runtime<=0.29`.
 
