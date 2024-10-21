@@ -1647,10 +1647,12 @@ class TestConverterIntegration:
         qc1.measure(1, 1)
 
         qtemp, qtemp1 = load(qc), load(qc1)
-        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
+        assert qml.equal(qtemp()[0], qml.measure(0))
+        assert qml.equal(qtemp1()[0], qml.measure(2))
 
         qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
-        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+        assert not qml.equal(qtemp()[0], qtemp2()[0])
+        qml.assert_equal(qtemp2()[0], qml.expval(qml.PauliZ(0)) )
 
 
 class TestConverterPennyLaneCircuitToQiskit:
