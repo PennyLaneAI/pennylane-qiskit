@@ -1639,6 +1639,12 @@ class TestConverterIntegration:
         qc.cx(0, 1)
         qc.measure(1, 1)
 
+        m1, m2 = load(qc)()
+        for m, w in zip((m1, m2), (0, 1)):
+            assert isinstance(m, qml.measurements.MeasurementValue)
+            assert len(m.measurements) == 1
+            assert m.measurements[0].wires == qml.wires.Wires(w)
+
         qc1 = QuantumCircuit(3, 3)
         qc1.h(0)
         qc1.measure(2, 2)
@@ -1646,11 +1652,11 @@ class TestConverterIntegration:
         qc1.cx(0, 1)
         qc1.measure(1, 1)
 
-        qtemp, qtemp1 = load(qc), load(qc1)
-        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
-
-        qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
-        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+        m1, m2 = load(qc1)()
+        for m, w in zip((m1, m2), (2, 1)):
+            assert isinstance(m, qml.measurements.MeasurementValue)
+            assert len(m.measurements) == 1
+            assert m.measurements[0].wires == qml.wires.Wires(w)
 
 
 class TestConverterPennyLaneCircuitToQiskit:
