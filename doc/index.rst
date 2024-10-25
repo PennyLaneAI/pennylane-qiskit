@@ -77,10 +77,10 @@ be defined as follows:
 
     # To access saved credentials for the IBM quantum channel and select an instance
     service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
-    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
+    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<min_num_qubits>)
 
     # passing a string in backend would result in an error
-    dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
+    dev = qml.device('qiskit.remote', wires=<backend_num_qubits>, backend=backend)
 
 Tutorials
 ~~~~~~~~~

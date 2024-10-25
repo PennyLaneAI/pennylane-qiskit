@@ -79,6 +79,7 @@ or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, sim
 
 .. code-block:: python
 
+    # Make sure to use a backend that has these options available e.g. FakeManila
     dev = qml.device(
         "qiskit.remote", 
         wires=5, 
