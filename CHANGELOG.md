@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Make `qiskit_session` available top-level. Users can now import it as `pennylane_qiskit.qiskit_session`.
+  [(#593)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/593)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -12,9 +15,15 @@
 
 ### Bug fixes 🐛
 
+* Fix deprecated import path for `QubitDevice`.
+  [(#584)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/584)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Astral Cai
+Austin Huang
 
 ---
 # Release 0.38.1
