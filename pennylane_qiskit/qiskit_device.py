@@ -91,10 +91,9 @@ def qiskit_session(device, **kwargs):
     .. warning::
 
         Currently, sessions cannot be used by IBM users on
-        the Open plan. There are also reports of sessions behaving unexpectedly and closing randomly.
-        In such an event, we recommend referring to the Qiskit Session
+        the Open plan. We recommend referring to the Qiskit Session
         `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_
-        and opening a session with Qiskit's session directly while we work to resolve these issues.
+        and opening a session with Qiskit's session directly.
 
     Using the context manager will ensure the Session closes properly and is removed from the
     device after completing the tasks. Any Session that was initialized and passed into the
