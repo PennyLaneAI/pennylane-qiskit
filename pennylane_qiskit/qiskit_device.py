@@ -91,7 +91,7 @@ def qiskit_session(device, **kwargs):
         the Open plan. There are also reports of sessions behaving unexpectedly and closing randomly. 
         In such event, we recommend referring to the Qiskit Session
         `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
-        and opening a session with Qiskit's session directly.
+        and opening a session with Qiskit's session directly while we work to resolve these issues.
 
     A context manager that creates a Qiskit Session and sets it as a session
     on the device while the context manager is active. Using the context manager
