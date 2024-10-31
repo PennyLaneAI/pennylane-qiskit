@@ -85,6 +85,8 @@ def custom_simulator_tracking(cls):
 @contextmanager
 def qiskit_session(device, **kwargs):
     """
+    A context manager that creates a Qiskit Session and sets it as a session
+    on the device while the context manager is active. 
     .. warning::
 
         As of the time of writing (Oct 31, 2024), sessions can no longer be used by IBM users on
@@ -93,10 +95,8 @@ def qiskit_session(device, **kwargs):
         `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
         and opening a session with Qiskit's session directly while we work to resolve these issues.
 
-    A context manager that creates a Qiskit Session and sets it as a session
-    on the device while the context manager is active. Using the context manager
-    will ensure the Session closes properly and is removed from the device after
-    completing the tasks. Any Session that was initialized and passed into the
+    Using the context manager will ensure the Session closes properly and is removed from the
+    device after completing the tasks. Any Session that was initialized and passed into the
     device will be overwritten by the Qiskit Session created by this context
     manager. As of the time of writing (Oct 31, 2024), Sessions cannot be used by Open Plan users.
 
