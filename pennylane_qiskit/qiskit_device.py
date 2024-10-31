@@ -103,7 +103,7 @@ def qiskit_session(device, **kwargs):
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
-        **kwargs: 
+        **kwargs:
             keyword arguments for session settings. At the time of writing, the only relevant
             keyword argument is "max_time", which lets you set the maximum amount of time the session
             is open. For the most up-to-date information, please refer to the Qiskit Session
