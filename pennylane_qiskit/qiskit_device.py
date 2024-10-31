@@ -90,7 +90,7 @@ def qiskit_session(device, **kwargs):
 
     .. warning::
 
-        At the time of writing, sessions can no longer be used by IBM users on
+        Currently, sessions cannot be used by IBM users on
         the Open plan. There are also reports of sessions behaving unexpectedly and closing randomly.
         In such an event, we recommend referring to the Qiskit Session
         `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_
