@@ -10,12 +10,16 @@
 
 ### Documentation 📝
 
+* Added warning in the documentation of `qiskit_session` due to recent reports of unexpected behavior.
+  [(#594)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/594)
+
 ### Bug fixes 🐛
 
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
 
+Austin Huang
 ---
 # Release 0.38.1
 
