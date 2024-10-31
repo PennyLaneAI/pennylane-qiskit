@@ -13,6 +13,9 @@
 
 ### Documentation 📝
 
+* Added warning in the documentation of `qiskit_session` due to recent reports of unexpected behavior.
+  [(#594)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/594)
+
 ### Bug fixes 🐛
 
 * Fix deprecated import path for `QubitDevice`.

@@ -84,20 +84,27 @@ def custom_simulator_tracking(cls):
 # pylint: disable=protected-access
 @contextmanager
 def qiskit_session(device, **kwargs):
-    """A context manager that creates a Qiskit Session and sets it as a session
-    on the device while the context manager is active. Using the context manager
-    will ensure the Session closes properly and is removed from the device after
-    completing the tasks. Any Session that was initialized and passed into the
+    """
+    A context manager that creates a Qiskit Session and sets it as a session
+    on the device while the context manager is active.
+
+    .. warning::
+
+        Currently, sessions cannot be used by IBM users on
+        the Open plan. We recommend referring to the Qiskit Session
+        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_
+        and opening a session with Qiskit's session directly.
+
+    Using the context manager will ensure the Session closes properly and is removed from the
+    device after completing the tasks. Any Session that was initialized and passed into the
     device will be overwritten by the Qiskit Session created by this context
     manager.
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
-        **kwargs: session keyword arguments to be used for settings for the Session. At the
-            time of writing, the only relevant keyword argument is "max_time", which lets you
-            set the maximum amount of time the session is open. For the most up to date information,
-            please refer to the Qiskit Session
-            `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
+        **kwargs: keyword arguments for session settings. Currently, the only relevant
+            keyword argument is "max_time", which allows setting the maximum amount of time the session
+            is open.
 
     **Example:**
 
