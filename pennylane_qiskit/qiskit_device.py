@@ -86,7 +86,8 @@ def custom_simulator_tracking(cls):
 def qiskit_session(device, **kwargs):
     """
     A context manager that creates a Qiskit Session and sets it as a session
-    on the device while the context manager is active. 
+    on the device while the context manager is active.
+
     .. warning::
 
         As of the time of writing (Oct 31, 2024), sessions can no longer be used by IBM users on
