@@ -84,12 +84,21 @@ def custom_simulator_tracking(cls):
 # pylint: disable=protected-access
 @contextmanager
 def qiskit_session(device, **kwargs):
-    """A context manager that creates a Qiskit Session and sets it as a session
+    """
+    .. warning::
+
+        As of the time of writing (Oct 31, 2024), sessions can no longer be used by IBM users on
+        the Open plan. Sessions may behave unexpectedly and close randomly. In such event, we
+        recommend referring to the Qiskit Session
+        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
+        and opening a session with Qiskit's session directly.
+
+    A context manager that creates a Qiskit Session and sets it as a session
     on the device while the context manager is active. Using the context manager
     will ensure the Session closes properly and is removed from the device after
     completing the tasks. Any Session that was initialized and passed into the
     device will be overwritten by the Qiskit Session created by this context
-    manager.
+    manager. As of the time of writing (Oct 31, 2024), Sessions cannot be used by Open Plan users.
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
