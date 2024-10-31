@@ -99,7 +99,7 @@ def qiskit_session(device, **kwargs):
     Using the context manager will ensure the Session closes properly and is removed from the
     device after completing the tasks. Any Session that was initialized and passed into the
     device will be overwritten by the Qiskit Session created by this context
-    manager. As of the time of writing (Oct 31, 2024), Sessions cannot be used by Open Plan users.
+    manager.
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
