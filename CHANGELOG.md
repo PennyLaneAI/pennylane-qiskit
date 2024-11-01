@@ -1,15 +1,9 @@
-# Release 0.39.0-dev
-
-### New features since last release
+# Release 0.39.0
 
 ### Improvements 🛠
 
 * Make `qiskit_session` available top-level. Users can now import it as `pennylane_qiskit.qiskit_session`.
   [(#593)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/593)
-
-### Breaking changes 💔
-
-### Deprecations 👋
 
 ### Documentation 📝
 
