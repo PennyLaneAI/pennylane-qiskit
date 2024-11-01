@@ -28,7 +28,6 @@ requirements = [
     "qiskit-ibm-provider",
     "pennylane>=0.38",
     "numpy",
-    "setuptools",
     "sympy<1.13",
     "networkx>=2.2",
 ]
