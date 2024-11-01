@@ -5,6 +5,11 @@
 * Make `qiskit_session` available top-level. Users can now import it as `pennylane_qiskit.qiskit_session`.
   [(#593)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/593)
 
+### Breaking changes 💔
+
+* Removes support for Python 3.9.
+  [(#597)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/597)
+
 ### Documentation 📝
 
 * Added warning in the documentation of `qiskit_session` due to recent reports of unexpected behavior.
