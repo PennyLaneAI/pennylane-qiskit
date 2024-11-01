@@ -7,7 +7,7 @@
 
 ### Breaking changes 💔
 
-* Removes support for Python 3.9.
+* Remove support for Python 3.9.
   [(#597)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/597)
 
 ### Documentation 📝
