@@ -25,7 +25,9 @@
 This release contains contributions from (in alphabetical order):
 
 Astral Cai
+Lillian M. A. Frederiksen
 Austin Huang
+
 
 ---
 # Release 0.38.1
