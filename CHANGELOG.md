@@ -10,6 +10,9 @@
 * Remove support for Python 3.9.
   [(#597)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/597)
 
+* Upgrade minimum supported version of PennyLane to 0.38.0.
+  [(#)]()
+
 ### Documentation 📝
 
 * Added warning in the documentation of `qiskit_session` due to recent reports of unexpected behavior.
@@ -27,6 +30,7 @@ This release contains contributions from (in alphabetical order):
 Astral Cai
 Lillian M. A. Frederiksen
 Austin Huang
+Mudit Pandey
 
 
 ---
