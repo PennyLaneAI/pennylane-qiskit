@@ -11,7 +11,7 @@
   [(#597)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/597)
 
 * Upgrade minimum supported version of PennyLane to 0.38.0.
-  [(#)]()
+  [(#599)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/599)
 
 ### Documentation 📝
 
