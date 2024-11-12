@@ -61,7 +61,6 @@ QISKIT_OPERATION_MAP = {
     "CRY": lib.CRYGate,
     "CRZ": lib.CRZGate,
     "PhaseShift": lib.PhaseGate,
-    "QubitStateVector": lib.Initialize,
     "StatePrep": lib.Initialize,
     "Toffoli": lib.CCXGate,
     "QubitUnitary": lib.UnitaryGate,
@@ -527,7 +526,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             elif instruction_name in inv_map:
                 operation_class = getattr(pennylane_ops, inv_map[instruction_name])
                 operation_args.extend(operation_params)
-                if operation_class in (qml.QubitStateVector, qml.StatePrep):
+                if operation_class is qml.StatePrep:
                     operation_args = [np.array(operation_params)]
 
             elif isinstance(instruction, Measure):
@@ -747,7 +746,7 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering
-    if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+    if operation in ("QubitUnitary", "StatePrep"):
         qregs = list(reversed(qregs))
 
     if creg:

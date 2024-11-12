@@ -301,7 +301,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
-            if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+            if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
@@ -327,9 +327,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             operation (pennylane.Operation): operation to be checked
 
         Raises:
-            DeviceError: If the operation is QubitStateVector or StatePrep
+            DeviceError: If the operation is StatePrep
         """
-        if operation in ("QubitStateVector", "StatePrep"):
+        if operation == "StatePrep":
             if self._is_unitary_backend:
                 raise DeviceError(
                     f"The {operation} operation "

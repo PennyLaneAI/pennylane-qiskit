@@ -6,6 +6,8 @@
 
 ### Breaking changes 💔
 
+* The ``qml.QubitStateVector`` template has been removed. Instead, use :class:`~pennylane.StatePrep`.
+
 ### Deprecations 👋
 
 ### Documentation 📝
@@ -15,6 +17,8 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Andrija Paurevic
 
 ---
 # Release 0.39.0
