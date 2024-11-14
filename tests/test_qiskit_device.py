@@ -320,5 +320,6 @@ class TestBatchExecution:
             return qml.state()
 
         res = barrier_func()
-        assert barrier_func.tape.operations[0] == qml.Barrier([0, 1])
-        assert np.allclose(res, dev.batch_execute([barrier_func.tape]), atol=0)
+        tape = qml.workflow.construct_tape(barrier_func)()
+        assert tape.operations[0] == qml.Barrier([0, 1])
+        assert np.allclose(res, dev.batch_execute([tape]), atol=0)
