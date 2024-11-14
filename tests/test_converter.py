@@ -2098,10 +2098,13 @@ class TestControlOpIntegration:
             qml.Barrier([0, 1, 2])
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
+        loaded_qiskit_circuit_tape = qml.workflow.construct_tape(loaded_qiskit_circuit)()
+        built_pl_circuit_tape = qml.workflow.construct_tape(built_pl_circuit)()
+
         assert loaded_qiskit_circuit() == built_pl_circuit()
-        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        assert len(loaded_qiskit_circuit_tape.operations) == len(built_pl_circuit_tape.operations)
         for op1, op2 in zip(
-            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            loaded_qiskit_circuit_tape.operations, built_pl_circuit_tape.operations
         ):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
@@ -2187,11 +2190,12 @@ class TestControlOpIntegration:
 
             return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
 
+        loaded_qiskit_circuit_tape = qml.workflow.construct_tape(loaded_qiskit_circuit)()
+        built_pl_circuit_tape = qml.workflow.construct_tape(built_pl_circuit)()
         assert loaded_qiskit_circuit() == built_pl_circuit()
-
-        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        assert len(loaded_qiskit_circuit_tape.operations) == len(built_pl_circuit_tape.operations)
         for op1, op2 in zip(
-            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            loaded_qiskit_circuit_tape.operations, built_pl_circuit_tape.operations
         ):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
@@ -2285,9 +2289,11 @@ class TestControlOpIntegration:
             qml.cond(m1 == 1, qml.PauliX)(wires=[2])
             return qml.expval(qml.PauliZ(0))
 
+        qk_circuit_tape = qml.workflow.construct_tape(qk_circuit)()
+        pl_circuit_tape = qml.workflow.construct_tape(pl_circuit)()
         assert qk_circuit() == pl_circuit()
-        assert len(qk_circuit.tape.operations) == len(pl_circuit.tape.operations)
-        for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations):
+        assert len(qk_circuit_tape.operations) == len(pl_circuit_tape.operations)
+        for op1, op2 in zip(qk_circuit_tape.operations, pl_circuit_tape.operations):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
             elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):

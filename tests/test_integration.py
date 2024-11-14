@@ -446,8 +446,8 @@ class TestPLTemplates:
             return qml.expval(qml.PauliZ(0))
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
-        circuit(phi)
-        ops = circuit.tape.operations
+        tape = qml.workflow.construct_tape(circuit)(phi)
+        ops = tape.operations
         for i in range(phi.shape[1]):
             # Test each rotation applied
             assert ops[i].name == "RX"
@@ -469,8 +469,8 @@ class TestPLTemplates:
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
-        circuit(phi)
-        ops = circuit.tape.operations
+        tape = qml.workflow.construct_tape(circuit)(phi)
+        ops = tape.operations
         # Test the rotation applied
         assert ops[0].name == "Rot"
         assert len(ops[0].parameters) == 3
