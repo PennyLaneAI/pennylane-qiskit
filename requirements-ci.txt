@@ -1,5 +1,5 @@
 pennylane>=0.38
-qiskit
+qiskit<=1.2.0
 qiskit-ibm-runtime<=0.29
 numpy
 sympy==1.12
