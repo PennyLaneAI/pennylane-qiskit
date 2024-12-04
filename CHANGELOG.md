@@ -15,19 +15,27 @@
 
 ### Bug fixes 🐛
 
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Andrija Paurevic
+
+---
+# Release 0.39.1
+
 ### Other changes 
 
 * The `qiskit` dependency has been temporarily pinned to version `<1.3` to prevent wrong results. 
   At present, `pennylane-qiskit` is incompatible with `qiskit 1.3`.
   [(#603)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/603) 
-  [(#604)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/604)   
+  [(#604)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/604)
 
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
 
-Pietropaolo Frisoni,
-Andrija Paurevic
+Pietropaolo Frisoni
 
 ---
 # Release 0.39.0
