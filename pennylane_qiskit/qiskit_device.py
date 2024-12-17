@@ -15,7 +15,8 @@ r"""
 This module contains a prototype base class for constructing Qiskit devices
 for PennyLane with the new device API.
 """
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
+# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init,too-many-positional-arguments
+
 
 
 import warnings
