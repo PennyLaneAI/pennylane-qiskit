@@ -13,13 +13,16 @@
 
 ### Documentation 📝
 
-### Bug fixes 🐛
+### Bug fixes 🐛  
+* Fixed premature session closure after a single execution when using `qiskit_device.qiskit_session`.  
+  [(#608)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/608)
 
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
 
 Andrija Paurevic
+Tak Hur(@takh04)
 
 ---
 # Release 0.39.1
