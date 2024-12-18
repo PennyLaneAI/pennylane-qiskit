@@ -573,7 +573,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                         mid_circ_regs[carg] = mid_circ_meas[-1]
 
             else:
-
                 try:
                     if not isinstance(instruction, (ControlFlowOp,)):
                         operation_args = [instruction.to_matrix()]
