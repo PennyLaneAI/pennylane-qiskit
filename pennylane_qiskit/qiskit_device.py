@@ -18,7 +18,6 @@ for PennyLane with the new device API.
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init,too-many-positional-arguments
 
 
-
 import warnings
 import inspect
 from typing import Union, Callable, Tuple, Sequence
@@ -326,7 +325,6 @@ class QiskitDevice(Device):
         compile_backend=None,
         **kwargs,
     ):
-
         if shots is None:
             warnings.warn(
                 "Expected an integer number of shots, but received shots=None. Defaulting "
