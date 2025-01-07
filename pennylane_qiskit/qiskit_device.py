@@ -15,7 +15,7 @@ r"""
 This module contains a prototype base class for constructing Qiskit devices
 for PennyLane with the new device API.
 """
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
+# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init,too-many-positional-arguments
 
 
 import warnings
@@ -325,7 +325,6 @@ class QiskitDevice(Device):
         compile_backend=None,
         **kwargs,
     ):
-
         if shots is None:
             warnings.warn(
                 "Expected an integer number of shots, but received shots=None. Defaulting "
@@ -592,7 +591,8 @@ class QiskitDevice(Device):
                     results.append(execute_fn(circ, session))
                 yield results
             finally:
-                session.close()
+                if self._session is None:
+                    session.close()
 
         with execute_circuits(session) as results:
             return results
