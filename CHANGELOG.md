@@ -1,19 +1,12 @@
-# Release 0.40.0-dev
-
-### New features since last release
-
-### Improvements 🛠
+# Release 0.40.0
 
 ### Breaking changes 💔
 
 * The ``qml.QubitStateVector`` template has been removed. Instead, use :class:`~pennylane.StatePrep`.
   [(#601)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/601)
 
-### Deprecations 👋
-
-### Documentation 📝
-
 ### Bug fixes 🐛  
+
 * Fixed premature session closure when using `qiskit_session`.  
   [(#608)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/608)
 
