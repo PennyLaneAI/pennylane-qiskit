@@ -28,6 +28,7 @@ This release contains contributions from (in alphabetical order):
 
 * The layout of the circuit is now applied to the observables when it is changed on transpilation.
   [(#613)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/613)
+  
 * Fixed premature session closure when using `qiskit_session`.  
   [(#608)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/608)
 
