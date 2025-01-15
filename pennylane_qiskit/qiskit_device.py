@@ -654,7 +654,9 @@ class QiskitDevice(Device):
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc)
-        compiled_observables = [op.apply_layout(compiled_circuits[0].layout) for op in pauli_observables]
+        compiled_observables = [
+            op.apply_layout(compiled_circuits[0].layout) for op in pauli_observables
+        ]
         estimator.options.update(**self._kwargs)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
