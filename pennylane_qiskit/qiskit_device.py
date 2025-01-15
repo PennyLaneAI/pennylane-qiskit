@@ -654,12 +654,15 @@ class QiskitDevice(Device):
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc)
+        compiled_observables = [
+            op.apply_layout(compiled_circuits[0].layout) for op in pauli_observables
+        ]
         estimator.options.update(**self._kwargs)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        circ_and_obs = [(compiled_circuits[0], pauli_observables)]
+        circ_and_obs = [(compiled_circuits[0], compiled_observables)]
         result = estimator.run(
             circ_and_obs,
             precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
