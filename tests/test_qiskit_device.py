@@ -216,24 +216,29 @@ class TestAerBackendOptions:
         dev2 = qml.device("qiskit.aer", wires=2)
         assert dev2.backend.options.get("noise_model") is None
 
+
 class TestExecutionAtOptimizationLevels:
-    """Test that a known circuit returns the expected result at all 
-        optimization levels."""
+    """Test that a known circuit returns the expected result at all
+    optimization levels."""
 
     @pytest.mark.parametrize("optimization_level", [0, 1, 2, 3])
     def test_layout_at_optimization_levels(self, optimization_level):
         """Test circuit to detect layout problems in the circuit and observables."""
-        backend = FakeManilaV2()
-        dev = qml.device("qiskit.remote", wires=5, backend=backend, optimization_level=optimization_level)
-        
+
+        fakebackend = FakeManilaV2()
+        dev = qml.device(
+            "qiskit.remote", wires=5, backend=fakebackend, optimization_level=optimization_level
+        )
+
         @qml.qnode(dev)
         def circuit():
             qml.Hadamard(2)
-            qml.CNOT([1,4])
+            qml.CNOT([1, 4])
             return qml.expval(qml.PauliX(2))
-            
+
         res = circuit()
         assert np.allclose(res, 1.0, atol=0.2)
+
 
 @pytest.mark.parametrize("shots", [None])
 class TestBatchExecution:
