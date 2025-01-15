@@ -225,11 +225,13 @@ class TestExecutionAtOptimizationLevels:
         """Test circuit to detect layout problems in the circuit and observables."""
         backend = FakeManilaV2()
         dev = qml.device("qiskit.remote", wires=5, backend=backend, optimization_level=optimization_level)
+        
         @qml.qnode(dev)
         def circuit():
             qml.Hadamard(2)
             qml.CNOT([1,4])
             return qml.expval(qml.PauliX(2))
+            
         res = circuit()
         assert np.allclose(res, 1.0, atol=0.2)
 
