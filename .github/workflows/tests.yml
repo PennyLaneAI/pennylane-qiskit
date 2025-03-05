@@ -68,7 +68,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip wheel setuptools>=75.8.1
           pip install setuptools
           pip install git+https://github.com/PennyLaneAI/pennylane.git
           pip install -r requirements-ci.txt
@@ -77,7 +77,7 @@ jobs:
       - name: Install Plugin
         run: |
           python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
+          pip install dist/pennyLane*.whl
 
       - name: Run tests
         run: |
