@@ -19,7 +19,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools>=75.8.1
           pip install qiskit
           python setup.py bdist_wheel
-          pip install dist/pennyLane*.whl
+          pip install dist/pennylane*.whl
 
       - name: Install test dependencies
         run: |
