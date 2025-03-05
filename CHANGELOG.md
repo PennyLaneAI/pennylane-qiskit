@@ -27,8 +27,8 @@
 
 This release contains contributions from (in alphabetical order):
 
-Juan Felipe Huan Lew Yee
 Pietropaolo Frisoni
+Juan Felipe Huan Lew Yee
 
 ---
 # Release 0.40.0
