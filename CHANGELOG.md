@@ -1,3 +1,20 @@
+# Release 0.40.1
+
+### Internal changes ⚙️
+
+* Pinning `setuptools` in the CI to update how the plugin is installed.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+* Pinning `qiskit.aer` in the `setup.py` file to maintain compatibility with the plugin.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Pietropaolo Frisoni
+
+---
 # Release 0.40.0
 
 ### Breaking changes 💔
