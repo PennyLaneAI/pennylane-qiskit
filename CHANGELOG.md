@@ -10,6 +10,25 @@
 
 ### Documentation 📝
 
+### Bug fixes 🐛
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+---
+# Release 0.40.1
+
+### New features since last release
+
+### Improvements 🛠
+
+### Breaking changes 💔
+
+### Deprecations 👋
+
+### Documentation 📝
+
 ### Internal changes
 
 * Pinning `setuptools` in the CI to update how the plugin is installed.
