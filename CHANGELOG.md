@@ -10,14 +10,6 @@
 
 ### Documentation 📝
 
-### Internal changes
-
-* Pinning `setuptools` in the CI to update how the plugin is installed.
-  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
-
-* Pinning `qiskit.aer` in the `setup.py` file to maintain compatibility with the plugin.
-  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
-
 ### Bug fixes 🐛
 
 * The layout of the circuit is now applied to the observables when it is changed on transpilation.
@@ -27,8 +19,24 @@
 
 This release contains contributions from (in alphabetical order):
 
-Pietropaolo Frisoni
 Juan Felipe Huan Lew Yee
+
+---
+# Release 0.40.1
+
+### Internal changes ⚙️
+
+* Pinning `setuptools` in the CI to update how the plugin is installed.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+* Pinning `qiskit.aer` in the `setup.py` file to maintain compatibility with the plugin.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Pietropaolo Frisoni
 
 ---
 # Release 0.40.0
