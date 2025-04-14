@@ -339,7 +339,7 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with pytest.raises(
-            qml.QuantumFunctionError,
+            qml.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(only_two_wires)} - does not match the"
             " number of wires the loaded quantum circuit acts on.",
         ):
@@ -362,7 +362,7 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with pytest.raises(
-            qml.QuantumFunctionError,
+            qml.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(more_than_three_wires)} - does not match the"
             " number of wires the loaded quantum circuit acts on.",
         ):
@@ -855,7 +855,7 @@ class TestConverterUtils:
         qc_wires = [hash(q) for q in qc.qubits]
 
         with pytest.raises(
-            qml.QuantumFunctionError,
+            qml.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(wires)} - does not match ",
         ):
             map_wires(qc_wires, wires)
