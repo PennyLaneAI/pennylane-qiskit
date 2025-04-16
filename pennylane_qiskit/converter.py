@@ -383,7 +383,7 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     if len(qc_wires) == len(wires):
         return dict(zip(qc_wires, wires))
 
-    raise qml.QuantumFunctionError(
+    raise qml.exceptions.QuantumFunctionError(
         f"The specified number of wires - {len(wires)} - does not match "
         "the number of wires the loaded quantum circuit acts on."
     )
