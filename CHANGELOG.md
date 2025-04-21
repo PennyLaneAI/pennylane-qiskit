@@ -1,14 +1,25 @@
-# Release 0.41.0-dev
+# Release 0.42.0-dev
+ 
+ ### New features since last release
+ 
+ ### Improvements 🛠
+ 
+ ### Breaking changes 💔
+ 
+ ### Deprecations 👋
 
-### New features since last release
-
-### Improvements 🛠
-
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
+ ### Internal changes ⚙️
+ 
+ ### Documentation 📝
+ 
+ ### Bug fixes 🐛
+ 
+ ### Contributors ✍️
+ 
+ This release contains contributions from (in alphabetical order):
+ 
+ ---
+# Release 0.41.0
 
 ### Bug fixes 🐛
 
@@ -18,6 +29,25 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Juan Felipe Huan Lew Yee
+
+---
+# Release 0.40.1
+
+### Internal changes ⚙️
+
+* Pinning `setuptools` in the CI to update how the plugin is installed.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+* Pinning `qiskit.aer` in the `setup.py` file to maintain compatibility with the plugin.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Pietropaolo Frisoni
 
 ---
 # Release 0.40.0
