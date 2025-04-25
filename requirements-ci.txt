@@ -1,4 +1,4 @@
-git+https://github.com/PennyLaneAI/pennylane.git@master#egg=pennylane
+pennylane
 qiskit<1.3
 qiskit-ibm-runtime<=0.29
 numpy
