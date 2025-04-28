@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - uses: PennyLaneAI/sphinx-action@master
+    - uses: PennyLaneAI/sphinx-action@3.9
       with:
         docs-folder: "doc/"
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
