@@ -293,7 +293,8 @@ html_theme_options = {
         "of Google Inc."
     ],
     "toc_overview": True,
-    "google_analytics_tracking_id": "G-C480Z9JL0D"
+    "google_analytics_tracking_id": "G-C480Z9JL0D",
+    "search_on_pennylane_ai": True,
 }
 
 edit_on_github_project = 'PennyLaneAI/pennylane-qiskit'
