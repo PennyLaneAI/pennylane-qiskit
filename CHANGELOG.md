@@ -15,12 +15,19 @@
   [(#628)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/628)
  
  ### Documentation 📝
- 
+
+ * Users are now redirected to `pennylane.ai/search` with the doc content type selected 
+  and the associated project and version filters selected when using the search bar.
+  [(#617)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/617)
+
  ### Bug fixes 🐛
  
  ### Contributors ✍️
  
  This release contains contributions from (in alphabetical order):
+
+ Pietropaolo Frisoni
+ Andrew Gardhouse
  
  ---
 # Release 0.41.0
