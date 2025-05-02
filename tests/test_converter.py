@@ -1579,7 +1579,7 @@ class TestConverterIntegration:
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
-    def test_quantum_circuit_with_multiple_measurements(self, qubit_device_2_wires):
+    def test_quantum_circuit_with_multiple_measurements(self):
         """Tests loading a converted template in a QNode with multiple measurements."""
 
         angle = 0.543
@@ -1595,11 +1595,11 @@ class TestConverterIntegration:
         measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
         quantum_circuit = load(qc, measurements=measurements)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_loaded_qiskit_circuit():
             return quantum_circuit()
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_native_pennylane():
             qml.Hadamard(0)
             m0 = qml.measure(0)
@@ -1612,12 +1612,12 @@ class TestConverterIntegration:
 
         quantum_circuit = load(qc, measurements=None)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_loaded_qiskit_circuit2():
             meas = quantum_circuit()
             return [qml.expval(m) for m in meas]
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_native_pennylane2():
             qml.Hadamard(0)
             m0 = qml.measure(0)
@@ -2059,7 +2059,7 @@ class TestControlOpIntegration:
         qc.cx(0, 1)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qml.device("default.qubit")
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
@@ -2149,7 +2149,7 @@ class TestControlOpIntegration:
                 qc.x(2)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=5, seed=24)
+        dev = qml.device("default.qubit", seed=24)
         qiskit_circuit = load(qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))])
 
         @qml.qnode(dev)
@@ -2269,7 +2269,7 @@ class TestControlOpIntegration:
         with qc.if_test((1, 1)):
             qc.x(2)
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qml.device("default.qubit")
 
         @qml.qnode(dev)
         def qk_circuit():

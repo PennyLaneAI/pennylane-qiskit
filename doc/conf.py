@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath('.')), 'doc'))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.6'
+needs_sphinx = '8.1'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -293,7 +293,8 @@ html_theme_options = {
         "of Google Inc."
     ],
     "toc_overview": True,
-    "google_analytics_tracking_id": "G-C480Z9JL0D"
+    "google_analytics_tracking_id": "G-C480Z9JL0D",
+    "search_on_pennylane_ai": True,
 }
 
 edit_on_github_project = 'PennyLaneAI/pennylane-qiskit'
