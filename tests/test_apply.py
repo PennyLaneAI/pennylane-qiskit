@@ -210,7 +210,7 @@ class TestStateApplyUnitarySimulator:
         state = init_state(1)
 
         with pytest.raises(
-            qml.DeviceError,
+            qml.exceptions.DeviceError,
             match="The StatePrep operation is not supported on the unitary simulator backend",
         ):
             dev.apply([qml.StatePrep(state, wires=[0])])
