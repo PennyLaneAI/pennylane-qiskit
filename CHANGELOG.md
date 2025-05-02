@@ -1,35 +1,22 @@
-# Release 0.42.0-dev
- 
- ### New features since last release
- 
- ### Improvements 🛠
- 
- ### Breaking changes 💔
- 
- ### Deprecations 👋
+# Release 0.42.0-dev.post0
 
- ### Internal changes ⚙️
+### New features since last release
 
- * Updated tests to keep into account that wires validation on `default.qubit` in PennyLane now takes place 
-  after the `mid_circuit_measurements` transform is applied during preprocessing.
-  [(#628)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/628)
- 
- ### Documentation 📝
+### Improvements 🛠
 
- * Users are now redirected to `pennylane.ai/search` with the doc content type selected 
-  and the associated project and version filters selected when using the search bar.
-  [(#617)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/617)
+### Breaking changes 💔
 
- ### Bug fixes 🐛
- 
- ### Contributors ✍️
- 
- This release contains contributions from (in alphabetical order):
+### Deprecations 👋
 
- Pietropaolo Frisoni
- Andrew Gardhouse
- 
- ---
+### Documentation 📝
+
+### Bug fixes 🐛
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+---
 # Release 0.41.0
 
 ### Bug fixes 🐛
