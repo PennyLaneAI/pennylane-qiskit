@@ -13,6 +13,7 @@
  * Updated tests to keep into account that wires validation on `default.qubit` in PennyLane now takes place 
   after the `mid_circuit_measurements` transform is applied during preprocessing.
   [(#628)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/628)
+  * Bumped `readthedocs.yml` up to Ubuntu-24.04 [(#629)](https://github.com/PennyLaneAI/pennylane-rigetti/pull/175)
  
  ### Documentation 📝
 
