@@ -5,6 +5,7 @@
  ### Improvements 🛠
  
 * Removes use of deprecated `qml.operation.AnyWires`.
+  [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
 
  ### Breaking changes 💔
  
@@ -28,6 +29,7 @@
  ### Bug fixes 🐛
 
  * Stops queuing a mid circuit measurement on first use of `qml.from_qiskit`.
+ [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
  
  ### Contributors ✍️
  
