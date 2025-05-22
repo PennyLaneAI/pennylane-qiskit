@@ -35,7 +35,6 @@ from pennylane import I, X, Y, Z
 from pennylane import numpy as np
 from pennylane.measurements import MidMeasureMP
 from pennylane.noise import op_in, wires_in, partial_wires
-from pennylane.operation import AnyWires
 from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
@@ -2621,36 +2620,36 @@ class TestLoadNoiseModel:
         pl_model_map = {
             op_in("Identity")
             & wires_in(0): qml.ThermalRelaxationError(
-                0.0, 26981.9403362283, 26034.6676428009, 1.0, wires=AnyWires
+                0.0, 26981.9403362283, 26034.6676428009, 1.0, wires="ANY"
             ),
             op_in("Identity")
             & wires_in(1): qml.ThermalRelaxationError(
-                0.0, 30732.034088541, 28335.6514829973, 1.0, wires=AnyWires
+                0.0, 30732.034088541, 28335.6514829973, 1.0, wires="ANY"
             ),
             (op_in("U1") & wires_in(0))
             | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
-                p=0.08999999999999997, wires=AnyWires
+                p=0.08999999999999997, wires="ANY"
             ),
             op_in("U2")
             & wires_in(0): qml.ThermalRelaxationError(
-                0.4998455776, 7.8227384666, 7.8226559459, 1.0, wires=AnyWires
+                0.4998455776, 7.8227384666, 7.8226559459, 1.0, wires="ANY"
             ),
             op_in("U2")
             & wires_in(1): qml.ThermalRelaxationError(
-                0.4998644198, 7.8227957211, 7.8226273195, 1.0, wires=AnyWires
+                0.4998644198, 7.8227957211, 7.8226273195, 1.0, wires="ANY"
             ),
             op_in("U3")
             & wires_in(0): qml.ThermalRelaxationError(
-                0.4996911588, 7.8227934813, 7.8226284393, 1.0, wires=AnyWires
+                0.4996911588, 7.8227934813, 7.8226284393, 1.0, wires="ANY"
             ),
             op_in("U3")
             & wires_in(1): qml.ThermalRelaxationError(
-                0.4997288404, 7.8229079927, 7.8225711871, 1.0, wires=AnyWires
+                0.4997288404, 7.8229079927, 7.8225711871, 1.0, wires="ANY"
             ),
             op_in("CNOT")
             & wires_in([0, 1]): qml.QubitChannel(
                 Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
-                wires=AnyWires,
+                wires="ANY",
             ),
         }
 
@@ -2661,7 +2660,7 @@ class TestLoadNoiseModel:
         for (pl_k, pl_v), (qk_k, qk_v) in zip(
             pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
         ):
-            pl_op, qk_op = pl_v(AnyWires), qk_v(AnyWires)
+            pl_op, qk_op = pl_v("ANY"), qk_v("ANY")
             assert repr(pl_k) == repr(qk_k)
             assert isinstance(qk_op, qml.QubitChannel)
 
@@ -2705,9 +2704,9 @@ class TestLoadNoiseModel:
         ):
             assert repr(pl_k) == repr(qk_k)
 
-            pl_data = np.array(pl_v(AnyWires).data)
+            pl_data = np.array(pl_v("ANY").data)
             if verbose:
-                choi_mat1 = self._kraus_to_choi(qk_v(AnyWires).data)
+                choi_mat1 = self._kraus_to_choi(qk_v("ANY").data)
                 choi_mat2 = self._kraus_to_choi(pl_data)
                 assert np.allclose(choi_mat1, choi_mat2)
             else:
