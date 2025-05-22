@@ -35,7 +35,6 @@ from sympy import lambdify
 
 import pennylane as qml
 from pennylane.noise.conditionals import WiresIn, _rename
-from pennylane.operation import AnyWires
 import pennylane.ops as pennylane_ops
 from pennylane.tape.tape import rotations_and_diagonal_measurements
 
@@ -1272,7 +1271,7 @@ def load_noise_model(
         conditions = []
         for wires, operations in wires_map.items():
             cond = qml.noise.op_in(operations)
-            if wires != AnyWires:
+            if wires != "ANY":
                 cond &= WiresIn(wires)
             conditions.append(cond)
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
