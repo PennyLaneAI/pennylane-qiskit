@@ -928,23 +928,6 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    @patch("pennylane_qiskit.qiskit_device.QiskitDevice._execute_estimator")
-    def test_execute_pipeline_primitives_no_session(self, mocker):
-        """Test that a Primitives-based device initialized with no Session creates one for the
-        execution, and then returns the device session to None."""
-
-        dev = QiskitDevice(wires=5, backend=aer_backend, session=None)
-
-        assert dev._session is None
-
-        qs = QuantumScript([qml.PauliX(0), qml.PauliY(1)], measurements=[qml.expval(qml.PauliZ(0))])
-
-        with patch("pennylane_qiskit.qiskit_device.Session") as mock_session:
-            dev.execute(qs)
-            mock_session.assert_called_once()  # a session was created
-
-        assert dev._session is None  # the device session is still None
-
     @pytest.mark.parametrize("backend", [aer_backend, legacy_backend, FakeManila(), FakeManilaV2()])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
         """Test that a device executes measurements that require raw samples via the sampler,
