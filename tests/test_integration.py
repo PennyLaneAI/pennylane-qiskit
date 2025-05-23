@@ -107,7 +107,7 @@ class TestDeviceIntegration:
             qml.device("qiskit.aer")
 
         with pytest.raises(
-            qml.DeviceError, match="specified number of shots needs to be at least 1"
+            qml.exceptions.DeviceError, match="specified number of shots needs to be at least 1"
         ):
             qml.device("qiskit.aer", wires=1, shots=0)
 
