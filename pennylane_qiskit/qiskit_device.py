@@ -566,7 +566,7 @@ class QiskitDevice(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""
-        session = self._session or Session(backend=self.backend)
+        session = self._session
 
         results = []
 
@@ -575,29 +575,51 @@ class QiskitDevice(Device):
 
         @contextmanager
         def execute_circuits(session):
-            try:
-                for circ in circuits:
-                    if circ.shots and len(circ.shots.shot_vector) > 1:
-                        raise ValueError(
-                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            "Please use a single integer instead when specifying the number of shots."
-                        )
-                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
-                        circ.measurements[0].obs, "pauli_rep", None
-                    ):
-                        execute_fn = self._execute_estimator
-                    else:
-                        execute_fn = self._execute_sampler
-                    results.append(execute_fn(circ, session))
-                yield results
-            finally:
-                if self._session is None:
-                    session.close()
+
+            estimator_circuits = []
+            sampler_circuits = []
+
+            # classify circuits acording to qiskit primitives
+            for circ in circuits:
+                if circ.shots and len(circ.shots.shot_vector) > 1:
+                    raise ValueError(
+                        f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
+                        "Please use a single integer instead when specifying the number of shots."
+                    )
+                if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                    circ.measurements[0].obs, "pauli_rep", None
+                ):
+                    estimator_circuits.append(circ)
+                else:
+                    sampler_circuits.append(circ)
+
+            # execute estimator and sampler
+            estimator_results = (
+                self._execute_estimator(estimator_circuits, session) if estimator_circuits else []
+            )
+            sampler_results = (
+                self._execute_sampler(sampler_circuits, session) if sampler_circuits else []
+            )
+
+            # join results in the same vector
+            results = []
+            i_est, i_sam = 0, 0
+            for circ in circuits:
+                if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                    circ.measurements[0].obs, "pauli_rep", None
+                ):
+                    results.append(estimator_results[i_est])
+                    i_est += 1
+                else:
+                    results.append(sampler_results[i_sam])
+                    i_sam += 1
+
+            yield results
 
         with execute_circuits(session) as results:
             return results
 
-    def _execute_sampler(self, circuit, session):
+    def _execute_sampler(self, circuits, session):
         """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
         Note that this result has been processed respective to the MeasurementProcess given.
         E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
@@ -609,33 +631,40 @@ class QiskitDevice(Device):
         Returns:
             result (tuple): the processed result from SamplerV2
         """
-        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
-        sampler = Sampler(session=session)
-        compiled_circuits = self.compile_circuits(qcirc)
+        sampler = Sampler(session=session, backend=self.backend)
         sampler.options.update(**self._kwargs)
 
-        # len(compiled_circuits) is always 1 so the indexing does not matter.
-        result = sampler.run(
-            compiled_circuits,
-            shots=circuit.shots.total_shots if circuit.shots.total_shots else None,
-        ).result()[0]
-        classical_register_name = compiled_circuits[0].cregs[0].name
-        self._current_job = getattr(result.data, classical_register_name)
-
-        # needs processing function to convert to the correct format for states, and
-        # also handle instances where wires were specified in probs, and for multiple probs measurements
-
-        self._samples = self.generate_samples(0)
-        res = [
-            mp.process_samples(self._samples, wire_order=self.wires) for mp in circuit.measurements
+        qcircs = [
+            circuit_to_qiskit(circ, self.num_wires, diagonalize=True, measure=True)
+            for circ in circuits
         ]
+        pubs = self.compile_circuits(qcircs)
 
-        single_measurement = len(circuit.measurements) == 1
-        res = (res[0],) if single_measurement else tuple(res)
+        job_result = sampler.run(
+            pubs,
+            shots=circuits[0].shots.total_shots if circuits[0].shots.total_shots else None,
+        ).result()
 
-        return res
+        results = []
+        for i, circ in enumerate(circuits):
+            classical_register_name = pubs[i].cregs[0].name
+            self._current_job = getattr(job_result[i].data, classical_register_name)
 
-    def _execute_estimator(self, circuit, session):
+            # needs processing function to convert to the correct format for states, and
+            # also handle instances where wires were specified in probs, and for multiple probs measurements
+            self._samples = self.generate_samples(0)
+            res = [
+                mp.process_samples(self._samples, wire_order=self.wires) for mp in circ.measurements
+            ]
+
+            single_measurement = len(circ.measurements) == 1
+            res = (res[0],) if single_measurement else tuple(res)
+
+            results.append(res)
+
+        return results
+
+    def _execute_estimator(self, circuits, session):
         """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
         Note that this result has been processed respective to the MeasurementProcess given.
         E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
@@ -649,28 +678,34 @@ class QiskitDevice(Device):
         """
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
-        qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
-        estimator = Estimator(session=session)
-
-        pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
-        compiled_circuits = self.compile_circuits(qcirc)
-        compiled_observables = [
-            op.apply_layout(compiled_circuits[0].layout) for op in pauli_observables
-        ]
+        # the Estimator primitive takes care of diagonalization and measurements itself,
+        # so diagonalizing gates and measurements are not included in the circuit
+        estimator = Estimator(session=session, backend=self.backend)
         estimator.options.update(**self._kwargs)
-        # split into one call per measurement
-        # could technically be more efficient if there are some observables where we ask
-        # for expectation value and variance on the same observable, but spending time on
-        # that right now feels excessive
-        circ_and_obs = [(compiled_circuits[0], compiled_observables)]
-        result = estimator.run(
-            circ_and_obs,
-            precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,
-        ).result()
-        self._current_job = result
-        result = self._process_estimator_job(circuit.measurements, result)
 
-        return result
+        qcircs = [
+            circuit_to_qiskit(circ, self.num_wires, diagonalize=False, measure=False)
+            for circ in circuits
+        ]
+        compiled_qcircs = self.compile_circuits(qcircs)
+        pubs = []
+        for i, circ in enumerate(circuits):
+            pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circ.measurements]
+            compiled_obs = [op.apply_layout(compiled_qcircs[i].layout) for op in pauli_observables]
+            pubs.append((compiled_qcircs[i], compiled_obs))
+
+        job_result = estimator.run(
+            pubs,
+            precision=np.sqrt(1 / circuits[0].shots.total_shots) if circuits[0].shots else None,
+        ).result()
+
+        results = []
+        for i, circ in enumerate(circuits):
+            self._current_job = job_result[i]
+            processed_result = self._process_estimator_job(circ.measurements, job_result[i])
+            results.append(processed_result)
+
+        return results
 
     @staticmethod
     def _process_estimator_job(measurements, job_result):
@@ -688,8 +723,8 @@ class QiskitDevice(Device):
         Returns:
             result (tuple): the processed result from EstimatorV2
         """
-        expvals = job_result[0].data.evs
-        variances = (job_result[0].data.stds / job_result[0].metadata["target_precision"]) ** 2
+        expvals = job_result.data.evs
+        variances = (job_result.data.stds / job_result.metadata["target_precision"]) ** 2
         result = []
         for i, mp in enumerate(measurements):
             if isinstance(mp, ExpectationMP):
