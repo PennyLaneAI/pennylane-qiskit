@@ -566,7 +566,7 @@ class QiskitDevice(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""
-        session = self._session or Session(backend=self.backend)
+        session = self._session
 
         results = []
 
@@ -610,7 +610,7 @@ class QiskitDevice(Device):
             result (tuple): the processed result from SamplerV2
         """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
-        sampler = Sampler(session=session)
+        sampler = Sampler(mode=session) if session else Sampler(mode=self.backend)
         compiled_circuits = self.compile_circuits(qcirc)
         sampler.options.update(**self._kwargs)
 
@@ -650,7 +650,7 @@ class QiskitDevice(Device):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
-        estimator = Estimator(session=session)
+        estimator = Estimator(mode=session) if session else Estimator(mode=self.backend)
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc)
