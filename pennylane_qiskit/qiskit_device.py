@@ -591,7 +591,8 @@ class QiskitDevice(Device):
                     results.append(execute_fn(circ, session))
                 yield results
             finally:
-                pass
+                if self._session:
+                    session.close()
 
         with execute_circuits(session) as results:
             return results
