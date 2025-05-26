@@ -566,36 +566,27 @@ class QiskitDevice(Device):
         execution_config: ExecutionConfig = DefaultExecutionConfig,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""
-        session = self._session or Session(backend=self.backend)
+        session = self._session
 
         results = []
 
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
 
-        @contextmanager
-        def execute_circuits(session):
-            try:
-                for circ in circuits:
-                    if circ.shots and len(circ.shots.shot_vector) > 1:
-                        raise ValueError(
-                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            "Please use a single integer instead when specifying the number of shots."
-                        )
-                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
-                        circ.measurements[0].obs, "pauli_rep", None
-                    ):
-                        execute_fn = self._execute_estimator
-                    else:
-                        execute_fn = self._execute_sampler
-                    results.append(execute_fn(circ, session))
-                yield results
-            finally:
-                if self._session is None:
-                    session.close()
-
-        with execute_circuits(session) as results:
-            return results
+        for circ in circuits:
+            if circ.shots and len(circ.shots.shot_vector) > 1:
+                raise ValueError(
+                    f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
+                    "Please use a single integer instead when specifying the number of shots."
+                )
+            if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                circ.measurements[0].obs, "pauli_rep", None
+            ):
+                execute_fn = self._execute_estimator
+            else:
+                execute_fn = self._execute_sampler
+            results.append(execute_fn(circ, session))
+        return results
 
     def _execute_sampler(self, circuit, session):
         """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
@@ -610,7 +601,7 @@ class QiskitDevice(Device):
             result (tuple): the processed result from SamplerV2
         """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
-        sampler = Sampler(session=session)
+        sampler = Sampler(mode=session) if session else Sampler(mode=self.backend)
         compiled_circuits = self.compile_circuits(qcirc)
         sampler.options.update(**self._kwargs)
 
@@ -650,7 +641,7 @@ class QiskitDevice(Device):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
-        estimator = Estimator(session=session)
+        estimator = Estimator(mode=session) if session else Estimator(mode=self.backend)
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc)
