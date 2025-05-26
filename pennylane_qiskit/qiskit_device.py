@@ -573,29 +573,20 @@ class QiskitDevice(Device):
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
 
-        @contextmanager
-        def execute_circuits(session):
-            try:
-                for circ in circuits:
-                    if circ.shots and len(circ.shots.shot_vector) > 1:
-                        raise ValueError(
-                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            "Please use a single integer instead when specifying the number of shots."
-                        )
-                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
-                        circ.measurements[0].obs, "pauli_rep", None
-                    ):
-                        execute_fn = self._execute_estimator
-                    else:
-                        execute_fn = self._execute_sampler
-                    results.append(execute_fn(circ, session))
-                yield results
-            finally:
-                if self._session:
-                    session.close()
-
-        with execute_circuits(session) as results:
-            return results
+        for circ in circuits:
+            if circ.shots and len(circ.shots.shot_vector) > 1:
+                raise ValueError(
+                    f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
+                    "Please use a single integer instead when specifying the number of shots."
+                )
+            if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                circ.measurements[0].obs, "pauli_rep", None
+            ):
+                execute_fn = self._execute_estimator
+            else:
+                execute_fn = self._execute_sampler
+            results.append(execute_fn(circ, session))
+        return results
 
     def _execute_sampler(self, circuit, session):
         """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
