@@ -146,7 +146,9 @@ class TestLoadNoiseChannels:
         choi_mat1 = self._kraus_to_choi(
             pl_op_from_qiskit.compute_kraus_matrices(*pl_op_from_qiskit.data)
         )
-        choi_mat2 = self._kraus_to_choi(pl_channel.compute_kraus_matrices(*pl_channel.data))
+        choi_mat2 = self._kraus_to_choi(
+            pl_channel.compute_kraus_matrices(*pl_channel.data, **pl_channel.hyperparameters)
+        )
         assert np.allclose(choi_mat1, choi_mat2)
 
     @pytest.mark.parametrize(
