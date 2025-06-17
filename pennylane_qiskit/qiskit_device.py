@@ -20,7 +20,10 @@ for PennyLane with the new device API.
 
 import warnings
 import inspect
-from typing import Union, Callable, Tuple, Sequence
+from dataclasses import replace
+
+
+from typing import Union, Tuple, Sequence, Callable
 from contextlib import contextmanager
 from functools import wraps
 
@@ -37,7 +40,7 @@ from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.tape import QuantumTape, QuantumScript
 from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
-from pennylane.devices.execution_config import ExecutionConfig, DefaultExecutionConfig
+from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.preprocess import (
     decompose,
     validate_observables,
@@ -62,7 +65,7 @@ def custom_simulator_tracking(cls):
     tracked_execute = cls.execute
 
     @wraps(tracked_execute)
-    def execute(self, circuits, execution_config=DefaultExecutionConfig):
+    def execute(self, circuits, execution_config: ExecutionConfig = None):
         results = tracked_execute(self, circuits, execution_config)
         if self.tracker.active:
             res = []
@@ -208,7 +211,7 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 @transform
 def split_execution_types(
     tape: qml.tape.QuantumTape,
-) -> (Sequence[qml.tape.QuantumTape], Callable):
+) -> tuple[Sequence[qml.tape.QuantumTape], Callable]:
     """Split into separate tapes based on measurement type. Counts and sample-based measurements
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
@@ -426,7 +429,7 @@ class QiskitDevice(Device):
 
     def preprocess(
         self,
-        execution_config: ExecutionConfig = DefaultExecutionConfig,
+        execution_config: ExecutionConfig = None,
     ) -> Tuple[TransformProgram, ExecutionConfig]:
         """This function defines the device transform program to be applied and an updated device configuration.
 
@@ -446,7 +449,8 @@ class QiskitDevice(Device):
 
         """
         config = execution_config
-        config.use_device_gradient = False
+
+        config = replace(config, use_device_gradient=False)
 
         transform_program = TransformProgram()
 
@@ -563,7 +567,7 @@ class QiskitDevice(Device):
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
-        execution_config: ExecutionConfig = DefaultExecutionConfig,
+        execution_config: ExecutionConfig = None,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""
         session = self._session
