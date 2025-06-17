@@ -66,6 +66,8 @@ def custom_simulator_tracking(cls):
 
     @wraps(tracked_execute)
     def execute(self, circuits, execution_config: ExecutionConfig = None):
+        if execution_config is None:
+            execution_config = ExecutionConfig()
         results = tracked_execute(self, circuits, execution_config)
         if self.tracker.active:
             res = []
@@ -448,7 +450,7 @@ class QiskitDevice(Device):
         * Does not intrinsically support parameter broadcasting
 
         """
-        config = execution_config
+        config = execution_config or ExecutionConfig()
 
         config = replace(config, use_device_gradient=False)
 
