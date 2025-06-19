@@ -13,6 +13,10 @@
 
  ### Internal changes ⚙️
 
+ * Replace `DefaultExecutionConfig` with `ExecutionConfig()` and use `dataclasses.replace` to update
+   configurations to not mutate properties.
+  [(#634)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/634)
+
  * Updated tests to keep into account that wires validation on `default.qubit` in PennyLane now takes place 
   after the `mid_circuit_measurements` transform is applied during preprocessing.
   [(#628)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/628)
