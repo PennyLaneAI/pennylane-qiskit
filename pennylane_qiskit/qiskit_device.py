@@ -23,7 +23,7 @@ import inspect
 from dataclasses import replace
 
 
-from typing import Union, Tuple, Sequence, Callable
+from typing import Union, Tuple, Sequence, Callable, Optional
 from contextlib import contextmanager
 from functools import wraps
 
