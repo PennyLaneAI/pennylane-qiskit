@@ -431,7 +431,7 @@ class QiskitDevice(Device):
 
     def preprocess(
         self,
-        execution_config: ExecutionConfig = None,
+        execution_config: Optional[ExecutionConfig] = None,
     ) -> Tuple[TransformProgram, ExecutionConfig]:
         """This function defines the device transform program to be applied and an updated device configuration.
 
