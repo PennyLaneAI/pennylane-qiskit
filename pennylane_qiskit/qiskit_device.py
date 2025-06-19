@@ -65,7 +65,7 @@ def custom_simulator_tracking(cls):
     tracked_execute = cls.execute
 
     @wraps(tracked_execute)
-    def execute(self, circuits, execution_config: ExecutionConfig = None):
+    def execute(self, circuits, execution_config: Optional[ExecutionConfig] = None):
         if execution_config is None:
             execution_config = ExecutionConfig()
         results = tracked_execute(self, circuits, execution_config)
