@@ -14,7 +14,7 @@
  ### Internal changes ⚙️
 
  * Update `requirements.txt` and `requirements-ci.txt`.
-  [(#)]()
+  [(#635)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/635)
 
  * Replace `DefaultExecutionConfig` with `ExecutionConfig()` and use `dataclasses.replace` to update
    configurations to not mutate properties.
