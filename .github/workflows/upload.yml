@@ -27,7 +27,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
+          python -m pytest tests --tb=native
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
