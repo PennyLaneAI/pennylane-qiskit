@@ -13,38 +13,44 @@
 
  ### Internal changes ⚙️
 
- * Replace `DefaultExecutionConfig` with `ExecutionConfig()` and use `dataclasses.replace` to update
-   configurations to not mutate properties.
+* Replace `DefaultExecutionConfig` with `ExecutionConfig()` and use `dataclasses.replace` to update
+  configurations to not mutate properties.
   [(#634)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/634)
 
- * Updated tests to keep into account that wires validation on `default.qubit` in PennyLane now takes place 
+* Updated tests to keep into account that wires validation on `default.qubit` in PennyLane now takes place 
   after the `mid_circuit_measurements` transform is applied during preprocessing.
   [(#628)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/628)
 
-  * Bumped the `readthedocs.yml` action up to Ubuntu-24.04.
-    [(#629)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/629)
+* Bumped the `readthedocs.yml` action up to Ubuntu-24.04.
+  [(#629)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/629)
 
-  * Use new `pennylane.exceptions` module for custom exceptions.
-    [(#626)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/626)
+* Use new `pennylane.exceptions` module for custom exceptions.
+  [(#626)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/626)
+
+* Plugin no longer defaults to creating a session. Instead, it decides between job mode and 
+  session mode and chooses one or the other based on if a user has passed in a session or not.
+  [(#632)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/632)
  
  ### Documentation 📝
 
- * Users are now redirected to `pennylane.ai/search` with the doc content type selected 
+* Users are now redirected to `pennylane.ai/search` with the doc content type selected 
   and the associated project and version filters selected when using the search bar.
   [(#617)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/617)
 
  ### Bug fixes 🐛
 
- * Stops queuing a mid circuit measurement on first use of `qml.from_qiskit`.
+* Stops queuing a mid circuit measurement on first use of `qml.from_qiskit`.
  [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
  
  ### Contributors ✍️
  
  This release contains contributions from (in alphabetical order):
 
- Pietropaolo Frisoni
- Andrew Gardhouse
+ Pietropaolo Frisoni,
+ Andrew Gardhouse,
+ Austin Huang,
  Christina Lee,
+ Andrija Paurevic
  
  ---
 # Release 0.41.0
