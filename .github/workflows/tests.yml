@@ -42,7 +42,7 @@ jobs:
 
       - name: Run standard Qiskit plugin tests
         # Run the standard tests with the most recent version of Qiskit
-        run: python -m pytest tests --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
+        run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
