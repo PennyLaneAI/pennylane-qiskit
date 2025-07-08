@@ -23,6 +23,9 @@
 
   * Bumped the `readthedocs.yml` action up to Ubuntu-24.04.
     [(#629)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/629)
+
+  * Use new `pennylane.exceptions` module for custom exceptions.
+    [(#626)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/626)
  
  ### Documentation 📝
 
