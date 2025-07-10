@@ -64,7 +64,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
     """
 
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.42.0"
+    pennylane_requires = ">=0.38.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
