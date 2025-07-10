@@ -1,4 +1,4 @@
-# Release 0.42.0
+# Release 0.42.0-dev
  
  ### New features since last release
  
@@ -8,9 +8,6 @@
   [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
 
  ### Breaking changes 💔
-
-* Upgrade minimum supported version of PennyLane to 0.42.0.
-  [(#639)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/639)
  
  ### Deprecations 👋
 
