@@ -41,11 +41,15 @@
 
 * Stops queuing a mid circuit measurement on first use of `qml.from_qiskit`.
  [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
- 
+
+* `qml.QubitChannel` in a converted noise model should now act on correct number of qubits.
+  [(#640)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/640)
+
  ### Contributors ✍️
  
  This release contains contributions from (in alphabetical order):
 
+ Utkarsh Azad,
  Pietropaolo Frisoni,
  Andrew Gardhouse,
  Austin Huang,
