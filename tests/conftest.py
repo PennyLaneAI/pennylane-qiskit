@@ -57,7 +57,7 @@ def skip_if_no_account():
             pytest.skip("Skipping test, no IBM Quantum account available.")
     try:
         QiskitRuntimeService(token=t, channel="ibm_quantum")
-    except Exception:
+    except Exception: # pylint:disable=broad-except
         pytest.skip("Skipping test, failed to initialize IBM Quantum service.")
 
 
