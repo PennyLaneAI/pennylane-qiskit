@@ -53,11 +53,9 @@ def skip_if_no_account():
     """Skips test if no IBM Quantum account is found."""
     token = os.getenv("QISKIT_IBM_TOKEN")
     if token is None:
-        # If no token, check for saved accounts on disk
         if not QiskitRuntimeService.saved_accounts():
             pytest.skip("Skipping test, no IBM Quantum account available.")
     try:
-        # Validate credentials by attempting to initialize the service
         QiskitRuntimeService(token=token, channel="ibm_quantum")
     except Exception:
         pytest.skip("Skipping test, failed to initialize IBM Quantum service.")
@@ -67,7 +65,7 @@ def skip_if_no_account():
 def skip_if_account_saved():
     """Skips test if an IBM Quantum account is already saved locally."""
     if QiskitRuntimeService.saved_accounts():
-        pytest.skip("Skipping test, an IBM Quantum account is already saved.")
+        pytest.skip("Skipping test, IBMQ will load an account successfully")
 
 
 @pytest.fixture
