@@ -52,9 +52,8 @@ state_backends = [
 def skip_if_no_account():
     """Skips test if no IBM Quantum account is found."""
     t = os.getenv("IBMQX_TOKEN", None)
-    if t is None:
-        if not QiskitRuntimeService.saved_accounts():
-            pytest.skip("Skipping test, no IBM Quantum account available.")
+    if t is None and not QiskitRuntimeService.saved_accounts():
+        pytest.skip("Skipping test, no IBM Quantum account available.")
     try:
         QiskitRuntimeService(token=t, channel="ibm_quantum")
     except Exception:  # pylint:disable=broad-except
