@@ -79,7 +79,9 @@ def _build_qerror_op(error) -> qml.QubitChannel:
     except Exception as exc:  # pragma: no cover
         raise ValueError(f"Error {error} could not be converted.") from exc
 
-    return qml.QubitChannel(K_list=kraus_matrices, wires="DummyTempWire")
+    num_wires = int(qml.math.log2(kraus_matrices[0].shape[0]))
+    kraus_wires = [f"DummyTempWire{i}" for i in range(num_wires)]
+    return qml.QubitChannel(K_list=kraus_matrices, wires=kraus_wires)
 
 
 def _build_noise_model_map(noise_model) -> Tuple[dict, dict]:

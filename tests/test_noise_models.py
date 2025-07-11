@@ -138,6 +138,21 @@ class TestLoadNoiseChannels:
                     wires="ANY",
                 ),
             ),
+            (
+                noise.kraus_error(
+                    [
+                        np.diag([-0.9486833] * 4),
+                        np.diag([-0.31622777] * 2, k=2) + np.diag([-0.31622777] * 2, k=-2),
+                    ],
+                ),
+                qml.QubitChannel(
+                    [
+                        np.diag([-0.9486833] * 4),
+                        np.diag([-0.31622777] * 2, k=2) + np.diag([-0.31622777] * 2, k=-2),
+                    ],
+                    wires=["ANY1", "ANY2"],
+                ),
+            ),
         ],
     )
     def test_build_kraus_error_ops(self, qiskit_error, pl_channel):
