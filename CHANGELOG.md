@@ -8,7 +8,9 @@
   [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
 
  ### Breaking changes 💔
- 
+
+* Upgrade minimum supported version of PennyLane to 0.42.0.
+  [(#643)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/643)
  ### Deprecations 👋
 
  ### Internal changes ⚙️
