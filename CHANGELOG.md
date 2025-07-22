@@ -8,11 +8,18 @@
 
 ### Deprecations 👋
 
+### Internal changes ⚙️
+
+* Updated tests to use `qml.set_shots` for setting shot values on circuits.
+  [(#644)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/644)
+
 ### Documentation 📝
 
 ### Bug fixes 🐛
 
 ### Contributors ✍️
+
+Yushao Chen
 
 This release contains contributions from (in alphabetical order):
 

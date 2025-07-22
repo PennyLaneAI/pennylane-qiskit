@@ -667,7 +667,7 @@ class TestKwargsHandling:
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
-        circuit(shots=123)
+        qml.set_shots(shots=123)(circuit)()
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
@@ -693,7 +693,7 @@ class TestKwargsHandling:
         assert dev._transpile_args["seed_transpiler"] == 42
 
         # Make sure that running the circuit again doesn't change the optios
-        circuit(shots=5)
+        qml.set_shots(circuit, shots=5)()
         assert dev._kwargs["resilience_level"] == 1
         assert not hasattr(dev._kwargs, "seed_transpiler")
         assert dev._transpile_args["seed_transpiler"] == 42
@@ -1109,7 +1109,7 @@ class TestExecution:
         def circuit():
             return qml.expval(qml.PauliX(0))
 
-        circuit(shots=[5])
+        qml.set_shots(circuit, shots=[5])()
 
         estimator_execute.assert_called_once()
         # calculates # of shots executed from precision
@@ -1207,7 +1207,7 @@ class TestExecution:
             qml.PauliX(0)
             return qml.probs(wires=[0, 1])
 
-        circuit(shots=[5])
+        qml.set_shots(circuit, shots=[5])()
 
         sampler_execute.assert_called_once()
         assert dev._current_job.num_shots == 5
@@ -1225,7 +1225,7 @@ class TestExecution:
             return qml.sample(qml.PauliX(0))
 
         with pytest.raises(ValueError, match="Setting shot vector"):
-            circuit(shots=[5, 10, 2])
+            qml.set_shots(circuit, shots=[5, 10, 2])()
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
