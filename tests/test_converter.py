@@ -14,6 +14,7 @@
 r"""
 This module contains tests for converting circuits for PennyLane IBMQ devices.
 """
+# pylint: disable=too-many-positional-arguments
 import sys
 from typing import cast
 

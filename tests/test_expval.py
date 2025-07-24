@@ -14,6 +14,7 @@
 r"""
 This module contains tests for using expvals for PennyLane IBMQ devices.
 """
+# pylint: disable=too-many-positional-arguments
 import pytest
 from flaky import flaky
 
