@@ -84,7 +84,7 @@ def _build_qerror_op(error) -> qml.QubitChannel:
     return qml.QubitChannel(K_list=kraus_matrices, wires=kraus_wires)
 
 
-def _build_noise_model_map(noise_model) -> Tuple[dict, dict]:
+def _build_noise_model_map(noise_model) -> tuple[dict, dict]:
     """Builds a noise model map from a Qiskit noise model. This noise model map can be used
     to efficiently construct a PennyLane noise model.
 
