@@ -17,7 +17,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install black pylint==2.7.4
+        run: pip install --upgrade black pylint
 
       - uses: actions/checkout@v2
 
