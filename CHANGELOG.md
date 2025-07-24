@@ -7,7 +7,7 @@
 ### Breaking changes 💔
 
 * Remove support for Python 3.10 and add support for Python 3.13.
-  [(#)]()
+  [(#646)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/646)
 
 ### Deprecations 👋
 
