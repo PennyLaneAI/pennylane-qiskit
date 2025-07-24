@@ -15,7 +15,7 @@ r"""
 This module contains functions for converting between Qiskit QuantumCircuit objects
 and PennyLane circuits.
 """
-from typing import Dict, Any, Union
+from typing import Any
 from collections.abc import Iterable, Sequence
 import warnings
 from functools import partial, reduce

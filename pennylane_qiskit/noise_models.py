@@ -16,7 +16,6 @@ This module contains functions for converting Qiskit NoiseModel objects
 into PennyLane NoiseModels.
 """
 from collections import defaultdict
-from typing import Tuple
 from warnings import warn
 
 import pennylane as qml
