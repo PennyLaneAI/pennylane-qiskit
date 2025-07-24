@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* Remove support for Python 3.10 and add support for Python 3.13.
+  [(#)]()
+
 ### Deprecations 👋
 
 ### Internal changes ⚙️
