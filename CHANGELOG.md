@@ -19,6 +19,7 @@
 ### Documentation 📝
 
 * Updated documentation for connecting to IBM backends.
+  [(#647)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/647)
 
 ### Bug fixes 🐛
 
