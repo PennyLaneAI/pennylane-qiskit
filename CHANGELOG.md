@@ -18,6 +18,9 @@
 
 ### Documentation 📝
 
+* Updated documentation for connecting to IBM backends.
+  [(#647)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/647)
+
 ### Bug fixes 🐛
 
 ### Contributors ✍️
@@ -25,6 +28,7 @@
 This release contains contributions from (in alphabetical order):
 
 Yushao Chen,
+Austin Huang,
 Andrija Paurevic.
 
 ---
