@@ -18,6 +18,8 @@
 
 ### Documentation 📝
 
+* Updated documentation for connecting to IBM backends.
+
 ### Bug fixes 🐛
 
 ### Contributors ✍️
@@ -25,6 +27,7 @@
 This release contains contributions from (in alphabetical order):
 
 Yushao Chen,
+Austin Huang,
 Andrija Paurevic.
 
 ---
