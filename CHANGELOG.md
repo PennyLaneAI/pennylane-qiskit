@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* Remove support for Python 3.10 and add support for Python 3.13.
+  [(#646)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/646)
+
 ### Deprecations 👋
 
 ### Internal changes ⚙️
@@ -19,9 +22,10 @@
 
 ### Contributors ✍️
 
-Yushao Chen
-
 This release contains contributions from (in alphabetical order):
+
+Yushao Chen,
+Andrija Paurevic.
 
 ---
 # Release 0.42.0

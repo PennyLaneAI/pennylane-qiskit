@@ -377,6 +377,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             state = unitary @ initial_state
 
+        else:  # pragma: no cover
+            raise DeviceError(f"Cannot get state for backend {self.backend_name}. ")
+
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
 

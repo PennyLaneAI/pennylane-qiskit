@@ -53,7 +53,7 @@ Features
 Installation
 ============
 
-This plugin requires Python version 3.10 and above, as well as PennyLane and Qiskit.
+This plugin requires Python >= 3.11, as well as PennyLane and Qiskit.
 Installation of this plugin, as well as all dependencies, can be done using ``pip``:
 
 .. code-block:: bash

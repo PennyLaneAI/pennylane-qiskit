@@ -23,7 +23,8 @@ import inspect
 from dataclasses import replace
 
 
-from typing import Union, Tuple, Sequence, Callable, Optional
+from typing import Union
+from collections.abc import Sequence, Callable
 from contextlib import contextmanager
 from functools import wraps
 
@@ -65,7 +66,7 @@ def custom_simulator_tracking(cls):
     tracked_execute = cls.execute
 
     @wraps(tracked_execute)
-    def execute(self, circuits, execution_config: Optional[ExecutionConfig] = None):
+    def execute(self, circuits, execution_config: ExecutionConfig | None = None):
         if execution_config is None:
             execution_config = ExecutionConfig()
         results = tracked_execute(self, circuits, execution_config)
@@ -431,8 +432,8 @@ class QiskitDevice(Device):
 
     def preprocess(
         self,
-        execution_config: Optional[ExecutionConfig] = None,
-    ) -> Tuple[TransformProgram, ExecutionConfig]:
+        execution_config: ExecutionConfig | None = None,
+    ) -> tuple[TransformProgram, ExecutionConfig]:
         """This function defines the device transform program to be applied and an updated device configuration.
 
         Args:
@@ -569,7 +570,7 @@ class QiskitDevice(Device):
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
-        execution_config: Optional[ExecutionConfig] = None,
+        execution_config: ExecutionConfig | None = None,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""
         session = self._session

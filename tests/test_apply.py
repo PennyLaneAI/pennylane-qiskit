@@ -14,6 +14,7 @@
 r"""
 This module contains tests for applying operations on PennyLane IBMQ devices.
 """
+# pylint: disable=too-many-positional-arguments
 import pytest
 
 import numpy as np
