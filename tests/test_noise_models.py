@@ -22,7 +22,7 @@ import numpy as np
 import pennylane as qml
 
 # pylint:disable = wrong-import-position, unnecessary-lambda
-qiksit = pytest.importorskip("qiskit", "1.0.0")
+qiskit = pytest.importorskip("qiskit", "1.0.0")
 from qiskit_aer import noise
 from qiskit.quantum_info.operators.channel import Kraus
 
