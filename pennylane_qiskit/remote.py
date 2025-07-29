@@ -51,7 +51,7 @@ class RemoteDevice(QiskitDevice):
         import pennylane as qml
         from qiskit_ibm_runtime import QiskitRuntimeService
 
-        service = QiskitRuntimeService(channel="ibm_quantum")
+        service = QiskitRuntimeService()
         backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
         dev = qml.device("qiskit.remote", wires=127, backend=backend)
 
