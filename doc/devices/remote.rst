@@ -4,37 +4,25 @@ The Remote device
 The ``'qiskit.remote'`` device is a generic adapter to use any Qiskit backend as interface
 for a PennyLane device.
 
-To access IBM backends, we recommend using `Qiskit Runtime <https://docs.quantum.ibm.com/api/migration-guides/qiskit-runtime-from-ibm-provider>`_.
+To access IBM backends, please follow `the guide for setting up IBM Cloud <https://quantum.cloud.ibm.com/docs/en/guides/cloud-setup>`_.
+After creating an account and initializing an instance, you can connect to a backend like so:
 
 .. code-block:: python
 
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<YOUR_IBMQ_TOKEN>")
+    service = QiskitRuntimeService.save_account(
+        token=token, # Your token is confidential. Do not share it with others
+        instance="<IBM Cloud CRN or instance name>", # Optionally specify the instance to use.
+        plans_preference="['plan-type1', 'plan-type2']", # Optionally set the types of plans to prioritize.  This is ignored if the instance is specified.
+        region="<region>", # Optionally set the region to prioritize. This is ignored if the instance is specified.
+        name="<account-name>", # Optionally name this set of account credentials.
+        set_as_default=True, # Optionally set these as your default credentials.
+    )
 
-    # To access saved credentials for the IBM quantum channel and select an instance
-    service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
-    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
+    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<min_num_qubits>)
 
-    dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
-
-
-.. note:: 
-
-    Certain third-party backends may be using the deprecated ``Provider`` interface, in which case
-    you can get the backend instance from providers with complex search options using their 
-    ``get_backend()`` method. For example:
-
-    .. code-block:: python
-
-        import pennylane as qml
-
-        def configured_backend():
-            backend = SomeProvider.get_backend(...)
-        backend.options.update_options(...) # Set backend options this way
-        return backend
-
-        dev = qml.device('qiskit.remote', wires=2, backend=configured_backend())
+    dev = qml.device('qiskit.remote', wires=<num_qubits_of_backend>, backend=backend)
 
 After installing the plugin, this device can be used just like any other PennyLane device for defining and evaluating QNodes.
 For example, a simple quantum function that returns the expectation value of a measurement and depends on
