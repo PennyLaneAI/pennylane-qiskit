@@ -44,6 +44,7 @@ from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.preprocess import (
     decompose,
+    no_analytic,
     validate_observables,
     validate_measurements,
     validate_device_wires,
@@ -331,16 +332,6 @@ class QiskitDevice(Device):
         compile_backend=None,
         **kwargs,
     ):
-        if shots is None:
-            warnings.warn(
-                "Expected an integer number of shots, but received shots=None. Defaulting "
-                "to 1024 shots. The analytic calculation of results is not supported on "
-                "this device. All statistics obtained from this device are estimates based "
-                "on samples.",
-                UserWarning,
-            )
-
-            shots = 1024
 
         super().__init__(wires=wires, shots=shots)
 
@@ -457,6 +448,7 @@ class QiskitDevice(Device):
 
         transform_program = TransformProgram()
 
+        transform_program.add_transform(no_analytic, name=self.name)
         transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
             decompose,
