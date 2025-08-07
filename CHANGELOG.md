@@ -13,6 +13,10 @@
 
 ### Internal changes ⚙️
 
+* `QiskitDevice` does not error out `None` shots at initialization any more.
+  Instead, a `no_analytic` preprocess transform is applied.
+  [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
+
 * Updated tests to use `qml.set_shots` for setting shot values on circuits.
   [(#644)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/644)
 
