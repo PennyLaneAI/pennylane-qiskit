@@ -13,7 +13,7 @@
 
 ### Internal changes ⚙️
 
-* `QiskitDevice` does not error out `None` shots at initialization any more.
+* `QiskitDevice` does not issue a warning when device shots are `None` shots at initialization any more.
   Instead, a `no_analytic` preprocess transform is applied.
   [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
 
