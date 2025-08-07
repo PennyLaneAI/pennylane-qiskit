@@ -173,18 +173,6 @@ class TestDeviceInitialization:
         assert dev2._compile_backend != dev2._backend
         assert dev2._compile_backend == compile_backend
 
-    def test_no_shots_warns_and_defaults(self):
-        """Test that initializing with shots=None raises a warning indicating that
-        the device is sample based and will default to 1024 shots"""
-
-        with pytest.warns(
-            UserWarning,
-            match="Expected an integer number of shots, but received shots=None",
-        ):
-            dev = QiskitDevice(wires=2, backend=aer_backend, shots=None)
-
-        assert dev.shots.total_shots == 1024
-
     @pytest.mark.parametrize("backend", [aer_backend, legacy_backend])
     def test_backend_wire_validation(self, backend):
         """Test that an error is raised if the number of device wires exceeds
@@ -566,7 +554,7 @@ class TestDevicePreprocessing:
         """Test that the device preprocess decomposes operators that
         aren't on the list of Qiskit-supported operators"""
         qs = QuantumScript(
-            [qml.CosineWindow(wires=range(2))], measurements=[qml.expval(qml.PauliZ(0))]
+            [qml.CosineWindow(wires=range(2))], measurements=[qml.expval(qml.PauliZ(0))], shots=1024
         )
 
         # tape contains unsupported operations
@@ -584,7 +572,7 @@ class TestDevicePreprocessing:
 
         qs = QuantumScript(
             [qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
-            measurements=[qml.expval(qml.PauliZ(0))],
+            measurements=[qml.expval(qml.PauliZ(0))], shots=1024
         )
 
         program, _ = test_dev.preprocess()
