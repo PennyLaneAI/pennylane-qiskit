@@ -614,7 +614,7 @@ class TestDevicePreprocessing:
 
         program, _ = test_dev.preprocess()
 
-        with pytest.raises(DeviceError, match="Analytic execution is not supported"):
+        with pytest.raises(qml.exceptions.DeviceError, match="Analytic execution is not supported"):
             program([qs])
 
 
