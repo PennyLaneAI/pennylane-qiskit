@@ -9,13 +9,30 @@
 * Remove support for Python 3.10 and add support for Python 3.13.
   [(#646)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/646)
 
+* `QiskitDevice` does not issue a warning when device shots are `None` at initialization any more.
+  Instead, a `no_analytic` preprocess transform is applied. This means an
+  error will now be raised if shots are not specified. Please use `qml.set_shots(shots)`
+  on all QNodes that will be executed on the `QiskitDevice`:
+
+  ```python
+  dev = qml.device("qiskit.aer", wires=2, shots=None)  # Previously issued warning
+
+  @qml.qnode(dev)
+  def circuit():
+      qml.Hadamard(wires=0)
+      qml.CNOT(wires=[0, 1])
+      return qml.expval(qml.PauliZ(0))
+
+  # Now you must set shots before execution to avoid errors
+  circuit = qml.set_shots(circuit, shots=1000)
+  result = circuit()
+  ```
+
+  [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
+
 ### Deprecations 👋
 
 ### Internal changes ⚙️
-
-* `QiskitDevice` does not issue a warning when device shots are `None` shots at initialization any more.
-  Instead, a `no_analytic` preprocess transform is applied.
-  [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
 
 * Updated tests to use `qml.set_shots` for setting shot values on circuits.
   [(#644)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/644)
