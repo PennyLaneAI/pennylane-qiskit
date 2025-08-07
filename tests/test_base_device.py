@@ -603,6 +603,20 @@ class TestDevicePreprocessing:
 
         assert np.all([op.name in QISKIT_OPERATION_MAP for op in tapes[0].operations])
 
+    def test_no_analytic(self):
+        """Test that the device preprocess applies the no_analytic transform
+        to unsupported operators even if they are state prep operators"""
+
+        qs = QuantumScript(
+            [qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
+            measurements=[qml.expval(qml.PauliZ(0))],
+        )
+
+        program, _ = test_dev.preprocess()
+
+        with pytest.raises(DeviceError, match="Analytic execution is not supported"):
+            program([qs])
+
 
 class TestKwargsHandling:
     def test_warning_if_shots(self):
