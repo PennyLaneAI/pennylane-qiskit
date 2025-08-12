@@ -17,6 +17,7 @@
   ```python
   dev = qml.device("qiskit.aer", wires=2, shots=None)  # Previously issued warning
 
+  @qml.set_shots(1000)
   @qml.qnode(dev)
   def circuit():
       qml.Hadamard(wires=0)
@@ -24,8 +25,10 @@
       return qml.expval(qml.PauliZ(0))
 
   # Now you must set shots before execution to avoid errors
-  circuit = qml.set_shots(circuit, shots=1000)
   result = circuit()
+
+  # or equivalently, without the decorator:
+  #  circuit = qml.set_shots(circuit, shots=1000)
   ```
 
   [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
