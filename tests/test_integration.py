@@ -125,12 +125,13 @@ class TestDeviceIntegration:
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
+        dev = qml.device(d[0], wires=1, backend=backend)
 
         a = 0.543
         b = 0.123
         c = 0.987
 
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
@@ -151,13 +152,14 @@ class TestDeviceIntegration:
         if not is_compatible:
             pytest.skip(failure_msg)
 
-        dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
+        dev = qml.device(d[0], wires=1, backend=backend)
 
         a = 0
         b = 0
         c = np.pi
         expected = 1
 
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
@@ -184,14 +186,13 @@ class TestDeviceIntegration:
         dev_qsk = qml.device(
             "qiskit.aer",
             wires=n_qubits,
-            shots=1000,
             backend="qasm_simulator",
         )
 
         weights = np.random.random((depth, n_qubits)).flatten()
 
         # Want to get expectation value and gradient
-        exp_sampled = qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift")
+        exp_sampled = qml.set_shots(qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift"), shots = 1000)
         grad_shift = qml.grad(exp_sampled, argnum=0)
         exp_sampled(weights)
         grad_shift(weights)
@@ -492,7 +493,7 @@ class TestInverses:
         by comparing a simple circuit with default.qubit."""
         dev = qml.device("default.qubit", wires=2)
 
-        dev2 = qml.device("qiskit.aer", backend="statevector_simulator", shots=None, wires=2)
+        dev2 = qml.device("qiskit.aer", backend="statevector_simulator", wires=2)
 
         angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.0])
 
@@ -502,6 +503,7 @@ class TestInverses:
             qml.adjoint(qml.RX(angle, wires=0))
             return qml.expval(qml.PauliZ(0))
 
+        @qml.set_shots(None)
         @qml.qnode(dev2)
         def circuit_with_inverses_default_qubit(angle):
             qml.adjoint(qml.Hadamard(0))
@@ -550,7 +552,7 @@ class TestBatchExecution:
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=1, backend=backend, shots=shots)
+        dev = qml.device(d[0], wires=1, backend=backend)
 
         # Batch the input parameters
         batch_dim = 3
@@ -562,6 +564,7 @@ class TestBatchExecution:
         spy2 = mocker.spy(dev.backend, "run")
 
         @partial(qml.batch_params, all_operations=True)
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
@@ -590,11 +593,12 @@ class TestBatchExecution:
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=3, backend=backend, shots=shots)
+        dev = qml.device(d[0], wires=3, backend=backend)
 
         spy1 = mocker.spy(QiskitDeviceLegacy, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
+        @qml.set_shots(shots)
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x, y):
             qml.RX(x, wires=[0])
@@ -618,8 +622,9 @@ class TestBatchExecution:
 
     def test_tracker(self):
         """Tests the device tracker with batch execution."""
-        dev = qml.device("qiskit.aer", shots=100, wires=3)
+        dev = qml.device("qiskit.aer", wires=3)
 
+        @qml.set_shots(100)
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
             qml.RX(x, wires=0)

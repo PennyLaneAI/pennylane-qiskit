@@ -1406,8 +1406,9 @@ class TestConverterIntegration:
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3, shots=shots)
+        dev = qml.device("default.qubit", wires=3)
 
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(params):
             qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
@@ -1437,8 +1438,9 @@ class TestConverterIntegration:
 
         pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
 
-        dev = qml.device("default.qubit", wires=1, shots=shots)
+        dev = qml.device("default.qubit", wires=1)
 
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(theta):
             pl_circuit_loader(params={theta_param: theta})
@@ -1470,8 +1472,9 @@ class TestConverterIntegration:
 
         pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
 
-        dev = qml.device("default.qubit", wires=1, shots=shots)
+        dev = qml.device("default.qubit", wires=1)
 
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(phi, theta):
             pl_circuit_loader(params={phi_param: phi, theta_param: theta})
@@ -1503,8 +1506,9 @@ class TestConverterIntegration:
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3, shots=shots)
+        dev = qml.device("default.qubit", wires=3)
 
+        @qml.set_shots(shots)
         @qml.qnode(dev)
         def circuit(params):
             qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
