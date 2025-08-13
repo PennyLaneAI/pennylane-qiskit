@@ -44,7 +44,6 @@ from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.preprocess import (
     decompose,
-    no_analytic,
     validate_observables,
     validate_measurements,
     validate_device_wires,
@@ -58,6 +57,20 @@ from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 QuantumTapeBatch = Sequence[QuantumTape]
 QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
+
+
+@qml.transform
+def analytic_warning(tape: QuantumTape) -> QuantumTape:
+    """Transform that adds a warning for circuits without shots set."""
+    if not tape.shots:
+        warnings.warn(
+            "Expected an integer number of shots, but received shots=None. Defaulting "
+            "to 1024 shots. The analytic calculation of results is not supported on "
+            "this device. All statistics obtained from this device are estimates based "
+            "on samples.",
+            UserWarning,
+        )
+    return (tape,), lambda results: results[0]  # null preprocess
 
 
 def custom_simulator_tracking(cls):
@@ -448,7 +461,7 @@ class QiskitDevice(Device):
 
         transform_program = TransformProgram()
 
-        transform_program.add_transform(no_analytic, name=self.name)
+        transform_program.add_transform(analytic_warning)
         transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
             decompose,

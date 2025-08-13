@@ -584,20 +584,6 @@ class TestDevicePreprocessing:
 
         assert np.all([op.name in QISKIT_OPERATION_MAP for op in tapes[0].operations])
 
-    def test_no_analytic(self):
-        """Test that the device preprocess applies the no_analytic transform
-        to unsupported operators even if they are state prep operators"""
-
-        qs = QuantumScript(
-            [qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
-            measurements=[qml.expval(qml.PauliZ(0))],
-        )
-
-        program, _ = test_dev.preprocess()
-
-        with pytest.raises(qml.exceptions.DeviceError, match="Analytic execution is not supported"):
-            program([qs])
-
 
 class TestKwargsHandling:
     def test_warning_if_shots(self):
@@ -1004,6 +990,22 @@ class TestMockedExecution:
 
 
 class TestExecution:
+
+    def test_no_shots_warning(self):
+        """
+        Test that when no shots are set, a warning is issued.
+        """
+        dev = QiskitDevice(wires=1, backend=aer_backend, shots=None)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.expval(qml.PauliZ(0))
+
+        with pytest.warns(UserWarning, match="Expected an integer number of shots"):
+            res = circuit()
+
+        assert res != 0  # should not be analytic results
 
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
