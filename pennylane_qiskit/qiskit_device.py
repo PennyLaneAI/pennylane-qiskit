@@ -306,7 +306,8 @@ class QiskitDevice(Device):
 
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables.
+            to estimate expectation values and variances of observables. Note that
+            if `shots=None`, the Qiskit backend will default to 1024 shots.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
