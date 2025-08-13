@@ -1182,7 +1182,7 @@ class TestExecution:
     def test_generate_samples(self, num_wires, num_shots):
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
         dev = QiskitDevice(wires=num_wires, backend=aer_backend)
-        dev._execute_sampler(qs.copy(shots = num_shots), session=Session(backend=aer_backend))
+        dev._execute_sampler(qs.copy(shots=num_shots), session=Session(backend=aer_backend))
 
         samples = dev.generate_samples(0)
 

@@ -192,7 +192,9 @@ class TestDeviceIntegration:
         weights = np.random.random((depth, n_qubits)).flatten()
 
         # Want to get expectation value and gradient
-        exp_sampled = qml.set_shots(qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift"), shots = 1000)
+        exp_sampled = qml.set_shots(
+            qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift"), shots=1000
+        )
         grad_shift = qml.grad(exp_sampled, argnum=0)
         exp_sampled(weights)
         grad_shift(weights)
