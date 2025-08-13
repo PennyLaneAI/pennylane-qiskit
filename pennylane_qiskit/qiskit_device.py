@@ -154,7 +154,7 @@ def qiskit_session(device, **kwargs):
         from qiskit_ibm_runtime import QiskitRuntimeService, Session
 
         # get backend
-        service = QiskitRuntimeService(channel="ibm_quantum")
+        service = QiskitRuntimeService()
         backend = service.least_busy(simulator=False, operational=True)
 
         # initialize device
