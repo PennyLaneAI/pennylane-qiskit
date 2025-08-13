@@ -60,7 +60,7 @@ Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
 @qml.transform
-def analytic_warning(tape: QuantumTape) -> QuantumTape:
+def analytic_warning(tape):
     """Transform that adds a warning for circuits without shots set."""
     if not tape.shots:
         warnings.warn(
