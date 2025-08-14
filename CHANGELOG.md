@@ -11,12 +11,12 @@
 
 * `QiskitDevice` no longer warns or changes `shots=None` at initialization.
   Instead, the `analytic_warning` transform issues a warning only at execution time,
-  and leaves `shots=None` unchanged so the Qiskit backend can default to 1024 shots.
+  and leaves `shots=None` unchanged; the Qiskit backend will then set it's own default for the number of shots.
   To ensure a consistent experience, use `qml.set_shots(shots)` on each QNode executed
   with `QiskitDevice`:
 
   ```python
-  dev = qml.device("qiskit.aer", wires=2, shots=None)  # Previously issued warning now
+  dev = qml.device("qiskit.aer", wires=2)
 
   @qml.set_shots(1000)
   @qml.qnode(dev)
@@ -25,7 +25,6 @@
       qml.CNOT(wires=[0, 1])
       return qml.expval(qml.PauliZ(0))
 
-  # Now you must set shots before execution to avoid errors
   # or equivalently, without the decorator:
   #  circuit = qml.set_shots(circuit, shots=1000)
   result = circuit()

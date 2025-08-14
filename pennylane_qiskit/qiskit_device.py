@@ -64,8 +64,8 @@ def analytic_warning(tape):
     """Transform that adds a warning for circuits without shots set."""
     if not tape.shots:
         warnings.warn(
-            "Expected an integer number of shots, but received shots=None. Defaulting "
-            "to 1024 shots. The analytic calculation of results is not supported on "
+            "Expected an integer number of shots, but received shots=None. A default "
+            "number of shots will be selected by the Qiskit backend. The analytic calculation of results is not supported on "
             "this device. All statistics obtained from this device are estimates based "
             "on samples.",
             UserWarning,
@@ -307,7 +307,7 @@ class QiskitDevice(Device):
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables. Note that
-            if `shots=None`, the Qiskit backend will default to 1024 shots.
+            if `shots=None`, the Qiskit backend will select a default.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
