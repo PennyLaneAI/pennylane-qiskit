@@ -735,16 +735,18 @@ class TestDeviceProperties:
 class TestTrackerFunctionality:
     def test_tracker_batched(self):
         """Test that the tracker works for batched circuits"""
-        dev = qml.device("default.qubit", wires=1, shots=10000)
-        qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator(), shots=10000)
+        dev = qml.device("default.qubit", wires=1)
+        qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator())
 
         x = pnp.array(0.1, requires_grad=True)
 
+        @qml.set_shots(10000)
         @qml.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
             qml.RX(x, wires=0)
             return qml.expval(qml.Z(0))
 
+        @qml.set_shots(10000)
         @qml.qnode(qiskit_dev, diff_method="parameter-shift")
         def qiskit_circuit(x):
             qml.RX(x, wires=0)
@@ -767,8 +769,8 @@ class TestTrackerFunctionality:
 
     def test_tracker_single_tape(self):
         """Test that the tracker works for a single tape"""
-        dev = qml.device("default.qubit", wires=1, shots=10000)
-        qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator(), shots=10000)
+        dev = qml.device("default.qubit", wires=1)
+        qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator())
 
         tape = qml.tape.QuantumTape([qml.S(0)], [qml.expval(qml.X(0))])
         with qiskit_dev.tracker:
@@ -798,10 +800,11 @@ class TestTrackerFunctionality:
 
     def test_tracker_split_by_measurement_type(self):
         """Test that the tracker works for as intended for circuits split by measurement type"""
-        qiskit_dev = QiskitDevice(wires=5, backend=AerSimulator(), shots=10000)
+        qiskit_dev = QiskitDevice(wires=5, backend=AerSimulator())
 
         x = 0.1
 
+        @qml.set_shots(10000)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit(x):
             qml.RX(x, wires=0)
@@ -818,10 +821,11 @@ class TestTrackerFunctionality:
 
     def test_tracker_split_by_non_commute(self):
         """Test that the tracker works for as intended for circuits split by non commute"""
-        qiskit_dev = QiskitDevice(wires=5, backend=AerSimulator(), shots=10000)
+        qiskit_dev = QiskitDevice(wires=5, backend=AerSimulator())
 
         x = 0.1
 
+        @qml.set_shots(10000)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit(x):
             qml.RX(x, wires=0)
@@ -1112,10 +1116,11 @@ class TestExecution:
 
     def test_tape_shots_used_for_estimator(self, mocker):
         """Tests that device uses tape shots rather than device shots for estimator"""
-        dev = QiskitDevice(wires=5, backend=aer_backend, shots=2)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
+        @qml.set_shots(2)
         @qml.qnode(dev)
         def circuit():
             return qml.expval(qml.PauliX(0))
@@ -1190,8 +1195,8 @@ class TestExecution:
     @pytest.mark.parametrize("num_shots", [50, 100])
     def test_generate_samples(self, num_wires, num_shots):
         qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))])
-        dev = QiskitDevice(wires=num_wires, backend=aer_backend, shots=num_shots)
-        dev._execute_sampler(circuit=qs, session=Session(backend=aer_backend))
+        dev = QiskitDevice(wires=num_wires, backend=aer_backend)
+        dev._execute_sampler(qs.copy(shots=num_shots), session=Session(backend=aer_backend))
 
         samples = dev.generate_samples(0)
 
@@ -1213,10 +1218,11 @@ class TestExecution:
 
     def test_tape_shots_used_for_sampler(self, mocker):
         """Tests that device uses tape shots rather than device shots for sampler"""
-        dev = QiskitDevice(wires=5, backend=aer_backend, shots=2)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
+        @qml.set_shots(2)
         @qml.qnode(dev)
         def circuit():
             qml.PauliX(0)
@@ -1233,8 +1239,9 @@ class TestExecution:
 
     def test_error_for_shot_vector(self):
         """Tests that a ValueError is raised if a shot vector is passed."""
-        dev = QiskitDevice(wires=5, backend=aer_backend, shots=2)
+        dev = QiskitDevice(wires=5, backend=aer_backend)
 
+        @qml.set_shots(2)
         @qml.qnode(dev)
         def circuit():
             return qml.sample(qml.PauliX(0))
@@ -1333,9 +1340,10 @@ class TestExecution:
     def test_sampler_output_shape(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane"""
-        dev = qml.device("default.qubit", wires=5, shots=1024)
+        dev = qml.device("default.qubit", wires=5)
         qiskit_dev = QiskitDevice(wires=5, backend=backend)
 
+        @qml.set_shots(1024)
         @qml.qnode(dev)
         def circuit(x):
             qml.RX(x, wires=[0])
@@ -1357,9 +1365,10 @@ class TestExecution:
     def test_sampler_output_shape_multi_measurements(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane for circuits with multiple measurements"""
-        dev = qml.device("default.qubit", wires=5, shots=10)
-        qiskit_dev = QiskitDevice(wires=5, backend=backend, shots=10)
+        dev = qml.device("default.qubit", wires=5)
+        qiskit_dev = QiskitDevice(wires=5, backend=backend)
 
+        @qml.set_shots(10)
         @qml.qnode(dev)
         def circuit(x):
             qml.RX(x, wires=[0])
@@ -1372,6 +1381,7 @@ class TestExecution:
                 qml.counts(),
             )
 
+        @qml.set_shots(10)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit(x):
             qml.RX(x, wires=[0])
@@ -1443,16 +1453,18 @@ class TestExecution:
         """Tests that observables that have non-commuting measurements are
         processed correctly when executed by the Estimator or, in the case of
         qml.Hadamard, executed by the Sampler via expval() or var"""
-        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend, shots=30000)
+        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend)
 
+        @qml.set_shots(30000)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
             qml.RX(np.pi / 3, 0)
             qml.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3, shots=30000)
+        dev = qml.device("default.qubit", wires=3)
 
+        @qml.set_shots(30000)
         @qml.qnode(dev)
         def circuit():
             qml.RX(np.pi / 3, 0)
@@ -1484,16 +1496,18 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting_counts(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via counts()"""
-        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend, shots=4000)
+        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend)
 
+        @qml.set_shots(4000)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
             qml.RX(np.pi / 3, 0)
             qml.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3, shots=4000)
+        dev = qml.device("default.qubit", wires=3)
 
+        @qml.set_shots(4000)
         @qml.qnode(dev)
         def circuit():
             qml.RX(np.pi / 3, 0)
@@ -1566,16 +1580,18 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting_samples(self, observable):
         """Tests that observables that have non-commuting measurents are processed
         correctly when executed by the Sampler via sample()"""
-        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend, shots=20000)
+        qiskit_dev = QiskitDevice(wires=3, backend=aer_backend)
 
+        @qml.set_shots(20000)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit():
             qml.RX(np.pi / 3, 0)
             qml.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3, shots=20000)
+        dev = qml.device("default.qubit", wires=3)
 
+        @qml.set_shots(20000)
         @qml.qnode(dev)
         def circuit():
             qml.RX(np.pi / 3, 0)

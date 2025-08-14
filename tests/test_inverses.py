@@ -47,8 +47,9 @@ class TestInverses:
 
         op = getattr(qml.ops, name)
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.adjoint(op(wires=0))
@@ -70,10 +71,11 @@ class TestInverses:
 
         op = getattr(qml.ops, name)
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         assert dev.supports_operation(name)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
@@ -93,10 +95,11 @@ class TestInverses:
 
         op = getattr(qml.ops, name)
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=3, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=3)
 
         assert dev.supports_operation(name)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.BasisState(np.array([1, 0, 1]), wires=[0, 1, 2])
@@ -146,12 +149,13 @@ class TestInverses:
     def test_supported_gate_inverse_single_wire_with_parameters(self, name, par, expected_output):
         """Test the inverse of single gates with parameters"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         op = getattr(qml.ops, name)
 
         assert dev.supports_operation(name)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.adjoint(op(*np.negative(par), wires=0))
@@ -199,12 +203,13 @@ class TestInverses:
     def test_supported_gate_inverse_two_wires_with_parameters(self, name, par, expected_output):
         """Tests the inverse of supported gates that act on two wires that are parameterized"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         op = getattr(qml.ops, name)
 
         assert dev.supports_operation(name)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
@@ -227,10 +232,11 @@ class TestInverses:
     def test_unsupported_gate_inverses(self, name, par, expected_output):
         """Test the inverse of single gates with parameters"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         op = getattr(qml.ops, name)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.adjoint(op(*np.negative(par), wires=0))
@@ -242,10 +248,11 @@ class TestInverses:
     def test_s_gate_inverses(self, par):
         """Tests the inverse of the S gate"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         expected_output = -0.5 * 1j * cmath.exp(-1j * par) * (-1 + cmath.exp(2j * par))
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.Hadamard(0)
@@ -259,10 +266,11 @@ class TestInverses:
     def test_t_gate_inverses(self, par):
         """Tests the inverse of the T gate"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         expected_output = -math.sin(par) / math.sqrt(2)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.RX(par, wires=[0])
@@ -275,10 +283,11 @@ class TestInverses:
     def test_sx_gate_inverses(self, par):
         """Tests the inverse of the SX gate"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", method="statevector", wires=2)
 
         expected_output = math.sin(par)
 
+        @qml.set_shots(None)
         @qml.qnode(dev)
         def circuit():
             qml.RY(par, wires=[0])
