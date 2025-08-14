@@ -341,7 +341,7 @@ class QiskitDevice(Device):
         self,
         wires,
         backend,
-        shots=1024,
+        shots=None,
         session=None,
         compile_backend=None,
         **kwargs,
