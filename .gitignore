@@ -14,3 +14,4 @@ PennyLane_qiskit.egg-info/
 coverage_html_report/
 .coverage
 doc/code/
+.vscode/

@@ -173,18 +173,6 @@ class TestDeviceInitialization:
         assert dev2._compile_backend != dev2._backend
         assert dev2._compile_backend == compile_backend
 
-    def test_no_shots_warns_and_defaults(self):
-        """Test that initializing with shots=None raises a warning indicating that
-        the device is sample based and will default to 1024 shots"""
-
-        with pytest.warns(
-            UserWarning,
-            match="Expected an integer number of shots, but received shots=None",
-        ):
-            dev = QiskitDevice(wires=2, backend=aer_backend, shots=None)
-
-        assert dev.shots.total_shots == 1024
-
     @pytest.mark.parametrize("backend", [aer_backend, legacy_backend])
     def test_backend_wire_validation(self, backend):
         """Test that an error is raised if the number of device wires exceeds
@@ -254,7 +242,8 @@ class TestQiskitSessionManagement:
     def test_error_when_passing_unexpected_kwarg(self):
         """Test that we accept any keyword argument that the user wants to supply so that if
         Qiskit allows for more customization we can automatically accomodate those needs. Right
-        now there are no such keyword arguments, so an error on Qiskit's side is raised."""
+        now there are no such keyword arguments, so an error on Qiskit's side is raised.
+        """
 
         dev = QiskitDevice(wires=2, backend=aer_backend)
 
@@ -566,7 +555,9 @@ class TestDevicePreprocessing:
         """Test that the device preprocess decomposes operators that
         aren't on the list of Qiskit-supported operators"""
         qs = QuantumScript(
-            [qml.CosineWindow(wires=range(2))], measurements=[qml.expval(qml.PauliZ(0))]
+            [qml.CosineWindow(wires=range(2))],
+            measurements=[qml.expval(qml.PauliZ(0))],
+            shots=1024,
         )
 
         # tape contains unsupported operations
@@ -585,6 +576,7 @@ class TestDevicePreprocessing:
         qs = QuantumScript(
             [qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
             measurements=[qml.expval(qml.PauliZ(0))],
+            shots=1024,
         )
 
         program, _ = test_dev.preprocess()
@@ -793,7 +785,9 @@ class TestTrackerFunctionality:
         )
         assert np.allclose(pl_out, qiskit_out, atol=0.1)
         assert np.allclose(
-            qiskit_dev.tracker.history["results"], dev.tracker.history["results"], atol=0.1
+            qiskit_dev.tracker.history["results"],
+            dev.tracker.history["results"],
+            atol=0.1,
         )
 
         assert np.shape(qiskit_dev.tracker.history["results"]) == np.shape(
@@ -1001,6 +995,22 @@ class TestMockedExecution:
 
 class TestExecution:
 
+    def test_no_shots_warning(self):
+        """
+        Test that when no shots are set, a warning is issued.
+        """
+        dev = QiskitDevice(wires=1, backend=aer_backend, shots=None)
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.expval(qml.PauliZ(0))
+
+        with pytest.warns(UserWarning, match="Expected an integer number of shots"):
+            res = circuit()
+
+        assert res != 0  # should not be analytic results
+
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
         "angle, op, expectation",
@@ -1137,12 +1147,16 @@ class TestExecution:
                 ],
                 (0, 1, 1),
             ),
-            ([qml.expval(0.5 * qml.Y(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0))], (0)),
+            (
+                [qml.expval(0.5 * qml.Y(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0))],
+                (0),
+            ),
             (
                 [
                     qml.expval(
                         qml.ops.LinearCombination(
-                            [1, 3, 4], [qml.X(3) @ qml.Y(2), qml.Y(4) - qml.X(2), qml.Z(2) * 3]
+                            [1, 3, 4],
+                            [qml.X(3) @ qml.Y(2), qml.Y(4) - qml.X(2), qml.Z(2) * 3],
                         )
                         + qml.X(4)
                     )
@@ -1408,7 +1422,9 @@ class TestExecution:
                 ),
                 qml.expval(
                     qml.ops.LinearCombination(
-                        [1.0, 2.0, 3.0], [qml.X(0), qml.X(1), qml.Z(0)], grouping_type="qwc"
+                        [1.0, 2.0, 3.0],
+                        [qml.X(0), qml.X(1), qml.Z(0)],
+                        grouping_type="qwc",
                     )
                 ),
             ],
@@ -1542,7 +1558,9 @@ class TestExecution:
                 lambda: [
                     qml.sample(
                         qml.ops.LinearCombination(
-                            [1.0, 2.0, 3.0], [qml.X(0), qml.X(1), qml.Z(0)], grouping_type="qwc"
+                            [1.0, 2.0, 3.0],
+                            [qml.X(0), qml.X(1), qml.Z(0)],
+                            grouping_type="qwc",
                         )
                     ),
                 ],
