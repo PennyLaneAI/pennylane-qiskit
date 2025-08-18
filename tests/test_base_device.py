@@ -145,6 +145,7 @@ class TestSupportForV1andV2:
         """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
         dev = QiskitDevice(wires=5, backend=backend)
 
+        @qml.set_shots(1024)
         @qml.qnode(dev)
         def circuit(x):
             qml.RX(x, wires=[0])
@@ -1350,6 +1351,7 @@ class TestExecution:
             qml.CNOT(wires=[0, 1])
             return [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
 
+        @qml.set_shots(1024)
         @qml.qnode(qiskit_dev)
         def qiskit_circuit(x):
             qml.RX(x, wires=[0])

@@ -24,6 +24,7 @@ from qiskit.providers import BackendV1, BackendV2
 from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
 import pennylane as qml
+from pennylane.exceptions import PennyLaneDeprecationWarning
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
 
@@ -173,7 +174,11 @@ class TestAnalyticWarningHWSimulator:
         hardware simulators when calculating the expectation"""
 
         with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
+            with pytest.warns(
+                PennyLaneDeprecationWarning,
+                match = "shots on device is deprecated"
+            ):
+                dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
         assert (
             record[-1].message.args[0] == "The analytic calculation of "
