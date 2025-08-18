@@ -517,6 +517,7 @@ class QiskitDevice(Device):
                 kwargs[key] = val
 
         shots = kwargs.pop("shots")
+        shots = 1024 if not shots else shots
 
         if "default_shots" in kwargs:
             warnings.warn(
