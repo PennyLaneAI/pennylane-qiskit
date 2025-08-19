@@ -30,7 +30,6 @@ from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 from pennylane.exceptions import DeviceError
 from pennylane.devices import QubitDevice
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
-from pennylane.workflow import set_shots
 
 from .converter import QISKIT_OPERATION_MAP
 from ._version import __version__
