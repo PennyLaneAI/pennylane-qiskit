@@ -1005,7 +1005,7 @@ class TestExecution:
         """
         Test that when no shots are set, a warning is issued.
         """
-        dev = QiskitDevice(wires=1, backend=aer_backend, shots=None)
+        dev = QiskitDevice(wires=1, backend=aer_backend)
 
         @qml.qnode(dev)
         def circuit():

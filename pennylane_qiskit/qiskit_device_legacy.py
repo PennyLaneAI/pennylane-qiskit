@@ -143,12 +143,12 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         self.process_kwargs(kwargs)
 
-    def expand_fn(self, circuit, max_expansion=10):
+    def expand_fn(self, tape, max_expansion=10):
         """Expand the circuit"""
-        if not (circuit.shots or self.shots or self._is_state_backend):
+        if not (tape.shots or self.shots or self._is_state_backend):
             warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
-            circuit = set_shots(circuit, 1024)
-        return super().expand_fn(circuit, max_expansion)
+            tape = tape.copy(shots=1024)
+        return super().expand_fn(tape, max_expansion)
 
     def process_kwargs(self, kwargs):
         """Processing the keyword arguments that were provided upon device initialization.
@@ -455,6 +455,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         # Shots preprocessing
         shots = circuits[0].shots.total_shots or self.shots
+        if not shots:
+            warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
+            shots = 1024
         if not self.shots:
             self._shots = shots
         # Send the batch of circuit objects using backend.run
