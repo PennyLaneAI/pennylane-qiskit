@@ -126,12 +126,6 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             self.backend_name = _get_backend_name(self._backend)
 
-        # # Keep track if the user specified analytic to be True
-        # if shots is None and not self._is_state_backend:
-        #     # Raise a warning if no shots were specified for a hardware device
-        #     warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
-
-        #     self.shots = 1024
 
         self._capabilities["returns_state"] = self._is_state_backend
 
@@ -153,8 +147,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         """Expand the circuit"""
         if not (circuit.shots or self.shots or self._is_state_backend):
             warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
-            # self.shots = 1024
-            circuit._shots = Shots(1024)  # pylint:disable=protected-access
+            circuit = qml.set_shots(circuit, 1024)
         return super().expand_fn(circuit, max_expansion)
 
     def process_kwargs(self, kwargs):
