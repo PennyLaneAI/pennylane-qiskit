@@ -104,7 +104,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
     _eigs = {}
 
-    def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+    def __init__(self, wires, provider, backend, shots=None, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
         self.provider = provider
@@ -126,12 +126,12 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             self.backend_name = _get_backend_name(self._backend)
 
-        # Keep track if the user specified analytic to be True
-        if shots is None and not self._is_state_backend:
-            # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
+        # # Keep track if the user specified analytic to be True
+        # if shots is None and not self._is_state_backend:
+        #     # Raise a warning if no shots were specified for a hardware device
+        #     warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
 
-            self.shots = 1024
+        #     self.shots = 1024
 
         self._capabilities["returns_state"] = self._is_state_backend
 
@@ -148,6 +148,13 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         self.reset()
 
         self.process_kwargs(kwargs)
+
+    def expand_fn(self, circuit, max_expansion=10):
+        """Expand the circuit"""
+        if not (circuit.shots or self.shots or self._is_state_backend):
+            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
+            self.shots = 1024
+        return super().expand_fn(circuit, max_expansion)
 
     def process_kwargs(self, kwargs):
         """Processing the keyword arguments that were provided upon device initialization.
@@ -454,6 +461,8 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         # Shots preprocessing
         shots = circuits[0].shots.total_shots or self.shots
+        if not self.shots:
+            self._shots = shots
         # Send the batch of circuit objects using backend.run
         self._current_job = self.backend.run(compiled_circuits, shots=shots, **self.run_args)
 

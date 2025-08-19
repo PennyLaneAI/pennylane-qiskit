@@ -56,7 +56,7 @@ class AerDevice(QiskitDeviceLegacy):
 
     short_name = "qiskit.aer"
 
-    def __init__(self, wires, shots=1024, backend="aer_simulator", method="automatic", **kwargs):
+    def __init__(self, wires, shots=None, backend="aer_simulator", method="automatic", **kwargs):
         if method != "automatic":
             backend += "_" + method
 
