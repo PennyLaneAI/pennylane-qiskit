@@ -341,7 +341,7 @@ class QiskitDevice(Device):
         self,
         wires,
         backend,
-        shots=1024,
+        shots=None,
         session=None,
         compile_backend=None,
         **kwargs,
@@ -524,7 +524,7 @@ class QiskitDevice(Device):
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
-        kwargs["default_shots"] = shots
+        kwargs["default_shots"] = shots or 1024
 
         kwargs, transpile_args = self.get_transpile_args(kwargs)
 
