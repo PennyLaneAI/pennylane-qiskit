@@ -29,7 +29,8 @@ from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 
 from pennylane.exceptions import DeviceError
 from pennylane.devices import QubitDevice
-from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP, Shots
+from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
+from pennylane.workflow import set_shots
 
 from .converter import QISKIT_OPERATION_MAP
 from ._version import __version__
@@ -126,7 +127,6 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             self.backend_name = _get_backend_name(self._backend)
 
-
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
@@ -147,7 +147,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         """Expand the circuit"""
         if not (circuit.shots or self.shots or self._is_state_backend):
             warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
-            circuit = qml.set_shots(circuit, 1024)
+            circuit = set_shots(circuit, 1024)
         return super().expand_fn(circuit, max_expansion)
 
     def process_kwargs(self, kwargs):

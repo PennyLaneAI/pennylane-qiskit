@@ -63,7 +63,7 @@ class TestDeviceIntegration:
 
         dev = qml.device(d[0], wires=2, backend=backend)
         assert dev.num_wires == 2
-        assert dev.shots.total_shots == None
+        assert dev.shots.total_shots is None
         assert dev.short_name == d[0]
         assert dev.provider == d[1]
 
@@ -86,7 +86,7 @@ class TestDeviceIntegration:
             backend=backend_instance,
         )
         assert dev.num_wires == backend_instance.configuration().n_qubits
-        assert dev.shots.total_shots == None
+        assert dev.shots.total_shots is None
         assert dev.short_name == "qiskit.remote"
 
     def test_incorrect_backend(self):
