@@ -153,8 +153,8 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         """Expand the circuit"""
         if not (circuit.shots or self.shots or self._is_state_backend):
             warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
-            self.shots = 1024
-            circuit._shots = Shots(1024)
+            # self.shots = 1024
+            circuit._shots = Shots(1024)  # pylint:disable=protected-access
         return super().expand_fn(circuit, max_expansion)
 
     def process_kwargs(self, kwargs):
