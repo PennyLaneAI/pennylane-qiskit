@@ -29,7 +29,7 @@ from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 
 from pennylane.exceptions import DeviceError
 from pennylane.devices import QubitDevice
-from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
+from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP, Shots
 
 from .converter import QISKIT_OPERATION_MAP
 from ._version import __version__
@@ -152,8 +152,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
     def expand_fn(self, circuit, max_expansion=10):
         """Expand the circuit"""
         if not (circuit.shots or self.shots or self._is_state_backend):
-            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
+            warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
             self.shots = 1024
+            circuit._shots = Shots(1024)
         return super().expand_fn(circuit, max_expansion)
 
     def process_kwargs(self, kwargs):
@@ -488,9 +489,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
                 self._state = self._get_state(result, experiment=circuit_obj)
 
             # generate computational basis samples
-            if shots is not None or any(
-                isinstance(m, SAMPLE_TYPES) for m in circuit.measurements
-            ):
+            if shots is not None or any(isinstance(m, SAMPLE_TYPES) for m in circuit.measurements):
                 self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit)
