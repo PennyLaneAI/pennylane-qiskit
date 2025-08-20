@@ -454,7 +454,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         # Shots preprocessing
         shots = circuits[0].shots.total_shots or self.shots
-        if not shots:
+        if not (shots or self._is_state_backend):
             warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
             shots = 1024
         if not self.shots:
