@@ -142,13 +142,6 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         self.process_kwargs(kwargs)
 
-    def expand_fn(self, circuit, max_expansion=10):
-        """Expand the circuit"""
-        if not (circuit.shots or self.shots or self._is_state_backend):
-            warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
-            circuit = circuit.copy(shots=1024)
-        return super().expand_fn(circuit, max_expansion)
-
     def batch_transform(self, circuit):
         """Batch transform the circuit"""
         if not (circuit.shots or self.shots or self._is_state_backend):
