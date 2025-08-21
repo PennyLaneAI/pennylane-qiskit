@@ -32,6 +32,7 @@
   ```
 
   [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
+  [(#654)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/654)
 
 ### Deprecations 👋
 
