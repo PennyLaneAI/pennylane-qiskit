@@ -40,7 +40,7 @@ learning, automatic differentiation, and optimization of hybrid quantum-classica
 Features
 ========
 
-* Provides three devices to be used with PennyLane: ``qiskit.aer``, ``qiskit.basicaer`` and ``qiskit.ibmq``.
+* Provides three devices to be used with PennyLane: ``qiskit.aer``, ``qiskit.basicaer`` and ``qiskit.remote``.
   These devices provide access to the various backends, including the IBM hardware accessible through the cloud.
 
 * Supports a wide range of PennyLane operations and expectation values across the providers.
