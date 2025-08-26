@@ -20,8 +20,8 @@ import numpy as np
 import pytest
 
 from qiskit_aer import noise
-from qiskit.providers import BackendV1, BackendV2
-from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit.providers import BackendV2
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 import pennylane as qml
 from pennylane_qiskit import AerDevice
@@ -66,26 +66,6 @@ class MockedBackend(BackendV2):
         return self._target
 
 
-class MockedBackendLegacy(BackendV1):
-    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
-        self._configuration = Configuration(num_qubits, backend_name=name)
-        self._service = "SomeServiceProvider"
-        self._options = self._default_options()
-
-    def configuration(self):
-        return self._configuration
-
-    def _default_options(self):
-        return {}
-
-    def run(self, *args, **kwargs):
-        return None
-
-    @property
-    def options(self):
-        return self._options
-
-
 test_transpile_options = [
     {},
     {"optimization_level": 2},
@@ -94,7 +74,6 @@ test_transpile_options = [
 
 test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
 backend = MockedBackend()
-legacy_backend = MockedBackendLegacy()
 
 
 class TestSupportForV1andV2:
@@ -103,7 +82,6 @@ class TestSupportForV1andV2:
     @pytest.mark.parametrize(
         "dev_backend",
         [
-            legacy_backend,
             backend,
         ],
     )
@@ -115,7 +93,6 @@ class TestSupportForV1andV2:
     @pytest.mark.parametrize(
         "dev_backend",
         [
-            FakeManila(),
             FakeManilaV2(),
         ],
     )
