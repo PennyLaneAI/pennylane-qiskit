@@ -354,7 +354,7 @@ def _get_operation_params(instruction, unbound_params) -> list:
                         f_params.append(parameter)
                         f_args.append(argument)
 
-                f_expr = getattr(p, "_symbol_expr")
+                f_expr = p.sympify()
                 f = lambdify(f_params, f_expr, modules=qml.numpy)
 
                 operation_params.append(f(*f_args))

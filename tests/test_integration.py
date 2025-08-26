@@ -77,15 +77,15 @@ class TestDeviceIntegration:
         except QiskitBackendNotFoundError:
             pytest.skip("Backend is not compatible with specified device")
 
-        if backend_instance.configuration().n_qubits is None:
+        if backend_instance.num_qubits is None:
             pytest.skip("No qubits?")
 
         dev = qml.device(
             "qiskit.remote",
-            wires=backend_instance.configuration().n_qubits,
+            wires=backend_instance.num_qubits,
             backend=backend_instance,
         )
-        assert dev.num_wires == backend_instance.configuration().n_qubits
+        assert dev.num_wires == backend_instance.num_qubits
         assert dev.shots.total_shots is None
         assert dev.short_name == "qiskit.remote"
 

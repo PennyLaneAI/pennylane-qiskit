@@ -114,13 +114,11 @@ def hardware_backend(request):
 
 @pytest.fixture(params=test_devices)
 def device(request, backend, shots):
-    print("getting a device")
     if backend not in state_backends:
         if shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
     if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
-        print("I should be skipping this test")
         pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
     if issubclass(request.param, BasicSimulatorDevice) and backend != "basic_simulator":
