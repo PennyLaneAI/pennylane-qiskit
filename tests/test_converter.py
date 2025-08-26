@@ -1587,7 +1587,8 @@ class TestConverterIntegration:
         qc = QuantumCircuit(2, 2)
         qc.h(0)
         qc.measure(0, 0)
-        qc.z(0).c_if(0, 1)
+        with qc.if_test((0, 1)):
+            qc.z(0)
         qc.rz(angle, [0])
         qc.cx(0, 1)
         qc.measure_all()
@@ -2527,7 +2528,7 @@ class TestLoadPauliOp:
 
         match = (
             "Not all parameter expressions are assigned in coeffs "
-            r"\[\(3\+0j\) ParameterExpression\(1\.0\*b\)\]"
+            r"\[\(3\+0j\) ParameterExpression\(b\)\]"
         )
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(pauli_op, params={a: 3})
@@ -2613,9 +2614,9 @@ class TestLoadNoiseModel:
     def test_build_noise_model(self):
         """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
         from qiskit_aer import noise
-        from qiskit.providers.fake_provider import FakeOpenPulse2Q
+        from qiskit.providers.fake_provider import GenericBackendV2
 
-        noise_model = noise.NoiseModel.from_backend(FakeOpenPulse2Q())
+        noise_model = noise.NoiseModel.from_backend(GenericBackendV2(num_qubits=2))
         loaded_noise_model = load_noise_model(noise_model)
 
         pl_model_map = {

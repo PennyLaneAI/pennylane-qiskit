@@ -496,7 +496,11 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # Processing the dictionary of parameters passed
         # pylint: disable=too-many-nested-blocks
         for idx, circuit_instruction in enumerate(qc.data):
-            (instruction, qargs, cargs) = circuit_instruction
+            (instruction, qargs, cargs) = (
+                circuit_instruction.operation,
+                circuit_instruction.qubits,
+                circuit_instruction.clbits,
+            )
             # the new Singleton classes have different names than the objects they represent,
             # but base_class.__name__ still matches
             instruction_name = getattr(instruction, "base_class", instruction.__class__).__name__
@@ -544,13 +548,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                             if set(next_cargs) & op_cregs:
                                 meas_terminal = False
                                 break
-                        elif next_op.condition:  # For legacy c_if
-                            next_op_reg = next_op.condition[0]
-                            if isinstance(next_op_reg, Clbit):
-                                next_op_reg = [next_op_reg]
-                            if set(next_op_reg) & op_cregs:
-                                meas_terminal = False
-                                break
                         # Check if the subsequent next_op is measurement interfering
                         if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
                             next_op_wires = {wire_map[hash(qubit)] for qubit in next_qargs}
@@ -586,7 +583,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     )
 
             # Check if it is a conditional operation or conditional instruction
-            if instruction.condition or isinstance(instruction, ControlFlowOp):
+            if isinstance(instruction, ControlFlowOp):
                 # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
