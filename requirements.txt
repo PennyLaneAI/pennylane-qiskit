@@ -1,5 +1,5 @@
 pennylane
 qiskit
-qiskit-ibm-runtime==0.36.1
+qiskit-ibm-runtime
 numpy
 sympy
