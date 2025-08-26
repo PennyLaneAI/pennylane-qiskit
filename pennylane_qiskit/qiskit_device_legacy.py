@@ -130,9 +130,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         # Perform validation against backend
         backend_qubits = (
-            backend.num_qubits
-            if isinstance(backend, BackendV2)
-            else self.backend.configuration().n_qubits
+            backend.num_qubits if isinstance(backend, BackendV2) else self.backend.num_qubits
         )
         if backend_qubits and len(self.wires) > int(backend_qubits):
             raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
