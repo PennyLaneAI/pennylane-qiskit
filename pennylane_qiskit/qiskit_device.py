@@ -193,7 +193,7 @@ def qiskit_session(device, **kwargs):
     # Code to acquire session:
     existing_session = device._session
 
-    session_options = {"backend": device.backend, "service": device.service}
+    session_options = {"backend": device.backend}
 
     for k, v in kwargs.items():
         # Options like service and backend should be tied to the settings set on device

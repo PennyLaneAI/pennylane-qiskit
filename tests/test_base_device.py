@@ -272,15 +272,6 @@ class TestQiskitSessionManagement:
                 assert dev._session != initial_session
                 assert dev._session._backend.name == "aer_simulator"
 
-        with pytest.warns(
-            UserWarning,
-            match="Using 'service' set in device",
-        ):
-            with qiskit_session(dev, max_time=30, service="placeholder") as session:
-                assert dev._session == session
-                assert dev._session != initial_session
-                assert dev._session._service != "placeholder"
-
         # device session should be unchanged by qiskit_session
         assert dev._session == initial_session
 
@@ -1164,7 +1155,7 @@ class TestExecution:
         pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
 
         # run on simulator via Estimator
-        estimator = Estimator(backend=aer_backend)
+        estimator = Estimator(mode=aer_backend)
         compiled_circuits = [transpile(qcirc, backend=aer_backend)]
         circ_and_obs = [(compiled_circuits[0], pauli_observables)]
         result = estimator.run(circ_and_obs).result()
@@ -1173,7 +1164,6 @@ class TestExecution:
         assert result[0].data.evs.size == len(qs.measurements)
 
         assert isinstance(result[0].metadata, dict)
-
         processed_result = QiskitDevice._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
