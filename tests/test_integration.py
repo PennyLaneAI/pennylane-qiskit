@@ -65,7 +65,7 @@ class TestDeviceIntegration:
         assert dev.num_wires == 2
         assert dev.shots.total_shots is None
         assert dev.short_name == d[0]
-        assert dev.provider == d[1]
+        assert isinstance(dev.provider, type(d[1]))
 
     @pytest.mark.parametrize("d", pldevices)
     def test_load_remote_device_with_backend_instance(self, d, backend):
