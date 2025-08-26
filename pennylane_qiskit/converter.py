@@ -351,7 +351,7 @@ def _get_operation_params(instruction, unbound_params) -> list:
 
                     if parameter.name not in f_param_names:
                         f_param_names.add(parameter.name)
-                        f_params.append(parameter)
+                        f_params.append(parameter.sympify())
                         f_args.append(argument)
 
                 f_expr = p.sympify()
