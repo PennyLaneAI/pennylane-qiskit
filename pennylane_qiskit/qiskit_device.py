@@ -59,6 +59,20 @@ QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
+@qml.transform
+def analytic_warning(tape):
+    """Transform that adds a warning for circuits without shots set."""
+    if not tape.shots:
+        warnings.warn(
+            "Expected an integer number of shots, but received shots=None. A default "
+            "number of shots will be selected by the Qiskit backend. The analytic calculation of results is not supported on "
+            "this device. All statistics obtained from this device are estimates based "
+            "on samples.",
+            UserWarning,
+        )
+    return (tape,), lambda results: results[0]  # null preprocess
+
+
 def custom_simulator_tracking(cls):
     """Decorator that adds custom tracking to the device class."""
 
@@ -292,7 +306,8 @@ class QiskitDevice(Device):
 
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables.
+            to estimate expectation values and variances of observables. Note that
+            if `shots=None`, the Qiskit backend will select a default.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
@@ -326,21 +341,11 @@ class QiskitDevice(Device):
         self,
         wires,
         backend,
-        shots=1024,
+        shots=None,
         session=None,
         compile_backend=None,
         **kwargs,
     ):
-        if shots is None:
-            warnings.warn(
-                "Expected an integer number of shots, but received shots=None. Defaulting "
-                "to 1024 shots. The analytic calculation of results is not supported on "
-                "this device. All statistics obtained from this device are estimates based "
-                "on samples.",
-                UserWarning,
-            )
-
-            shots = 1024
 
         super().__init__(wires=wires, shots=shots)
 
@@ -457,6 +462,7 @@ class QiskitDevice(Device):
 
         transform_program = TransformProgram()
 
+        transform_program.add_transform(analytic_warning)
         transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
             decompose,
@@ -518,7 +524,7 @@ class QiskitDevice(Device):
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
-        kwargs["default_shots"] = shots
+        kwargs["default_shots"] = shots or 1024
 
         kwargs, transpile_args = self.get_transpile_args(kwargs)
 

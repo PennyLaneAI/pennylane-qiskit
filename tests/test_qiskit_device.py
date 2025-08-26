@@ -172,18 +172,22 @@ class TestAnalyticWarningHWSimulator:
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
 
-        with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
-        assert (
-            record[-1].message.args[0] == "The analytic calculation of "
+        @qml.qnode(dev)
+        def circuit():
+            qml.RX(np.pi / 2, wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        with pytest.warns(
+            UserWarning,
+            match="The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
-            "device are estimates based on samples."
-        )
+            "device are estimates based on samples.",
+        ):
 
-        # One warning raised about analytic calculations.
-        assert len(record) == 1
+            circuit()
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(

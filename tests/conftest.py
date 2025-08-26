@@ -138,8 +138,7 @@ def device(request, backend, shots):
 
 
 @pytest.fixture(params=test_devices)
-def state_vector_device(request, statevector_backend, shots):
-
+def state_vector_device(request, statevector_backend):
     if backend == "aer_simulator" and not issubclass(request.param, AerDevice):
         pytest.skip("Only the AerDevice can use the aer_simulator backend")
 
@@ -150,7 +149,7 @@ def state_vector_device(request, statevector_backend, shots):
         pytest.skip("BasicSimulator is the only supported backend for the BasicSimulatorDevice")
 
     def _device(n):
-        return request.param(wires=n, backend=statevector_backend, shots=shots)
+        return request.param(wires=n, backend=statevector_backend)
 
     return _device
 

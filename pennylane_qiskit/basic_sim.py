@@ -45,5 +45,5 @@ class BasicSimulatorDevice(QiskitDeviceLegacy):
         "device are estimates based on samples."
     )
 
-    def __init__(self, wires, shots=1024, backend="basic_simulator", **kwargs):
+    def __init__(self, wires, shots=None, backend="basic_simulator", **kwargs):
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)
