@@ -6,7 +6,7 @@ dist/
 pennylane_qiskit/__pycache__/
 tests/__pycache__/
 .idea
-*.ipynp
+*.ipynb
 *.ipynb_checkpoints
 __pycache__
 PennyLane_qiskit.egg-info/
