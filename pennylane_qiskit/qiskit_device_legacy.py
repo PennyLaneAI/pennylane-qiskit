@@ -340,9 +340,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         If compile_backend is None, then the target is simply the
         backend.
         """
-        compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
-        return compiled_circuits
+        return transpile(
+            self._circuit, backend=self.compile_backend or self.backend, **self.transpile_args
+        )
 
     def run(self, qcirc):
         """Run the compiled circuit and query the result.
