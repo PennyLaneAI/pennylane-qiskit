@@ -1006,19 +1006,27 @@ class TestExecution:
         Test that when no shots are set, a warning is issued.
         """
         dev = QiskitDevice(wires=1, backend=aer_backend)
+        dev_analytic = qml.device("default.qubit", wires=1)
 
         theta = 0.543
-        analytic_result = np.cos(theta)
+        res_theoretic = np.cos(theta)
 
         @qml.qnode(dev)
         def circuit():
             qml.RY(theta, wires=0)
             return qml.expval(qml.PauliZ(0))
 
+        @qml.qnode(dev_analytic)
+        def circuit_analytic():
+            qml.RY(theta, wires=0)
+            return qml.expval(qml.PauliZ(0))
+
         with pytest.warns(UserWarning, match="Expected an integer number of shots"):
             res = circuit()
+        res_analytic = circuit_analytic()
 
-        assert res != analytic_result  # should not be analytic results
+        assert np.allclose(res_analytic, res_theoretic, atol=np.finfo(float).eps)
+        assert res != res_theoretic  # should not be analytic results
 
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
