@@ -1007,15 +1007,18 @@ class TestExecution:
         """
         dev = QiskitDevice(wires=1, backend=aer_backend)
 
+        theta = 0.543
+        analytic_result = np.cos(theta)
+
         @qml.qnode(dev)
         def circuit():
-            qml.Hadamard(0)
+        qml.RY(theta, wires=0)
             return qml.expval(qml.PauliZ(0))
 
         with pytest.warns(UserWarning, match="Expected an integer number of shots"):
             res = circuit()
 
-        assert res != 0  # should not be analytic results
+        assert res != analytic_result  # should not be analytic results
 
     @pytest.mark.parametrize("wire", [0, 1])
     @pytest.mark.parametrize(
