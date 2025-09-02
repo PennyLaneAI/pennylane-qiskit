@@ -9,6 +9,31 @@
 * Remove support for Python 3.10 and add support for Python 3.13.
   [(#646)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/646)
 
+* `QiskitDevice` no longer warns or changes `shots=None` at initialization.
+  Instead, the `analytic_warning` transform issues a warning only at execution time,
+  and leaves `shots=None` unchanged; the Qiskit backend will then set it's own default for the number of shots.
+  To ensure a consistent experience, use `qml.set_shots(shots)` on each QNode executed
+  with `QiskitDevice`:
+
+  ```python
+  dev = qml.device("qiskit.aer", wires=2)
+
+  @qml.set_shots(1000)
+  @qml.qnode(dev)
+  def circuit():
+      qml.Hadamard(wires=0)
+      qml.CNOT(wires=[0, 1])
+      return qml.expval(qml.PauliZ(0))
+
+  # or equivalently, without the decorator:
+  #  circuit = qml.set_shots(circuit, shots=1000)
+  result = circuit()
+
+  ```
+
+  [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
+  [(#654)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/654)
+
 ### Deprecations 👋
 
 ### Internal changes ⚙️
