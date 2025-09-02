@@ -341,7 +341,13 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         backend.
         """
         return transpile(
-            self._circuit, backend=self.compile_backend or self.backend, **self.transpile_args
+            self._circuit,
+            backend=self.compile_backend or self.backend,
+            **self.transpile_args,
+            # Disable routing to keep SWAP in circuit rather than
+            # using ElidePermutation to shuffle qubit indices around.
+            # See https://github.com/Qiskit/qiskit/issues/13144 for more details.
+            routing_method="none",
         )
 
     def run(self, qcirc):
@@ -351,10 +357,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             qcirc (qiskit.QuantumCircuit): the quantum circuit to be run on the backend
         """
         self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
-        result = self._current_job.result()
 
         if self._is_state_backend:
-            self._state = self._get_state(result)
+            self._state = self._get_state(self._current_job.result())
 
     def _get_state(self, result, experiment=None):
         """Returns the statevector for state simulator backends.
