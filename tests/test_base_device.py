@@ -1012,7 +1012,7 @@ class TestExecution:
 
         @qml.qnode(dev)
         def circuit():
-        qml.RY(theta, wires=0)
+            qml.RY(theta, wires=0)
             return qml.expval(qml.PauliZ(0))
 
         with pytest.warns(UserWarning, match="Expected an integer number of shots"):
