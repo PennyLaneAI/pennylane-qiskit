@@ -104,7 +104,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
     _eigs = {}
 
-    def __init__(self, wires, provider, backend, shots=1024, **kwargs):
+    def __init__(self, wires, provider, backend, shots=None, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
         self.provider = provider
@@ -126,13 +126,6 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             self.backend_name = _get_backend_name(self._backend)
 
-        # Keep track if the user specified analytic to be True
-        if shots is None and not self._is_state_backend:
-            # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
-
-            self.shots = 1024
-
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
@@ -148,6 +141,14 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         self.reset()
 
         self.process_kwargs(kwargs)
+
+    def batch_transform(self, circuit):
+        """Batch transform the circuit"""
+        if not (circuit.shots or self.shots or self._is_state_backend):
+            warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
+            circuit = circuit.copy(shots=1024)
+
+        return super().batch_transform(circuit)
 
     def process_kwargs(self, kwargs):
         """Processing the keyword arguments that were provided upon device initialization.
@@ -452,8 +453,12 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             # At least one circuit must always be provided to the backend.
             return []
 
+        # Shots preprocessing
+        shots = circuits[0].shots.total_shots or self.shots
+        if not self.shots:
+            self._shots = shots
         # Send the batch of circuit objects using backend.run
-        self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
+        self._current_job = self.backend.run(compiled_circuits, shots=shots, **self.run_args)
 
         try:
             result = self._current_job.result(timeout=timeout)
@@ -470,16 +475,14 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
             # Update the tracker
             if self.tracker.active:
-                self.tracker.update(executions=1, shots=self.shots)
+                self.tracker.update(executions=1, shots=shots)
                 self.tracker.record()
 
             if self._is_state_backend:
                 self._state = self._get_state(result, experiment=circuit_obj)
 
             # generate computational basis samples
-            if self.shots is not None or any(
-                isinstance(m, SAMPLE_TYPES) for m in circuit.measurements
-            ):
+            if shots is not None or any(isinstance(m, SAMPLE_TYPES) for m in circuit.measurements):
                 self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit)
