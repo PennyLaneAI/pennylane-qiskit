@@ -2628,27 +2628,27 @@ class TestLoadNoiseModel:
             ),
             op_in("Identity")
             & wires_in(0): qml.ThermalRelaxationError(
-                pe=0.0, t1=3405.6439611113, t2=2648.9423227373, tg=1.0, wires="ANY"
+                pe=0.0, t1=3012.4484977654, t2=3516.8757664521, tg=1.0, wires="ANY"
             ),
             op_in("Identity")
             & wires_in(1): qml.ThermalRelaxationError(
-                pe=0.0, t1=2522.6066001391, t2=3751.4723241259, tg=1.0, wires="ANY"
+                pe=0.0, t1=3135.7677876495, t2=3327.6164130642, tg=1.0, wires="ANY"
             ),
             op_in("SX")
             & wires_in(0): qml.ThermalRelaxationError(
-                pe=0.0, t1=3265.8600671851, t2=2540.2170781471, tg=1.0, wires="ANY"
+                pe=0.0, t1=4331.5087867281, t2=5056.8095340207, tg=1.0, wires="ANY"
             ),
             op_in("SX")
             & wires_in(1): qml.ThermalRelaxationError(
-                pe=0.0, t1=1830.3123076198, t2=2721.9329269099, tg=1.0, wires="ANY"
+                pe=0.0, t1=2718.6952247608, t2=2885.0270379233, tg=1.0, wires="ANY"
             ),
             op_in("PauliX")
             & wires_in(0): qml.ThermalRelaxationError(
-                pe=0.0, t1=5504.7201132441, t2=4281.6237543623, tg=1.0, wires="ANY"
+                pe=0.0, t1=2721.2824719589, t2=3176.95468865, tg=1.0, wires="ANY"
             ),
             op_in("PauliX")
             & wires_in(1): qml.ThermalRelaxationError(
-                pe=0.0, t1=2116.7959731602, t2=3147.9746024161, tg=1.0, wires="ANY"
+                pe=0.0, t1=2520.0690896181, t2=2674.2488068467, tg=1.0, wires="ANY"
             ),
         }
 
