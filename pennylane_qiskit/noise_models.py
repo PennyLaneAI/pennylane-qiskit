@@ -65,7 +65,7 @@ with qml.QueuingManager.stop_recording():
 
 
 def _build_qerror_op(error) -> qml.QubitChannel:
-    """Builds a PennyLane error channel from a Qiksit ``QuantumError`` object.
+    """Builds a PennyLane error channel from a Qiskit ``QuantumError`` object.
 
     Args:
         error (QuantumError): Quantum error object

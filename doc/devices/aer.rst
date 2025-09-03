@@ -58,7 +58,7 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
 .. note::
 
-    Occassionally, you may see others pass in a string as a backend. For example:
+    Occasionally, you may see others pass in a string as a backend. For example:
 
     .. code-block:: python
 
