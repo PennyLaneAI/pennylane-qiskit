@@ -14,14 +14,13 @@
 r"""
 This module contains tests for applying operations on PennyLane IBMQ devices.
 """
-# pylint: disable=too-many-positional-arguments
-import pytest
-
 import numpy as np
 import pennylane as qml
-from scipy.linalg import block_diag
 
-from conftest import U, U2
+# pylint: disable=too-many-positional-arguments
+import pytest
+from conftest import U2, U
+from scipy.linalg import block_diag
 
 # pylint: disable=protected-access, too-many-arguments, too-few-public-methods
 

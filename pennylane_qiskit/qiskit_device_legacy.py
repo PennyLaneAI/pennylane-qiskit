@@ -444,6 +444,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         return compiled_circuits
 
+    # pylint: disable=arguments-differ
     def batch_execute(self, circuits, timeout: int = None):
         """Batch execute the circuits on the device"""
 
