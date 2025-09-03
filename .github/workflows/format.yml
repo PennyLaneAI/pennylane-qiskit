@@ -1,22 +1,9 @@
 name: Formatting check
 on:
-  merge_group:
-    types:
-      - checks_requested
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  pull_request
 
 jobs:
-
-  format-checks:
+  black-pylint:
     if: github.event.pull_request.draft == false
     needs: [determine_runner]
     runs-on: ${{ needs.determine_runner.outputs.runner_group }}
