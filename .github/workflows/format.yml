@@ -1,6 +1,6 @@
 name: Formatting check
 on:
-  pull_request
+  - pull_request
 
 jobs:
   black-pylint:
