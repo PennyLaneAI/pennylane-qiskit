@@ -15,29 +15,35 @@ r"""
 This module contains functions for converting between Qiskit QuantumCircuit objects
 and PennyLane circuits.
 """
-from typing import Any
-from collections.abc import Iterable, Sequence
 import warnings
+from collections.abc import Iterable, Sequence
 from functools import partial, reduce
+from typing import Any
 
 import numpy as np
-from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
-from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
+import pennylane as qml
+import pennylane.ops as pennylane_ops
+from pennylane.noise.conditionals import WiresIn, _rename
+from pennylane.tape.tape import rotations_and_diagonal_measurements
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import (
+    Barrier,
+    Clbit,
+    ControlFlowOp,
+    Measure,
+    Parameter,
+    ParameterExpression,
+    ParameterVector,
+)
 from qiskit.circuit import library as lib
 from qiskit.circuit.classical import expr
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.circuit.parametervector import ParameterVectorElement
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
-
-import pennylane as qml
-from pennylane.noise.conditionals import WiresIn, _rename
-import pennylane.ops as pennylane_ops
-from pennylane.tape.tape import rotations_and_diagonal_measurements
 
 from .noise_models import _build_noise_model_map
 

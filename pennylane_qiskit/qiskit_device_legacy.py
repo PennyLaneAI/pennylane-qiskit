@@ -22,17 +22,16 @@ import inspect
 import warnings
 
 import numpy as np
+from pennylane.devices import QubitDevice
+from pennylane.exceptions import DeviceError
+from pennylane.measurements import ClassicalShadowMP, CountsMP, SampleMP, ShadowExpvalMP
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 
-from pennylane.exceptions import DeviceError
-from pennylane.devices import QubitDevice
-from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
-
-from .converter import QISKIT_OPERATION_MAP
 from ._version import __version__
+from .converter import QISKIT_OPERATION_MAP
 
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
