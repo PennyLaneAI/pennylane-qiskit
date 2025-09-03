@@ -16,57 +16,56 @@ This module contains functions for converting Qiskit NoiseModel objects
 into PennyLane NoiseModels.
 """
 from collections import defaultdict
-from typing import Tuple
 from warnings import warn
 
 import pennylane as qml
-from pennylane.operation import AnyWires
 from qiskit.quantum_info.operators.channel import Kraus
 
 # pylint:disable = protected-access
-qiskit_op_map = {
-    "x": "X",
-    "y": "Y",
-    "z": "Z",
-    "h": "Hadamard",
-    "cx": "CNOT",
-    "cz": "CZ",
-    "swap": "SWAP",
-    "iswap": "ISWAP",
-    "rx": "RX",
-    "ry": "RY",
-    "rz": "RZ",
-    "id": "Identity",
-    "cswap": "CSWAP",
-    "crx": "CRX",
-    "cry": "CRY",
-    "crz": "CRZ",
-    "p": "PhaseShift",
-    "ccx": "Toffoli",
-    "qubitunitary": "QubitUnitary",
-    "u1": "U1",
-    "u2": "U2",
-    "u3": "U3",
-    "rzz": "IsingZZ",
-    "ryy": "IsingYY",
-    "rxx": "IsingXX",
-    "s": "S",
-    "t": "T",
-    "sx": "SX",
-    "cy": "CY",
-    "ch": "CH",
-    "cp": "CPhase",
-    "ccz": "CCZ",
-    "ecr": "ECR",
-    "sdg": qml.adjoint(qml.S),
-    "tdg": qml.adjoint(qml.T),
-    "sxdg": qml.adjoint(qml.SX),
-    "reset": qml.measure(AnyWires, reset=True),  # TODO: Improve reset support
-}
+with qml.QueuingManager.stop_recording():
+    qiskit_op_map = {
+        "x": "X",
+        "y": "Y",
+        "z": "Z",
+        "h": "Hadamard",
+        "cx": "CNOT",
+        "cz": "CZ",
+        "swap": "SWAP",
+        "iswap": "ISWAP",
+        "rx": "RX",
+        "ry": "RY",
+        "rz": "RZ",
+        "id": "Identity",
+        "cswap": "CSWAP",
+        "crx": "CRX",
+        "cry": "CRY",
+        "crz": "CRZ",
+        "p": "PhaseShift",
+        "ccx": "Toffoli",
+        "qubitunitary": "QubitUnitary",
+        "u1": "U1",
+        "u2": "U2",
+        "u3": "U3",
+        "rzz": "IsingZZ",
+        "ryy": "IsingYY",
+        "rxx": "IsingXX",
+        "s": "S",
+        "t": "T",
+        "sx": "SX",
+        "cy": "CY",
+        "ch": "CH",
+        "cp": "CPhase",
+        "ccz": "CCZ",
+        "ecr": "ECR",
+        "sdg": qml.adjoint(qml.S),
+        "tdg": qml.adjoint(qml.T),
+        "sxdg": qml.adjoint(qml.SX),
+        "reset": qml.measure("DummyTempWire", reset=True),  # TODO: Improve reset support
+    }
 
 
 def _build_qerror_op(error) -> qml.QubitChannel:
-    """Builds a PennyLane error channel from a Qiksit ``QuantumError`` object.
+    """Builds a PennyLane error channel from a Qiskit ``QuantumError`` object.
 
     Args:
         error (QuantumError): Quantum error object
@@ -79,10 +78,12 @@ def _build_qerror_op(error) -> qml.QubitChannel:
     except Exception as exc:  # pragma: no cover
         raise ValueError(f"Error {error} could not be converted.") from exc
 
-    return qml.QubitChannel(K_list=kraus_matrices, wires=AnyWires)
+    num_wires = int(qml.math.log2(kraus_matrices[0].shape[0]))
+    kraus_wires = [f"DummyTempWire{i}" for i in range(num_wires)]
+    return qml.QubitChannel(K_list=kraus_matrices, wires=kraus_wires)
 
 
-def _build_noise_model_map(noise_model) -> Tuple[dict, dict]:
+def _build_noise_model_map(noise_model) -> tuple[dict, dict]:
     """Builds a noise model map from a Qiskit noise model. This noise model map can be used
     to efficiently construct a PennyLane noise model.
 
@@ -100,24 +101,26 @@ def _build_noise_model_map(noise_model) -> Tuple[dict, dict]:
 
                 qerror_dmap = {
                     noise_op1: {
-                        AnyWires: [qiskit_op1, qiskit_op2],
+                        ANY: [qiskit_op1, qiskit_op2],
                         (0, 1): [qiskit_op3],
                         (2,): [qiskit_op4]
                     },
                     noise_op2: {
-                        AnyWires: [qiskit_op5],
+                        ANY: [qiskit_op5],
                         (1, 2): [qiskit_op6, qiskit_op7]
                     }
                 }
 
         * rerror_dmap: noise_operation -> wires -> target_measurement
+
+    The string ``"ANY"`` is used to indicate operations on any wires.
     """
     qerror_dmap = defaultdict(lambda: defaultdict(list))
 
     # Add default quantum errors
     for gate_name, error in noise_model._default_quantum_errors.items():
         noise_op = _build_qerror_op(error)
-        qerror_dmap[noise_op][AnyWires].append(qiskit_op_map[gate_name])
+        qerror_dmap[noise_op]["ANY"].append(qiskit_op_map[gate_name])
 
     # Add specific qubit errors
     for gate_name, qubit_dict in noise_model._local_quantum_errors.items():

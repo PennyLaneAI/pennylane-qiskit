@@ -49,7 +49,7 @@ Backends
 ~~~~~~~~
 
 Qiskit devices have different **backends**, which define the actual simulator or hardware 
-used by the device. A backend instance should be initalized and passed to the device.
+used by the device. A backend instance should be initialized and passed to the device.
 
 Different simulator backends are optimized for different purposes. To change what backend is used, 
 a simulator backend can be defined as follows:
@@ -66,21 +66,26 @@ a simulator backend can be defined as follows:
     backend is specified. For more details on the ``aer_simulator``, including available backend 
     options, see `Qiskit Aer Simulator documentation <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html#qiskit_aer.AerSimulator.run>`_.
 
-To access a real device, we can use the ``'qiskit.remote'`` device. A real hardware backend can 
-be defined as follows:
+To access a real device, we can use the ``'qiskit.remote'`` device. Please follow `the guide for
+setting up IBM Cloud <https://quantum.cloud.ibm.com/docs/en/guides/cloud-setup>`_. After creating 
+an account and initializing an instance, you can connect to a backend like so:
 
 .. code-block:: python
 
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token="<IQP_TOKEN>")
+    service = QiskitRuntimeService.save_account(
+        token=token, # Your token is confidential. Do not share it with others
+        instance="<IBM Cloud CRN or instance name>", # Optionally specify the instance to use.
+        plans_preference="['plan-type1', 'plan-type2']", # Optionally set the types of plans to prioritize.  This is ignored if the instance is specified.
+        region="<region>", # Optionally set the region to prioritize. This is ignored if the instance is specified.
+        name="<account-name>", # Optionally name this set of account credentials.
+        set_as_default=True, # Optionally set these as your default credentials.
+    )
 
-    # To access saved credentials for the IBM quantum channel and select an instance
-    service = QiskitRuntimeService(channel="ibm_quantum", instance="my_hub/my_group/my_project")
-    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<num_qubits>)
+    backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<min_num_qubits>)
 
-    # passing a string in backend would result in an error
-    dev = qml.device('qiskit.remote', wires=<num_qubits>, backend=backend)
+    dev = qml.device('qiskit.remote', wires=<num_qubits_of_backend>, backend=backend)
 
 Tutorials
 ~~~~~~~~~

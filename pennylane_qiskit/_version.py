@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Version information.
-   Version number (major.minor.patch[-label])
+Version number (major.minor.patch[-label])
 """
 
-__version__ = "0.39.0-dev"
+__version__ = "0.43.0-dev"

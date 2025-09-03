@@ -15,12 +15,16 @@ r"""
 This module contains a prototype base class for constructing Qiskit devices
 for PennyLane with the new device API.
 """
-# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
+# pylint: disable=too-many-instance-attributes,attribute-defined-outside-init,too-many-positional-arguments
 
 
 import warnings
 import inspect
-from typing import Union, Callable, Tuple, Sequence
+from dataclasses import replace
+
+
+from typing import Union
+from collections.abc import Sequence, Callable
 from contextlib import contextmanager
 from functools import wraps
 
@@ -37,7 +41,7 @@ from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.tape import QuantumTape, QuantumScript
 from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
-from pennylane.devices.execution_config import ExecutionConfig, DefaultExecutionConfig
+from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.preprocess import (
     decompose,
     validate_observables,
@@ -55,6 +59,20 @@ QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
+@qml.transform
+def analytic_warning(tape):
+    """Transform that adds a warning for circuits without shots set."""
+    if not tape.shots:
+        warnings.warn(
+            "Expected an integer number of shots, but received shots=None. A default "
+            "number of shots will be selected by the Qiskit backend. The analytic calculation of results is not supported on "
+            "this device. All statistics obtained from this device are estimates based "
+            "on samples.",
+            UserWarning,
+        )
+    return (tape,), lambda results: results[0]  # null preprocess
+
+
 def custom_simulator_tracking(cls):
     """Decorator that adds custom tracking to the device class."""
 
@@ -62,7 +80,9 @@ def custom_simulator_tracking(cls):
     tracked_execute = cls.execute
 
     @wraps(tracked_execute)
-    def execute(self, circuits, execution_config=DefaultExecutionConfig):
+    def execute(self, circuits, execution_config: ExecutionConfig | None = None):
+        if execution_config is None:
+            execution_config = ExecutionConfig()
         results = tracked_execute(self, circuits, execution_config)
         if self.tracker.active:
             res = []
@@ -84,20 +104,27 @@ def custom_simulator_tracking(cls):
 # pylint: disable=protected-access
 @contextmanager
 def qiskit_session(device, **kwargs):
-    """A context manager that creates a Qiskit Session and sets it as a session
-    on the device while the context manager is active. Using the context manager
-    will ensure the Session closes properly and is removed from the device after
-    completing the tasks. Any Session that was initialized and passed into the
+    """
+    A context manager that creates a Qiskit Session and sets it as a session
+    on the device while the context manager is active.
+
+    .. warning::
+
+        Currently, sessions cannot be used by IBM users on
+        the Open plan. We recommend referring to the Qiskit Session
+        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_
+        and opening a session with Qiskit's session directly.
+
+    Using the context manager will ensure the Session closes properly and is removed from the
+    device after completing the tasks. Any Session that was initialized and passed into the
     device will be overwritten by the Qiskit Session created by this context
     manager.
 
     Args:
         device (QiskitDevice2): the device that will create remote tasks using the session
-        **kwargs: session keyword arguments to be used for settings for the Session. At the
-        time of writing, the only relevant keyword argument is "max_time", which lets you
-        set the maximum amount of time the sessin is open. For the most up to date information,
-        please refer to the Qiskit Session
-        `documentation <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.Session>`_.
+        **kwargs: keyword arguments for session settings. Currently, the only relevant
+            keyword argument is "max_time", which allows setting the maximum amount of time the session
+            is open.
 
     **Example:**
 
@@ -141,7 +168,7 @@ def qiskit_session(device, **kwargs):
         from qiskit_ibm_runtime import QiskitRuntimeService, Session
 
         # get backend
-        service = QiskitRuntimeService(channel="ibm_quantum")
+        service = QiskitRuntimeService()
         backend = service.least_busy(simulator=False, operational=True)
 
         # initialize device
@@ -201,7 +228,7 @@ def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
 @transform
 def split_execution_types(
     tape: qml.tape.QuantumTape,
-) -> (Sequence[qml.tape.QuantumTape], Callable):
+) -> tuple[Sequence[qml.tape.QuantumTape], Callable]:
     """Split into separate tapes based on measurement type. Counts and sample-based measurements
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
@@ -272,18 +299,19 @@ class QiskitDevice(Device):
     r"""Hardware/simulator Qiskit device for PennyLane.
 
     Args:
-        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+        wires (int or Iterable[Number, str]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['aux_wire', 'q1', 'q2']``).
         backend (Backend): the initialized Qiskit backend
 
     Keyword Args:
         shots (int or None): number of circuit evaluations/random samples used
-            to estimate expectation values and variances of observables.
+            to estimate expectation values and variances of observables. Note that
+            if `shots=None`, the Qiskit backend will select a default.
         session (Session): a Qiskit Session to use for device execution. If none is provided, a session will
             be created at each device execution.
         compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit that will be
-            sent to the backend device, to be set if the backend desired for compliation differs from the
+            sent to the backend device, to be set if the backend desired for compilation differs from the
             backend used for execution. Defaults to ``None``, which means the primary backend will be used.
         **kwargs: transpilation and runtime keyword arguments to be used for measurements with Primitives.
             If an `options` dictionary is defined amongst the kwargs, and there are settings that overlap
@@ -313,22 +341,11 @@ class QiskitDevice(Device):
         self,
         wires,
         backend,
-        shots=1024,
+        shots=None,
         session=None,
         compile_backend=None,
         **kwargs,
     ):
-
-        if shots is None:
-            warnings.warn(
-                "Expected an integer number of shots, but received shots=None. Defaulting "
-                "to 1024 shots. The analytic calculation of results is not supported on "
-                "this device. All statistics obtained from this device are estimates based "
-                "on samples.",
-                UserWarning,
-            )
-
-            shots = 1024
 
         super().__init__(wires=wires, shots=shots)
 
@@ -420,8 +437,8 @@ class QiskitDevice(Device):
 
     def preprocess(
         self,
-        execution_config: ExecutionConfig = DefaultExecutionConfig,
-    ) -> Tuple[TransformProgram, ExecutionConfig]:
+        execution_config: ExecutionConfig | None = None,
+    ) -> tuple[TransformProgram, ExecutionConfig]:
         """This function defines the device transform program to be applied and an updated device configuration.
 
         Args:
@@ -439,11 +456,13 @@ class QiskitDevice(Device):
         * Does not intrinsically support parameter broadcasting
 
         """
-        config = execution_config
-        config.use_device_gradient = False
+        config = execution_config or ExecutionConfig()
+
+        config = replace(config, use_device_gradient=False)
 
         transform_program = TransformProgram()
 
+        transform_program.add_transform(analytic_warning)
         transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
         transform_program.add_transform(
             decompose,
@@ -505,7 +524,7 @@ class QiskitDevice(Device):
                 "Please use the `shots` keyword argument instead. The number of shots "
                 f"{shots} will be used instead."
             )
-        kwargs["default_shots"] = shots
+        kwargs["default_shots"] = shots or 1024
 
         kwargs, transpile_args = self.get_transpile_args(kwargs)
 
@@ -557,38 +576,30 @@ class QiskitDevice(Device):
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
-        execution_config: ExecutionConfig = DefaultExecutionConfig,
+        execution_config: ExecutionConfig | None = None,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""
-        session = self._session or Session(backend=self.backend)
+        session = self._session
 
         results = []
 
         if isinstance(circuits, QuantumScript):
             circuits = [circuits]
 
-        @contextmanager
-        def execute_circuits(session):
-            try:
-                for circ in circuits:
-                    if circ.shots and len(circ.shots.shot_vector) > 1:
-                        raise ValueError(
-                            f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
-                            "Please use a single integer instead when specifying the number of shots."
-                        )
-                    if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
-                        circ.measurements[0].obs, "pauli_rep", None
-                    ):
-                        execute_fn = self._execute_estimator
-                    else:
-                        execute_fn = self._execute_sampler
-                    results.append(execute_fn(circ, session))
-                yield results
-            finally:
-                session.close()
-
-        with execute_circuits(session) as results:
-            return results
+        for circ in circuits:
+            if circ.shots and len(circ.shots.shot_vector) > 1:
+                raise ValueError(
+                    f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
+                    "Please use a single integer instead when specifying the number of shots."
+                )
+            if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+                circ.measurements[0].obs, "pauli_rep", None
+            ):
+                execute_fn = self._execute_estimator
+            else:
+                execute_fn = self._execute_sampler
+            results.append(execute_fn(circ, session))
+        return results
 
     def _execute_sampler(self, circuit, session):
         """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
@@ -603,7 +614,7 @@ class QiskitDevice(Device):
             result (tuple): the processed result from SamplerV2
         """
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=True, measure=True)]
-        sampler = Sampler(session=session)
+        sampler = Sampler(mode=session) if session else Sampler(mode=self.backend)
         compiled_circuits = self.compile_circuits(qcirc)
         sampler.options.update(**self._kwargs)
 
@@ -643,16 +654,19 @@ class QiskitDevice(Device):
         # the Estimator primitive takes care of diagonalization and measurements itself,
         # so diagonalizing gates and measurements are not included in the circuit
         qcirc = [circuit_to_qiskit(circuit, self.num_wires, diagonalize=False, measure=False)]
-        estimator = Estimator(session=session)
+        estimator = Estimator(mode=session) if session else Estimator(mode=self.backend)
 
         pauli_observables = [mp_to_pauli(mp, self.num_wires) for mp in circuit.measurements]
         compiled_circuits = self.compile_circuits(qcirc)
+        compiled_observables = [
+            op.apply_layout(compiled_circuits[0].layout) for op in pauli_observables
+        ]
         estimator.options.update(**self._kwargs)
         # split into one call per measurement
         # could technically be more efficient if there are some observables where we ask
         # for expectation value and variance on the same observable, but spending time on
         # that right now feels excessive
-        circ_and_obs = [(compiled_circuits[0], pauli_observables)]
+        circ_and_obs = [(compiled_circuits[0], compiled_observables)]
         result = estimator.run(
             circ_and_obs,
             precision=np.sqrt(1 / circuit.shots.total_shots) if circuit.shots else None,

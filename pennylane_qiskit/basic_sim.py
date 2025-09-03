@@ -28,7 +28,7 @@ class BasicSimulatorDevice(QiskitDeviceLegacy):
     These options can be passed to this plugin device as keyword arguments.
 
     Args:
-        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+        wires (int or Iterable[Number, str]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['aux_wire', 'q1', 'q2']``).
         backend (str): the desired backend
@@ -45,5 +45,5 @@ class BasicSimulatorDevice(QiskitDeviceLegacy):
         "device are estimates based on samples."
     )
 
-    def __init__(self, wires, shots=1024, backend="basic_simulator", **kwargs):
+    def __init__(self, wires, shots=None, backend="basic_simulator", **kwargs):
         super().__init__(wires, provider=BasicProvider(), backend=backend, shots=shots, **kwargs)

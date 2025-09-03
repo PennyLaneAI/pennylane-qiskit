@@ -22,50 +22,49 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=0.32",
-    "qiskit-aer",
+    "qiskit>=0.32,<1.3",
+    "qiskit-aer<0.16.1",
     "qiskit-ibm-runtime<=0.29",
-    "qiskit-ibm-provider",
-    "pennylane>=0.38",
+    "pennylane>=0.42",
     "numpy",
     "sympy<1.13",
     "networkx>=2.2",
 ]
 
 info = {
-    'name': 'PennyLane-qiskit',
-    'version': version,
-    'maintainer': 'Xanadu',
-    'maintainer_email': 'software@xanadu.ai',
-    'url': 'https://github.com/XanaduAI/pennylane-qiskit',
-    'license': 'Apache License 2.0',
-    'packages': [
-        'pennylane_qiskit'
-    ],
-    'entry_points': {
-        'pennylane.plugins': [
-            'qiskit.remote = pennylane_qiskit:RemoteDevice',
-            'qiskit.aer = pennylane_qiskit:AerDevice',
-            'qiskit.basicaer = pennylane_qiskit:BasicAerDevice',
-            'qiskit.basicsim = pennylane_qiskit:BasicSimulatorDevice',
-            ],
-        'pennylane.io': [
-            'qiskit = pennylane_qiskit:load',
-            'qiskit_op = pennylane_qiskit:load_pauli_op',
-            'qiskit_noise = pennylane_qiskit:load_noise_model',
-            'qasm = pennylane_qiskit:load_qasm',
-            'qasm_file = pennylane_qiskit:load_qasm_from_file',
-            ],
-        },
-    'description': 'PennyLane plugin for Qiskit',
-    'long_description': open('README.rst').read(),
-    'provides': ["pennylane_qiskit"],
-    'install_requires': requirements,
+    "name": "PennyLane-qiskit",
+    "version": version,
+    "maintainer": "Xanadu",
+    "maintainer_email": "software@xanadu.ai",
+    "url": "https://github.com/XanaduAI/pennylane-qiskit",
+    "license": "Apache License 2.0",
+    "packages": ["pennylane_qiskit"],
+    "entry_points": {
+        "pennylane.plugins": [
+            "qiskit.remote = pennylane_qiskit:RemoteDevice",
+            "qiskit.aer = pennylane_qiskit:AerDevice",
+            "qiskit.basicaer = pennylane_qiskit:BasicAerDevice",
+            "qiskit.basicsim = pennylane_qiskit:BasicSimulatorDevice",
+        ],
+        "pennylane.io": [
+            "qiskit = pennylane_qiskit:load",
+            "qiskit_op = pennylane_qiskit:load_pauli_op",
+            "qiskit_noise = pennylane_qiskit:load_noise_model",
+            "qasm = pennylane_qiskit:load_qasm",
+            "qasm_file = pennylane_qiskit:load_qasm_from_file",
+        ],
+    },
+    "description": "PennyLane plugin for Qiskit",
+    "long_description": open("README.rst").read(),
+    "provides": ["pennylane_qiskit"],
+    "install_requires": requirements,
     # 'extras_require': extra_requirements,
-    'command_options': {
-        'build_sphinx': {
-            'version': ('setup.py', version),
-            'release': ('setup.py', version)}}
+    "command_options": {
+        "build_sphinx": {
+            "version": ("setup.py", version),
+            "release": ("setup.py", version),
+        }
+    },
 }
 
 classifiers = [
@@ -79,12 +78,12 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: 3.11',
-    'Programming Language :: Python :: 3 :: Only',
-    "Topic :: Scientific/Engineering :: Physics"
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Physics",
 ]
 
 setup(classifiers=classifiers, **(info))

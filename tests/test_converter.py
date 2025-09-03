@@ -14,6 +14,7 @@
 r"""
 This module contains tests for converting circuits for PennyLane IBMQ devices.
 """
+# pylint: disable=too-many-positional-arguments
 import sys
 from typing import cast
 
@@ -35,7 +36,6 @@ from pennylane import I, X, Y, Z
 from pennylane import numpy as np
 from pennylane.measurements import MidMeasureMP
 from pennylane.noise import op_in, wires_in, partial_wires
-from pennylane.operation import AnyWires
 from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
@@ -339,7 +339,7 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with pytest.raises(
-            qml.QuantumFunctionError,
+            qml.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(only_two_wires)} - does not match the"
             " number of wires the loaded quantum circuit acts on.",
         ):
@@ -362,7 +362,7 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with pytest.raises(
-            qml.QuantumFunctionError,
+            qml.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(more_than_three_wires)} - does not match the"
             " number of wires the loaded quantum circuit acts on.",
         ):
@@ -855,7 +855,7 @@ class TestConverterUtils:
         qc_wires = [hash(q) for q in qc.qubits]
 
         with pytest.raises(
-            qml.QuantumFunctionError,
+            qml.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(wires)} - does not match ",
         ):
             map_wires(qc_wires, wires)
@@ -1579,7 +1579,7 @@ class TestConverterIntegration:
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
-    def test_quantum_circuit_with_multiple_measurements(self, qubit_device_2_wires):
+    def test_quantum_circuit_with_multiple_measurements(self):
         """Tests loading a converted template in a QNode with multiple measurements."""
 
         angle = 0.543
@@ -1595,11 +1595,11 @@ class TestConverterIntegration:
         measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
         quantum_circuit = load(qc, measurements=measurements)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_loaded_qiskit_circuit():
             return quantum_circuit()
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_native_pennylane():
             qml.Hadamard(0)
             m0 = qml.measure(0)
@@ -1612,12 +1612,12 @@ class TestConverterIntegration:
 
         quantum_circuit = load(qc, measurements=None)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_loaded_qiskit_circuit2():
             meas = quantum_circuit()
             return [qml.expval(m) for m in meas]
 
-        @qml.qnode(qubit_device_2_wires)
+        @qml.qnode(qml.device("default.qubit"))
         def circuit_native_pennylane2():
             qml.Hadamard(0)
             m0 = qml.measure(0)
@@ -1639,6 +1639,12 @@ class TestConverterIntegration:
         qc.cx(0, 1)
         qc.measure(1, 1)
 
+        m1, m2 = load(qc)()
+        for m, w in zip((m1, m2), (0, 1)):
+            assert isinstance(m, qml.measurements.MeasurementValue)
+            assert len(m.measurements) == 1
+            assert m.measurements[0].wires == qml.wires.Wires(w)
+
         qc1 = QuantumCircuit(3, 3)
         qc1.h(0)
         qc1.measure(2, 2)
@@ -1646,11 +1652,11 @@ class TestConverterIntegration:
         qc1.cx(0, 1)
         qc1.measure(1, 1)
 
-        qtemp, qtemp1 = load(qc), load(qc1)
-        assert qtemp()[0] == qml.measure(0) and qtemp1()[0] == qml.measure(2)
-
-        qtemp2 = load(qc, measurements=[qml.expval(qml.PauliZ(0))])
-        assert qtemp()[0] != qtemp2()[0] and qtemp2()[0] == qml.expval(qml.PauliZ(0))
+        m1, m2 = load(qc1)()
+        for m, w in zip((m1, m2), (2, 1)):
+            assert isinstance(m, qml.measurements.MeasurementValue)
+            assert len(m.measurements) == 1
+            assert m.measurements[0].wires == qml.wires.Wires(w)
 
 
 class TestConverterPennyLaneCircuitToQiskit:
@@ -2053,7 +2059,7 @@ class TestControlOpIntegration:
         qc.cx(0, 1)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qml.device("default.qubit")
 
         @qml.qnode(dev)
         def loaded_qiskit_circuit():
@@ -2092,10 +2098,13 @@ class TestControlOpIntegration:
             qml.Barrier([0, 1, 2])
             return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
 
+        loaded_qiskit_circuit_tape = qml.workflow.construct_tape(loaded_qiskit_circuit)()
+        built_pl_circuit_tape = qml.workflow.construct_tape(built_pl_circuit)()
+
         assert loaded_qiskit_circuit() == built_pl_circuit()
-        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        assert len(loaded_qiskit_circuit_tape.operations) == len(built_pl_circuit_tape.operations)
         for op1, op2 in zip(
-            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            loaded_qiskit_circuit_tape.operations, built_pl_circuit_tape.operations
         ):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
@@ -2140,7 +2149,7 @@ class TestControlOpIntegration:
                 qc.x(2)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", wires=5, seed=24)
+        dev = qml.device("default.qubit", seed=24)
         qiskit_circuit = load(qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))])
 
         @qml.qnode(dev)
@@ -2181,11 +2190,12 @@ class TestControlOpIntegration:
 
             return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
 
+        loaded_qiskit_circuit_tape = qml.workflow.construct_tape(loaded_qiskit_circuit)()
+        built_pl_circuit_tape = qml.workflow.construct_tape(built_pl_circuit)()
         assert loaded_qiskit_circuit() == built_pl_circuit()
-
-        assert len(loaded_qiskit_circuit.tape.operations) == len(built_pl_circuit.tape.operations)
+        assert len(loaded_qiskit_circuit_tape.operations) == len(built_pl_circuit_tape.operations)
         for op1, op2 in zip(
-            loaded_qiskit_circuit.tape.operations, built_pl_circuit.tape.operations
+            loaded_qiskit_circuit_tape.operations, built_pl_circuit_tape.operations
         ):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
@@ -2259,7 +2269,7 @@ class TestControlOpIntegration:
         with qc.if_test((1, 1)):
             qc.x(2)
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qml.device("default.qubit")
 
         @qml.qnode(dev)
         def qk_circuit():
@@ -2279,9 +2289,11 @@ class TestControlOpIntegration:
             qml.cond(m1 == 1, qml.PauliX)(wires=[2])
             return qml.expval(qml.PauliZ(0))
 
+        qk_circuit_tape = qml.workflow.construct_tape(qk_circuit)()
+        pl_circuit_tape = qml.workflow.construct_tape(pl_circuit)()
         assert qk_circuit() == pl_circuit()
-        assert len(qk_circuit.tape.operations) == len(pl_circuit.tape.operations)
-        for op1, op2 in zip(qk_circuit.tape.operations, pl_circuit.tape.operations):
+        assert len(qk_circuit_tape.operations) == len(pl_circuit_tape.operations)
+        for op1, op2 in zip(qk_circuit_tape.operations, pl_circuit_tape.operations):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
             elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
@@ -2609,36 +2621,36 @@ class TestLoadNoiseModel:
         pl_model_map = {
             op_in("Identity")
             & wires_in(0): qml.ThermalRelaxationError(
-                0.0, 26981.9403362283, 26034.6676428009, 1.0, wires=AnyWires
+                0.0, 26981.9403362283, 26034.6676428009, 1.0, wires="ANY"
             ),
             op_in("Identity")
             & wires_in(1): qml.ThermalRelaxationError(
-                0.0, 30732.034088541, 28335.6514829973, 1.0, wires=AnyWires
+                0.0, 30732.034088541, 28335.6514829973, 1.0, wires="ANY"
             ),
             (op_in("U1") & wires_in(0))
             | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
-                p=0.08999999999999997, wires=AnyWires
+                p=0.08999999999999997, wires="ANY"
             ),
             op_in("U2")
             & wires_in(0): qml.ThermalRelaxationError(
-                0.4998455776, 7.8227384666, 7.8226559459, 1.0, wires=AnyWires
+                0.4998455776, 7.8227384666, 7.8226559459, 1.0, wires="ANY"
             ),
             op_in("U2")
             & wires_in(1): qml.ThermalRelaxationError(
-                0.4998644198, 7.8227957211, 7.8226273195, 1.0, wires=AnyWires
+                0.4998644198, 7.8227957211, 7.8226273195, 1.0, wires="ANY"
             ),
             op_in("U3")
             & wires_in(0): qml.ThermalRelaxationError(
-                0.4996911588, 7.8227934813, 7.8226284393, 1.0, wires=AnyWires
+                0.4996911588, 7.8227934813, 7.8226284393, 1.0, wires="ANY"
             ),
             op_in("U3")
             & wires_in(1): qml.ThermalRelaxationError(
-                0.4997288404, 7.8229079927, 7.8225711871, 1.0, wires=AnyWires
+                0.4997288404, 7.8229079927, 7.8225711871, 1.0, wires="ANY"
             ),
             op_in("CNOT")
             & wires_in([0, 1]): qml.QubitChannel(
                 Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
-                wires=AnyWires,
+                wires="ANY",
             ),
         }
 
@@ -2649,7 +2661,7 @@ class TestLoadNoiseModel:
         for (pl_k, pl_v), (qk_k, qk_v) in zip(
             pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
         ):
-            pl_op, qk_op = pl_v(AnyWires), qk_v(AnyWires)
+            pl_op, qk_op = pl_v("ANY"), qk_v("ANY")
             assert repr(pl_k) == repr(qk_k)
             assert isinstance(qk_op, qml.QubitChannel)
 
@@ -2693,9 +2705,9 @@ class TestLoadNoiseModel:
         ):
             assert repr(pl_k) == repr(qk_k)
 
-            pl_data = np.array(pl_v(AnyWires).data)
+            pl_data = np.array(pl_v("ANY").data)
             if verbose:
-                choi_mat1 = self._kraus_to_choi(qk_v(AnyWires).data)
+                choi_mat1 = self._kraus_to_choi(qk_v("ANY").data)
                 choi_mat2 = self._kraus_to_choi(pl_data)
                 assert np.allclose(choi_mat1, choi_mat2)
             else:

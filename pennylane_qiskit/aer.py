@@ -34,7 +34,7 @@ class AerDevice(QiskitDeviceLegacy):
     `qiskit_aer documentation <https://qiskit.org/ecosystem/aer/index.html>`_.
 
     Args:
-        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+        wires (int or Iterable[Number, str]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
         backend (str): the desired backend
@@ -56,7 +56,7 @@ class AerDevice(QiskitDeviceLegacy):
 
     short_name = "qiskit.aer"
 
-    def __init__(self, wires, shots=1024, backend="aer_simulator", method="automatic", **kwargs):
+    def __init__(self, wires, shots=None, backend="aer_simulator", method="automatic", **kwargs):
         if method != "automatic":
             backend += "_" + method
 

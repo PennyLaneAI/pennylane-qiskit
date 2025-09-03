@@ -15,7 +15,8 @@ r"""
 This module contains functions for converting between Qiskit QuantumCircuit objects
 and PennyLane circuits.
 """
-from typing import Dict, Any, Iterable, Sequence, Union
+from typing import Any
+from collections.abc import Iterable, Sequence
 import warnings
 from functools import partial, reduce
 
@@ -35,7 +36,6 @@ from sympy import lambdify
 
 import pennylane as qml
 from pennylane.noise.conditionals import WiresIn, _rename
-from pennylane.operation import AnyWires
 import pennylane.ops as pennylane_ops
 from pennylane.tape.tape import rotations_and_diagonal_measurements
 
@@ -61,7 +61,6 @@ QISKIT_OPERATION_MAP = {
     "CRY": lib.CRYGate,
     "CRZ": lib.CRZGate,
     "PhaseShift": lib.PhaseGate,
-    "QubitStateVector": lib.Initialize,
     "StatePrep": lib.Initialize,
     "Toffoli": lib.CCXGate,
     "QubitUnitary": lib.UnitaryGate,
@@ -103,7 +102,7 @@ referral_to_forum = (
 
 def _check_parameter_bound(
     param: Parameter,
-    unbound_params: Dict[Union[Parameter, ParameterVector], Any],
+    unbound_params: dict[Parameter | ParameterVector, Any],
 ):
     """Utility function determining if a certain parameter in a QuantumCircuit has
     been bound.
@@ -235,7 +234,7 @@ def _format_params_dict(quantum_circuit, params, *args, **kwargs):
     return params
 
 
-def _extract_variable_refs(params: Dict[Parameter, Any]) -> Dict[Parameter, Any]:
+def _extract_variable_refs(params: dict[Parameter, Any]) -> dict[Parameter, Any]:
     """Iterate through the parameter mapping to be bound to the circuit,
     and return a dictionary containing the trainable parameters.
 
@@ -384,7 +383,7 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     if len(qc_wires) == len(wires):
         return dict(zip(qc_wires, wires))
 
-    raise qml.QuantumFunctionError(
+    raise qml.exceptions.QuantumFunctionError(
         f"The specified number of wires - {len(wires)} - does not match "
         "the number of wires the loaded quantum circuit acts on."
     )
@@ -527,7 +526,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             elif instruction_name in inv_map:
                 operation_class = getattr(pennylane_ops, inv_map[instruction_name])
                 operation_args.extend(operation_params)
-                if operation_class in (qml.QubitStateVector, qml.StatePrep):
+                if operation_class is qml.StatePrep:
                     operation_args = [np.array(operation_params)]
 
             elif isinstance(instruction, Measure):
@@ -554,7 +553,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                                 break
                         # Check if the subsequent next_op is measurement interfering
                         if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
-                            next_op_wires = set(wire_map[hash(qubit)] for qubit in next_qargs)
+                            next_op_wires = {wire_map[hash(qubit)] for qubit in next_qargs}
                             # Check if there's any overlapping wires
                             if next_op_wires & op_wires:
                                 meas_terminal = False
@@ -574,7 +573,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                         mid_circ_regs[carg] = mid_circ_meas[-1]
 
             else:
-
                 try:
                     if not isinstance(instruction, (ControlFlowOp,)):
                         operation_args = [instruction.to_matrix()]
@@ -747,7 +745,7 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering
-    if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+    if operation in ("QubitUnitary", "StatePrep"):
         qregs = list(reversed(qregs))
 
     if creg:
@@ -793,7 +791,7 @@ def mp_to_pauli(mp, register_size):
 def load_pauli_op(
     pauli_op: SparsePauliOp,
     params: Any = None,
-    wires: Union[Sequence, None] = None,
+    wires: Sequence | None = None,
 ) -> qml.operation.Operator:
     """Loads a PennyLane ``Operator`` from a Qiskit `SparsePauliOp
     <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp>`_.
@@ -964,7 +962,7 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
         # Switch ops condition is None by default
         # So we make up a custom one for it ourselves
         inst.condition = [inst.target, res_bits, "SwitchCase"]
-        if any((isinstance(case, _DefaultCaseType) for case in inst._case_map)):
+        if any(isinstance(case, _DefaultCaseType) for case in inst._case_map):
             true_fns.append(branch_funcs[-1])
             # Marker for we have a default case scenario
             inst.condition[-1] = "SwitchDefault"
@@ -1182,9 +1180,9 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
     # For other operations we need to work with all bits at once,
     # So we build an integer form 'before' performing the operation.
     else:
-        meas1, meas2 = [
+        meas1, meas2 = (
             sum(2**idx * meas for idx, meas in enumerate(clreg)) for clreg in [clreg1, clreg2]
-        ]
+        )
         condition_res = expr_func(meas1, meas2)
 
     return condition_res
@@ -1225,7 +1223,7 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
 
 
 def load_noise_model(
-    noise_model, verbose: bool = False, decimal_places: Union[int, None] = None
+    noise_model, verbose: bool = False, decimal_places: int | None = None
 ) -> qml.NoiseModel:
     """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
     from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
@@ -1274,7 +1272,7 @@ def load_noise_model(
         conditions = []
         for wires, operations in wires_map.items():
             cond = qml.noise.op_in(operations)
-            if wires != AnyWires:
+            if wires != "ANY":
                 cond &= WiresIn(wires)
             conditions.append(cond)
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)

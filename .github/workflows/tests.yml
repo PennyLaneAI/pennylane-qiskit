@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.9, '3.10', '3.11']
+        python-version: ['3.11', '3.12', '3.13']
 
     steps:
       - name: Cancel Previous Runs
@@ -28,7 +28,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools>=75.8.1
+          pip install setuptools
           pip install git+https://github.com/PennyLaneAI/pennylane.git
           pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
@@ -41,7 +42,7 @@ jobs:
 
       - name: Run standard Qiskit plugin tests
         # Run the standard tests with the most recent version of Qiskit
-        run: python -m pytest tests -k 'not test_ibmq.py and not test_runtime.py' --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
+        run: python -m pytest tests --cov=pennylane_qiskit --cov-report=term-missing --cov-report=xml -p no:warnings --tb=native
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -63,11 +64,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools>=75.8.1
+          pip install setuptools
           pip install git+https://github.com/PennyLaneAI/pennylane.git
           pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock pytest-benchmark flaky --upgrade
@@ -75,7 +77,7 @@ jobs:
       - name: Install Plugin
         run: |
           python setup.py bdist_wheel
-          pip install dist/PennyLane*.whl
+          pip install dist/pennylane*.whl
 
       - name: Run tests
         run: |

@@ -14,10 +14,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install black pylint==2.7.4
+        run: pip install --upgrade black pylint
 
       - uses: actions/checkout@v2
 

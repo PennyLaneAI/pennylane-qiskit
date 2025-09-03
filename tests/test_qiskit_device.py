@@ -172,18 +172,22 @@ class TestAnalyticWarningHWSimulator:
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
 
-        with pytest.warns(UserWarning) as record:
-            dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
 
-        assert (
-            record[-1].message.args[0] == "The analytic calculation of "
+        @qml.qnode(dev)
+        def circuit():
+            qml.RX(np.pi / 2, wires=[0])
+            return qml.expval(qml.PauliZ(0))
+
+        with pytest.warns(
+            UserWarning,
+            match="The analytic calculation of "
             "expectations, variances and probabilities is only supported on "
             f"statevector backends, not on the {dev.backend.name}. Such statistics obtained from this "
-            "device are estimates based on samples."
-        )
+            "device are estimates based on samples.",
+        ):
 
-        # One warning raised about analytic calculations.
-        assert len(record) == 1
+            circuit()
 
     @pytest.mark.parametrize("method", ["unitary", "statevector"])
     def test_no_warning_raised_for_software_backend_analytic_expval(
@@ -215,6 +219,29 @@ class TestAerBackendOptions:
 
         dev2 = qml.device("qiskit.aer", wires=2)
         assert dev2.backend.options.get("noise_model") is None
+
+
+class TestExecutionAtOptimizationLevels:
+    """Test that a known circuit returns the expected result at all
+    optimization levels."""
+
+    @pytest.mark.parametrize("optimization_level", [0, 1, 2, 3])
+    def test_layout_at_optimization_levels(self, optimization_level):
+        """Test circuit to detect layout problems in the circuit and observables."""
+
+        fakebackend = FakeManilaV2()
+        dev = qml.device(
+            "qiskit.remote", wires=5, backend=fakebackend, optimization_level=optimization_level
+        )
+
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(2)
+            qml.CNOT([1, 4])
+            return qml.expval(qml.PauliX(2))
+
+        res = circuit()
+        assert np.allclose(res, 1.0, atol=0.2)
 
 
 @pytest.mark.parametrize("shots", [None])
@@ -320,5 +347,6 @@ class TestBatchExecution:
             return qml.state()
 
         res = barrier_func()
-        assert barrier_func.tape.operations[0] == qml.Barrier([0, 1])
-        assert np.allclose(res, dev.batch_execute([barrier_func.tape]), atol=0)
+        tape = qml.workflow.construct_tape(barrier_func)()
+        assert tape.operations[0] == qml.Barrier([0, 1])
+        assert np.allclose(res, dev.batch_execute([tape]), atol=0)

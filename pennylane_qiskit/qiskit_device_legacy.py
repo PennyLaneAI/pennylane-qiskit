@@ -27,7 +27,7 @@ from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
 
-from pennylane import DeviceError
+from pennylane.exceptions import DeviceError
 from pennylane.devices import QubitDevice
 from pennylane.measurements import SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP
 
@@ -48,7 +48,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
     r"""Abstract Qiskit device for PennyLane.
 
     Args:
-        wires (int or Iterable[Number, str]]): Number of subsystems represented by the device,
+        wires (int or Iterable[Number, str]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers (i.e., ``[-1, 0, 2]``)
             or strings (``['ancilla', 'q1', 'q2']``).
         provider (Provider | None): The Qiskit backend provider.
@@ -64,7 +64,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
     """
 
     name = "Qiskit PennyLane plugin"
-    pennylane_requires = ">=0.30.0"
+    pennylane_requires = ">=0.42.0"
     version = __version__
     plugin_version = __version__
     author = "Xanadu"
@@ -104,8 +104,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
     _eigs = {}
 
-    def __init__(self, wires, provider, backend, shots=1024, **kwargs):
-
+    def __init__(self, wires, provider, backend, shots=None, **kwargs):
         super().__init__(wires=wires, shots=shots)
 
         self.provider = provider
@@ -127,13 +126,6 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             self.backend_name = _get_backend_name(self._backend)
 
-        # Keep track if the user specified analytic to be True
-        if shots is None and not self._is_state_backend:
-            # Raise a warning if no shots were specified for a hardware device
-            warnings.warn(self.analytic_warning_message.format(backend), UserWarning)
-
-            self.shots = 1024
-
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
@@ -149,6 +141,14 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         self.reset()
 
         self.process_kwargs(kwargs)
+
+    def batch_transform(self, circuit):
+        """Batch transform the circuit"""
+        if not (circuit.shots or self.shots or self._is_state_backend):
+            warnings.warn(self.analytic_warning_message.format(self.backend_name), UserWarning)
+            circuit = circuit.copy(shots=1024)
+
+        return super().batch_transform(circuit)
 
     def process_kwargs(self, kwargs):
         """Processing the keyword arguments that were provided upon device initialization.
@@ -301,7 +301,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in device_wires.labels]
 
-            if operation in ("QubitUnitary", "QubitStateVector", "StatePrep"):
+            if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in
                 # Qiskit such that it matches the PennyLane ordering
                 qregs = list(reversed(qregs))
@@ -327,9 +327,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             operation (pennylane.Operation): operation to be checked
 
         Raises:
-            DeviceError: If the operation is QubitStateVector or StatePrep
+            DeviceError: If the operation is StatePrep
         """
-        if operation in ("QubitStateVector", "StatePrep"):
+        if operation == "StatePrep":
             if self._is_unitary_backend:
                 raise DeviceError(
                     f"The {operation} operation "
@@ -377,6 +377,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             initial_state[0] = 1
 
             state = unitary @ initial_state
+
+        else:  # pragma: no cover
+            raise DeviceError(f"Cannot get state for backend {self.backend_name}. ")
 
         # reverse qubit order to match PennyLane convention
         return state.reshape([2] * self.num_wires).T.flatten()
@@ -450,8 +453,12 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             # At least one circuit must always be provided to the backend.
             return []
 
+        # Shots preprocessing
+        shots = circuits[0].shots.total_shots or self.shots
+        if not self.shots:
+            self._shots = shots
         # Send the batch of circuit objects using backend.run
-        self._current_job = self.backend.run(compiled_circuits, shots=self.shots, **self.run_args)
+        self._current_job = self.backend.run(compiled_circuits, shots=shots, **self.run_args)
 
         try:
             result = self._current_job.result(timeout=timeout)
@@ -468,16 +475,14 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         for circuit, circuit_obj in zip(circuits, compiled_circuits):
             # Update the tracker
             if self.tracker.active:
-                self.tracker.update(executions=1, shots=self.shots)
+                self.tracker.update(executions=1, shots=shots)
                 self.tracker.record()
 
             if self._is_state_backend:
                 self._state = self._get_state(result, experiment=circuit_obj)
 
             # generate computational basis samples
-            if self.shots is not None or any(
-                isinstance(m, SAMPLE_TYPES) for m in circuit.measurements
-            ):
+            if shots is not None or any(isinstance(m, SAMPLE_TYPES) for m in circuit.measurements):
                 self._samples = self.generate_samples(circuit_obj)
 
             res = self.statistics(circuit)

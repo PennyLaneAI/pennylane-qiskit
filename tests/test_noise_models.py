@@ -20,10 +20,9 @@ import itertools as it
 import pytest
 import numpy as np
 import pennylane as qml
-from pennylane.operation import AnyWires
 
 # pylint:disable = wrong-import-position, unnecessary-lambda
-qiksit = pytest.importorskip("qiskit", "1.0.0")
+qiskit = pytest.importorskip("qiskit", "1.0.0")
 from qiskit_aer import noise
 from qiskit.quantum_info.operators.channel import Kraus
 
@@ -47,42 +46,42 @@ class TestLoadNoiseChannels:
         [
             (
                 noise.amplitude_damping_error(0.123, 0.0),
-                qml.AmplitudeDamping(0.123, wires=AnyWires),
+                qml.AmplitudeDamping(0.123, wires="ANY"),
             ),
-            (noise.phase_damping_error(0.123), qml.PhaseDamping(0.123, wires=AnyWires)),
+            (noise.phase_damping_error(0.123), qml.PhaseDamping(0.123, wires="ANY")),
             (
                 noise.phase_amplitude_damping_error(0.0345, 0.0),
-                qml.AmplitudeDamping(0.0345, wires=AnyWires),
+                qml.AmplitudeDamping(0.0345, wires="ANY"),
             ),
             (
                 noise.phase_amplitude_damping_error(0.0, 0.0345),
-                qml.PhaseDamping(0.0345, wires=AnyWires),
+                qml.PhaseDamping(0.0345, wires="ANY"),
             ),
-            (noise.reset_error(0.02789), qml.ResetError(0.02789, 0.0, wires=AnyWires)),
-            (noise.reset_error(0.01364, 0.02789), qml.ResetError(0.01364, 0.02789, wires=AnyWires)),
+            (noise.reset_error(0.02789), qml.ResetError(0.02789, 0.0, wires="ANY")),
+            (noise.reset_error(0.01364, 0.02789), qml.ResetError(0.01364, 0.02789, wires="ANY")),
             (
                 noise.thermal_relaxation_error(0.25, 0.45, 1.0, 0.01),
-                qml.ThermalRelaxationError(0.01, 0.25, 0.45, 1.0, wires=AnyWires),
+                qml.ThermalRelaxationError(0.01, 0.25, 0.45, 1.0, wires="ANY"),
             ),
             (
                 noise.thermal_relaxation_error(0.45, 0.25, 1.0, 0.01),
-                qml.ThermalRelaxationError(0.01, 0.45, 0.25, 1.0, wires=AnyWires),
+                qml.ThermalRelaxationError(0.01, 0.45, 0.25, 1.0, wires="ANY"),
             ),
             (
                 noise.depolarizing_error(0.3264, 1),
-                qml.DepolarizingChannel(0.3264 * 3 / 4, wires=AnyWires),
+                qml.DepolarizingChannel(0.3264 * 3 / 4, wires="ANY"),
             ),
             (
                 noise.pauli_error([("X", 0.1), ("I", 0.9)]),
-                qml.BitFlip(0.1, wires=AnyWires),
+                qml.BitFlip(0.1, wires="ANY"),
             ),
             (
                 noise.pauli_error([("Y", 0.178), ("I", 0.822)]),
-                qml.PauliError("Y", 0.178, wires=AnyWires),
+                qml.PauliError("Y", 0.178, wires="ANY"),
             ),
             (
                 noise.coherent_unitary_error(qml.X(0).matrix()),
-                qml.QubitChannel([qml.X(0).matrix()], wires=AnyWires),
+                qml.QubitChannel([qml.X(0).matrix()], wires="ANY"),
             ),
             (
                 noise.mixed_unitary_error(
@@ -97,7 +96,7 @@ class TestLoadNoiseChannels:
                             (qml.I, 0.9),
                         ]
                     ],
-                    wires=AnyWires,
+                    wires="ANY",
                 ),
             ),
             (
@@ -117,7 +116,7 @@ class TestLoadNoiseChannels:
                             [[0.0 + 0.0j, 0.58745213 + 0.0j], [0.0 + 0.0j, 0.0 + 0.0j]],
                         ]
                     ),
-                    wires=AnyWires,
+                    wires="ANY",
                 ),
             ),
             (
@@ -136,7 +135,22 @@ class TestLoadNoiseChannels:
                             [[0.0 + 0.0j, 0.58745213 + 0.0j], [0.0 + 0.0j, 0.0 + 0.0j]],
                         ]
                     ),
-                    wires=AnyWires,
+                    wires="ANY",
+                ),
+            ),
+            (
+                noise.kraus_error(
+                    [
+                        np.diag([-0.9486833] * 4),
+                        np.diag([-0.31622777] * 2, k=2) + np.diag([-0.31622777] * 2, k=-2),
+                    ],
+                ),
+                qml.QubitChannel(
+                    [
+                        np.diag([-0.9486833] * 4),
+                        np.diag([-0.31622777] * 2, k=2) + np.diag([-0.31622777] * 2, k=-2),
+                    ],
+                    wires=["ANY1", "ANY2"],
                 ),
             ),
         ],
@@ -147,7 +161,9 @@ class TestLoadNoiseChannels:
         choi_mat1 = self._kraus_to_choi(
             pl_op_from_qiskit.compute_kraus_matrices(*pl_op_from_qiskit.data)
         )
-        choi_mat2 = self._kraus_to_choi(pl_channel.compute_kraus_matrices(*pl_channel.data))
+        choi_mat2 = self._kraus_to_choi(
+            pl_channel.compute_kraus_matrices(*pl_channel.data, **pl_channel.hyperparameters)
+        )
         assert np.allclose(choi_mat1, choi_mat2)
 
     @pytest.mark.parametrize(
@@ -174,7 +190,7 @@ class TestLoadNoiseChannels:
         pl_channels = [
             qml.QubitChannel(
                 qml.DepolarizingChannel.compute_kraus_matrices(3 * depol1 / 4),
-                wires=AnyWires,
+                wires="ANY",
             ),
             qml.QubitChannel(
                 [
@@ -186,13 +202,13 @@ class TestLoadNoiseChannels:
                         ),
                     )
                 ],
-                wires=AnyWires,
+                wires="ANY",
             ),
             qml.QubitChannel(
                 qml.ThermalRelaxationError.compute_kraus_matrices(
                     exc_pop, 6.6302933312, 4.1837870638, 1.0
                 ),
-                wires=AnyWires,
+                wires="ANY",
             ),
         ]
         for key, channel in zip(list(qerror_dmap.keys()), pl_channels):
@@ -201,9 +217,9 @@ class TestLoadNoiseChannels:
             assert np.allclose(choi_mat1, choi_mat2)
 
         assert list(qerror_dmap.values()) == [
-            {AnyWires: ["RZ", "SX", "X"]},
-            {AnyWires: ["CNOT"]},
-            {AnyWires: ["RY", "RX"]},
+            {"ANY": ["RZ", "SX", "X"]},
+            {"ANY": ["CNOT"]},
+            {"ANY": ["RY", "RX"]},
         ]
 
     @pytest.mark.parametrize(

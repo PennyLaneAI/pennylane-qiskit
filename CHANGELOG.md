@@ -1,4 +1,4 @@
-# Release 0.39.0-dev
+# Release 0.43.0-dev
 
 ### New features since last release
 
@@ -6,19 +6,239 @@
 
 ### Breaking changes 💔
 
+* Remove support for Python 3.10 and add support for Python 3.13.
+  [(#646)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/646)
+
+* `QiskitDevice` no longer warns or changes `shots=None` at initialization.
+  Instead, the `analytic_warning` transform issues a warning only at execution time,
+  and leaves `shots=None` unchanged; the Qiskit backend will then set it's own default for the number of shots.
+  To ensure a consistent experience, use `qml.set_shots(shots)` on each QNode executed
+  with `QiskitDevice`:
+
+  ```python
+  dev = qml.device("qiskit.aer", wires=2)
+
+  @qml.set_shots(1000)
+  @qml.qnode(dev)
+  def circuit():
+      qml.Hadamard(wires=0)
+      qml.CNOT(wires=[0, 1])
+      return qml.expval(qml.PauliZ(0))
+
+  # or equivalently, without the decorator:
+  #  circuit = qml.set_shots(circuit, shots=1000)
+  result = circuit()
+
+  ```
+
+  [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
+  [(#654)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/654)
+
 ### Deprecations 👋
 
+### Internal changes ⚙️
+
+* Updated tests to use `qml.set_shots` for setting shot values on circuits.
+  [(#644)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/644)
+
 ### Documentation 📝
+
+* Updated documentation for connecting to IBM backends.
+  [(#647)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/647)
+
+* Fix minor typos in documentation and docstrings.
+  [(#648)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/648)
+
+### Bug fixes 🐛
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Yushao Chen,
+Inho Choi,
+Austin Huang,
+Andrija Paurevic.
+
+---
+# Release 0.42.0
+ 
+ ### New features since last release
+ 
+ ### Improvements 🛠
+ 
+* Removes use of deprecated `qml.operation.AnyWires`.
+  [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
+
+ ### Breaking changes 💔
+
+* Upgrade minimum supported version of PennyLane to 0.42.0.
+  [(#643)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/643)
+ ### Deprecations 👋
+
+ ### Internal changes ⚙️
+
+* Replace `DefaultExecutionConfig` with `ExecutionConfig()` and use `dataclasses.replace` to update
+  configurations to not mutate properties.
+  [(#634)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/634)
+
+* Updated tests to keep into account that wires validation on `default.qubit` in PennyLane now takes place 
+  after the `mid_circuit_measurements` transform is applied during preprocessing.
+  [(#628)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/628)
+
+* Bumped the `readthedocs.yml` action up to Ubuntu-24.04.
+  [(#629)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/629)
+
+* Use new `pennylane.exceptions` module for custom exceptions.
+  [(#626)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/626)
+
+* Plugin no longer defaults to creating a session. Instead, it decides between job mode and 
+  session mode and chooses one or the other based on if a user has passed in a session or not.
+  [(#632)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/632)
+ 
+ ### Documentation 📝
+
+* Users are now redirected to `pennylane.ai/search` with the doc content type selected 
+  and the associated project and version filters selected when using the search bar.
+  [(#617)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/617)
+
+ ### Bug fixes 🐛
+
+* Stops queuing a mid circuit measurement on first use of `qml.from_qiskit`.
+ [(#630)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/630)
+
+* `qml.QubitChannel` in a converted noise model should now act on correct number of qubits.
+  [(#640)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/640)
+
+ ### Contributors ✍️
+ 
+ This release contains contributions from (in alphabetical order):
+
+ Utkarsh Azad,
+ Pietropaolo Frisoni,
+ Andrew Gardhouse,
+ Austin Huang,
+ Christina Lee,
+ Andrija Paurevic
+ 
+ ---
+# Release 0.41.0
+
+### Bug fixes 🐛
+
+* The layout of the circuit is now applied to the observables when it is changed on transpilation.
+  [(#613)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/613)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Juan Felipe Huan Lew Yee
+
+---
+# Release 0.40.1
+
+### Internal changes ⚙️
+
+* Pinning `setuptools` in the CI to update how the plugin is installed.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+* Pinning `qiskit.aer` in the `setup.py` file to maintain compatibility with the plugin.
+  [(#620)](https://github.com/PennyLaneAI/pennylane-cirq/pull/620)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Pietropaolo Frisoni
+
+---
+# Release 0.40.0
+
+### Breaking changes 💔
+
+* The ``qml.QubitStateVector`` template has been removed. Instead, use :class:`~pennylane.StatePrep`.
+  [(#601)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/601)
+
+### Bug fixes 🐛  
+  
+* Fixed premature session closure when using `qiskit_session`.  
+  [(#608)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/608)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Andrija Paurevic
+Tak Hur
+
+---
+# Release 0.39.1
+
+### Other changes 
+
+* The `qiskit` dependency has been temporarily pinned to version `<1.3` to prevent wrong results. 
+  At present, `pennylane-qiskit` is incompatible with `qiskit 1.3`.
+  [(#603)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/603) 
+  [(#604)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/604)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Pietropaolo Frisoni
+
+---
+# Release 0.39.0
+
+### Improvements 🛠
+
+* Make `qiskit_session` available top-level. Users can now import it as `pennylane_qiskit.qiskit_session`.
+  [(#593)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/593)
+
+### Breaking changes 💔
+
+* Remove support for Python 3.9.
+  [(#597)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/597)
+
+* Upgrade minimum supported version of PennyLane to 0.38.0.
+  [(#599)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/599)
+
+### Documentation 📝
+
+* Added warning in the documentation of `qiskit_session` due to recent reports of unexpected behavior.
+  [(#594)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/594)
+
+### Bug fixes 🐛
+
+* Fix deprecated import path for `QubitDevice`.
+  [(#584)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/584)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Astral Cai
+Lillian M. A. Frederiksen
+Austin Huang
+Mudit Pandey
+
+
+---
+# Release 0.38.1
 
 ### Bug fixes 🐛
 
 * Due to the removal of the `Session` and `Backend` keywords in the 0.30 release of `qiskit-ibm-runtime`, the PennyLane-Qiskit
   plugin now pins to `qiskit-ibm-runtime<=0.29`.
+  [(#587)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/587)
 
 ### Contributors ✍️
-Austin Huang
 
 This release contains contributions from (in alphabetical order):
+
+Austin Huang
+Mudit Pandey
 
 ---
 # Release 0.38.0

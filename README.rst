@@ -53,7 +53,7 @@ Features
 Installation
 ============
 
-This plugin requires Python version 3.9 and above, as well as PennyLane and Qiskit.
+This plugin requires Python >= 3.11, as well as PennyLane and Qiskit.
 Installation of this plugin, as well as all dependencies, can be done using ``pip``:
 
 .. code-block:: bash
@@ -84,7 +84,7 @@ Contributing
 
 We welcome contributions - simply fork the repository of this plugin, and then make a
 `pull request <https://help.github.com/articles/about-pull-requests/>`_ containing your contribution.
-All contributers to this plugin will be listed as authors on the releases.
+All contributors to this plugin will be listed as authors on the releases.
 
 We also encourage bug reports, suggestions for new features and enhancements, and even links to cool projects
 or applications built on PennyLane.
