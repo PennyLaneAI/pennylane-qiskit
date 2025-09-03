@@ -58,9 +58,16 @@ Installation of this plugin, as well as all dependencies, can be done using ``pi
 
 .. code-block:: bash
 
-    pip install pennylane-qiskit
+    python -m pip install pennylane-qiskit
 
-To test that the PennyLane-Qiskit plugin is working correctly you can run
+To test that the PennyLane-Qiskit plugin is working correctly you can install the development
+requirements with,
+
+.. code-block:: bash
+    
+    python -m pip install -r requirements-dev.txt
+
+With this, you can run the tests with,
 
 .. code-block:: bash
 
