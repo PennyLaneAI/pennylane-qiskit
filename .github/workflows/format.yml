@@ -15,13 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  determine_runner:
-    if: github.event.pull_request.draft == false
-    name: Determine runner type to use
-    uses: ./.github/workflows/determine-workflow-runner.yml
-    with:
-      default_runner: ubuntu-latest
-      force_large_runner: ${{ github.event_name == 'merge_group' }}
 
   black-pylint:
     if: github.event.pull_request.draft == false
