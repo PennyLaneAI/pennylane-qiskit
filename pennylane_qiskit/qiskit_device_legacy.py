@@ -467,7 +467,6 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             result = self._current_job.result()
 
         # increment counter for number of executions of qubit device
-        # pylint: disable=no-member
         self._num_executions += 1
 
         # Compute statistics using the state and/or samples

@@ -47,7 +47,6 @@ from sympy import lambdify
 
 from .noise_models import _build_noise_model_map
 
-# pylint: disable=too-many-instance-attributes
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": lib.XGate,
@@ -395,7 +394,7 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     )
 
 
-# pylint:disable=too-many-statements, too-many-branches
+# pylint:disable=too-many-statements
 def load(quantum_circuit: QuantumCircuit, measurements=None):
     """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
@@ -411,7 +410,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: The resulting PennyLane template.
     """
 
-    # pylint:disable=too-many-branches, fixme, protected-access, too-many-nested-blocks
+    # pylint:disable=too-many-branches
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -1083,7 +1082,6 @@ def _process_switch_condition(condition, mid_circ_regs):
     return meas_pl_ops
 
 
-# pylint:disable = unbalanced-tuple-unpacking
 def _expr_evaluation(condition, mid_circ_regs):
     """Evaluates the ``Expr`` condition
 

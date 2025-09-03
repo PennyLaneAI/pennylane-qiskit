@@ -570,7 +570,6 @@ class QiskitDevice(Device):
 
         return compiled_circuits
 
-    # pylint: disable=unused-argument, no-member
     def execute(
         self,
         circuits: QuantumTape_or_Batch,
