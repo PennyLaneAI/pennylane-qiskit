@@ -6,6 +6,9 @@
 
 ### Breaking changes 💔
 
+* Remove support for Qiskit 1.0 eco-system.
+  [(#653)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/653)
+
 * Remove support for Python 3.10 and add support for Python 3.13.
   [(#646)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/646)
 
