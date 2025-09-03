@@ -1,5 +1,4 @@
 pennylane
-qiskit
-qiskit-ibm-runtime
-numpy
-sympy
+qiskit>=2.0
+qiskit-aer>=0.17
+qiskit-ibm-runtime>=0.41
