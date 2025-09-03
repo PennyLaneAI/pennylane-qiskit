@@ -938,10 +938,6 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     """
     true_fns, false_fns = [operation_class], [None]
 
-    # Logic for using legacy c_if
-    if not isinstance(inst, ControlFlowOp):
-        return true_fns, false_fns, inst.condition
-
     # Logic for handling IfElseOp
     if ctrl_flow_type == "IfElseOp":
         true_fns[0] = branch_funcs[0]
