@@ -4,9 +4,12 @@ on:
 
 jobs:
   black-pylint:
-    if: github.event.pull_request.draft == false
-    needs: [determine_runner]
-    runs-on: ${{ needs.determine_runner.outputs.runner_group }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.1
+        with:
+          access_token: ${{ github.token }}
 
     steps:
       - name: Set up Python
