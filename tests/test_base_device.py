@@ -102,8 +102,8 @@ aer_backend = AerSimulator()
 test_dev = QiskitDevice(wires=5, backend=aer_backend)
 
 
-class TestSupportForV1andV2:
-    """Tests compatibility with BackendV1 and BackendV2"""
+class TestSupportForV2:
+    """Tests compatibility with and BackendV2"""
 
     @pytest.mark.parametrize(
         "backend",
@@ -114,15 +114,9 @@ class TestSupportForV1andV2:
         dev = QiskitDevice(wires=10, backend=backend)
         assert dev._backend == backend
 
-    @pytest.mark.parametrize(
-        "backend, shape",
-        [
-            (FakeManilaV2(), (1024,)),
-        ],
-    )
-    def test_v1_and_v2_manila(self, backend, shape):
-        """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
-        dev = QiskitDevice(wires=5, backend=backend)
+    def test_v2_manila(self):
+        """Test that device initializes and runs without error with V2 backends by Qiskit"""
+        dev = QiskitDevice(wires=5, backend=FakeManilaV2())
 
         @qml.set_shots(1024)
         @qml.qnode(dev)
@@ -133,8 +127,8 @@ class TestSupportForV1andV2:
 
         res = circuit(np.pi / 2)
 
-        assert np.shape(res) == shape
-        assert dev._backend == backend
+        assert np.shape(res) == (1024,)
+        assert dev._backend == FakeManilaV2()
 
 
 class TestDeviceInitialization:
@@ -153,13 +147,12 @@ class TestDeviceInitialization:
         assert dev2._compile_backend != dev2._backend
         assert dev2._compile_backend == compile_backend
 
-    @pytest.mark.parametrize("backend", [aer_backend])
-    def test_backend_wire_validation(self, backend):
+    def test_backend_wire_validation(self):
         """Test that an error is raised if the number of device wires exceeds
         the number of wires available on the backend, for both backend versions"""
 
         with pytest.raises(ValueError, match="supports maximum"):
-            QiskitDevice(wires=500, backend=backend)
+            QiskitDevice(wires=500, backend=aer_backend)
 
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
