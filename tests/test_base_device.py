@@ -116,7 +116,8 @@ class TestSupportForV2:
 
     def test_v2_manila(self):
         """Test that device initializes and runs without error with V2 backends by Qiskit"""
-        dev = QiskitDevice(wires=5, backend=FakeManilaV2())
+        backend = FakeManilaV2()
+        dev = QiskitDevice(wires=5, backend=backend)
 
         @qml.set_shots(1024)
         @qml.qnode(dev)
@@ -128,7 +129,7 @@ class TestSupportForV2:
         res = circuit(np.pi / 2)
 
         assert np.shape(res) == (1024,)
-        assert dev._backend == FakeManilaV2()
+        assert dev._backend == backend
 
 
 class TestDeviceInitialization:
