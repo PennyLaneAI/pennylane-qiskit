@@ -25,7 +25,7 @@ import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
+from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from pennylane.exceptions import DeviceError
 from pennylane.devices import QubitDevice
