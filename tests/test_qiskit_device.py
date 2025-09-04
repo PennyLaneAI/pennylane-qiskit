@@ -20,9 +20,9 @@ import numpy as np
 import pennylane as qml
 import pytest
 
-from qiskit.providers import BackendV1, BackendV2
+from qiskit.providers import BackendV2
 from qiskit_aer import noise
-from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
