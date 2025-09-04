@@ -16,11 +16,12 @@ This module contains some configuration for PennyLane IBMQ devices.
 """
 
 import os
-import pytest
-import numpy as np
 
+import numpy as np
 import pennylane as qml
+import pytest
 from qiskit_ibm_runtime import QiskitRuntimeService
+
 from pennylane_qiskit import AerDevice, BasicSimulatorDevice
 
 # pylint: disable=protected-access, unused-argument, redefined-outer-name

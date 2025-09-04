@@ -14,14 +14,13 @@
 r"""
 This module contains tests for using expvals for PennyLane IBMQ devices.
 """
-# pylint: disable=too-many-positional-arguments
-import pytest
-from flaky import flaky
-
 import numpy as np
 import pennylane as qml
 
+# pylint: disable=too-many-positional-arguments
+import pytest
 from conftest import A
+from flaky import flaky
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments
 

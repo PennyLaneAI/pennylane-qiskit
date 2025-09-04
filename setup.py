@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Setup script for PennyLane-Qiskit."""
 
 #!/usr/bin/env python3
 from setuptools import setup
 
-with open("pennylane_qiskit/_version.py") as f:
+with open("pennylane_qiskit/_version.py", encoding="utf-8") as f:
     version = f.readlines()[-1].split()[-1].strip("\"'")
 
-with open("README.rst", "r") as fh:
+with open("README.rst", encoding="utf-8") as fh:
     long_description = fh.read()
 
 requirements = [
@@ -55,7 +56,7 @@ info = {
         ],
     },
     "description": "PennyLane plugin for Qiskit",
-    "long_description": open("README.rst").read(),
+    "long_description": long_description,
     "provides": ["pennylane_qiskit"],
     "install_requires": requirements,
     # 'extras_require': extra_requirements,

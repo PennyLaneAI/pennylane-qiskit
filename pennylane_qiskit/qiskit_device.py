@@ -18,39 +18,37 @@ for PennyLane with the new device API.
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init,too-many-positional-arguments
 
 
-import warnings
 import inspect
-from dataclasses import replace
-
-
-from typing import Union
-from collections.abc import Sequence, Callable
+import warnings
+from collections.abc import Callable, Sequence
 from contextlib import contextmanager
+from dataclasses import replace
 from functools import wraps
+from typing import Union
 
 import numpy as np
 import pennylane as qml
-from qiskit.compiler import transpile
-from qiskit.providers import BackendV2
-
-from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
-
 from pennylane import transform
-from pennylane.transforms.core import TransformProgram
-from pennylane.transforms import broadcast_expand, split_non_commuting
-from pennylane.tape import QuantumTape, QuantumScript
-from pennylane.typing import Result, ResultBatch
 from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig
+from pennylane.devices.modifiers.simulator_tracking import simulator_tracking
 from pennylane.devices.preprocess import (
     decompose,
-    validate_observables,
-    validate_measurements,
     validate_device_wires,
+    validate_measurements,
+    validate_observables,
 )
-
 from pennylane.measurements import ExpectationMP, VarianceMP
-from pennylane.devices.modifiers.simulator_tracking import simulator_tracking
+from pennylane.tape import QuantumScript, QuantumTape
+from pennylane.transforms import broadcast_expand, split_non_commuting
+from pennylane.transforms.core import TransformProgram
+from pennylane.typing import Result, ResultBatch
+from qiskit.compiler import transpile
+from qiskit.providers import BackendV2
+from qiskit_ibm_runtime import EstimatorV2 as Estimator
+from qiskit_ibm_runtime import SamplerV2 as Sampler
+from qiskit_ibm_runtime import Session
+
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
@@ -572,7 +570,7 @@ class QiskitDevice(Device):
 
         return compiled_circuits
 
-    # pylint: disable=unused-argument, no-member
+    # pylint: disable=unused-argument
     def execute(
         self,
         circuits: QuantumTape_or_Batch,

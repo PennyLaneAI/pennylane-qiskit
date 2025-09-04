@@ -1,0 +1,5 @@
+pre-commit
+pytest
+pylint
+black
+isort

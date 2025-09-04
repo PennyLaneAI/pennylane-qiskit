@@ -58,9 +58,16 @@ Installation of this plugin, as well as all dependencies, can be done using ``pi
 
 .. code-block:: bash
 
-    pip install pennylane-qiskit
+    python -m pip install pennylane-qiskit
 
-To test that the PennyLane-Qiskit plugin is working correctly you can run
+To test that the PennyLane-Qiskit plugin is working correctly you can install the development
+requirements with,
+
+.. code-block:: bash
+    
+    python -m pip install -r requirements-dev.txt
+
+With this, you can run the tests with,
 
 .. code-block:: bash
 
@@ -73,6 +80,23 @@ in the source folder.
     When installing the Pennylane-Qiskit plugin, we recommend starting with a clean environment.
     This is especially pertinent when upgrading from a pre-1.0 version of Qiskit, as described
     in `Qiskit's migration guide <https://docs.quantum.ibm.com/api/migration-guides/qiskit-1.0-installation>`_. 
+
+Development
+===========
+
+If you wish to develop the PennyLane-Qiskit plugin, please first install the developer requirements with
+
+.. code-block:: bash
+
+    python -m pip install -r requirements-dev.txt
+
+and install the pre-commit hooks with
+
+.. code-block:: bash
+
+    pre-commit install
+
+This will set up pre-commit hooks to automatically format and lint your code before each commit.
 
 .. installation-end-inclusion-marker-do-not-remove
 
