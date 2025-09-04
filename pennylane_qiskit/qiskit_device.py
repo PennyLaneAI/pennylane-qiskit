@@ -31,7 +31,6 @@ from functools import wraps
 import numpy as np
 import pennylane as qml
 from qiskit.compiler import transpile
-from qiskit.providers import BackendV2
 
 from qiskit_ibm_runtime import Session, SamplerV2 as Sampler, EstimatorV2 as Estimator
 
