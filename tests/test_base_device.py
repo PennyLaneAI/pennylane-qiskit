@@ -32,11 +32,11 @@ from qiskit import QuantumCircuit, transpile
 # named Estimator object has a different call signature than the remote device Estimator,
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
-from qiskit.providers import BackendV1, BackendV2
+from qiskit.providers import BackendV2
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
 from qiskit_ibm_runtime import Session
-from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 from pennylane_qiskit.converter import (
     QISKIT_OPERATION_MAP,

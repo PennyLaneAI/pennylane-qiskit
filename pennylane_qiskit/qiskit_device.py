@@ -44,7 +44,6 @@ from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.transforms.core import TransformProgram
 from pennylane.typing import Result, ResultBatch
 from qiskit.compiler import transpile
-from qiskit.providers import BackendV2
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from qiskit_ibm_runtime import Session
