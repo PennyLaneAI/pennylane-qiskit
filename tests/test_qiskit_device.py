@@ -19,7 +19,6 @@ from unittest.mock import Mock
 import numpy as np
 import pennylane as qml
 import pytest
-
 from qiskit.providers import BackendV2
 from qiskit_aer import noise
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
