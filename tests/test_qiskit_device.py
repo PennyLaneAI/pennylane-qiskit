@@ -76,29 +76,17 @@ test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
 backend = MockedBackend()
 
 
-class TestSupportForV1andV2:
-    """Tests compatibility with BackendV1 and BackendV2"""
+class TestSupportForV2:
+    """Tests compatibility with BackendV2"""
 
-    @pytest.mark.parametrize(
-        "dev_backend",
-        [
-            backend,
-        ],
-    )
-    def test_v1_and_v2_mocked(self, dev_backend):
+    def test_mocked_backend(self):
         """Test that device initializes with no error mocked"""
-        dev = qml.device("qiskit.aer", wires=10, backend=dev_backend)
-        assert dev._backend == dev_backend
+        dev = qml.device("qiskit.aer", wires=10, backend=backend)
+        assert dev._backend == backend
 
-    @pytest.mark.parametrize(
-        "dev_backend",
-        [
-            FakeManilaV2(),
-        ],
-    )
-    def test_v1_and_v2_manila(self, dev_backend):
-        """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = qml.device("qiskit.aer", wires=5, backend=dev_backend)
+    def test_fake_manila(self):
+        """Test that device initializes with no error with V2 backends by Qiskit"""
+        dev = qml.device("qiskit.aer", wires=5, backend=FakeManilaV2())
 
         @qml.qnode(dev)
         def circuit(x):
