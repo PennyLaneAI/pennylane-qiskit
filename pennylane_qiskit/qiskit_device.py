@@ -358,13 +358,10 @@ class QiskitDevice(Device):
         kwargs["shots"] = shots
 
         # Perform validation against backend
-        available_qubits = (
-            backend.num_qubits
-            if isinstance(backend, BackendV2)
-            else backend.configuration().n_qubits
-        )
-        if len(self.wires) > int(available_qubits):
-            raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
+        if len(self.wires) > int(self.backend.num_qubits):
+            raise ValueError(
+                f"Backend '{self.backend}' supports maximum {self.backend.num_qubits} wires"
+            )
 
         self.reset()
         self._kwargs, self._transpile_args = self._process_kwargs(
