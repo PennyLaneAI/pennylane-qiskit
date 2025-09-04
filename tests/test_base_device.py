@@ -109,7 +109,7 @@ class TestSupportForV1andV2:
         "backend",
         [aer_backend, mocked_backend],
     )
-    def test_v1_and_v2_mocked(self, backend):
+    def test_mocked_backend(self, backend):
         """Test that device initializes with no error mocked"""
         dev = QiskitDevice(wires=10, backend=backend)
         assert dev._backend == backend
