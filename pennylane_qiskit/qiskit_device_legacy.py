@@ -112,13 +112,11 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         if isinstance(backend, Backend):
             self._backend = backend
             self.backend_name = _get_backend_name(backend)
-            num_available_qubits = backend.num_qubits
         elif provider is None:
             raise ValueError("Must pass a provider if the backend is not a Backend instance.")
         else:
             try:
                 self._backend = provider.get_backend(backend)
-                num_available_qubits = self._backend.num_qubits
             except QiskitBackendNotFoundError as e:
                 available_backends = list(map(_get_backend_name, provider.backends()))
                 raise ValueError(
@@ -131,6 +129,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
+        num_available_qubits = self.backend.num_qubits
         if num_available_qubits and len(self.wires) > int(num_available_qubits):
             raise ValueError(f"Backend '{backend}' supports maximum {num_available_qubits} wires")
 
