@@ -17,6 +17,7 @@ evaluation and differentiation of Qiskit Terra's BasicAer simulator
 using PennyLane.
 """
 from qiskit.providers.basic_provider import BasicProvider
+
 from .qiskit_device_legacy import QiskitDeviceLegacy
 
 

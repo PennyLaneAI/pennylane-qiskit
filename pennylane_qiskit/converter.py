@@ -15,33 +15,38 @@ r"""
 This module contains functions for converting between Qiskit QuantumCircuit objects
 and PennyLane circuits.
 """
-from typing import Any
-from collections.abc import Iterable, Sequence
 import warnings
+from collections.abc import Iterable, Sequence
 from functools import partial, reduce
+from typing import Any
 
 import numpy as np
-from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.circuit import Parameter, ParameterExpression, ParameterVector
-from qiskit.circuit import Measure, Barrier, ControlFlowOp, Clbit
+import pennylane as qml
+import pennylane.ops as pennylane_ops
+from pennylane.noise.conditionals import WiresIn, _rename
+from pennylane.tape.tape import rotations_and_diagonal_measurements
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import (
+    Barrier,
+    Clbit,
+    ControlFlowOp,
+    Measure,
+    Parameter,
+    ParameterExpression,
+    ParameterVector,
+)
 from qiskit.circuit import library as lib
 from qiskit.circuit.classical import expr
 from qiskit.circuit.controlflow.switch_case import _DefaultCaseType
 from qiskit.circuit.library import GlobalPhaseGate
 from qiskit.circuit.parametervector import ParameterVectorElement
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.exceptions import QiskitError
 from qiskit.quantum_info import SparsePauliOp
 from sympy import lambdify
 
-import pennylane as qml
-from pennylane.noise.conditionals import WiresIn, _rename
-import pennylane.ops as pennylane_ops
-from pennylane.tape.tape import rotations_and_diagonal_measurements
-
 from .noise_models import _build_noise_model_map
 
-# pylint: disable=too-many-instance-attributes
 QISKIT_OPERATION_MAP = {
     # native PennyLane operations also native to qiskit
     "PauliX": lib.XGate,
@@ -389,7 +394,7 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     )
 
 
-# pylint:disable=too-many-statements, too-many-branches
+# pylint:disable=too-many-statements
 def load(quantum_circuit: QuantumCircuit, measurements=None):
     """Loads a PennyLane template from a Qiskit QuantumCircuit.
     Warnings are created for each of the QuantumCircuit instructions that were
@@ -405,7 +410,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         function: The resulting PennyLane template.
     """
 
-    # pylint:disable=too-many-branches, fixme, protected-access, too-many-nested-blocks
+    # pylint:disable=too-many-branches
     def _function(*args, params: dict = None, wires: list = None, **kwargs):
         """Returns a PennyLane quantum function created based on the input QuantumCircuit.
         Warnings are created for each of the QuantumCircuit instructions that were
@@ -1070,7 +1075,6 @@ def _process_switch_condition(condition, mid_circ_regs):
     return meas_pl_ops
 
 
-# pylint:disable = unbalanced-tuple-unpacking
 def _expr_evaluation(condition, mid_circ_regs):
     """Evaluates the ``Expr`` condition
 

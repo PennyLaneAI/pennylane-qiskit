@@ -16,20 +16,18 @@ This module contains integration tests for PennyLane IBMQ devices.
 """
 # pylint: disable=too-many-positional-arguments
 import sys
-
 from functools import partial
+
 import numpy as np
-
-from conftest import state_backends
-
 import pennylane as qml
-from pennylane.numpy import tensor
 import pytest
 import qiskit
 import qiskit_aer
-
+from conftest import state_backends
+from pennylane.numpy import tensor
 from qiskit.providers import QiskitBackendNotFoundError
 from qiskit.providers.basic_provider import BasicProvider
+
 from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
 
 # pylint: disable=protected-access, unused-argument, ungrouped-imports, too-many-arguments, too-few-public-methods
@@ -287,7 +285,7 @@ class TestLoadIntegration:
         with open(apply_hadamard, "w", encoding="utf") as f:
             f.write(TestLoadIntegration.hadamard_qasm)
 
-        with open(apply_hadamard, "r", encoding="utf") as f:
+        with open(apply_hadamard, encoding="utf") as f:
             hadamard = qml.from_qasm(f.read(), measurements=[])
 
         dev = qml.device("default.qubit", wires=2)

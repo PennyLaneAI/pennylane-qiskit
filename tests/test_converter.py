@@ -14,44 +14,43 @@
 r"""
 This module contains tests for converting circuits for PennyLane IBMQ devices.
 """
+import functools as ft
+import itertools as it
+
 # pylint: disable=too-many-positional-arguments
 import sys
 from typing import cast
 
-import itertools as it
-import functools as ft
-
+import pennylane as qml
 import pytest
+from pennylane import I, X, Y, Z
+from pennylane import numpy as np
+from pennylane.measurements import MidMeasureMP
+from pennylane.noise import op_in, partial_wires, wires_in
+from pennylane.tape.qscript import QuantumScript
+from pennylane.wires import Wires
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit.circuit import library as lib
 from qiskit.circuit import Parameter, ParameterVector
+from qiskit.circuit import library as lib
 from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.quantum_info.operators.channel import Kraus
 
-import pennylane as qml
-from pennylane import I, X, Y, Z
-from pennylane import numpy as np
-from pennylane.measurements import MidMeasureMP
-from pennylane.noise import op_in, wires_in, partial_wires
-from pennylane.tape.qscript import QuantumScript
-from pennylane.wires import Wires
 from pennylane_qiskit.converter import (
+    _check_parameter_bound,
+    _format_params_dict,
+    circuit_to_qiskit,
     load,
-    load_pauli_op,
     load_noise_model,
+    load_pauli_op,
     load_qasm,
     load_qasm_from_file,
     map_wires,
-    circuit_to_qiskit,
-    operation_to_qiskit,
     mp_to_pauli,
-    _format_params_dict,
-    _check_parameter_bound,
+    operation_to_qiskit,
 )
-
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments
 
@@ -277,7 +276,7 @@ class TestConverterQiskitToPennyLane:
 
     def test_unused_parameters_are_ignored(self, recorder):
         """Tests that unused parameters are ignored during assignment."""
-        a, b, c = [Parameter(var) for var in "abc"]
+        a, b, c = (Parameter(var) for var in "abc")
         v = ParameterVector("v", 2)
 
         qc = QuantumCircuit(1)
@@ -295,7 +294,7 @@ class TestConverterQiskitToPennyLane:
 
     def test_unused_parameter_vector_items_are_ignored(self, recorder):
         """Tests that unused parameter vector items are ignored during assignment."""
-        a, b = [Parameter(var) for var in "ab"]
+        a, b = (Parameter(var) for var in "ab")
         v = ParameterVector("v", 3)
 
         qc = QuantumCircuit(1)
@@ -2509,7 +2508,7 @@ class TestLoadPauliOp:
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
         to each parameterized coefficient.
         """
-        a, b = [Parameter(var) for var in "ab"]
+        a, b = (Parameter(var) for var in "ab")
         pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
         have_op = load_pauli_op(pauli_op, params={a: 3, b: 7})
@@ -2523,7 +2522,7 @@ class TestLoadPauliOp:
         """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
         a PennyLane operator without assigning values for all parameterized coefficients.
         """
-        a, b = [Parameter(var) for var in "ab"]
+        a, b = (Parameter(var) for var in "ab")
         pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
         match = (
@@ -2537,7 +2536,7 @@ class TestLoadPauliOp:
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
         to a strict superset of the parameterized coefficients.
         """
-        a, b, c = [Parameter(var) for var in "abc"]
+        a, b, c = (Parameter(var) for var in "abc")
         pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
         have_op = load_pauli_op(pauli_op, params={a: 3, b: 7, c: 9})
@@ -2613,8 +2612,8 @@ class TestLoadNoiseModel:
 
     def test_build_noise_model(self):
         """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
+        from qiskit.providers.fake_provider import FakeOpenPulse2Q
         from qiskit_aer import noise
-        from qiskit.providers.fake_provider import GenericBackendV2
 
         backend = GenericBackendV2(num_qubits=2, seed=7, coupling_map=[[0, 1]])
         noise_model = noise.NoiseModel.from_backend(backend)

@@ -14,11 +14,11 @@
 r"""
 This module contains tests for computing variances on PennyLane IBMQ devices.
 """
-# pylint: disable=too-many-positional-arguments
-import pytest
-
 import numpy as np
 import pennylane as qml
+
+# pylint: disable=too-many-positional-arguments
+import pytest
 
 # pylint: disable=protected-access, too-many-arguments
 

@@ -14,17 +14,17 @@
 r"""
 This module contains tests for converting Qiskit NoiseModels to PennyLane NoiseModels.
 """
+import itertools as it
 from functools import reduce
 
-import itertools as it
-import pytest
 import numpy as np
 import pennylane as qml
+import pytest
 
 # pylint:disable = wrong-import-position, unnecessary-lambda
 qiskit = pytest.importorskip("qiskit", "1.0.0")
-from qiskit_aer import noise
 from qiskit.quantum_info.operators.channel import Kraus
+from qiskit_aer import noise
 
 from pennylane_qiskit.noise_models import (
     _build_noise_model_map,

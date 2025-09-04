@@ -14,11 +14,12 @@
 r"""
 This module contains tests for using adjoints for PennyLane IBMQ devices.
 """
-import math
 import cmath
-import pytest
+import math
+
 import numpy as np
 import pennylane as qml
+import pytest
 
 # defaults
 tol = 1e-5

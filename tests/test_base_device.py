@@ -16,36 +16,37 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 """
 # pylint: disable=too-many-positional-arguments
 
-from unittest.mock import patch, Mock
-from flaky import flaky
-import numpy as np
-from pennylane import numpy as pnp
-from pydantic_core import ValidationError
-import pytest
+from unittest.mock import Mock, patch
 
+import numpy as np
 import pennylane as qml
+import pytest
+from flaky import flaky
+from pennylane import numpy as pnp
 from pennylane.exceptions import PennyLaneDeprecationWarning
 from pennylane.tape.qscript import QuantumScript
-from qiskit_ibm_runtime import EstimatorV2 as Estimator, Session
-from qiskit_ibm_runtime.fake_provider import FakeManilaV2
-from qiskit_aer import AerSimulator
+from pydantic_core import ValidationError
+from qiskit import QuantumCircuit, transpile
 
 # do not import Estimator (imported above) from qiskit.primitives - the identically
 # named Estimator object has a different call signature than the remote device Estimator,
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
-from qiskit.providers import BackendV2
+from qiskit.providers import BackendV1, BackendV2
+from qiskit_aer import AerSimulator
+from qiskit_ibm_runtime import EstimatorV2 as Estimator
+from qiskit_ibm_runtime import Session
+from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
-from qiskit import QuantumCircuit, transpile
+from pennylane_qiskit.converter import (
+    QISKIT_OPERATION_MAP,
+    circuit_to_qiskit,
+    mp_to_pauli,
+)
 from pennylane_qiskit.qiskit_device import (
     QiskitDevice,
     qiskit_session,
     split_execution_types,
-)
-from pennylane_qiskit.converter import (
-    circuit_to_qiskit,
-    QISKIT_OPERATION_MAP,
-    mp_to_pauli,
 )
 
 # pylint: disable=protected-access, unused-argument, too-many-arguments, redefined-outer-name
@@ -61,6 +62,7 @@ class Configuration:
 
 class MockedBackend(BackendV2):
     def __init__(self, num_qubits=10, name="mocked_backend"):
+        super().__init__(name=name)
         self._options = Configuration(num_qubits, name)
         self._service = "SomeServiceProvider"
         self.name = name
@@ -73,6 +75,7 @@ class MockedBackend(BackendV2):
     def _default_options(self):
         return {}
 
+    @property
     def max_circuits(self):
         return 10
 

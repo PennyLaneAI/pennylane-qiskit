@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Add `pre-commit` hook and `requirements-dev.txt` file for installation of development dependencies.
+  [(#657)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/657)
+
 ### Breaking changes 💔
 
 * Remove support for Qiskit 1.0 and add support for Qiskit 2.0.

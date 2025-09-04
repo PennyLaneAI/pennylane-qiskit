@@ -17,13 +17,13 @@ This module contains tests qiskit devices for PennyLane IBMQ devices.
 from unittest.mock import Mock
 
 import numpy as np
+import pennylane as qml
 import pytest
 
+from qiskit.providers import BackendV1, BackendV2
 from qiskit_aer import noise
-from qiskit.providers import BackendV2
-from qiskit_ibm_runtime.fake_provider import FakeManilaV2
+from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
 
-import pennylane as qml
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
 
@@ -43,6 +43,7 @@ class Configuration:
 
 class MockedBackend(BackendV2):
     def __init__(self, num_qubits=10, name="mocked_backend"):
+        super().__init__(name=name)
         self._options = Configuration(num_qubits, name)
         self._service = "SomeServiceProvider"
         self.name = name
@@ -55,6 +56,7 @@ class MockedBackend(BackendV2):
     def _default_options(self):
         return {}
 
+    @property
     def max_circuits(self):
         return 10
 
