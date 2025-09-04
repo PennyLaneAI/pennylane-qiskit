@@ -99,6 +99,7 @@ class MockSession:
 
 mocked_backend = MockedBackend()
 aer_backend = AerSimulator()
+manila_v2_backend = FakeManilaV2()
 test_dev = QiskitDevice(wires=5, backend=aer_backend)
 
 
@@ -148,12 +149,13 @@ class TestDeviceInitialization:
         assert dev2._compile_backend != dev2._backend
         assert dev2._compile_backend == compile_backend
 
-    def test_backend_wire_validation(self):
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
+    def test_backend_wire_validation(self, backend):
         """Test that an error is raised if the number of device wires exceeds
         the number of wires available on the backend, for both backend versions"""
 
         with pytest.raises(ValueError, match="supports maximum"):
-            QiskitDevice(wires=500, backend=aer_backend)
+            QiskitDevice(wires=500, backend=backend)
 
     def test_setting_simulator_noise_model(self):
         """Test that the simulator noise model saved on a passed Options
