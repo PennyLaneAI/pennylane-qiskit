@@ -19,9 +19,9 @@ from unittest.mock import Mock
 import numpy as np
 import pennylane as qml
 import pytest
-from qiskit.providers import BackendV1, BackendV2
+from qiskit.providers import BackendV2
 from qiskit_aer import noise
-from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 from pennylane_qiskit import AerDevice
 from pennylane_qiskit.qiskit_device_legacy import QiskitDeviceLegacy
@@ -67,26 +67,6 @@ class MockedBackend(BackendV2):
         return self._target
 
 
-class MockedBackendLegacy(BackendV1):
-    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
-        self._configuration = Configuration(num_qubits, backend_name=name)
-        self._service = "SomeServiceProvider"
-        self._options = self._default_options()
-
-    def configuration(self):
-        return self._configuration
-
-    def _default_options(self):
-        return {}
-
-    def run(self, *args, **kwargs):
-        return None
-
-    @property
-    def options(self):
-        return self._options
-
-
 test_transpile_options = [
     {},
     {"optimization_level": 2},
@@ -95,34 +75,19 @@ test_transpile_options = [
 
 test_device_options = [{}, {"optimization_level": 3}, {"optimization_level": 1}]
 backend = MockedBackend()
-legacy_backend = MockedBackendLegacy()
 
 
-class TestSupportForV1andV2:
-    """Tests compatibility with BackendV1 and BackendV2"""
+class TestSupportForV2:
+    """Tests compatibility with BackendV2"""
 
-    @pytest.mark.parametrize(
-        "dev_backend",
-        [
-            legacy_backend,
-            backend,
-        ],
-    )
-    def test_v1_and_v2_mocked(self, dev_backend):
+    def test_mocked_backend(self):
         """Test that device initializes with no error mocked"""
-        dev = qml.device("qiskit.aer", wires=10, backend=dev_backend)
-        assert dev._backend == dev_backend
+        dev = qml.device("qiskit.aer", wires=10, backend=backend)
+        assert dev._backend == backend
 
-    @pytest.mark.parametrize(
-        "dev_backend",
-        [
-            FakeManila(),
-            FakeManilaV2(),
-        ],
-    )
-    def test_v1_and_v2_manila(self, dev_backend):
-        """Test that device initializes with no error with V1 and V2 backends by Qiskit"""
-        dev = qml.device("qiskit.aer", wires=5, backend=dev_backend)
+    def test_fake_manila(self):
+        """Test that device initializes with no error with V2 backends by Qiskit"""
+        dev = qml.device("qiskit.aer", wires=5, backend=FakeManilaV2())
 
         @qml.qnode(dev)
         def circuit(x):

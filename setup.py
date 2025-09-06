@@ -23,12 +23,11 @@ with open("README.rst", encoding="utf-8") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=0.32,<1.3",
-    "qiskit-aer<0.16.1",
-    "qiskit-ibm-runtime<=0.29",
+    "qiskit>=2.0",
+    "qiskit-aer>=0.17",
+    "qiskit-ibm-runtime>=0.41",
     "pennylane>=0.42",
-    "numpy",
-    "sympy<1.13",
+    "sympy",
     "networkx>=2.2",
 ]
 

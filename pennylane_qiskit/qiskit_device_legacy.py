@@ -28,7 +28,7 @@ from pennylane.measurements import ClassicalShadowMP, CountsMP, SampleMP, Shadow
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.compiler import transpile
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.providers import Backend, BackendV2, QiskitBackendNotFoundError
+from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP
@@ -128,13 +128,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         self._capabilities["returns_state"] = self._is_state_backend
 
         # Perform validation against backend
-        backend_qubits = (
-            backend.num_qubits
-            if isinstance(backend, BackendV2)
-            else self.backend.configuration().n_qubits
-        )
-        if backend_qubits and len(self.wires) > int(backend_qubits):
-            raise ValueError(f"Backend '{backend}' supports maximum {backend_qubits} wires")
+        num_available_qubits = self.backend.num_qubits
+        if num_available_qubits and len(self.wires) > int(num_available_qubits):
+            raise ValueError(f"Backend '{backend}' supports maximum {num_available_qubits} wires")
 
         # Initialize inner state
         self.reset()
@@ -341,9 +337,15 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         If compile_backend is None, then the target is simply the
         backend.
         """
-        compile_backend = self.compile_backend or self.backend
-        compiled_circuits = transpile(self._circuit, backend=compile_backend, **self.transpile_args)
-        return compiled_circuits
+        return transpile(
+            self._circuit,
+            backend=self.compile_backend or self.backend,
+            **self.transpile_args,
+            # Disable routing to keep SWAP in circuit rather than
+            # using ElidePermutation to shuffle qubit indices around.
+            # See https://github.com/Qiskit/qiskit/issues/13144 for more details.
+            routing_method="none",
+        )
 
     def run(self, qcirc):
         """Run the compiled circuit and query the result.
@@ -352,10 +354,9 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             qcirc (qiskit.QuantumCircuit): the quantum circuit to be run on the backend
         """
         self._current_job = self.backend.run(qcirc, shots=self.shots, **self.run_args)
-        result = self._current_job.result()
 
         if self._is_state_backend:
-            self._state = self._get_state(result)
+            self._state = self._get_state(self._current_job.result())
 
     def _get_state(self, result, experiment=None):
         """Returns the statevector for state simulator backends.

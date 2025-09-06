@@ -1586,7 +1586,8 @@ class TestConverterIntegration:
         qc = QuantumCircuit(2, 2)
         qc.h(0)
         qc.measure(0, 0)
-        qc.z(0).c_if(0, 1)
+        with qc.if_test((0, 1)):
+            qc.z(0)
         qc.rz(angle, [0])
         qc.cx(0, 1)
         qc.measure_all()
@@ -2526,7 +2527,7 @@ class TestLoadPauliOp:
 
         match = (
             "Not all parameter expressions are assigned in coeffs "
-            r"\[\(3\+0j\) ParameterExpression\(1\.0\*b\)\]"
+            r"\[\(3\+0j\) ParameterExpression\(b\)\]"
         )
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(pauli_op, params={a: 3})
@@ -2611,45 +2612,42 @@ class TestLoadNoiseModel:
 
     def test_build_noise_model(self):
         """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
-        from qiskit.providers.fake_provider import FakeOpenPulse2Q
+        from qiskit.providers.fake_provider import GenericBackendV2
         from qiskit_aer import noise
 
-        noise_model = noise.NoiseModel.from_backend(FakeOpenPulse2Q())
+        backend = GenericBackendV2(num_qubits=2, seed=7, coupling_map=[[0, 1]])
+        noise_model = noise.NoiseModel.from_backend(backend)
         loaded_noise_model = load_noise_model(noise_model)
 
         pl_model_map = {
-            op_in("Identity")
-            & wires_in(0): qml.ThermalRelaxationError(
-                0.0, 26981.9403362283, 26034.6676428009, 1.0, wires="ANY"
-            ),
-            op_in("Identity")
-            & wires_in(1): qml.ThermalRelaxationError(
-                0.0, 30732.034088541, 28335.6514829973, 1.0, wires="ANY"
-            ),
-            (op_in("U1") & wires_in(0))
-            | (op_in("U1") & wires_in(1)): qml.DepolarizingChannel(
-                p=0.08999999999999997, wires="ANY"
-            ),
-            op_in("U2")
-            & wires_in(0): qml.ThermalRelaxationError(
-                0.4998455776, 7.8227384666, 7.8226559459, 1.0, wires="ANY"
-            ),
-            op_in("U2")
-            & wires_in(1): qml.ThermalRelaxationError(
-                0.4998644198, 7.8227957211, 7.8226273195, 1.0, wires="ANY"
-            ),
-            op_in("U3")
-            & wires_in(0): qml.ThermalRelaxationError(
-                0.4996911588, 7.8227934813, 7.8226284393, 1.0, wires="ANY"
-            ),
-            op_in("U3")
-            & wires_in(1): qml.ThermalRelaxationError(
-                0.4997288404, 7.8229079927, 7.8225711871, 1.0, wires="ANY"
-            ),
             op_in("CNOT")
             & wires_in([0, 1]): qml.QubitChannel(
                 Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
                 wires="ANY",
+            ),
+            op_in("Identity")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.0, t1=3012.4484977654, t2=3516.8757664521, tg=1.0, wires="ANY"
+            ),
+            op_in("Identity")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.0, t1=3135.7677876495, t2=3327.6164130642, tg=1.0, wires="ANY"
+            ),
+            op_in("SX")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.0, t1=4331.5087867281, t2=5056.8095340207, tg=1.0, wires="ANY"
+            ),
+            op_in("SX")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.0, t1=2718.6952247608, t2=2885.0270379233, tg=1.0, wires="ANY"
+            ),
+            op_in("PauliX")
+            & wires_in(0): qml.ThermalRelaxationError(
+                pe=0.0, t1=2721.2824719589, t2=3176.95468865, tg=1.0, wires="ANY"
+            ),
+            op_in("PauliX")
+            & wires_in(1): qml.ThermalRelaxationError(
+                pe=0.0, t1=2520.0690896181, t2=2674.2488068467, tg=1.0, wires="ANY"
             ),
         }
 

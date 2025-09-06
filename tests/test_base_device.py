@@ -32,11 +32,11 @@ from qiskit import QuantumCircuit, transpile
 # named Estimator object has a different call signature than the remote device Estimator,
 # and only runs local simulations. We need the Estimator from qiskit_ibm_runtime. They
 # both use this EstimatorResults, however:
-from qiskit.providers import BackendV1, BackendV2
+from qiskit.providers import BackendV2
 from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
 from qiskit_ibm_runtime import Session
-from qiskit_ibm_runtime.fake_provider import FakeManila, FakeManilaV2
+from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
 from pennylane_qiskit.converter import (
     QISKIT_OPERATION_MAP,
@@ -87,26 +87,6 @@ class MockedBackend(BackendV2):
         return self._target
 
 
-class MockedBackendLegacy(BackendV1):
-    def __init__(self, num_qubits=10, name="mocked_backend_legacy"):
-        self._configuration = Configuration(num_qubits, backend_name=name)
-        self._service = "SomeServiceProvider"
-        self._options = self._default_options()
-
-    def configuration(self):
-        return self._configuration
-
-    def _default_options(self):
-        return {}
-
-    def run(self, *args, **kwargs):
-        return None
-
-    @property
-    def options(self):
-        return self._options
-
-
 # pylint: disable=too-few-public-methods
 class MockSession:
     def __init__(self, backend, max_time=None):
@@ -121,32 +101,26 @@ class MockSession:
 
 
 mocked_backend = MockedBackend()
-legacy_backend = MockedBackendLegacy()
 aer_backend = AerSimulator()
+manila_v2_backend = FakeManilaV2()
 test_dev = QiskitDevice(wires=5, backend=aer_backend)
 
 
-class TestSupportForV1andV2:
-    """Tests compatibility with BackendV1 and BackendV2"""
+class TestSupportForV2:
+    """Tests compatibility with and BackendV2"""
 
     @pytest.mark.parametrize(
         "backend",
-        [legacy_backend, aer_backend, mocked_backend],
+        [aer_backend, mocked_backend],
     )
-    def test_v1_and_v2_mocked(self, backend):
+    def test_mocked_backend(self, backend):
         """Test that device initializes with no error mocked"""
         dev = QiskitDevice(wires=10, backend=backend)
         assert dev._backend == backend
 
-    @pytest.mark.parametrize(
-        "backend, shape",
-        [
-            (FakeManila(), (1024,)),
-            (FakeManilaV2(), (1024,)),
-        ],
-    )
-    def test_v1_and_v2_manila(self, backend, shape):
-        """Test that device initializes and runs without error with V1 and V2 backends by Qiskit"""
+    def test_v2_manila(self):
+        """Test that device initializes and runs without error with V2 backends by Qiskit"""
+        backend = FakeManilaV2()
         dev = QiskitDevice(wires=5, backend=backend)
 
         @qml.set_shots(1024)
@@ -158,7 +132,7 @@ class TestSupportForV1andV2:
 
         res = circuit(np.pi / 2)
 
-        assert np.shape(res) == shape
+        assert np.shape(res) == (1024,)
         assert dev._backend == backend
 
 
@@ -178,7 +152,7 @@ class TestDeviceInitialization:
         assert dev2._compile_backend != dev2._backend
         assert dev2._compile_backend == compile_backend
 
-    @pytest.mark.parametrize("backend", [aer_backend, legacy_backend])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_backend_wire_validation(self, backend):
         """Test that an error is raised if the number of device wires exceeds
         the number of wires available on the backend, for both backend versions"""
@@ -201,14 +175,14 @@ class TestDeviceInitialization:
 class TestQiskitSessionManagement:
     """Test using Qiskit sessions with the device"""
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_default_no_session_on_initialization(self, backend):
         """Test that the default behaviour is no session at initialization"""
 
         dev = QiskitDevice(wires=2, backend=backend)
         assert dev._session is None
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_initializing_with_session(self, backend):
         """Test that you can initialize a device with an existing Qiskit session"""
 
@@ -296,15 +270,6 @@ class TestQiskitSessionManagement:
                 assert dev._session == session
                 assert dev._session != initial_session
                 assert dev._session._backend.name == "aer_simulator"
-
-        with pytest.warns(
-            UserWarning,
-            match="Using 'service' set in device",
-        ):
-            with qiskit_session(dev, max_time=30, service="placeholder") as session:
-                assert dev._session == session
-                assert dev._session != initial_session
-                assert dev._session._service != "placeholder"
 
         # device session should be unchanged by qiskit_session
         assert dev._session == initial_session
@@ -649,7 +614,7 @@ class TestKwargsHandling:
         with pytest.raises(ValidationError, match="Object has no attribute"):
             circuit()
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_options_and_kwargs_combine_into_unified_kwargs(self, backend):
         """Test that options set via the keyword argument options and options set via kwargs
         will combine into a single unified kwargs that is passed to the device"""
@@ -673,7 +638,7 @@ class TestKwargsHandling:
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_no_error_is_raised_if_transpilation_options_are_passed(self, backend):
         """Tests that when transpilation options are passed in, they are properly
         handled without error"""
@@ -711,7 +676,7 @@ class TestDeviceProperties:
         assert test_dev.backend == test_dev._backend
         assert test_dev.backend == aer_backend
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_compile_backend_property(self, backend):
         """Test the compile_backend property"""
 
@@ -936,7 +901,7 @@ class TestMockedExecution:
         assert len(np.argwhere([np.allclose(s, [0, 1]) for s in samples])) == results_dict["10"]
         assert len(np.argwhere([np.allclose(s, [1, 0]) for s in samples])) == results_dict["01"]
 
-    @pytest.mark.parametrize("backend", [aer_backend, legacy_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_execute_pipeline_with_all_execute_types_mocked(self, mocker, backend):
         """Test that a device executes measurements that require raw samples via the sampler,
         and the relevant primitive measurements via the estimator"""
@@ -1200,7 +1165,7 @@ class TestExecution:
         pauli_observables = [mp_to_pauli(mp, qs.num_wires) for mp in qs.measurements]
 
         # run on simulator via Estimator
-        estimator = Estimator(backend=aer_backend)
+        estimator = Estimator(mode=aer_backend)
         compiled_circuits = [transpile(qcirc, backend=aer_backend)]
         circ_and_obs = [(compiled_circuits[0], pauli_observables)]
         result = estimator.run(circ_and_obs).result()
@@ -1209,7 +1174,6 @@ class TestExecution:
         assert result[0].data.evs.size == len(qs.measurements)
 
         assert isinstance(result[0].metadata, dict)
-
         processed_result = QiskitDevice._process_estimator_job(qs.measurements, result)
         assert isinstance(processed_result, tuple)
         assert np.allclose(processed_result, expectation, atol=0.1)
@@ -1341,7 +1305,7 @@ class TestExecution:
         ):
             circuit()
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_qiskit_probability_output_format(self, backend):
         """Test that the format and values of the Qiskit device's output for `qml.probs` is
         the same as pennylane's."""
@@ -1365,7 +1329,7 @@ class TestExecution:
 
         assert np.shape(res) == np.shape(qiskit_res)
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_sampler_output_shape(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane"""
@@ -1391,7 +1355,7 @@ class TestExecution:
 
         assert np.shape(res) == np.shape(qiskit_res)
 
-    @pytest.mark.parametrize("backend", [aer_backend, FakeManila(), FakeManilaV2()])
+    @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_sampler_output_shape_multi_measurements(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane for circuits with multiple measurements"""

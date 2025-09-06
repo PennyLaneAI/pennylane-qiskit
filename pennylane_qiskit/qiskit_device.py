@@ -44,7 +44,6 @@ from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.transforms.core import TransformProgram
 from pennylane.typing import Result, ResultBatch
 from qiskit.compiler import transpile
-from qiskit.providers import BackendV2
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from qiskit_ibm_runtime import Session
@@ -191,7 +190,7 @@ def qiskit_session(device, **kwargs):
     # Code to acquire session:
     existing_session = device._session
 
-    session_options = {"backend": device.backend, "service": device.service}
+    session_options = {"backend": device.backend}
 
     for k, v in kwargs.items():
         # Options like service and backend should be tied to the settings set on device
@@ -356,13 +355,10 @@ class QiskitDevice(Device):
         kwargs["shots"] = shots
 
         # Perform validation against backend
-        available_qubits = (
-            backend.num_qubits
-            if isinstance(backend, BackendV2)
-            else backend.configuration().n_qubits
-        )
-        if len(self.wires) > int(available_qubits):
-            raise ValueError(f"Backend '{backend}' supports maximum {available_qubits} wires")
+        if len(self.wires) > int(self.backend.num_qubits):
+            raise ValueError(
+                f"Backend '{self.backend}' supports maximum {self.backend.num_qubits} wires"
+            )
 
         self.reset()
         self._kwargs, self._transpile_args = self._process_kwargs(

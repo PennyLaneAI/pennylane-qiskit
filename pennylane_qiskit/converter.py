@@ -356,10 +356,10 @@ def _get_operation_params(instruction, unbound_params) -> list:
 
                     if parameter.name not in f_param_names:
                         f_param_names.add(parameter.name)
-                        f_params.append(parameter)
+                        f_params.append(parameter.sympify())
                         f_args.append(argument)
 
-                f_expr = getattr(p, "_symbol_expr")
+                f_expr = p.sympify()
                 f = lambdify(f_params, f_expr, modules=qml.numpy)
 
                 operation_params.append(f(*f_args))
@@ -501,7 +501,11 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # Processing the dictionary of parameters passed
         # pylint: disable=too-many-nested-blocks
         for idx, circuit_instruction in enumerate(qc.data):
-            (instruction, qargs, cargs) = circuit_instruction
+            (instruction, qargs, cargs) = (
+                circuit_instruction.operation,
+                circuit_instruction.qubits,
+                circuit_instruction.clbits,
+            )
             # the new Singleton classes have different names than the objects they represent,
             # but base_class.__name__ still matches
             instruction_name = getattr(instruction, "base_class", instruction.__class__).__name__
@@ -549,13 +553,6 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                             if set(next_cargs) & op_cregs:
                                 meas_terminal = False
                                 break
-                        elif next_op.condition:  # For legacy c_if
-                            next_op_reg = next_op.condition[0]
-                            if isinstance(next_op_reg, Clbit):
-                                next_op_reg = [next_op_reg]
-                            if set(next_op_reg) & op_cregs:
-                                meas_terminal = False
-                                break
                         # Check if the subsequent next_op is measurement interfering
                         if not isinstance(next_op, (Barrier, GlobalPhaseGate)):
                             next_op_wires = {wire_map[hash(qubit)] for qubit in next_qargs}
@@ -591,7 +588,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     )
 
             # Check if it is a conditional operation or conditional instruction
-            if instruction.condition or isinstance(instruction, ControlFlowOp):
+            if isinstance(instruction, ControlFlowOp):
                 # Iteratively recurse over to build different branches for the condition
                 with qml.QueuingManager.stop_recording():
                     branch_funcs = [
@@ -945,10 +942,6 @@ def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
         Tuple[true_fns, false_fns, condition]: the condition and the corresponding branches
     """
     true_fns, false_fns = [operation_class], [None]
-
-    # Logic for using legacy c_if
-    if not isinstance(inst, ControlFlowOp):
-        return true_fns, false_fns, inst.condition
 
     # Logic for handling IfElseOp
     if ctrl_flow_type == "IfElseOp":
