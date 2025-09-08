@@ -6,10 +6,9 @@ nbsphinx==0.9.3
 pybind11==2.11.1
 pygments==2.17.2
 pygments-github-lexers==0.0.5
-qiskit==1.0.2
-qiskit-aer==0.14.1
-qiskit-ibm-runtime==0.23.0
-qiskit-ibm-provider==0.11.0
+qiskit==2.1.2
+qiskit-aer==0.17.1
+qiskit-ibm-runtime==0.41.1
 sphinxcontrib-bibtex==2.6.2
 sphinx-automodapi==0.17.0
 pennylane-sphinx-theme
