@@ -598,9 +598,9 @@ class QiskitDevice(Device):
 
         # execute estimator and sampler
         execute_fn = self._execute_estimator
-        estimator_results = (execute_fn(estimator_circuits, session) if estimator_circuits else ())
+        estimator_results = execute_fn(estimator_circuits, session) if estimator_circuits else ()
         execute_fn = self._execute_sampler
-        sampler_results = (execute_fn(sampler_circuits, session) if sampler_circuits else ())
+        sampler_results = execute_fn(sampler_circuits, session) if sampler_circuits else ()
 
         # join results in the same vector
         i_est, i_sam = 0, 0
