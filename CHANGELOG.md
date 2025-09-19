@@ -9,7 +9,7 @@
 
 ### Breaking changes 💔
 
-* Add upper bound to supported Qiskit versions of 2.2.0.
+* The supported Qiskit versions are now capped at 2.2.0, meaning versions above 2.2.0 are not compatible with this release.
   [(#661)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/661)
 
 * Remove support for Qiskit 1.0 and add support for Qiskit 2.0.
