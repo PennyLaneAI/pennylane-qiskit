@@ -1,6 +1,4 @@
-# Release 0.43.0-dev
-
-### New features since last release
+# Release 0.43.0
 
 ### Improvements 🛠
 
@@ -44,8 +42,6 @@
   [(#650)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/650)
   [(#654)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/654)
 
-### Deprecations 👋
-
 ### Internal changes ⚙️
 
 * Updated tests to use `qml.set_shots` for setting shot values on circuits.
@@ -58,8 +54,6 @@
 
 * Fix minor typos in documentation and docstrings.
   [(#648)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/648)
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 
