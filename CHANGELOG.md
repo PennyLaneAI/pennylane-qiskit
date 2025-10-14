@@ -7,6 +7,9 @@
 
 ### Breaking changes 💔
 
+* The minimum supported version of PennyLane is now v0.43.0.
+  [(#663)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/663)
+
 * The supported Qiskit versions are now capped at 2.2.0, meaning versions above 2.2.0 are not compatible with this release.
   [(#661)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/661)
 
