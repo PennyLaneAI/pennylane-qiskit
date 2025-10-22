@@ -2527,7 +2527,7 @@ class TestLoadPauliOp:
 
         match = (
             "Not all parameter expressions are assigned in coeffs "
-            r"[(3+0j)\n .*ParameterExpression.*\]"
+            r"\[\(3\+0j\)\n .*ParameterExpression.*\]"
         )
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(pauli_op, params={a: 3})
