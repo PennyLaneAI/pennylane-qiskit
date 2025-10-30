@@ -1,5 +1,5 @@
-pennylane
+pennylane>=0.43
 qiskit>=2.0,<=2.2.2
 qiskit-aer~=0.17.2
 qiskit-ibm-runtime~=0.43.0
-sympy
+sympy~=1.14
