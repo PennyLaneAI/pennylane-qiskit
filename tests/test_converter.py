@@ -2525,10 +2525,7 @@ class TestLoadPauliOp:
         a, b = (Parameter(var) for var in "ab")
         pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
-        match = (
-            "Not all parameter expressions are assigned in coeffs "
-            r"\[\(3\+0j\)\n .*ParameterExpression.*\]"
-        )
+        match = r"Not all parameter expressions are assigned in coeffs \[\(3\+0j\), \'b\'\]"
         with pytest.raises(RuntimeError, match=match):
             load_pauli_op(pauli_op, params={a: 3})
 
