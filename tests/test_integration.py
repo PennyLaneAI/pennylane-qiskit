@@ -186,7 +186,7 @@ class TestDeviceIntegration:
         # Want to get expectation value and gradient
         exp_sampled = qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift")
         qml.set_shots(exp_sampled, 1000)
-        grad_shift = qml.grad(exp_sampled, argnum=0)
+        grad_shift = qml.grad(exp_sampled, argnums=0)
         exp_sampled(weights)
         grad_shift(weights)
 
