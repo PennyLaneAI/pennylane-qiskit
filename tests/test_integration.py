@@ -190,6 +190,27 @@ class TestDeviceIntegration:
         exp_sampled(weights)
         grad_shift(weights)
 
+    @pytest.mark.xfail(strict=True, reason="https://github.com/Qiskit/qiskit-aer/issues/2383")
+    def test_four_qubit_circuit(self):
+        """Tests a simple four qubit circuit."""
+        dev = qml.device("qiskit.aer", wires=4, backend="qasm_simulator")
+        dev_ref = qml.device("default.qubit")
+
+        def circuit():
+            qml.CNOT(wires=[2, 3])
+            qml.RY(0.1, wires=[3])
+            qml.CNOT(wires=[2, 3])
+            qml.RY(-0.1, wires=[3])
+            qml.CNOT(wires=[2, 3])
+            qml.CRZ(0.3, wires=[3, 1])
+            qml.S(3)
+            return qml.expval(qml.Z(0))
+
+        qnode = qml.QNode(circuit, dev)
+        res = qnode()
+        res_ref = qml.QNode(circuit, dev_ref)
+        assert qml.math.allclose(res, res_ref)
+
 
 class TestKeywordArguments:
     """Test keyword argument logic is correct"""

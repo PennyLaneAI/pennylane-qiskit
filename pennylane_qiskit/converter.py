@@ -899,7 +899,9 @@ def load_pauli_op(
 
     coeffs = pauli_op.coeffs
     if ParameterExpression in [type(c) for c in coeffs]:
-        raise RuntimeError(f"Not all parameter expressions are assigned in coeffs {coeffs}")
+        raise RuntimeError(
+            f"Not all parameter expressions are assigned in coeffs {[str(c) if isinstance(c, ParameterExpression) else c for c in coeffs]}"
+        )
 
     qiskit_terms = pauli_op.paulis
     pl_terms = []
