@@ -10,6 +10,6 @@ qiskit==2.1.2
 qiskit-aer==0.17.1
 qiskit-ibm-runtime==0.41.1
 sphinxcontrib-bibtex==2.6.2
-sphinx-automodapi==0.17.0
+sphinx-automodapi==0.20.0
 pennylane-sphinx-theme
 git+https://github.com/PennyLaneAI/pennylane.git@master
