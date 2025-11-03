@@ -1,5 +1,7 @@
-pennylane>=0.43.0
-qiskit>=2.0.0,<=2.2.2
-qiskit-aer~=0.17.2
-qiskit-ibm-runtime~=0.43.0
-sympy~=1.14.0
+wheel
+pytest
+pytest-cov
+pytest-mock
+flaky
+
+git+https://github.com/PennyLaneAI/pennylane.git
