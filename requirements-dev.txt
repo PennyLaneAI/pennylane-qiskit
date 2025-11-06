@@ -1,5 +1,6 @@
+-r requirements-ci.txt
+
 pre-commit
-pytest
 pylint
 black
 isort
