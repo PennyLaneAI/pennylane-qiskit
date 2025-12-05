@@ -713,7 +713,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
             qc &= operation_to_qiskit(rot, reg, creg)
 
     # barrier ensures we first do all operations, then do all measurements
-    qc.barrier(reg)
+    # qc.barrier(reg)
     # we always measure the full register
     qc.measure(reg, creg)
 
