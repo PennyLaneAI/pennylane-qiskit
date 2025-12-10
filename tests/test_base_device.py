@@ -754,8 +754,8 @@ class TestTrackerFunctionality:
             pl_out = dev.execute(tape)
 
         assert (
-            qiskit_dev.tracker.history["resources"][0].shots
-            == dev.tracker.history["resources"][0].shots
+            qiskit_dev.tracker.history["resources"].shots
+            == dev.tracker.history["resources"].shots
         )
         assert np.allclose(pl_out, qiskit_out, atol=0.1)
         assert np.allclose(
