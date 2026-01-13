@@ -1,8 +1,37 @@
 # Release 0.44.0
 
+### Improvements 🛠
+
+* Updated qiskit ecosystem versions: qiskit to 2.2.2, qiskit-aer to 0.17.2, and qiskit-ibm-runtime to 0.43.0.
+  [(#666)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/666)
+
+* Added support for Python 3.14.
+  [(#679)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/679)
+
+### Bug fixes 🐛
+
+* Fixed `argnum` deprecation by replacing it with `argnums` in tests.
+  [(#665)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/665)
+
+### Internal changes ⚙️
+
+* Updated `TransformProgram` to `CompilePipeline` to align with latest PennyLane changes.
+  [(#678)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/678)
+
+* Upgraded Sphinx to version 8.1.
+  [(#676)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/676)
+
+* Updated requirements files to include all dependencies explicitly.
+  [(#673)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/673)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Runor Agbaire,
+Astral Cai,
+Yushao Chen,
+Andrija Paurevic.
 
 ---
 # Release 0.43.0
