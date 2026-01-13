@@ -8,12 +8,10 @@
 * Added support for Python 3.14.
   [(#679)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/679)
 
-### Bug fixes 🐛
+### Internal changes ⚙️
 
 * Fixed `argnum` deprecation by replacing it with `argnums` in tests.
   [(#665)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/665)
-
-### Internal changes ⚙️
 
 * Updated `TransformProgram` to `CompilePipeline` to align with latest PennyLane changes.
   [(#678)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/678)
