@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Updated qiskit ecosystem versions: qiskit to 2.3.0 and qiskit-ibm-runtime to 0.45.0.
+  [(#681)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/681)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
