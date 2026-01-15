@@ -17,7 +17,6 @@ for PennyLane with the new device API.
 """
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init,too-many-positional-arguments
 
-
 import inspect
 import warnings
 from collections.abc import Callable, Sequence
@@ -28,7 +27,7 @@ from typing import Union
 
 import numpy as np
 import pennylane as qml
-from pennylane import transform
+from pennylane import CompilePipeline, transform
 from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.modifiers.simulator_tracking import simulator_tracking
@@ -41,7 +40,6 @@ from pennylane.devices.preprocess import (
 from pennylane.measurements import ExpectationMP, VarianceMP
 from pennylane.tape import QuantumScript, QuantumTape
 from pennylane.transforms import broadcast_expand, split_non_commuting
-from pennylane.transforms.core import TransformProgram
 from pennylane.typing import Result, ResultBatch
 from qiskit.compiler import transpile
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
@@ -432,7 +430,7 @@ class QiskitDevice(Device):
     def preprocess(
         self,
         execution_config: ExecutionConfig | None = None,
-    ) -> tuple[TransformProgram, ExecutionConfig]:
+    ) -> tuple[CompilePipeline, ExecutionConfig]:
         """This function defines the device transform program to be applied and an updated device configuration.
 
         Args:
@@ -440,7 +438,7 @@ class QiskitDevice(Device):
                 parameters needed to fully describe the execution.
 
         Returns:
-            TransformProgram, ExecutionConfig: A transform program that when called returns QuantumTapes that the device
+            CompilePipeline, ExecutionConfig: A compile pipeline that when called returns QuantumTapes that the device
             can natively execute as well as a postprocessing function to be called after execution, and a configuration with
             unset specifications filled in.
 
@@ -450,37 +448,34 @@ class QiskitDevice(Device):
         * Does not intrinsically support parameter broadcasting
 
         """
-        config = execution_config or ExecutionConfig()
 
+        config = execution_config or ExecutionConfig()
         config = replace(config, use_device_gradient=False)
 
-        transform_program = TransformProgram()
-
-        transform_program.add_transform(analytic_warning)
-        transform_program.add_transform(validate_device_wires, self.wires, name=self.name)
-        transform_program.add_transform(
+        compile_pipeline = CompilePipeline()
+        compile_pipeline.add_transform(analytic_warning)
+        compile_pipeline.add_transform(validate_device_wires, self.wires, name=self.name)
+        compile_pipeline.add_transform(
             decompose,
             stopping_condition=self.stopping_condition,
             name=self.name,
             skip_initial_state_prep=False,
         )
-        transform_program.add_transform(
+        compile_pipeline.add_transform(
             validate_measurements,
             sample_measurements=accepted_sample_measurement,
             name=self.name,
         )
-        transform_program.add_transform(
+        compile_pipeline.add_transform(
             validate_observables,
             stopping_condition=self.observable_stopping_condition,
             name=self.name,
         )
+        compile_pipeline.add_transform(broadcast_expand)
+        compile_pipeline.add_transform(split_non_commuting)
+        compile_pipeline.add_transform(split_execution_types)
 
-        transform_program.add_transform(broadcast_expand)
-        transform_program.add_transform(split_non_commuting)
-
-        transform_program.add_transform(split_execution_types)
-
-        return transform_program, config
+        return compile_pipeline, config
 
     def _process_kwargs(self, kwargs):
         """Processes kwargs given and separates them into kwargs and transpile_args. If given
