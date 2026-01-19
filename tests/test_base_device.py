@@ -916,8 +916,8 @@ class TestMockedExecution:
         )
         tapes, _ = split_execution_types(qs)
 
-        with patch.object(dev, "_execute_sampler", return_value="sampler_execute_res"):
-            with patch.object(dev, "_execute_estimator", return_value="estimator_execute_res"):
+        with patch.object(dev, "_execute_sampler", return_value=("sampler_execute_res",)):
+            with patch.object(dev, "_execute_estimator", return_value=("estimator_execute_res",)):
                 sampler_execute = mocker.spy(dev, "_execute_sampler")
                 estimator_execute = mocker.spy(dev, "_execute_estimator")
 
@@ -946,7 +946,7 @@ class TestMockedExecution:
         result = test_dev._execute_estimator(qs, session)
 
         # to emphasize, this did nothing except appease CodeCov
-        assert isinstance(result, Mock)
+        assert isinstance(result[0], Mock)
 
     def test_shot_vector_error_mocked(self):
         """Test that a device that executes a circuit with an array of shots raises the appropriate ValueError"""
