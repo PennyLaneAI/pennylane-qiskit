@@ -1,6 +1,5 @@
-# Release 0.45.0-dev
 
-### New features since last release
+# Release 0.44.1
 
 ### Improvements 🛠
 
@@ -12,18 +11,12 @@
   for remote backends that don't support `barrier`.
   [(#677)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/677)
 
-### Breaking changes 💔
-
-### Deprecations 👋
-
-### Documentation 📝
-
-### Bug fixes 🐛
-
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
 
+Lillian M. A. Frederiksen,
+Diego Guala,
 Andrija Paurevic.
 
 ---
