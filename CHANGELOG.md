@@ -7,6 +7,11 @@
 * Updated qiskit ecosystem versions: qiskit to 2.3.0 and qiskit-ibm-runtime to 0.45.0.
   [(#681)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/681)
 
+* The circuit conversion from PennyLane no longer inserts a superfluous `barrier` to 
+  delineate the circuit operations from the terminal measurements. This will allow support 
+  for remote backends that don't support `barrier`.
+  [(#677)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/677)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋

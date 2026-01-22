@@ -14,6 +14,7 @@
 """
 This module contains tests for the base Qiskit device for the new PennyLane device API
 """
+
 # pylint: disable=too-many-positional-arguments
 
 from unittest.mock import Mock, patch
