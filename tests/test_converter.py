@@ -1722,10 +1722,10 @@ class TestConverterPennyLaneCircuitToQiskit:
 
         qc = circuit_to_qiskit(qscript, 2, diagonalize=diagonalize, measure=True)
 
-        # get list of instruction names up to the barrier (played right before measurements)
+        # get list of instruction names up to the first measurement
         instructions = []
         for instruction in qc.data:
-            if instruction.operation.name == "barrier":
+            if instruction.operation.name == "measure":
                 break
             instructions.append(instruction.operation.name)
 
@@ -1745,10 +1745,10 @@ class TestConverterPennyLaneCircuitToQiskit:
 
         qc = circuit_to_qiskit(tape, 2, diagonalize=True, measure=True)
 
-        # get list of instruction names up to the barrier (played right before measurements)
+        # get list of instruction names up to the first measurement
         instructions = []
         for instruction in qc.data:
-            if instruction.operation.name == "barrier":
+            if instruction.operation.name == "measure":
                 break
             instructions.append(instruction.operation.name)
 
