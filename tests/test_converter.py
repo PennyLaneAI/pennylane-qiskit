@@ -14,6 +14,7 @@
 r"""
 This module contains tests for converting circuits for PennyLane IBMQ devices.
 """
+
 import functools as ft
 import itertools as it
 

@@ -14,6 +14,7 @@
 r"""
 This module contains tests qiskit devices for PennyLane IBMQ devices.
 """
+
 from unittest.mock import Mock
 
 import numpy as np

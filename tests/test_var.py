@@ -14,6 +14,7 @@
 r"""
 This module contains tests for computing variances on PennyLane IBMQ devices.
 """
+
 import numpy as np
 import pennylane as qml
 

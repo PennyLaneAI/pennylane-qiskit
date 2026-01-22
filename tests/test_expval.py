@@ -14,6 +14,7 @@
 r"""
 This module contains tests for using expvals for PennyLane IBMQ devices.
 """
+
 import numpy as np
 import pennylane as qml
 
