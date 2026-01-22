@@ -15,6 +15,7 @@ r"""
 This module contains functions for converting between Qiskit QuantumCircuit objects
 and PennyLane circuits.
 """
+
 import warnings
 from collections.abc import Iterable, Sequence
 from functools import partial, reduce
@@ -501,7 +502,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # Processing the dictionary of parameters passed
         # pylint: disable=too-many-nested-blocks
         for idx, circuit_instruction in enumerate(qc.data):
-            (instruction, qargs, cargs) = (
+            instruction, qargs, cargs = (
                 circuit_instruction.operation,
                 circuit_instruction.qubits,
                 circuit_instruction.clbits,
