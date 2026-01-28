@@ -14,9 +14,7 @@
 r"""
 This module contains a base class for constructing Qiskit devices for PennyLane.
 """
-
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
-
 
 import abc
 import inspect
@@ -32,7 +30,7 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from ._version import __version__
-from .converter import QISKIT_OPERATION_MAP
+from .converter import QISKIT_OPERATION_MAP, _negate
 
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
@@ -85,7 +83,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
 
-    operations = set(_operation_map.keys())
+    operations = set(_operation_map.keys()) | {"GlobalPhase"}
     observables = {
         "PauliX",
         "PauliY",
@@ -290,6 +288,11 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
                     par[idx] = p.tolist()
 
             operation = operation.name
+
+            # Special logic to convert GlobalPhase to Adjoint(GlobalPhase)
+            if operation == "GlobalPhase":
+                par = _negate(par)
+                operation = "Adjoint(GlobalPhase)"
 
             mapped_operation = self._operation_map[operation]
 

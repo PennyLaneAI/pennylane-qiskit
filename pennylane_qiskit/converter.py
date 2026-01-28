@@ -740,6 +740,11 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     operation = operation.name
 
+    # Special logic to convert GlobalPhase to Adjoint(GlobalPhase)
+    if operation == "GlobalPhase":
+        par = _negate(par)
+        operation = "Adjoint(GlobalPhase)"
+
     mapped_operation = QISKIT_OPERATION_MAP[operation]
 
     qregs = [reg[i] for i in op_wires.labels]
@@ -1288,3 +1293,9 @@ def load_noise_model(
         model_map[fcond] = noise
 
     return qml.NoiseModel(model_map)
+
+
+def _negate(param):
+    if isinstance(param, Iterable):
+        return [_negate(p) for p in param]
+    return -param
