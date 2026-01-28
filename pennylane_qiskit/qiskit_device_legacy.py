@@ -14,6 +14,7 @@
 r"""
 This module contains a base class for constructing Qiskit devices for PennyLane.
 """
+
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 
 import abc
@@ -299,6 +300,8 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             self.qubit_state_vector_check(operation)
 
             qregs = [self._reg[i] for i in device_wires.labels]
+            if not qregs:
+                qregs = list(range(len(self.wires)))
 
             if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in
