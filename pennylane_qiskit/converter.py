@@ -730,7 +730,7 @@ def operation_to_qiskit(operation, reg, creg=None):
     Returns:
         QuantumCircuit: a quantum circuit objects containing the translated operation
     """
-    op_wires = operation.wires
+    op_wires = operation.wires.labels
     par = operation.parameters
 
     for idx, p in enumerate(par):
@@ -744,12 +744,11 @@ def operation_to_qiskit(operation, reg, creg=None):
     if operation == "GlobalPhase":
         par = _negate(par)
         operation = "Adjoint(GlobalPhase)"
+        op_wires = []
 
     mapped_operation = QISKIT_OPERATION_MAP[operation]
 
-    qregs = [reg[i] for i in op_wires.labels]
-    if not qregs:
-        qregs = reg[:]
+    qregs = [reg[i] for i in op_wires]
 
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering

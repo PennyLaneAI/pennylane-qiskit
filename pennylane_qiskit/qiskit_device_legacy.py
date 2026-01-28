@@ -294,14 +294,13 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
             if operation == "GlobalPhase":
                 par = _negate(par)
                 operation = "Adjoint(GlobalPhase)"
+                device_wires = []
 
             mapped_operation = self._operation_map[operation]
 
             self.qubit_state_vector_check(operation)
 
             qregs = [self._reg[i] for i in device_wires.labels]
-            if not qregs:
-                qregs = self._reg[:]  # no wires -> all wires
 
             if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in
