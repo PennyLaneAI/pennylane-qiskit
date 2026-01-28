@@ -280,7 +280,8 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         for operation in operations:
             # Apply the circuit operations
-            device_wires = self.map_wires(operation.wires)
+            device_wires = self.map_wires(operation.wires).labels
+
             par = operation.parameters
 
             for idx, p in enumerate(par):
@@ -300,7 +301,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             self.qubit_state_vector_check(operation)
 
-            qregs = [self._reg[i] for i in device_wires.labels]
+            qregs = [self._reg[i] for i in device_wires]
 
             if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in
