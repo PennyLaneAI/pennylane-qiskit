@@ -4,7 +4,7 @@
 
 ### Improvements 🛠
 
-* The plugin is now compatible with the new graph-based decomposition system in PennyLane.
+* The plugin supports `GlobalPhase` now and is compatible with the new graph-based decomposition system in PennyLane.
   [(#684)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/684)
 
 ### Breaking changes 💔
