@@ -301,7 +301,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             qregs = [self._reg[i] for i in device_wires.labels]
             if not qregs:
-                qregs = list(range(len(self.wires)))
+                qregs = self._reg[:]  # no wires -> all wires
 
             if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in

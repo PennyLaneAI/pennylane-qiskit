@@ -748,6 +748,8 @@ def operation_to_qiskit(operation, reg, creg=None):
     mapped_operation = QISKIT_OPERATION_MAP[operation]
 
     qregs = [reg[i] for i in op_wires.labels]
+    if not qregs:
+        qregs = reg[:]
 
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering
