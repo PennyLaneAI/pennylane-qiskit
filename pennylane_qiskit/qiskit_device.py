@@ -316,7 +316,7 @@ class QiskitDevice(Device):
             will be passed to the transpiler rather than to the Primitive.
     """
 
-    operations = set(QISKIT_OPERATION_MAP.keys())
+    operations = set(QISKIT_OPERATION_MAP.keys()) | {"GlobalPhase"}
     observables = {
         "PauliX",
         "PauliY",
@@ -458,6 +458,7 @@ class QiskitDevice(Device):
         compile_pipeline.add_transform(validate_device_wires, self.wires, name=self.name)
         compile_pipeline.add_transform(
             decompose,
+            target_gates=self.operations,
             stopping_condition=self.stopping_condition,
             name=self.name,
             skip_initial_state_prep=False,

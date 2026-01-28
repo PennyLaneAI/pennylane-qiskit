@@ -730,7 +730,7 @@ def operation_to_qiskit(operation, reg, creg=None):
     Returns:
         QuantumCircuit: a quantum circuit objects containing the translated operation
     """
-    op_wires = operation.wires
+    op_wires = operation.wires.labels
     par = operation.parameters
 
     for idx, p in enumerate(par):
@@ -740,9 +740,15 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     operation = operation.name
 
+    # Special logic to convert GlobalPhase to Adjoint(GlobalPhase)
+    if operation == "GlobalPhase":
+        par = _negate(par)
+        operation = "Adjoint(GlobalPhase)"
+        op_wires = []
+
     mapped_operation = QISKIT_OPERATION_MAP[operation]
 
-    qregs = [reg[i] for i in op_wires.labels]
+    qregs = [reg[i] for i in op_wires]
 
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering
@@ -1288,3 +1294,9 @@ def load_noise_model(
         model_map[fcond] = noise
 
     return qml.NoiseModel(model_map)
+
+
+def _negate(param):
+    if isinstance(param, Iterable):
+        return [_negate(p) for p in param]
+    return -param

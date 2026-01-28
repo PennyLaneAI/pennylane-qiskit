@@ -17,7 +17,6 @@ This module contains a base class for constructing Qiskit devices for PennyLane.
 
 # pylint: disable=too-many-instance-attributes,attribute-defined-outside-init
 
-
 import abc
 import inspect
 import warnings
@@ -32,7 +31,7 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.providers import Backend, QiskitBackendNotFoundError
 
 from ._version import __version__
-from .converter import QISKIT_OPERATION_MAP
+from .converter import QISKIT_OPERATION_MAP, _negate
 
 SAMPLE_TYPES = (SampleMP, CountsMP, ClassicalShadowMP, ShadowExpvalMP)
 
@@ -85,7 +84,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
     """set[str]: Set of backend names that define the backends
     that support returning the underlying quantum statevector"""
 
-    operations = set(_operation_map.keys())
+    operations = set(_operation_map.keys()) | {"GlobalPhase"}
     observables = {
         "PauliX",
         "PauliY",
@@ -281,7 +280,8 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
         for operation in operations:
             # Apply the circuit operations
-            device_wires = self.map_wires(operation.wires)
+            device_wires = self.map_wires(operation.wires).labels
+
             par = operation.parameters
 
             for idx, p in enumerate(par):
@@ -291,11 +291,17 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
 
             operation = operation.name
 
+            # Special logic to convert GlobalPhase to Adjoint(GlobalPhase)
+            if operation == "GlobalPhase":
+                par = _negate(par)
+                operation = "Adjoint(GlobalPhase)"
+                device_wires = []
+
             mapped_operation = self._operation_map[operation]
 
             self.qubit_state_vector_check(operation)
 
-            qregs = [self._reg[i] for i in device_wires.labels]
+            qregs = [self._reg[i] for i in device_wires]
 
             if operation in ("QubitUnitary", "StatePrep"):
                 # Need to revert the order of the quantum registers used in
