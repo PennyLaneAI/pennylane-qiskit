@@ -1661,6 +1661,8 @@ class TestConverterIntegration:
 
 
 class TestConverterPennyLaneCircuitToQiskit:
+    """Tests converting PennyLane circuits to Qiskit."""
+
     def test_circuit_to_qiskit(self):
         """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
 
@@ -1670,6 +1672,15 @@ class TestConverterPennyLaneCircuitToQiskit:
         operation_names = [instruction.operation.name for instruction in qc.data]
 
         assert operation_names == ["h", "cx"]
+
+    def test_globalphase_to_qiskit(self):
+        """Test GlobalPhase is properly handled."""
+
+        qscript = QuantumScript([qml.RZ(0.5, wires=0), qml.GlobalPhase(0.5)])
+        qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
+        operation_names = [instruction.operation.name for instruction in qc.data]
+        assert operation_names == ["rz", "global_phase"]
+        assert qc.data[1].params == [-0.5]
 
     def test_circuit_to_qiskit_with_parameterized_gate(self):
         """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""

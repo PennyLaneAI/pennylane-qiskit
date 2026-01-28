@@ -152,6 +152,19 @@ class TestAnalyticApply:
         expected = np.abs(applied_operation.matrix() @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
+    def test_global_phase(self, init_state, device, tol):
+        """Tests that GlobalPhase can be applied."""
+
+        dev = device(1)
+        state = init_state(1)
+        applied_operation = qml.GlobalPhase(0.5, wires=[0])
+
+        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
+
+        res = np.abs(dev.state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
     @pytest.mark.parametrize("operation", two_qubit)
     def test_two_qubit_operations_no_parameters(self, init_state, device, operation, tol):
         """Test that two qubit operations that take no parameters work fine
