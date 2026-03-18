@@ -13,4 +13,4 @@ sphinxcontrib-bibtex==2.6.2
 sphinx-automodapi==0.17.0
 sphinx==8.1
 pennylane-sphinx-theme
-git+https://github.com/PennyLaneAI/pennylane.git@master
+git+https://github.com/PennyLaneAI/pennylane.git@main
