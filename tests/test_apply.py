@@ -14,6 +14,7 @@
 r"""
 This module contains tests for applying operations on PennyLane IBMQ devices.
 """
+
 import numpy as np
 import pennylane as qml
 
@@ -144,6 +145,19 @@ class TestAnalyticApply:
         dev = device(1)
         state = init_state(1)
         applied_operation = operation(theta, wires=[0])
+
+        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
+
+        res = np.abs(dev.state) ** 2
+        expected = np.abs(applied_operation.matrix() @ state) ** 2
+        assert np.allclose(res, expected, **tol)
+
+    def test_global_phase(self, init_state, device, tol):
+        """Tests that GlobalPhase can be applied."""
+
+        dev = device(1)
+        state = init_state(1)
+        applied_operation = qml.GlobalPhase(0.5, wires=[0])
 
         dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
 
