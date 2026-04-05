@@ -23,10 +23,10 @@ with open("README.rst", encoding="utf-8") as fh:
     long_description = fh.read()
 
 requirements = [
-    "qiskit>=2.0.0,<=2.2.2",
+    "qiskit>=2.0.0,<=2.3.0",
     "qiskit-aer~=0.17.2",
-    "qiskit-ibm-runtime~=0.43.0",
-    "pennylane>=0.43.0",
+    "qiskit-ibm-runtime~=0.45.0",
+    "pennylane>=0.44.0",
     "sympy",
     "networkx>=2.2",
 ]
@@ -82,6 +82,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Physics",
 ]

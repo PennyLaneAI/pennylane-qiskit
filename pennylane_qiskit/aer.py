@@ -16,6 +16,7 @@ This module contains the :class:`~.AerDevice` class, a PennyLane device that all
 evaluation and differentiation of Qiskit Aer's C++ simulator
 using PennyLane.
 """
+
 import qiskit_aer
 
 from .qiskit_device_legacy import QiskitDeviceLegacy

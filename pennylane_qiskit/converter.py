@@ -15,6 +15,7 @@ r"""
 This module contains functions for converting between Qiskit QuantumCircuit objects
 and PennyLane circuits.
 """
+
 import warnings
 from collections.abc import Iterable, Sequence
 from functools import partial, reduce
@@ -501,7 +502,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # Processing the dictionary of parameters passed
         # pylint: disable=too-many-nested-blocks
         for idx, circuit_instruction in enumerate(qc.data):
-            (instruction, qargs, cargs) = (
+            instruction, qargs, cargs = (
                 circuit_instruction.operation,
                 circuit_instruction.qubits,
                 circuit_instruction.clbits,
@@ -712,8 +713,6 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
         for rot in rotations:
             qc &= operation_to_qiskit(rot, reg, creg)
 
-    # barrier ensures we first do all operations, then do all measurements
-    qc.barrier(reg)
     # we always measure the full register
     qc.measure(reg, creg)
 
@@ -731,7 +730,7 @@ def operation_to_qiskit(operation, reg, creg=None):
     Returns:
         QuantumCircuit: a quantum circuit objects containing the translated operation
     """
-    op_wires = operation.wires
+    op_wires = operation.wires.labels
     par = operation.parameters
 
     for idx, p in enumerate(par):
@@ -741,9 +740,15 @@ def operation_to_qiskit(operation, reg, creg=None):
 
     operation = operation.name
 
+    # Special logic to convert GlobalPhase to Adjoint(GlobalPhase)
+    if operation == "GlobalPhase":
+        par = _negate(par)
+        operation = "Adjoint(GlobalPhase)"
+        op_wires = []
+
     mapped_operation = QISKIT_OPERATION_MAP[operation]
 
-    qregs = [reg[i] for i in op_wires.labels]
+    qregs = [reg[i] for i in op_wires]
 
     # Need to revert the order of the quantum registers used in
     # Qiskit such that it matches the PennyLane ordering
@@ -1289,3 +1294,9 @@ def load_noise_model(
         model_map[fcond] = noise
 
     return qml.NoiseModel(model_map)
+
+
+def _negate(param):
+    if isinstance(param, Iterable):
+        return [_negate(p) for p in param]
+    return -param
