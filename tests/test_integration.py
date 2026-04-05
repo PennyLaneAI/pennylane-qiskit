@@ -14,6 +14,7 @@
 r"""
 This module contains integration tests for PennyLane IBMQ devices.
 """
+
 # pylint: disable=too-many-positional-arguments
 import sys
 from functools import partial

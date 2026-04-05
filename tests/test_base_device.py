@@ -14,6 +14,7 @@
 """
 This module contains tests for the base Qiskit device for the new PennyLane device API
 """
+
 # pylint: disable=too-many-positional-arguments
 
 from unittest.mock import Mock, patch
@@ -753,10 +754,7 @@ class TestTrackerFunctionality:
         with dev.tracker:
             pl_out = dev.execute(tape)
 
-        assert (
-            qiskit_dev.tracker.history["resources"][0].shots
-            == dev.tracker.history["resources"][0].shots
-        )
+        assert qiskit_dev.tracker.history["shots"] == dev.tracker.history["shots"]
         assert np.allclose(pl_out, qiskit_out, atol=0.1)
         assert np.allclose(
             qiskit_dev.tracker.history["results"],
