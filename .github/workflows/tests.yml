@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
 
     steps:
       - name: Cancel Previous Runs
@@ -25,6 +25,11 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libblas-dev liblapack-dev gfortran
 
       - name: Install dependencies
         run: |
