@@ -1,8 +1,11 @@
-# Release 0.44.0-dev
+# Release 0.45.0-dev
 
 ### New features since last release
 
 ### Improvements 🛠
+
+* The plugin supports `GlobalPhase` now and is compatible with the new graph-based decomposition system in PennyLane.
+  [(#684)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/684)
 
 ### Breaking changes 💔
 
@@ -15,6 +18,64 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Astral Cai
+
+---
+
+# Release 0.44.1
+
+### Improvements 🛠
+
+* Updated qiskit ecosystem versions: qiskit to 2.3.0 and qiskit-ibm-runtime to 0.45.0.
+  [(#681)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/681)
+
+* The circuit conversion from PennyLane no longer inserts a superfluous `barrier` to 
+  delineate the circuit operations from the terminal measurements. This will allow support 
+  for remote backends that don't support `barrier`.
+  [(#677)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/677)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Lillian M. A. Frederiksen,
+Diego Guala,
+Andrija Paurevic.
+
+---
+# Release 0.44.0
+
+### Improvements 🛠
+
+* Updated qiskit ecosystem versions: qiskit to 2.2.2, qiskit-aer to 0.17.2, and qiskit-ibm-runtime to 0.43.0.
+  [(#666)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/666)
+
+* Added support for Python 3.14.
+  [(#679)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/679)
+
+### Internal changes ⚙️
+
+* Fixed `argnum` deprecation by replacing it with `argnums` in tests.
+  [(#665)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/665)
+
+* Updated `TransformProgram` to `CompilePipeline` to align with latest PennyLane changes.
+  [(#678)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/678)
+
+* Upgraded Sphinx to version 8.1.
+  [(#676)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/676)
+
+* Updated requirements files to include all dependencies explicitly.
+  [(#673)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/673)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Runor Agbaire,
+Astral Cai,
+Yushao Chen,
+Andrija Paurevic.
 
 ---
 # Release 0.43.0
