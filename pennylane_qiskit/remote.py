@@ -23,17 +23,23 @@ class RemoteDevice(QiskitDevice):
     """A PennyLane device for any Qiskit backend.
 
     Args:
-        wires (int or Iterable[Number, str]): Number of subsystems represented by the device,
+        wires (int | Iterable[Number, str]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers
             (i.e., ``[-1, 0, 2]``) or strings (``['aux_wire', 'q1', 'q2']``).
+
+            .. note::
+
+                Custom wire labels (e.g., strings or non-consecutive integers) are used for user convenience only.
+                They have no effect on the transpilation process or the final qubit layout on the hardware.
+
         backend (Backend): the initialized Qiskit backend
 
     Keyword Args:
-        shots (Union[int, None]): number of circuit evaluations/random samples used
+        shots (int | None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        session (Session): a Qiskit Session to use for device execution. If none is provided,
+        session (Session | None): a Qiskit Session to use for device execution. If none is provided,
             a session will be created at each device execution.
-        compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit
+        compile_backend (Backend | None): the backend to be used for compiling the circuit
             that will be sent to the backend device, to be set if the backend desired for
             compilation differs from the backend used for execution. Defaults to ``None``,
             which means the primary backend will be used.
