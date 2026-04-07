@@ -292,7 +292,7 @@ def split_execution_types(
 
 @custom_simulator_tracking
 class QiskitDevice(Device):
-    r"""Constructs a hardware/simulator Qiskit device for PennyLane.
+    r"""Construct a hardware/simulator Qiskit device for PennyLane.
 
     Args:
         wires (int | Iterable[Number, str]): Number of subsystems represented by the device,
