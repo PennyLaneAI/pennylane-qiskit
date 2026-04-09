@@ -13,13 +13,17 @@
 
 ### Documentation 📝
 
+* Improve documentation for the plugin.
+  [(#697)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/697)
+
 ### Bug fixes 🐛
 
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
 
-Astral Cai
+Astral Cai,
+Andrija Paurevic.
 
 ---
 

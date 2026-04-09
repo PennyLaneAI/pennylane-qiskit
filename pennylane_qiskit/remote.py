@@ -23,17 +23,23 @@ class RemoteDevice(QiskitDevice):
     """A PennyLane device for any Qiskit backend.
 
     Args:
-        wires (int or Iterable[Number, str]): Number of subsystems represented by the device,
+        wires (int | Iterable[Number, str]): Number of subsystems represented by the device,
             or iterable that contains unique labels for the subsystems as numbers
             (i.e., ``[-1, 0, 2]``) or strings (``['aux_wire', 'q1', 'q2']``).
+
+            .. note::
+
+                Custom wire labels (e.g., strings or non-consecutive integers) are used for user convenience only.
+                They have no effect on the transpilation process or the final qubit layout on the hardware.
+
         backend (Backend): the initialized Qiskit backend
 
     Keyword Args:
-        shots (Union[int, None]): number of circuit evaluations/random samples used
+        shots (int | None): number of circuit evaluations/random samples used
             to estimate expectation values and variances of observables.
-        session (Session): a Qiskit Session to use for device execution. If none is provided,
+        session (Session | None): a Qiskit Session to use for device execution. If none is provided,
             a session will be created at each device execution.
-        compile_backend (Union[Backend, None]): the backend to be used for compiling the circuit
+        compile_backend (Backend | None): the backend to be used for compiling the circuit
             that will be sent to the backend device, to be set if the backend desired for
             compilation differs from the backend used for execution. Defaults to ``None``,
             which means the primary backend will be used.
@@ -55,13 +61,13 @@ class RemoteDevice(QiskitDevice):
         backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
         dev = qml.device("qiskit.remote", wires=127, backend=backend)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=1024)
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
             return qml.expval(qml.PauliZ(1))
 
-    >>> circuit(np.pi/3, shots=1024)
+    >>> circuit(np.pi/3)
     0.529296875
 
     This device also supports the use of local simulators such as ``AerSimulator`` or
@@ -75,13 +81,13 @@ class RemoteDevice(QiskitDevice):
         backend = AerSimulator()
         dev = qml.device("qiskit.remote", wires=5, backend=backend)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=1024)
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
             return qml.expval(qml.PauliZ(1))
 
-    >>> circuit(np.pi/3, shots=1024)
+    >>> circuit(np.pi/3)
     0.49755859375
 
     We can also change the number of shots, either when initializing the device or when we execute
@@ -90,9 +96,9 @@ class RemoteDevice(QiskitDevice):
 
     .. code-block:: python
 
-        dev = qml.device("qiskit.remote", wires=5, backend=backend, shots=2)
+        dev = qml.device("qiskit.remote", wires=5, backend=backend)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=2)
         def circuit(x):
             qml.RX(x, wires=[0])
             qml.CNOT(wires=[0, 1])
@@ -101,7 +107,8 @@ class RemoteDevice(QiskitDevice):
     >>> circuit(np.pi/3) # this will run with 2 shots
     array([-1.,  1.])
 
-    >>> circuit(np.pi/3, shots=5) # this will run with 5 shots
+    >>> new_circuit = qml.set_shots(circuit, 5)
+    >>> new_circuit(np.pi/3) # this will run with 5 shots
     array([-1., -1.,  1.,  1.,  1.])
 
     >>> circuit(np.pi/3) # this will run with 2 shots
