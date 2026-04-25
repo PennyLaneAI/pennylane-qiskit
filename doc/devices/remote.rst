@@ -86,13 +86,13 @@ or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, sim
     )
 
 This device is not compatible with analytic mode, so an error will be raised if ``shots=0`` or ``shots=None``.
-The default value of the shots argument is ``1024``. You can set the number of shots on device initialization using the 
-``shots`` keyword, or you can choose the number of shots on circuit execution.
+The default value of the shots argument is ``1024``. You can set the number of shots using the ``set_shots`` transform,
 
 .. code-block:: python
 
-    dev = qml.device("qiskit.remote", wires=5, backend=backend, shots=4096)
+    dev = qml.device("qiskit.remote", wires=5, backend=backend)
 
+    @qml.set_shots(4096)
     @qml.qnode(dev)
     def circuit(x, y, z):
         qml.RZ(z, wires=[0])
@@ -105,4 +105,5 @@ The default value of the shots argument is ``1024``. You can set the number of s
     circuit(0.2, 0.1, 0.3)
 
     # Runs with 10000 shots
-    circuit(0.2, 0.1, 0.3, shots=10000)
+    new_circuit = qml.set_shots(circuit, 10_000)
+    new_circuit(0.2, 0.1, 0.3)
