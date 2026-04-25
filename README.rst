@@ -90,7 +90,13 @@ If you wish to develop the PennyLane-Qiskit plugin, please first install the dev
 
     python -m pip install -r requirements-dev.txt
 
-and install the pre-commit hooks with
+followed by an edittable installation of the plugin with
+
+.. code-block:: bash
+
+    python -m pip install -e .
+
+Optionally, you can install the pre-commit hooks with
 
 .. code-block:: bash
 
