@@ -11,7 +11,7 @@ cryptography==46.0.7
 diastatic-malt==2.15.2
 dill==0.4.0
 gast==0.7.0
-ibm-cloud-sdk-core==3.24.2
+ibm-cloud-sdk-core==3.24.4
 ibm-platform-services==0.73.0
 idna==3.11
 mpmath==1.4.1
