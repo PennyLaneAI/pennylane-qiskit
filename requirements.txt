@@ -2,7 +2,7 @@ annotated-types==0.7.0
 appdirs==1.4.4
 astunparse==1.6.3
 autograd==1.8.0
-autoray==0.8.2
+autoray==0.8.10
 cachetools==6.2.4
 certifi==2026.1.4
 cffi==2.0.0
