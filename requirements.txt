@@ -8,7 +8,7 @@ certifi==2026.1.4
 cffi==2.0.0
 charset-normalizer==3.4.4
 cryptography==46.0.7
-diastatic-malt==2.15.2
+diastatic-malt==2.15.3
 dill==0.4.0
 gast==0.7.0
 ibm-cloud-sdk-core==3.24.4
