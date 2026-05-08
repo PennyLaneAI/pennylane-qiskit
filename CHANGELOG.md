@@ -1,22 +1,14 @@
-# Release 0.45.0-dev
-
-### New features since last release
+# Release 0.45.0
 
 ### Improvements 🛠
 
 * The plugin supports `GlobalPhase` now and is compatible with the new graph-based decomposition system in PennyLane.
   [(#684)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/684)
 
-### Breaking changes 💔
-
-### Deprecations 👋
-
 ### Documentation 📝
 
 * Improve documentation for the plugin.
   [(#697)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/697)
-
-### Bug fixes 🐛
 
 ### Contributors ✍️
 
