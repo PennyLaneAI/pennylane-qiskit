@@ -7,8 +7,6 @@ python:
   install:
     - method: pip
       path: .
-      extra_requirements:
-        - docs
 
 build:
   os: ubuntu-24.04
@@ -16,3 +14,6 @@ build:
     python: "3.11"
   apt_packages:
     - graphviz
+  jobs:
+    post_install:
+      - pip install --group docs
