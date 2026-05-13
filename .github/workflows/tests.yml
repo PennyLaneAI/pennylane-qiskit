@@ -73,7 +73,7 @@ jobs:
           python -m pip install --upgrade pip setuptools>=75.8.1
           pip install setuptools
           pip install git+https://github.com/PennyLaneAI/pennylane.git
-          pip install -r .txt
+          pip install --group ci
           pip install wheel pytest pytest-cov pytest-mock pytest-benchmark flaky --upgrade
 
       - name: Install Plugin
