@@ -5,9 +5,10 @@ sphinx:
 
 python:
   install:
-    - requirements: doc/requirements.txt
     - method: pip
       path: .
+      extra_requirements:
+        - docs
 
 build:
   os: ubuntu-24.04
