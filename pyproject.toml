@@ -60,6 +60,7 @@ docs = [
     "packaging==26.0",
     "pennylane==0.44.0",
     "pennylane-lightning==0.44.0",
+    "pennylane-sphinx-theme",
     "psutil==7.2.1",
     "pycparser==2.23",
     "pydantic==2.12.5",
