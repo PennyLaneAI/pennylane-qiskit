@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools>=75.8.1
-          pip install --group ci
+          pip install -r requirements-ci.txt
           pip freeze
 
       - name: Install Plugin
@@ -73,12 +73,12 @@ jobs:
           python -m pip install --upgrade pip setuptools>=75.8.1
           pip install setuptools build
           pip install git+https://github.com/PennyLaneAI/pennylane.git
-          pip install --group ci
+          pip install -r requirements-ci.txt
           pip install wheel pytest pytest-cov pytest-mock pytest-benchmark flaky --upgrade
 
       - name: Install Plugin
         run: |
-          python -m build
+          python setup.py bdist_wheel
           pip install dist/pennylane*.whl
 
       - name: Run tests
