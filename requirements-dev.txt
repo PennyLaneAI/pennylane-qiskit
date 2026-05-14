@@ -1,6 +1,0 @@
--r requirements-ci.txt
-
-pre-commit
-pylint
-black
-isort
