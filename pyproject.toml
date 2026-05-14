@@ -130,6 +130,9 @@ repository = "https://github.com/PennyLaneAI/pennylane-qiskit"
 [tool.setuptools.dynamic]
 version = {attr = "pennylane_qiskit._version.__version__"}
 
+[tool.setuptools.packages.find]
+include = ["pennylane_qiskit"]
+
 [project.entry-points."pennylane.plugins"]
 "qiskit.remote" = "pennylane_qiskit:RemoteDevice"
 "qiskit.aer" = "pennylane_qiskit:AerDevice"
