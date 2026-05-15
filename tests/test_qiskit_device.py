@@ -139,9 +139,9 @@ class TestAnalyticWarningHWSimulator:
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
 
-        dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2, shots=None)
+        dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=None)
         def circuit():
             qml.RX(np.pi / 2, wires=[0])
             return qml.expval(qml.PauliZ(0))
@@ -163,7 +163,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
 
-        _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2, shots=None)
+        _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2)
 
         # These simulators are being deprecated. Warnings are raised in Qiskit <1.1
         assert len(recwarn) == 0
