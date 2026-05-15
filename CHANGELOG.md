@@ -4,6 +4,9 @@
 
 ### Improvements 🛠
 
+* Updated tests to stop using deprecated shots kwarg on the device.
+  [(#708)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/708)
+
 ### Breaking changes 💔
 
 ### Deprecations 👋
@@ -15,6 +18,8 @@
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
+
+Marcus Edwards
 
 ---
 # Release 0.45.0
