@@ -1406,9 +1406,9 @@ class TestConverterIntegration:
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3, shots=shots)
+        dev = qml.device("default.qubit", wires=3)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=shots)
         def circuit(params):
             qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
             qc_pl(qiskit_param_mapping)
@@ -1437,9 +1437,9 @@ class TestConverterIntegration:
 
         pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
 
-        dev = qml.device("default.qubit", wires=1, shots=shots)
+        dev = qml.device("default.qubit", wires=1)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=shots)
         def circuit(theta):
             pl_circuit_loader(params={theta_param: theta})
             return qml.expval(qml.PauliZ(0))
@@ -1470,9 +1470,9 @@ class TestConverterIntegration:
 
         pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
 
-        dev = qml.device("default.qubit", wires=1, shots=shots)
+        dev = qml.device("default.qubit", wires=1)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=shots)
         def circuit(phi, theta):
             pl_circuit_loader(params={phi_param: phi, theta_param: theta})
             return qml.expval(qml.PauliZ(0))
@@ -1503,9 +1503,9 @@ class TestConverterIntegration:
         # convert to a PennyLane circuit
         qc_pl = qml.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3, shots=shots)
+        dev = qml.device("default.qubit", wires=3)
 
-        @qml.qnode(dev)
+        @qml.qnode(dev, shots=shots)
         def circuit(params):
             qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
             qc_pl(qiskit_param_mapping)
@@ -2664,15 +2664,21 @@ class TestLoadNoiseModel:
             {fcond: partial_wires(noise) for fcond, noise in pl_model_map.items()}
         )
 
-        for (pl_k, pl_v), (qk_k, qk_v) in zip(
-            pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
+        for (pl_k, _), (qk_k, qk_v), noise_op in zip(
+            pl_noise_model.model_map.items(),
+            loaded_noise_model.model_map.items(),
+            pl_model_map.values(),
+            strict=True,
         ):
-            pl_op, qk_op = pl_v("ANY"), qk_v("ANY")
             assert repr(pl_k) == repr(qk_k)
+            ref_kraus = noise_op.compute_kraus_matrices(*noise_op.data)
+            num_wires = int(np.log2(ref_kraus[0].shape[0]))
+            test_wires = list(range(num_wires))
+            qk_op = qk_v(test_wires)
             assert isinstance(qk_op, qml.QubitChannel)
 
             choi_mat1 = self._kraus_to_choi(qk_op.data)
-            choi_mat2 = self._kraus_to_choi(pl_op.compute_kraus_matrices(*pl_op.data))
+            choi_mat2 = self._kraus_to_choi(ref_kraus)
             assert np.allclose(choi_mat1, choi_mat2)
 
     @pytest.mark.parametrize(
@@ -2697,23 +2703,32 @@ class TestLoadNoiseModel:
         )
         pauli_prob1 = np.sqrt(error_1.probabilities)
         pauli_prob2 = np.sqrt(error_2.probabilities)
-        kraus_ops1 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob1, pauli_mats1)]
-        kraus_ops2 = [prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2)]
+        kraus_ops1 = [
+            prob * kraus_op for prob, kraus_op in zip(pauli_prob1, pauli_mats1, strict=True)
+        ]
+        kraus_ops2 = [
+            prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2, strict=True)
+        ]
 
         c0 = qml.noise.op_in([qml.RZ, qml.RY])
         c1 = qml.noise.op_in(qml.CNOT)
         n0 = qml.noise.partial_wires(qml.QubitChannel(kraus_ops1, wires=[0]))
         n1 = qml.noise.partial_wires(qml.QubitChannel(kraus_ops2, wires=[0, 1]))
         pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
+        num_wires_list = [1, 2]  # n0 is 1-qubit, n1 is 2-qubit
 
-        for (pl_k, pl_v), (qk_k, qk_v) in zip(
-            pl_noise_model.model_map.items(), loaded_noise_model.model_map.items()
+        for (pl_k, pl_v), (qk_k, qk_v), num_wires in zip(
+            pl_noise_model.model_map.items(),
+            loaded_noise_model.model_map.items(),
+            num_wires_list,
+            strict=True,
         ):
             assert repr(pl_k) == repr(qk_k)
+            test_wires = list(range(num_wires))
 
-            pl_data = np.array(pl_v("ANY").data)
+            pl_data = np.array(pl_v(test_wires).data)
             if verbose:
-                choi_mat1 = self._kraus_to_choi(qk_v("ANY").data)
+                choi_mat1 = self._kraus_to_choi(qk_v(test_wires).data)
                 choi_mat2 = self._kraus_to_choi(pl_data)
                 assert np.allclose(choi_mat1, choi_mat2)
             else:
