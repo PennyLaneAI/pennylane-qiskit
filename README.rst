@@ -65,7 +65,7 @@ requirements with,
 
 .. code-block:: bash
     
-    python -m pip install -r requirements-dev.txt
+    python -m pip install --group dev
 
 With this, you can run the tests with,
 
