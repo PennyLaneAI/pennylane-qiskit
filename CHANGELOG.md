@@ -24,6 +24,7 @@
 
 This release contains contributions from (in alphabetical order):
 
+Runor Agbaire
 Marcus Edwards
 
 ---
