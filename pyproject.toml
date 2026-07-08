@@ -65,7 +65,7 @@ base = [
     "certifi==2026.1.4",
     "cffi==2.0.0",
     "charset-normalizer==3.4.4",
-    "cryptography==46.0.7",
+    "cryptography==48.0.1",
     "diastatic-malt==2.15.2",
     "dill==0.4.0",
     "gast==0.7.0",
