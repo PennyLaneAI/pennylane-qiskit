@@ -71,7 +71,7 @@ base = [
     "gast==0.7.0",
     "ibm-cloud-sdk-core==3.24.4",
     "ibm-platform-services==0.73.0",
-    "idna==3.11",
+    "idna==3.15",
     "mpmath==1.4.1",
     "networkx==3.6.1",
     "numpy==2.4.1",
