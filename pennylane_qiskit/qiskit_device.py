@@ -38,7 +38,7 @@ from pennylane.devices.preprocess import (
     validate_measurements,
     validate_observables,
 )
-from pennylane.measurements import ExpectationMP, VarianceMP
+from pennylane.measurements import ClassicalShadowMP, ExpectationMP, ShadowExpvalMP, VarianceMP
 from pennylane.tape import QuantumScript, QuantumTape
 from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.typing import Result, ResultBatch
@@ -226,14 +226,18 @@ def split_execution_types(
     tape: qml.tape.QuantumTape,
 ) -> tuple[Sequence[qml.tape.QuantumTape], Callable]:
     """Split into separate tapes based on measurement type. Counts and sample-based measurements
-    will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
-    when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
-    used, and the raw samples will be processed to give an expectation value."""
+    will use the Qiskit Sampler. Classical shadow measurements use a dedicated shadow
+    execution path. ExpectationValue and Variance will use the Estimator, except when the
+    measured observable does not have a `pauli_rep`. In that case, the Sampler will be used,
+    and the raw samples will be processed to give an expectation value."""
     estimator = []
     sampler = []
+    shadow = []
 
     for i, mp in enumerate(tape.measurements):
-        if isinstance(mp, (ExpectationMP, VarianceMP)):
+        if isinstance(mp, (ClassicalShadowMP, ShadowExpvalMP)):
+            shadow.append((mp, i))
+        elif isinstance(mp, (ExpectationMP, VarianceMP)):
             if mp.obs.pauli_rep:
                 estimator.append((mp, i))
             else:
@@ -246,7 +250,9 @@ def split_execution_types(
         else:
             sampler.append((mp, i))
 
-    order_indices = [[i for mp, i in group] for group in [estimator, sampler]]
+    order_indices = [[i for mp, i in group] for group in [estimator, sampler]] + [
+        [i] for _, i in shadow
+    ]
 
     tapes = []
     if estimator:
@@ -267,6 +273,17 @@ def split_execution_types(
                     measurements=[mp for mp, i in sampler],
                     shots=tape.shots,
                 )
+            ]
+        )
+    if shadow:
+        tapes.extend(
+            [
+                qml.tape.QuantumScript(
+                    tape.operations,
+                    measurements=[mp],
+                    shots=tape.shots,
+                )
+                for mp, _ in shadow
             ]
         )
 
@@ -589,7 +606,9 @@ class QiskitDevice(Device):
                     f"Setting shot vector {circ.shots.shot_vector} is not supported for {self.name}."
                     "Please use a single integer instead when specifying the number of shots."
                 )
-            if isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
+            if isinstance(circ.measurements[0], (ClassicalShadowMP, ShadowExpvalMP)):
+                execute_fn = self._execute_classical_shadow
+            elif isinstance(circ.measurements[0], (ExpectationMP, VarianceMP)) and getattr(
                 circ.measurements[0].obs, "pauli_rep", None
             ):
                 execute_fn = self._execute_estimator
@@ -635,6 +654,74 @@ class QiskitDevice(Device):
         res = (res[0],) if single_measurement else tuple(res)
 
         return res
+
+    def _execute_classical_shadow(self, circuit, session):  # pylint: disable=too-many-locals
+        """Returns the result of a classical shadow measurement using the SamplerV2 Primitive."""
+        mp = circuit.measurements[0]
+        shots = circuit.shots.total_shots if circuit.shots else None
+        if shots is None:
+            raise ValueError(f"Shots must be specified to compute {mp.__class__.__name__}.")
+
+        rng = np.random.RandomState(mp.seed)
+        recipes = rng.randint(0, 3, size=(shots, len(mp.wires)))
+        unique_recipes, inverse = np.unique(recipes, axis=0, return_inverse=True)
+        obs_list = [qml.PauliX, qml.PauliY, qml.PauliZ]
+
+        qcircuits = []
+        group_indices = []
+        for recipe_idx, recipe in enumerate(unique_recipes):
+            rotations = [
+                rot
+                for wire_idx, wire in enumerate(mp.wires)
+                for rot in obs_list[recipe[wire_idx]].compute_diagonalizing_gates(wires=wire)
+            ]
+            shadow_circuit = qml.tape.QuantumScript(
+                list(circuit.operations) + rotations,
+                shots=int(np.sum(inverse == recipe_idx)),
+            )
+            qcircuits.append(
+                circuit_to_qiskit(
+                    shadow_circuit,
+                    self.num_wires,
+                    diagonalize=False,
+                    measure=True,
+                )
+            )
+            group_indices.append(np.flatnonzero(inverse == recipe_idx))
+
+        sampler = Sampler(mode=session) if session else Sampler(mode=self.backend)
+        compiled_circuits = self.compile_circuits(qcircuits)
+        sampler.options.update(**self._kwargs)
+
+        pubs = [
+            (compiled_circuit, None, len(indices))
+            for compiled_circuit, indices in zip(compiled_circuits, group_indices)
+        ]
+        result = sampler.run(pubs).result()
+        self._current_job = result
+
+        wire_indices = self.wires.indices(mp.wires)
+        outcomes = np.zeros((shots, len(mp.wires)), dtype=np.int8)
+        for pub_result, compiled_circuit, indices in zip(result, compiled_circuits, group_indices):
+            classical_register_name = compiled_circuit.cregs[0].name
+            counts = getattr(pub_result.data, classical_register_name).get_counts()
+
+            samples = []
+            for key, value in counts.items():
+                samples.extend([key] * value)
+            samples = np.vstack([np.array([int(i) for i in s[::-1]]) for s in samples])
+            outcomes[indices] = samples[:, wire_indices]
+
+        bits_and_recipes = np.stack([outcomes, recipes]).astype(np.int8)
+        if isinstance(mp, ShadowExpvalMP):
+            from pennylane.shadows import ClassicalShadow  # pylint:disable=import-outside-toplevel
+
+            shadow = ClassicalShadow(
+                bits_and_recipes[0], bits_and_recipes[1], wire_map=mp.wires.tolist()
+            )
+            bits_and_recipes = shadow.expval(mp.H, mp.k)
+
+        return (bits_and_recipes,)
 
     def _execute_estimator(self, circuit, session):
         """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
