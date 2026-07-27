@@ -14,6 +14,9 @@
 
 ### Breaking changes 💔
 
+* Support for Python 3.11 has been removed.
+  [(#716)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/716)
+
 ### Deprecations 👋
 
 ### Documentation 📝
