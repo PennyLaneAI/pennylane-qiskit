@@ -374,6 +374,26 @@ class TestDevicePreprocessing:
                     [qml.expval(qml.Hadamard(0)), qml.counts()],
                 ],
             ),
+            (
+                [
+                    qml.sample(wires=[0]),
+                    qml.classical_shadow(wires=[0], seed=123),
+                ],
+                [
+                    [qml.sample(wires=[0])],
+                    [qml.classical_shadow(wires=[0], seed=123)],
+                ],
+            ),
+            (
+                [
+                    qml.shadow_expval(qml.PauliX(0), seed=123),
+                    qml.expval(qml.PauliZ(0)),
+                ],
+                [
+                    [qml.expval(qml.PauliZ(0))],
+                    [qml.shadow_expval(qml.PauliX(0), seed=123)],
+                ],
+            ),
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
@@ -965,7 +985,7 @@ class TestMockedExecution:
                 dev.execute(qs)
 
 
-class TestExecution:
+class TestExecution:  # pylint: disable=too-many-public-methods
 
     def test_no_shots_warning(self):
         """
@@ -1224,6 +1244,128 @@ class TestExecution:
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
         assert dev._current_job.num_shots == 2
+
+    def test_classical_shadow(self):
+        """Tests that a classical shadow measurement returns bits and recipes."""
+        shots = 20
+        seed = 1
+        dev = QiskitDevice(wires=1, backend=AerSimulator(seed_simulator=42))
+
+        @qml.set_shots(shots)
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.classical_shadow(wires=[0], seed=seed)
+
+        res = circuit()
+        expected_recipes = np.random.RandomState(seed).randint(0, 3, size=(shots, 1))
+
+        assert res.shape == (2, shots, 1)
+        assert res.dtype == np.int8
+        assert np.array_equal(res[1], expected_recipes)
+
+        x_basis_rows = expected_recipes[:, 0] == 0
+        assert np.all(res[0, x_basis_rows, 0] == 0)
+
+    def test_classical_shadow_z_basis_measurement(self):
+        """Tests that Z-basis classical shadow bits match computational basis samples."""
+        shots = 20
+        seed = 1
+        dev = QiskitDevice(wires=1, backend=AerSimulator(seed_simulator=42))
+
+        @qml.set_shots(shots)
+        @qml.qnode(dev)
+        def circuit():
+            return qml.classical_shadow(wires=[0], seed=seed)
+
+        res = circuit()
+        recipes = np.random.RandomState(seed).randint(0, 3, size=(shots, 1))
+        z_basis_rows = recipes[:, 0] == 2
+
+        assert np.all(res[0, z_basis_rows, 0] == 0)
+
+    def test_classical_shadow_measured_wire_order(self):
+        """Tests that classical shadow outcomes follow the requested measurement wire order."""
+        shots = 20
+        seed = 2
+        dev = QiskitDevice(wires=3, backend=AerSimulator(seed_simulator=42))
+
+        @qml.set_shots(shots)
+        @qml.qnode(dev)
+        def circuit():
+            qml.PauliX(2)
+            return qml.classical_shadow(wires=[2, 0], seed=seed)
+
+        res = circuit()
+        recipes = np.random.RandomState(seed).randint(0, 3, size=(shots, 2))
+        z_basis_rows = np.all(recipes == np.array([2, 2]), axis=1)
+
+        assert np.any(z_basis_rows)
+        assert np.all(res[0, z_basis_rows] == np.array([1, 0]))
+
+    def test_shadow_expval(self):
+        """Tests that shadow_expval estimates an expectation value from classical shadows."""
+        dev = QiskitDevice(wires=1, backend=AerSimulator(seed_simulator=42))
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.shadow_expval(qml.PauliX(0), seed=123)
+
+        assert np.allclose(circuit(), 1, atol=0.25)
+
+    def test_shadow_expval_observable_list(self):
+        """Tests that shadow_expval supports a list of observables."""
+        dev = QiskitDevice(wires=1, backend=AerSimulator(seed_simulator=42))
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.shadow_expval([qml.PauliX(0), qml.PauliZ(0)], seed=123)
+
+        res = circuit()
+        assert res.shape == (2,)
+        assert np.allclose(res[0], 1, atol=0.25)
+
+    def test_mixed_sampler_and_classical_shadow_measurements(self, mocker):
+        """Tests sampler and classical shadow measurements are executed and reordered."""
+        dev = QiskitDevice(wires=2, backend=AerSimulator(seed_simulator=42))
+        sampler_execute = mocker.spy(dev, "_execute_sampler")
+        shadow_execute = mocker.spy(dev, "_execute_classical_shadow")
+
+        @qml.set_shots(20)
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.sample(wires=[0]), qml.classical_shadow(wires=[0], seed=1)
+
+        res = circuit()
+
+        sampler_execute.assert_called_once()
+        shadow_execute.assert_called_once()
+        assert res[0].shape == (20, 1)
+        assert res[1].shape == (2, 20, 1)
+
+    def test_mixed_estimator_and_classical_shadow_measurements(self, mocker):
+        """Tests estimator and classical shadow measurements are executed and reordered."""
+        dev = QiskitDevice(wires=2, backend=AerSimulator(seed_simulator=42))
+        estimator_execute = mocker.spy(dev, "_execute_estimator")
+        shadow_execute = mocker.spy(dev, "_execute_classical_shadow")
+
+        @qml.set_shots(20)
+        @qml.qnode(dev)
+        def circuit():
+            qml.Hadamard(0)
+            return qml.expval(qml.PauliZ(1)), qml.classical_shadow(wires=[0], seed=1)
+
+        res = circuit()
+
+        estimator_execute.assert_called_once()
+        shadow_execute.assert_called_once()
+        assert np.allclose(res[0], 1, atol=0.25)
+        assert res[1].shape == (2, 20, 1)
 
     def test_error_for_shot_vector(self):
         """Tests that a ValueError is raised if a shot vector is passed."""
