@@ -523,7 +523,7 @@ class TestDevicePreprocessing:
         assert len(tapes) == num_types
 
     @pytest.mark.xfail(
-        reason="Will be fix in https://github.com/PennyLaneAI/pennylane-qiskit/pull/717",
+        reason="Will be fixed in https://github.com/PennyLaneAI/pennylane-qiskit/pull/717",
         strict=True,
     )
     def test_preprocess_decomposes_unsupported_operator(self):
