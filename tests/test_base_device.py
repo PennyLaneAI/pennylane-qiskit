@@ -522,6 +522,10 @@ class TestDevicePreprocessing:
         # measurements that are incompatible are split when use_primtives=True
         assert len(tapes) == num_types
 
+    @pytest.mark.xfail(
+        reason="Will be fix in https://github.com/PennyLaneAI/pennylane-qiskit/pull/717",
+        strict=True,
+    )
     def test_preprocess_decomposes_unsupported_operator(self):
         """Test that the device preprocess decomposes operators that
         aren't on the list of Qiskit-supported operators"""
