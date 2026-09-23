@@ -2622,9 +2622,16 @@ class TestLoadNoiseModel:
     def test_build_noise_model(self):
         """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
         from qiskit.providers.fake_provider import GenericBackendV2
+        from qiskit.transpiler import InstructionProperties
         from qiskit_aer import noise
 
         backend = GenericBackendV2(num_qubits=2, seed=7, coupling_map=[[0, 1]])
+        backend.target.update_instruction_properties(
+            "reset", (0,), InstructionProperties(duration=0)
+        )
+        backend.target.update_instruction_properties(
+            "reset", (1,), InstructionProperties(duration=0)
+        )
         noise_model = noise.NoiseModel.from_backend(backend)
         loaded_noise_model = load_noise_model(noise_model)
 
