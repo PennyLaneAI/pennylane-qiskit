@@ -660,6 +660,51 @@ def load_qasm_from_file(file: str):
     return load(QuantumCircuit.from_qasm_file(file), measurements=[])
 
 
+def meas_val_to_qiskit_condition(meas_val, mid_measure_clbits):
+    """Converts a PennyLane MeasurementValue to a Qiskit condition (expr or tuple)."""
+    clbits = []
+    for m in meas_val.measurements:
+        if m in mid_measure_clbits:
+            clbits.append(mid_measure_clbits[m])
+        elif getattr(m, "meas_uid", None) in mid_measure_clbits:
+            clbits.append(mid_measure_clbits[m.meas_uid])
+        elif id(m) in mid_measure_clbits:
+            clbits.append(mid_measure_clbits[id(m)])
+        else:
+            found = None
+            for key, val in mid_measure_clbits.items():
+                if isinstance(key, qml.measurements.MidMeasureMP) and key == m:
+                    found = val
+                    break
+            if found is not None:
+                clbits.append(found)
+            else:
+                raise ValueError(f"Could not find classical bit for mid-circuit measurement {m}")
+
+    true_branches = [tuple_val for tuple_val, result in meas_val.branches.items() if bool(result)]
+
+    if len(clbits) == 1 and len(true_branches) == 1:
+        val = true_branches[0][0]
+        return (clbits[0], val)
+
+    branch_exprs = []
+    for tuple_val in true_branches:
+        bit_exprs = [expr.equal(clbits[i], bool(val)) for i, val in enumerate(tuple_val)]
+        clause = bit_exprs[0]
+        for b in bit_exprs[1:]:
+            clause = expr.logic_and(clause, b)
+        branch_exprs.append(clause)
+
+    if not branch_exprs:
+        return (clbits[0], -1)
+
+    total_expr = branch_exprs[0]
+    for b in branch_exprs[1:]:
+        total_expr = expr.logic_or(total_expr, b)
+
+    return total_expr
+
+
 # diagonalize is currently only used if measuring
 # maybe always diagonalize when measuring, and never when not?
 # will this be used for a user-facing function to convert from PL to Qiskit as well?
@@ -686,21 +731,68 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
         QuantumCircuit: the qiskit equivalent of the given circuit
     """
 
-    reg = QuantumRegister(register_size)
+    reg = QuantumRegister(register_size, "q")
+
+    if any(not isinstance(w, int) for w in circuit.wires):
+        circuit = circuit.map_to_standard_wires()
+
+    mid_measures = [
+        op for op in circuit.operations if isinstance(op, qml.measurements.MidMeasureMP)
+    ]
+    mid_creg = ClassicalRegister(len(mid_measures), "mid_c") if mid_measures else None
+    mid_measure_clbits = {}
+    if mid_measures:
+        for i, mp in enumerate(mid_measures):
+            clbit = mid_creg[i]
+            mid_measure_clbits[mp] = clbit
+            if hasattr(mp, "meas_uid"):
+                mid_measure_clbits[mp.meas_uid] = clbit
+            mid_measure_clbits[id(mp)] = clbit
 
     if not measure:
         qc = QuantumCircuit(reg, name="temp")
+        if mid_creg:
+            qc.add_register(mid_creg)
 
         for op in circuit.operations:
-            qc &= operation_to_qiskit(op, reg)
+            if isinstance(op, qml.measurements.MidMeasureMP):
+                clbit = mid_measure_clbits[op]
+                wire = op.wires[0]
+                qc.measure(reg[wire], clbit)
+                if op.reset:
+                    qc.reset(reg[wire])
+            elif isinstance(op, qml.ops.Conditional):
+                cond = meas_val_to_qiskit_condition(op.meas_val, mid_measure_clbits)
+                sub_qc = operation_to_qiskit(op.base, reg)
+                with qc.if_test(cond):
+                    for instr in sub_qc.data:
+                        qc.append(instr.operation, instr.qubits, instr.clbits)
+            else:
+                qc &= operation_to_qiskit(op, reg)
 
         return qc
 
-    creg = ClassicalRegister(register_size)
-    qc = QuantumCircuit(reg, creg, name="temp")
+    creg = ClassicalRegister(register_size, "c")
+    if mid_creg:
+        qc = QuantumCircuit(reg, creg, mid_creg, name="temp")
+    else:
+        qc = QuantumCircuit(reg, creg, name="temp")
 
     for op in circuit.operations:
-        qc &= operation_to_qiskit(op, reg, creg)
+        if isinstance(op, qml.measurements.MidMeasureMP):
+            clbit = mid_measure_clbits[op]
+            wire = op.wires[0]
+            qc.measure(reg[wire], clbit)
+            if op.reset:
+                qc.reset(reg[wire])
+        elif isinstance(op, qml.ops.Conditional):
+            cond = meas_val_to_qiskit_condition(op.meas_val, mid_measure_clbits)
+            sub_qc = operation_to_qiskit(op.base, reg, creg)
+            with qc.if_test(cond):
+                for instr in sub_qc.data:
+                    qc.append(instr.operation, instr.qubits, instr.clbits)
+        else:
+            qc &= operation_to_qiskit(op, reg, creg)
 
     # rotate the state for measurement in the computational basis
     # ToDo: check this in cases with multiple different bases
@@ -717,6 +809,7 @@ def circuit_to_qiskit(circuit, register_size, diagonalize=True, measure=True):
     qc.measure(reg, creg)
 
     return qc
+
 
 
 def operation_to_qiskit(operation, reg, creg=None):
