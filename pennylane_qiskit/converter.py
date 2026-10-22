@@ -532,6 +532,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             if instruction_name in dagger_map:
                 operation_class = qml.adjoint(dagger_map[instruction_name])
                 operation_args.extend(operation_params)
+                if instruction_name == "GlobalPhaseGate":
+                    operation_kwargs = {}
 
             elif instruction_name in inv_map:
                 operation_class = getattr(pennylane_ops, inv_map[instruction_name])
