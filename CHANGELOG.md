@@ -23,6 +23,9 @@
 
 ### Bug fixes 🐛
 
+* Fixed conversion of Qiskit `GlobalPhaseGate` to PennyLane when `GlobalPhase` does not accept `wires`.
+  [(#XXX)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/XXX)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
