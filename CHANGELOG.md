@@ -9,6 +9,9 @@
 
 ### Internal changes ⚙️
 
+* Bumped qiskit-ibm-runtime to 0.50.0 so ibm-platform-services no longer resolves to the unbuildable 0.55.2 sdist.
+  [(#XXX)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/XXX)
+
 * Upgraded Sphinx to version 9.0.
   [(#715)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/715)
 
