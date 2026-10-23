@@ -4,7 +4,7 @@
 
 ### Improvements 🛠
 
-* Raised the Qiskit upper version bound to `<2.6`.
+* Raised the Qiskit upper version bound to `<2.7`.
   [(#719)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/719)
 
 * Updated tests to stop using deprecated shots kwarg on the device.
