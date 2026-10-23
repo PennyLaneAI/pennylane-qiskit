@@ -157,12 +157,12 @@ class TestAnalyticApply:
 
         dev = device(1)
         state = init_state(1)
-        applied_operation = qml.GlobalPhase(0.5, wires=[0])
+        applied_operation = qml.GlobalPhase(0.5)
 
         dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
-        expected = np.abs(applied_operation.matrix() @ state) ** 2
+        expected = np.abs(applied_operation.matrix(wire_order=dev.wires) @ state) ** 2
         assert np.allclose(res, expected, **tol)
 
     @pytest.mark.parametrize("operation", two_qubit)
