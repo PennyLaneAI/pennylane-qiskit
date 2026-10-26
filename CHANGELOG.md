@@ -12,6 +12,9 @@
 
 ### Internal changes ⚙️
 
+* Bumped qiskit-ibm-runtime to 0.50.0 so ibm-platform-services no longer resolves to the unbuildable 0.55.2 sdist.
+  [(#723)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/723)
+
 * Upgraded Sphinx to version 9.0.
   [(#715)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/715)
 
@@ -25,6 +28,9 @@
 ### Documentation 📝
 
 ### Bug fixes 🐛
+
+* Fixed conversion of Qiskit `GlobalPhaseGate` to PennyLane when `GlobalPhase` does not accept `wires`.
+  [(#724)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/724)
 
 ### Contributors ✍️
 
