@@ -4,4 +4,4 @@ pytest-cov
 pytest-mock
 flaky
 
-git+https://github.com/PennyLaneAI/pennylane.git
+pennylane==0.45.0
