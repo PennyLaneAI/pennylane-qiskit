@@ -26,6 +26,9 @@ requirements = [
     "qiskit>=2.0.0,<2.7",
     "qiskit-aer~=0.17.2",
     "qiskit-ibm-runtime~=0.45.0",
+    # Mirror IBM Cloud SDK Core's dateutil bound to prevent uv from backtracking
+    # to ibm-platform-services==0.55.2, whose isolated build fails on pkg_resources.
+    "python-dateutil<3",
     "pennylane>=0.44.0",
     "sympy",
     "networkx>=2.2",
