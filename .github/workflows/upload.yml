@@ -3,6 +3,10 @@ on:
   release:
     types: [published]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   upload:
     runs-on: ubuntu-latest
