@@ -428,7 +428,10 @@ class QiskitDevice(Device):
 
     def stopping_condition(self, op: qml.operation.Operator) -> bool:
         """Specifies whether or not an Operator is accepted by QiskitDevice2."""
-        return op.name in self.operations
+        return (
+            isinstance(op, (qml.measurements.MidMeasureMP, qml.ops.Conditional))
+            or op.name in self.operations
+        )
 
     def observable_stopping_condition(self, obs: qml.operation.Operator) -> bool:
         """Specifies whether or not an observable is accepted by QiskitDevice2."""
@@ -460,6 +463,8 @@ class QiskitDevice(Device):
         config = replace(config, use_device_gradient=False)
 
         compile_pipeline = CompilePipeline()
+        if config.mcm_config.mcm_method == "deferred":
+            compile_pipeline.add_transform(qml.defer_measurements, allow_postselect=True)
         compile_pipeline.add_transform(analytic_warning)
         compile_pipeline.add_transform(validate_device_wires, self.wires, name=self.name)
         compile_pipeline.add_transform(
