@@ -2,7 +2,7 @@
 
 ### Improvements 🛠
 
-* Raised the Qiskit upper version bound from `<=2.3.0` to `<2.7`,
+* The Qiskit upper version bound has been raised from `<=2.3.0` to `<2.7`,
   allowing installation with newer Qiskit 2.x releases.
   [(#719)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/719)
 
