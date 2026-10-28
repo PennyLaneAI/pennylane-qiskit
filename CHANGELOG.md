@@ -1,3 +1,20 @@
+# Release 0.45.1
+
+### Improvements 🛠
+
+* The Qiskit upper version bound has been raised from `<=2.3.0` to `<2.7`,
+  allowing installation with newer Qiskit 2.x releases.
+  [(#719)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/719)
+
+### Contributors ✍️
+
+This release contains contributions from (in alphabetical order):
+
+Daniel Haag,
+Andrija Paurevic.
+
+---
+
 # Release 0.45.0
 
 ### Improvements 🛠
