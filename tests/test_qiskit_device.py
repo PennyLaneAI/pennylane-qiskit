@@ -317,3 +317,101 @@ class TestBatchExecution:
         tape = qml.workflow.construct_tape(barrier_func)()
         assert tape.operations[0] == qml.Barrier([0, 1])
         assert np.allclose(res, dev.batch_execute([tape]), atol=0)
+
+
+class TestMidCircuitMeasurements:
+    """Tests for mid-circuit measurements on QiskitDevice and RemoteDevice."""
+
+    def test_mid_circuit_measurement_remote_device(self):
+        """Test mid-circuit measurement with qiskit.remote and FakeManilaV2 backend."""
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=3, backend=backend)
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev, mcm_method="one-shot")
+        def circuit():
+            qml.Hadamard(0)
+            m = qml.measure(0)
+            qml.cond(m == 1, qml.PauliX)(1)
+            return qml.probs(wires=[0, 1])
+
+        probs = circuit()
+        assert len(probs) == 4
+        # On a noisy backend, probs for 00 and 11 should dominate (~0.5 each)
+        assert probs[0] > 0.3
+        assert probs[3] > 0.3
+        assert probs[1] < 0.1
+        assert probs[2] < 0.1
+
+    def test_mid_circuit_measurement_reset(self):
+        """Test mid-circuit measurement with reset=True."""
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=2, backend=backend)
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev, mcm_method="one-shot")
+        def circuit():
+            qml.PauliX(0)
+            qml.measure(0, reset=True)
+            return qml.probs(wires=[0])
+
+        probs = circuit()
+        assert probs[0] > 0.9
+
+    def test_mid_circuit_measurement_deferred(self):
+        """Test mid-circuit measurement with mcm_method='deferred'."""
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=3, backend=backend)
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev, mcm_method="deferred")
+        def circuit():
+            qml.Hadamard(0)
+            m = qml.measure(0)
+            qml.cond(m == 1, qml.PauliX)(1)
+            return qml.probs(wires=[0, 1])
+
+        probs = circuit()
+        assert probs[0] > 0.3
+        assert probs[3] > 0.3
+
+    def test_mid_circuit_measurement_complex_conditions(self):
+        """Test mid-circuit measurements with complex conditions."""
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=3, backend=backend)
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev, mcm_method="one-shot")
+        def circuit():
+            qml.Hadamard(0)
+            qml.Hadamard(1)
+            m0 = qml.measure(0)
+            m1 = qml.measure(1)
+            qml.cond(m0 == m1, qml.PauliX)(2)
+            return qml.probs(wires=[0, 1, 2])
+
+        probs = circuit()
+        # States where m0==m1 (001 and 111) should have wire 2 == 1 (index 1 and index 7)
+        # States where m0!=m1 (010 and 100) should have wire 2 == 0 (index 2 and index 4)
+        assert probs[1] > 0.15
+        assert probs[2] > 0.15
+        assert probs[4] > 0.15
+        assert probs[7] > 0.15
+
+    def test_mid_circuit_measurement_custom_wires(self):
+        """Test mid-circuit measurements with custom wire labels."""
+        backend = FakeManilaV2()
+        dev = qml.device("qiskit.remote", wires=["a", "b"], backend=backend)
+
+        @qml.set_shots(1000)
+        @qml.qnode(dev, mcm_method="one-shot")
+        def circuit():
+            qml.Hadamard("a")
+            m = qml.measure("a")
+            qml.cond(m == 1, qml.PauliX)("b")
+            return qml.probs(wires=["a", "b"])
+
+        probs = circuit()
+        assert probs[0] > 0.3
+        assert probs[3] > 0.3
+
