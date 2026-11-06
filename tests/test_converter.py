@@ -1191,7 +1191,7 @@ class TestConverterQasm:
         assert recorder.queue[1].wires == Wires([2, 0])
 
         for i in range(2, 6):
-            assert recorder.queue[i].name == "MidMeasureMP"
+            assert isinstance(recorder.queue[i], MidMeasureMP)
             assert recorder.queue[i].wires == Wires([i - 2])
 
     def test_qasm_measure(self):
