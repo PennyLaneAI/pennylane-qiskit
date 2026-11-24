@@ -19,11 +19,11 @@ into PennyLane NoiseModels.
 from collections import defaultdict
 from warnings import warn
 
-import pennylane as qml
+import pennylane as qp
 from qiskit.quantum_info.operators.channel import Kraus
 
 # pylint:disable = protected-access
-with qml.QueuingManager.stop_recording():
+with qp.QueuingManager.stop_recording():
     qiskit_op_map = {
         "x": "X",
         "y": "Y",
@@ -58,30 +58,30 @@ with qml.QueuingManager.stop_recording():
         "cp": "CPhase",
         "ccz": "CCZ",
         "ecr": "ECR",
-        "sdg": qml.adjoint(qml.S),
-        "tdg": qml.adjoint(qml.T),
-        "sxdg": qml.adjoint(qml.SX),
-        "reset": qml.measure("DummyTempWire", reset=True),  # TODO: Improve reset support
+        "sdg": qp.adjoint(qp.S),
+        "tdg": qp.adjoint(qp.T),
+        "sxdg": qp.adjoint(qp.SX),
+        "reset": qp.measure("DummyTempWire", reset=True),  # TODO: Improve reset support
     }
 
 
-def _build_qerror_op(error) -> qml.QubitChannel:
+def _build_qerror_op(error) -> qp.QubitChannel:
     """Builds a PennyLane error channel from a Qiskit ``QuantumError`` object.
 
     Args:
         error (QuantumError): Quantum error object
 
     Returns:
-        qml.QubitChannel: an equivalent PennyLane error channel
+        qp.QubitChannel: an equivalent PennyLane error channel
     """
     try:
         kraus_matrices = Kraus(error).data
     except Exception as exc:  # pragma: no cover
         raise ValueError(f"Error {error} could not be converted.") from exc
 
-    num_wires = int(qml.math.log2(kraus_matrices[0].shape[0]))
+    num_wires = int(qp.math.log2(kraus_matrices[0].shape[0]))
     kraus_wires = [f"DummyTempWire{i}" for i in range(num_wires)]
-    return qml.QubitChannel(K_list=kraus_matrices, wires=kraus_wires)
+    return qp.QubitChannel(K_list=kraus_matrices, wires=kraus_wires)
 
 
 def _build_noise_model_map(noise_model) -> tuple[dict, dict]:

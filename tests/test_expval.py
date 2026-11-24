@@ -16,7 +16,7 @@ This module contains tests for using expvals for PennyLane IBMQ devices.
 """
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 
 # pylint: disable=too-many-positional-arguments
 import pytest
@@ -42,11 +42,11 @@ class TestExpval:
         """Test that identity expectation value (i.e. the trace) is 1"""
         dev = device(2)
 
-        O1 = qml.Identity(wires=[0])
-        O2 = qml.Identity(wires=[1])
+        O1 = qp.Identity(wires=[0])
+        O2 = qp.Identity(wires=[1])
 
         dev.apply(
-            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RX(theta, wires=[0]), qp.RX(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
@@ -59,11 +59,11 @@ class TestExpval:
     def test_pauliz_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliZ expectation value is correct"""
         dev = device(2)
-        O1 = qml.PauliZ(wires=[0])
-        O2 = qml.PauliZ(wires=[1])
+        O1 = qp.PauliZ(wires=[0])
+        O2 = qp.PauliZ(wires=[1])
 
         dev.apply(
-            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RX(theta, wires=[0]), qp.RX(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
@@ -76,11 +76,11 @@ class TestExpval:
     def test_paulix_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliX expectation value is correct"""
         dev = device(2)
-        O1 = qml.PauliX(wires=[0])
-        O2 = qml.PauliX(wires=[1])
+        O1 = qp.PauliX(wires=[0])
+        O2 = qp.PauliX(wires=[1])
 
         dev.apply(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RY(theta, wires=[0]), qp.RY(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
@@ -93,11 +93,11 @@ class TestExpval:
     def test_pauliy_expectation(self, theta, phi, device, shots, tol):
         """Test that PauliY expectation value is correct"""
         dev = device(2)
-        O1 = qml.PauliY(wires=[0])
-        O2 = qml.PauliY(wires=[1])
+        O1 = qp.PauliY(wires=[0])
+        O2 = qp.PauliY(wires=[1])
 
         dev.apply(
-            [qml.RX(theta, wires=[0]), qml.RX(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RX(theta, wires=[0]), qp.RX(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
@@ -110,11 +110,11 @@ class TestExpval:
     def test_hadamard_expectation(self, theta, phi, device, shots, tol):
         """Test that Hadamard expectation value is correct"""
         dev = device(2)
-        O1 = qml.Hadamard(wires=[0])
-        O2 = qml.Hadamard(wires=[1])
+        O1 = qp.Hadamard(wires=[0])
+        O2 = qp.Hadamard(wires=[1])
 
         dev.apply(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RY(theta, wires=[0]), qp.RY(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
 
@@ -130,11 +130,11 @@ class TestExpval:
     def test_hermitian_expectation(self, theta, phi, device, shots, tol):
         """Test that arbitrary Hermitian expectation values are correct"""
         dev = device(2)
-        O1 = qml.Hermitian(A, wires=[0])
-        O2 = qml.Hermitian(A, wires=[1])
+        O1 = qp.Hermitian(A, wires=[0])
+        O2 = qp.Hermitian(A, wires=[1])
 
         dev.apply(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RY(theta, wires=[0]), qp.RY(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates(), *O2.diagonalizing_gates()],
         )
         if shots is not None:
@@ -164,10 +164,10 @@ class TestExpval:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
-        O1 = qml.Hermitian(mat, wires=[0, 1])
+        O1 = qp.Hermitian(mat, wires=[0, 1])
 
         dev.apply(
-            [qml.RY(theta, wires=[0]), qml.RY(phi, wires=[1]), qml.CNOT(wires=[0, 1])],
+            [qp.RY(theta, wires=[0]), qp.RY(phi, wires=[1]), qp.CNOT(wires=[0, 1])],
             rotations=[*O1.diagonalizing_gates()],
         )
         if shots is not None:
@@ -197,15 +197,15 @@ class TestTensorExpval:
         """Test that a tensor product involving PauliX and PauliY works
         correctly"""
         dev = device(3)
-        obs = qml.PauliX(0) @ qml.PauliY(2)
+        obs = qp.PauliX(0) @ qp.PauliY(2)
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -223,15 +223,15 @@ class TestTensorExpval:
         """Test that a tensor product involving PauliZ and Identity works
         correctly"""
         dev = device(3)
-        obs = qml.PauliZ(0) @ qml.Identity(1) @ qml.PauliZ(2)
+        obs = qp.PauliZ(0) @ qp.Identity(1) @ qp.PauliZ(2)
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -249,15 +249,15 @@ class TestTensorExpval:
         """Test that a tensor product involving PauliZ and PauliY and hadamard
         works correctly"""
         dev = device(3)
-        obs = qml.PauliZ(0) @ qml.Hadamard(1) @ qml.PauliY(2)
+        obs = qp.PauliZ(0) @ qp.Hadamard(1) @ qp.PauliY(2)
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -272,7 +272,7 @@ class TestTensorExpval:
 
     @flaky(max_runs=10, min_passes=7)
     def test_hermitian(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving qml.Hermitian works
+        """Test that a tensor product involving qp.Hermitian works
         correctly"""
         dev = device(3)
         mat = np.array(
@@ -284,15 +284,15 @@ class TestTensorExpval:
             ]
         )
 
-        obs = qml.PauliZ(0) @ qml.Hermitian(mat, wires=[1, 2])
+        obs = qp.PauliZ(0) @ qp.Hermitian(mat, wires=[1, 2])
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -325,15 +325,15 @@ class TestTensorExpval:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
-        obs = qml.Hermitian(A1, wires=[0]) @ qml.Hermitian(A2, wires=[1, 2])
+        obs = qp.Hermitian(A1, wires=[0]) @ qp.Hermitian(A2, wires=[1, 2])
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -366,13 +366,13 @@ class TestTensorExpval:
         identity works correctly"""
         dev = device(2)
 
-        obs = qml.Hermitian(A, wires=[0]) @ qml.Identity(1)
+        obs = qp.Hermitian(A, wires=[0]) @ qp.Identity(1)
 
         dev.apply(
             [
-                qml.RY(theta, wires=[0]),
-                qml.RY(phi, wires=[1]),
-                qml.CNOT(wires=[0, 1]),
+                qp.RY(theta, wires=[0]),
+                qp.RY(phi, wires=[1]),
+                qp.CNOT(wires=[0, 1]),
             ],
             rotations=obs.diagonalizing_gates(),
         )

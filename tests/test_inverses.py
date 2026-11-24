@@ -19,7 +19,7 @@ import cmath
 import math
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pytest
 
 # defaults
@@ -47,14 +47,14 @@ class TestInverses:
         """Tests the inverse of supported gates that act on a single wire that are not
         parameterized"""
 
-        op = getattr(qml.ops, name)
+        op = getattr(qp.ops, name)
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.adjoint(op(wires=0))
-            return qml.expval(qml.PauliZ(0))
+            qp.adjoint(op(wires=0))
+            return qp.expval(qp.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -70,17 +70,17 @@ class TestInverses:
     def test_supported_gate_inverse_two_wires_no_parameters(self, name, expected_output):
         """Tests the inverse of supported gates that act on two wires that are not parameterized"""
 
-        op = getattr(qml.ops, name)
+        op = getattr(qp.ops, name)
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
         assert dev.supports_operation(name)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
-            qml.adjoint(op(wires=[0, 1]))
-            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
+            qp.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
+            qp.adjoint(op(wires=[0, 1]))
+            return qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliZ(1))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -93,17 +93,17 @@ class TestInverses:
     def test_supported_gate_inverse_three_wires_no_parameters(self, name, expected_output):
         """Tests the inverse of supported gates that act on three wires that are not parameterized"""
 
-        op = getattr(qml.ops, name)
+        op = getattr(qp.ops, name)
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=3)
+        dev = qp.device("qiskit.aer", method="statevector", wires=3)
 
         assert dev.supports_operation(name)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.BasisState(np.array([1, 0, 1]), wires=[0, 1, 2])
-            qml.adjoint(op(wires=[0, 1, 2]))
-            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2))
+            qp.BasisState(np.array([1, 0, 1]), wires=[0, 1, 2])
+            qp.adjoint(op(wires=[0, 1, 2]))
+            return qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliZ(1)), qp.expval(qp.PauliZ(2))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -148,16 +148,16 @@ class TestInverses:
     def test_supported_gate_inverse_single_wire_with_parameters(self, name, par, expected_output):
         """Test the inverse of single gates with parameters"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
-        op = getattr(qml.ops, name)
+        op = getattr(qp.ops, name)
 
         assert dev.supports_operation(name)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.adjoint(op(*np.negative(par), wires=0))
-            return qml.expval(qml.PauliZ(0))
+            qp.adjoint(op(*np.negative(par), wires=0))
+            return qp.expval(qp.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -201,17 +201,17 @@ class TestInverses:
     def test_supported_gate_inverse_two_wires_with_parameters(self, name, par, expected_output):
         """Tests the inverse of supported gates that act on two wires that are parameterized"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
-        op = getattr(qml.ops, name)
+        op = getattr(qp.ops, name)
 
         assert dev.supports_operation(name)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
-            qml.adjoint(op(*np.negative(par), wires=[0, 1]))
-            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
+            qp.StatePrep(np.array([1 / 2, 0, 0, math.sqrt(3) / 2]), wires=[0, 1])
+            qp.adjoint(op(*np.negative(par), wires=[0, 1]))
+            return qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliZ(1))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -229,14 +229,14 @@ class TestInverses:
     def test_unsupported_gate_inverses(self, name, par, expected_output):
         """Test the inverse of single gates with parameters"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
-        op = getattr(qml.ops, name)
+        op = getattr(qp.ops, name)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.adjoint(op(*np.negative(par), wires=0))
-            return qml.expval(qml.PauliZ(0))
+            qp.adjoint(op(*np.negative(par), wires=0))
+            return qp.expval(qp.PauliZ(0))
 
         assert np.isclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -244,16 +244,16 @@ class TestInverses:
     def test_s_gate_inverses(self, par):
         """Tests the inverse of the S gate"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
         expected_output = -0.5 * 1j * cmath.exp(-1j * par) * (-1 + cmath.exp(2j * par))
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.Hadamard(0)
-            qml.RZ(par, wires=[0])
-            qml.adjoint(qml.S(wires=[0]))
-            return qml.expval(qml.PauliX(0))
+            qp.Hadamard(0)
+            qp.RZ(par, wires=[0])
+            qp.adjoint(qp.S(wires=[0]))
+            return qp.expval(qp.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -261,15 +261,15 @@ class TestInverses:
     def test_t_gate_inverses(self, par):
         """Tests the inverse of the T gate"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
         expected_output = -math.sin(par) / math.sqrt(2)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.RX(par, wires=[0])
-            qml.adjoint(qml.T(wires=[0]))
-            return qml.expval(qml.PauliX(0))
+            qp.RX(par, wires=[0])
+            qp.adjoint(qp.T(wires=[0]))
+            return qp.expval(qp.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)
 
@@ -277,14 +277,14 @@ class TestInverses:
     def test_sx_gate_inverses(self, par):
         """Tests the inverse of the SX gate"""
 
-        dev = qml.device("qiskit.aer", method="statevector", wires=2)
+        dev = qp.device("qiskit.aer", method="statevector", wires=2)
 
         expected_output = math.sin(par)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.RY(par, wires=[0])
-            qml.adjoint(qml.SX(wires=[0]))
-            return qml.expval(qml.PauliX(0))
+            qp.RY(par, wires=[0])
+            qp.adjoint(qp.SX(wires=[0]))
+            return qp.expval(qp.PauliX(0))
 
         assert np.allclose(circuit(), expected_output, atol=tol, rtol=0)

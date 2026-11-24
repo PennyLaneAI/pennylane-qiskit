@@ -20,7 +20,7 @@ This module contains tests for the base Qiskit device for the new PennyLane devi
 from unittest.mock import Mock, patch
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pytest
 from flaky import flaky
 from pennylane import numpy as pnp
@@ -124,12 +124,12 @@ class TestSupportForV2:
         backend = FakeManilaV2()
         dev = QiskitDevice(wires=5, backend=backend)
 
-        @qml.set_shots(1024)
-        @qml.qnode(dev)
+        @qp.set_shots(1024)
+        @qp.qnode(dev)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return qml.sample(qml.PauliZ(0))
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return qp.sample(qp.PauliZ(0))
 
         res = circuit(np.pi / 2)
 
@@ -308,70 +308,70 @@ class TestDevicePreprocessing:
         [
             (
                 [
-                    qml.expval(qml.PauliZ(1)),
-                    qml.counts(),
-                    qml.var(qml.PauliY(0)),
-                    qml.probs(wires=[2]),
+                    qp.expval(qp.PauliZ(1)),
+                    qp.counts(),
+                    qp.var(qp.PauliY(0)),
+                    qp.probs(wires=[2]),
                 ],
                 [
-                    [qml.expval(qml.PauliZ(1)), qml.var(qml.PauliY(0))],
-                    [qml.counts(), qml.probs(wires=[2])],
+                    [qp.expval(qp.PauliZ(1)), qp.var(qp.PauliY(0))],
+                    [qp.counts(), qp.probs(wires=[2])],
                 ],
             ),
             (
                 [
-                    qml.expval(qml.PauliZ(1)),
-                    qml.expval(qml.PauliX(2)),
-                    qml.var(qml.PauliY(0)),
-                    qml.probs(wires=[2]),
+                    qp.expval(qp.PauliZ(1)),
+                    qp.expval(qp.PauliX(2)),
+                    qp.var(qp.PauliY(0)),
+                    qp.probs(wires=[2]),
                 ],
                 [
                     [
-                        qml.expval(qml.PauliZ(1)),
-                        qml.expval(qml.PauliX(2)),
-                        qml.var(qml.PauliY(0)),
+                        qp.expval(qp.PauliZ(1)),
+                        qp.expval(qp.PauliX(2)),
+                        qp.var(qp.PauliY(0)),
                     ],
-                    [qml.probs(wires=[2])],
+                    [qp.probs(wires=[2])],
                 ],
             ),
             (
                 [
-                    qml.expval(qml.PauliZ(1)),
-                    qml.counts(),
-                    qml.var(qml.PauliY(0)),
+                    qp.expval(qp.PauliZ(1)),
+                    qp.counts(),
+                    qp.var(qp.PauliY(0)),
                 ],
                 [
-                    [qml.expval(qml.PauliZ(1)), qml.var(qml.PauliY(0))],
-                    [qml.counts()],
-                ],
-            ),
-            (
-                [
-                    qml.expval(qml.PauliZ(1)),
-                    qml.var(qml.PauliY(0)),
-                ],
-                [
-                    [qml.expval(qml.PauliZ(1)), qml.var(qml.PauliY(0))],
+                    [qp.expval(qp.PauliZ(1)), qp.var(qp.PauliY(0))],
+                    [qp.counts()],
                 ],
             ),
             (
-                [qml.counts(), qml.sample(wires=[1, 0])],
-                [[qml.counts(), qml.sample(wires=[1, 0])]],
-            ),
-            (
-                [qml.probs(wires=[2])],
-                [[qml.probs(wires=[2])]],
-            ),
-            (
                 [
-                    qml.expval(qml.Hadamard(0)),
-                    qml.expval(qml.PauliX(0)),
-                    qml.var(qml.PauliZ(0)),
-                    qml.counts(),
+                    qp.expval(qp.PauliZ(1)),
+                    qp.var(qp.PauliY(0)),
                 ],
                 [
-                    [qml.expval(qml.PauliX(0)), qml.var(qml.PauliZ(0))],
-                    [qml.expval(qml.Hadamard(0)), qml.counts()],
+                    [qp.expval(qp.PauliZ(1)), qp.var(qp.PauliY(0))],
+                ],
+            ),
+            (
+                [qp.counts(), qp.sample(wires=[1, 0])],
+                [[qp.counts(), qp.sample(wires=[1, 0])]],
+            ),
+            (
+                [qp.probs(wires=[2])],
+                [[qp.probs(wires=[2])]],
+            ),
+            (
+                [
+                    qp.expval(qp.Hadamard(0)),
+                    qp.expval(qp.PauliX(0)),
+                    qp.var(qp.PauliZ(0)),
+                    qp.counts(),
+                ],
+                [
+                    [qp.expval(qp.PauliX(0)), qp.var(qp.PauliZ(0))],
+                    [qp.expval(qp.Hadamard(0)), qp.counts()],
                 ],
             ),
         ],
@@ -381,7 +381,7 @@ class TestDevicePreprocessing:
         """Test that the split_execution_types transform splits measurements into Estimator-based
         (expval, var) and Sampler-based (everything else)"""
 
-        operations = [qml.PauliX(0), qml.PauliY(1), qml.Hadamard(2), qml.CNOT([2, 1])]
+        operations = [qp.PauliX(0), qp.PauliY(1), qp.Hadamard(2), qp.CNOT([2, 1])]
         qs = QuantumScript(operations, measurements=measurements)
         tapes, reorder_fn = split_execution_types(qs)
 
@@ -401,12 +401,12 @@ class TestDevicePreprocessing:
     @pytest.mark.parametrize(
         "op, expected",
         [
-            (qml.PauliX(0), True),
-            (qml.CRX(0.1, wires=[0, 1]), True),
-            (qml.sum(qml.PauliY(1), qml.PauliZ(0)), False),
-            (qml.pow(qml.RX(1.1, 0), 3), False),
-            (qml.adjoint(qml.S(0)), True),
-            (qml.adjoint(qml.RX(1.2, 0)), False),
+            (qp.PauliX(0), True),
+            (qp.CRX(0.1, wires=[0, 1]), True),
+            (qp.sum(qp.PauliY(1), qp.PauliZ(0)), False),
+            (qp.pow(qp.RX(1.1, 0), 3), False),
+            (qp.adjoint(qp.S(0)), True),
+            (qp.adjoint(qp.RX(1.2, 0)), False),
         ],
     )
     def test_stopping_conditions(self, op, expected):
@@ -417,10 +417,10 @@ class TestDevicePreprocessing:
     @pytest.mark.parametrize(
         "obs, expected",
         [
-            (qml.PauliX(0), True),
-            (qml.Hadamard(3), True),
-            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
-            (qml.prod(qml.PauliY(1), qml.PauliZ(0)), True),
+            (qp.PauliX(0), True),
+            (qp.Hadamard(3), True),
+            (qp.prod(qp.PauliY(1), qp.PauliZ(0)), True),
+            (qp.prod(qp.PauliY(1), qp.PauliZ(0)), True),
         ],
     )
     def test_observable_stopping_condition(self, obs, expected):
@@ -433,41 +433,37 @@ class TestDevicePreprocessing:
         [
             (
                 [
-                    qml.expval(qml.X(0) + qml.Y(0) + qml.Z(0)),
+                    qp.expval(qp.X(0) + qp.Y(0) + qp.Z(0)),
                 ],
                 3,
             ),
             (
                 pytest.param(
-                    [qml.var(qml.X(0) + qml.Y(0) + qml.Z(0))],
+                    [qp.var(qp.X(0) + qp.Y(0) + qp.Z(0))],
                     1,
                     marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
                 )
             ),
             (
                 [
-                    qml.expval(qml.X(0)),
-                    qml.expval(qml.Y(1)),
-                    qml.expval(qml.Z(0) @ qml.Z(1)),
-                    qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                    qp.expval(qp.X(0)),
+                    qp.expval(qp.Y(1)),
+                    qp.expval(qp.Z(0) @ qp.Z(1)),
+                    qp.expval(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
                 ],
                 3,
             ),
             (
-                [
-                    qml.expval(
-                        qml.prod(qml.X(0), qml.Z(0), qml.Z(0)) + 0.35 * qml.X(0) - 0.21 * qml.Z(0)
-                    )
-                ],
+                [qp.expval(qp.prod(qp.X(0), qp.Z(0), qp.Z(0)) + 0.35 * qp.X(0) - 0.21 * qp.Z(0))],
                 2,
             ),
             (
                 pytest.param(
                     [
-                        qml.counts(qml.X(0)),
-                        qml.counts(qml.Y(1)),
-                        qml.counts(qml.Z(0) @ qml.Z(1)),
-                        qml.counts(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                        qp.counts(qp.X(0)),
+                        qp.counts(qp.Y(1)),
+                        qp.counts(qp.Z(0) @ qp.Z(1)),
+                        qp.counts(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
                     ],
                     3,
                     marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
@@ -476,10 +472,10 @@ class TestDevicePreprocessing:
             (
                 pytest.param(
                     [
-                        qml.sample(qml.X(0)),
-                        qml.sample(qml.Y(1)),
-                        qml.sample(qml.Z(0) @ qml.Z(1)),
-                        qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
+                        qp.sample(qp.X(0)),
+                        qp.sample(qp.Y(1)),
+                        qp.sample(qp.Z(0) @ qp.Z(1)),
+                        qp.sample(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
                     ],
                     3,
                     marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
@@ -491,7 +487,7 @@ class TestDevicePreprocessing:
         """Test that `split_non_commuting` works as expected in the preprocess function."""
 
         dev = QiskitDevice(wires=5, backend=aer_backend)
-        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
+        qs = QuantumScript([], measurements=measurements, shots=qp.measurements.Shots(1000))
 
         program, _ = dev.preprocess()
         tapes, _ = program([qs])
@@ -501,11 +497,11 @@ class TestDevicePreprocessing:
     @pytest.mark.parametrize(
         "measurements,num_types",
         [
-            ([qml.expval(qml.PauliZ(0)), qml.probs(wires=[0, 1])], 2),
-            ([qml.expval(qml.PauliZ(0)), qml.sample(wires=[0, 1])], 2),
-            ([qml.counts(), qml.probs(wires=[0, 1]), qml.sample()], 1),
-            ([qml.var(qml.PauliZ(0)), qml.expval(qml.PauliX(1))], 1),
-            ([qml.probs(wires=[0]), qml.counts(), qml.var(qml.PauliY(2))], 2),
+            ([qp.expval(qp.PauliZ(0)), qp.probs(wires=[0, 1])], 2),
+            ([qp.expval(qp.PauliZ(0)), qp.sample(wires=[0, 1])], 2),
+            ([qp.counts(), qp.probs(wires=[0, 1]), qp.sample()], 1),
+            ([qp.var(qp.PauliZ(0)), qp.expval(qp.PauliX(1))], 1),
+            ([qp.probs(wires=[0]), qp.counts(), qp.var(qp.PauliY(2))], 2),
         ],
     )
     def test_preprocess_splits_incompatible_primitive_measurements(self, measurements, num_types):
@@ -514,7 +510,7 @@ class TestDevicePreprocessing:
         are another type (Sampler)."""
 
         dev = QiskitDevice(wires=5, backend=aer_backend)
-        qs = QuantumScript([], measurements=measurements, shots=qml.measurements.Shots(1000))
+        qs = QuantumScript([], measurements=measurements, shots=qp.measurements.Shots(1000))
 
         program, _ = dev.preprocess()
         tapes, _ = program([qs])
@@ -526,8 +522,8 @@ class TestDevicePreprocessing:
         """Test that the device preprocess decomposes operators that
         aren't on the list of Qiskit-supported operators"""
         qs = QuantumScript(
-            [qml.CosineWindow(wires=range(2))],
-            measurements=[qml.expval(qml.PauliZ(0))],
+            [qp.CosineWindow(wires=range(2))],
+            measurements=[qp.expval(qp.PauliZ(0))],
             shots=1024,
         )
 
@@ -545,8 +541,8 @@ class TestDevicePreprocessing:
         unsupported operator even if they are state prep operators"""
 
         qs = QuantumScript(
-            [qml.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
-            measurements=[qml.expval(qml.PauliZ(0))],
+            [qp.AmplitudeEmbedding(features=[0.5, 0.5, 0.5, 0.5], wires=range(2))],
+            measurements=[qp.expval(qp.PauliZ(0))],
             shots=1024,
         )
 
@@ -608,9 +604,9 @@ class TestKwargsHandling:
         # when you run the circuit
         assert dev._kwargs["random_sauce"] == "spaghetti"
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            return qml.expval(qml.PauliX(0))
+            return qp.expval(qp.PauliX(0))
 
         with pytest.raises(ValidationError, match="Object has no attribute"):
             circuit()
@@ -627,15 +623,15 @@ class TestKwargsHandling:
             execution={"init_qubits": False},
         )
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            return qml.expval(qml.PauliX(0))
+            return qp.expval(qp.PauliX(0))
 
         circuit()
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
-        qml.set_shots(shots=123)(circuit)()
+        qp.set_shots(shots=123)(circuit)()
         assert dev._kwargs["resilience_level"] == 1
         assert dev._kwargs["execution"]["init_qubits"] is False
 
@@ -651,9 +647,9 @@ class TestKwargsHandling:
             seed_transpiler=42,
         )
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            return qml.expval(qml.PauliX(0))
+            return qp.expval(qp.PauliX(0))
 
         circuit()
         assert dev._kwargs["resilience_level"] == 1
@@ -661,7 +657,7 @@ class TestKwargsHandling:
         assert dev._transpile_args["seed_transpiler"] == 42
 
         # Make sure that running the circuit again doesn't change the optios
-        qml.set_shots(circuit, shots=5)()
+        qp.set_shots(circuit, shots=5)()
         assert dev._kwargs["resilience_level"] == 1
         assert not hasattr(dev._kwargs, "seed_transpiler")
         assert dev._transpile_args["seed_transpiler"] == 42
@@ -710,28 +706,28 @@ class TestDeviceProperties:
 class TestTrackerFunctionality:
     def test_tracker_batched(self):
         """Test that the tracker works for batched circuits"""
-        dev = qml.device("default.qubit", wires=1)
+        dev = qp.device("default.qubit", wires=1)
         qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator())
 
         x = pnp.array(0.1, requires_grad=True)
 
-        @qml.set_shots(10000)
-        @qml.qnode(dev, diff_method="parameter-shift")
+        @qp.set_shots(10000)
+        @qp.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
-            qml.RX(x, wires=0)
-            return qml.expval(qml.Z(0))
+            qp.RX(x, wires=0)
+            return qp.expval(qp.Z(0))
 
-        @qml.set_shots(10000)
-        @qml.qnode(qiskit_dev, diff_method="parameter-shift")
+        @qp.set_shots(10000)
+        @qp.qnode(qiskit_dev, diff_method="parameter-shift")
         def qiskit_circuit(x):
-            qml.RX(x, wires=0)
-            return qml.expval(qml.Z(0))
+            qp.RX(x, wires=0)
+            return qp.expval(qp.Z(0))
 
-        with qml.Tracker(dev) as tracker:
-            qml.grad(circuit)(x)
+        with qp.Tracker(dev) as tracker:
+            qp.grad(circuit)(x)
 
-        with qml.Tracker(qiskit_dev) as qiskit_tracker:
-            qml.grad(qiskit_circuit)(x)
+        with qp.Tracker(qiskit_dev) as qiskit_tracker:
+            qp.grad(qiskit_circuit)(x)
 
         assert qiskit_tracker.history["batches"] == tracker.history["batches"]
         assert tracker.history["shots"] == qiskit_tracker.history["shots"]
@@ -744,10 +740,10 @@ class TestTrackerFunctionality:
 
     def test_tracker_single_tape(self):
         """Test that the tracker works for a single tape"""
-        dev = qml.device("default.qubit", wires=1)
+        dev = qp.device("default.qubit", wires=1)
         qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator())
 
-        tape = qml.tape.QuantumTape([qml.S(0)], [qml.expval(qml.X(0))], shots=10000)
+        tape = qp.tape.QuantumTape([qp.S(0)], [qp.expval(qp.X(0))], shots=10000)
         with qiskit_dev.tracker:
             qiskit_out = qiskit_dev.execute(tape)
 
@@ -776,13 +772,13 @@ class TestTrackerFunctionality:
 
         x = 0.1
 
-        @qml.set_shots(10000)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(10000)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit(x):
-            qml.RX(x, wires=0)
-            return qml.expval(qml.Z(0)), qml.counts(qml.X(1))
+            qp.RX(x, wires=0)
+            return qp.expval(qp.Z(0)), qp.counts(qp.X(1))
 
-        with qml.Tracker(qiskit_dev) as qiskit_tracker:
+        with qp.Tracker(qiskit_dev) as qiskit_tracker:
             qiskit_circuit(x)
 
         assert qiskit_tracker.totals["executions"] == 2
@@ -797,13 +793,13 @@ class TestTrackerFunctionality:
 
         x = 0.1
 
-        @qml.set_shots(10000)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(10000)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit(x):
-            qml.RX(x, wires=0)
-            return qml.expval(qml.Z(0)), qml.expval(qml.X(0))
+            qp.RX(x, wires=0)
+            return qp.expval(qp.Z(0)), qp.expval(qp.X(0))
 
-        with qml.Tracker(qiskit_dev) as qiskit_tracker:
+        with qp.Tracker(qiskit_dev) as qiskit_tracker:
             qiskit_circuit(x)
 
         assert qiskit_tracker.totals["executions"] == 2
@@ -849,9 +845,9 @@ class TestMockedExecution:
 
         # technically this doesn't matter due to the mock, but this is the correct input format for the function
         circuits = [
-            QuantumScript([qml.PauliX(0)], measurements=[qml.expval(qml.PauliZ(0))]),
-            QuantumScript([qml.PauliX(0)], measurements=[qml.probs(wires=[0])]),
-            QuantumScript([qml.PauliX(0), qml.PauliZ(1)], measurements=[qml.counts()]),
+            QuantumScript([qp.PauliX(0)], measurements=[qp.expval(qp.PauliZ(0))]),
+            QuantumScript([qp.PauliX(0)], measurements=[qp.probs(wires=[0])]),
+            QuantumScript([qp.PauliX(0), qp.PauliZ(1)], measurements=[qp.counts()]),
         ]
         input_circuits = [circuit_to_qiskit(c, register_size=2) for c in circuits]
 
@@ -907,12 +903,12 @@ class TestMockedExecution:
         dev = QiskitDevice(wires=5, backend=backend, session=MockSession(backend))
 
         qs = QuantumScript(
-            [qml.PauliX(0), qml.PauliY(1)],
+            [qp.PauliX(0), qp.PauliY(1)],
             measurements=[
-                qml.expval(qml.PauliZ(0)),
-                qml.probs(wires=[0, 1]),
-                qml.counts(),
-                qml.sample(),
+                qp.expval(qp.PauliZ(0)),
+                qp.probs(wires=[0, 1]),
+                qp.counts(),
+                qp.sample(),
             ],
         )
         tapes, _ = split_execution_types(qs)
@@ -940,8 +936,8 @@ class TestMockedExecution:
         that returns a meaningless result."""
 
         qs = QuantumScript(
-            [qml.PauliX(0)],
-            measurements=[qml.expval(qml.PauliY(0)), qml.var(qml.PauliX(0))],
+            [qp.PauliX(0)],
+            measurements=[qp.expval(qp.PauliY(0)), qp.var(qp.PauliX(0))],
             shots=100,
         )
         result = test_dev._execute_estimator(qs, session)
@@ -955,7 +951,7 @@ class TestMockedExecution:
         dev = QiskitDevice(wires=5, backend=aer_backend, session=MockSession(aer_backend))
         qs = QuantumScript(
             measurements=[
-                qml.expval(qml.PauliX(0)),
+                qp.expval(qp.PauliX(0)),
             ],
             shots=[5, 10, 2],
         )
@@ -972,20 +968,20 @@ class TestExecution:
         Test that when no shots are set, a warning is issued.
         """
         dev = QiskitDevice(wires=1, backend=aer_backend)
-        dev_analytic = qml.device("default.qubit", wires=1)
+        dev_analytic = qp.device("default.qubit", wires=1)
 
         theta = 0.543
         res_theoretic = np.cos(theta)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            qml.RY(theta, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RY(theta, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(dev_analytic)
+        @qp.qnode(dev_analytic)
         def circuit_analytic():
-            qml.RY(theta, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RY(theta, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         with pytest.warns(UserWarning, match="Expected an integer number of shots"):
             res = circuit()
@@ -998,11 +994,11 @@ class TestExecution:
     @pytest.mark.parametrize(
         "angle, op, expectation",
         [
-            (np.pi / 2, qml.RX, [0, -1, 0, 1, 0, 1]),
-            (np.pi, qml.RX, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RY, [1, 0, 0, 0, 1, 1]),
-            (np.pi, qml.RY, [0, 0, -1, 1, 1, 0]),
-            (np.pi / 2, qml.RZ, [0, 0, 1, 1, 1, 0]),
+            (np.pi / 2, qp.RX, [0, -1, 0, 1, 0, 1]),
+            (np.pi, qp.RX, [0, 0, -1, 1, 1, 0]),
+            (np.pi / 2, qp.RY, [1, 0, 0, 0, 1, 1]),
+            (np.pi, qp.RY, [0, 0, -1, 1, 1, 0]),
+            (np.pi / 2, qp.RZ, [0, 0, 1, 1, 1, 0]),
         ],
     )
     @flaky(max_runs=10, min_passes=7)
@@ -1021,12 +1017,12 @@ class TestExecution:
         qs = QuantumScript(
             [op(angle, wire)],
             measurements=[
-                qml.expval(qml.PauliX(wire)),
-                qml.expval(qml.PauliY(wire)),
-                qml.expval(qml.PauliZ(wire)),
-                qml.var(qml.PauliX(wire)),
-                qml.var(qml.PauliY(wire)),
-                qml.var(qml.PauliZ(wire)),
+                qp.expval(qp.PauliX(wire)),
+                qp.expval(qp.PauliY(wire)),
+                qp.expval(qp.PauliZ(wire)),
+                qp.var(qp.PauliX(wire)),
+                qp.var(qp.PauliY(wire)),
+                qp.var(qp.PauliZ(wire)),
             ],
         )
 
@@ -1043,21 +1039,20 @@ class TestExecution:
         [
             (
                 np.pi / 2,
-                qml.RX,
-                qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3]),
+                qp.RX,
+                qp.ops.LinearCombination([1, 3], [qp.X(3) @ qp.Y(1), qp.Z(0) * 3]),
             ),
             (
                 np.pi,
-                qml.RX,
-                qml.ops.LinearCombination([1, 3], [qml.X(3) @ qml.Y(1), qml.Z(0) * 3])
-                - 4 * qml.X(2),
+                qp.RX,
+                qp.ops.LinearCombination([1, 3], [qp.X(3) @ qp.Y(1), qp.Z(0) * 3]) - 4 * qp.X(2),
             ),
-            (np.pi / 2, qml.RY, qml.sum(qml.PauliZ(0), qml.PauliX(1))),
-            (np.pi, qml.RY, qml.dot([2, 3], [qml.X(0), qml.Y(0)])),
+            (np.pi / 2, qp.RY, qp.sum(qp.PauliZ(0), qp.PauliX(1))),
+            (np.pi, qp.RY, qp.dot([2, 3], [qp.X(0), qp.Y(0)])),
             (
                 np.pi / 2,
-                qml.RZ,
-                qml.Hamiltonian([1], [qml.X(0) @ qml.Y(2)]) - 3 * qml.Z(3) @ qml.Z(1),
+                qp.RZ,
+                qp.Hamiltonian([1], [qp.X(0) @ qp.Y(2)]) - 3 * qp.Z(3) @ qp.Z(1),
             ),
         ],
     )
@@ -1074,7 +1069,7 @@ class TestExecution:
         correspond correctly (wire ordering convention in Qiskit and PennyLane don't match.)
         """
 
-        pl_dev = qml.device("default.qubit", wires=4)
+        pl_dev = qp.device("default.qubit", wires=4)
         dev = QiskitDevice(wires=4, backend=aer_backend)
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
@@ -1083,8 +1078,8 @@ class TestExecution:
         qs = QuantumScript(
             [op(angle, wire)],
             measurements=[
-                qml.expval(multi_q_obs),
-                qml.var(multi_q_obs),
+                qp.expval(multi_q_obs),
+                qp.var(multi_q_obs),
             ],
             shots=10000,
         )
@@ -1107,11 +1102,11 @@ class TestExecution:
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            return qml.expval(qml.PauliX(0))
+            return qp.expval(qp.PauliX(0))
 
-        qml.set_shots(circuit, shots=[5])()
+        qp.set_shots(circuit, shots=[5])()
 
         estimator_execute.assert_called_once()
         # calculates # of shots executed from precision
@@ -1123,28 +1118,28 @@ class TestExecution:
     @pytest.mark.parametrize(
         "measurements, expectation",
         [
-            ([qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(0))], (1, 0)),
-            ([qml.var(qml.PauliX(0))], (1)),
+            ([qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliX(0))], (1, 0)),
+            ([qp.var(qp.PauliX(0))], (1)),
             (
                 [
-                    qml.expval(qml.PauliX(0)),
-                    qml.expval(qml.PauliZ(0)),
-                    qml.var(qml.PauliX(0)),
+                    qp.expval(qp.PauliX(0)),
+                    qp.expval(qp.PauliZ(0)),
+                    qp.var(qp.PauliX(0)),
                 ],
                 (0, 1, 1),
             ),
             (
-                [qml.expval(0.5 * qml.Y(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0))],
+                [qp.expval(0.5 * qp.Y(0) + 0.5 * qp.Y(0) - 1.5 * qp.X(0) - 0.5 * qp.Y(0))],
                 (0),
             ),
             (
                 [
-                    qml.expval(
-                        qml.ops.LinearCombination(
+                    qp.expval(
+                        qp.ops.LinearCombination(
                             [1, 3, 4],
-                            [qml.X(3) @ qml.Y(2), qml.Y(4) - qml.X(2), qml.Z(2) * 3],
+                            [qp.X(3) @ qp.Y(2), qp.Y(4) - qp.X(2), qp.Z(2) * 3],
                         )
-                        + qml.X(4)
+                        + qp.X(4)
                     )
                 ],
                 (16),
@@ -1179,7 +1174,7 @@ class TestExecution:
     @pytest.mark.parametrize("num_wires", [1, 3, 5])
     @pytest.mark.parametrize("num_shots", [50, 100])
     def test_generate_samples(self, num_wires, num_shots):
-        qs = QuantumScript([], measurements=[qml.expval(qml.PauliX(0))], shots=num_shots)
+        qs = QuantumScript([], measurements=[qp.expval(qp.PauliX(0))], shots=num_shots)
         dev = QiskitDevice(wires=num_wires, backend=aer_backend)
         dev._execute_sampler(circuit=qs, session=Session(backend=aer_backend))
 
@@ -1211,12 +1206,12 @@ class TestExecution:
 
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            qml.PauliX(0)
-            return qml.probs(wires=[0, 1])
+            qp.PauliX(0)
+            return qp.probs(wires=[0, 1])
 
-        qml.set_shots(circuit, shots=[5])()
+        qp.set_shots(circuit, shots=[5])()
 
         sampler_execute.assert_called_once()
         assert dev._current_job.num_shots == 5
@@ -1229,13 +1224,13 @@ class TestExecution:
         """Tests that a ValueError is raised if a shot vector is passed."""
         dev = QiskitDevice(wires=5, backend=aer_backend)
 
-        @qml.set_shots(2)
-        @qml.qnode(dev)
+        @qp.set_shots(2)
+        @qp.qnode(dev)
         def circuit():
-            return qml.sample(qml.PauliX(0))
+            return qp.sample(qp.PauliX(0))
 
         with pytest.raises(ValueError, match="Setting shot vector"):
-            qml.set_shots(circuit, shots=[5, 10, 2])()
+            qp.set_shots(circuit, shots=[5, 10, 2])()
 
         # Should reset to device shots if circuit ran again without shots defined
         circuit()
@@ -1244,9 +1239,9 @@ class TestExecution:
     @pytest.mark.parametrize(
         "observable",
         [
-            [qml.Hadamard(0), qml.PauliX(1)],
-            [qml.PauliZ(0), qml.Hadamard(1)],
-            [qml.PauliZ(0), qml.Hadamard(0)],
+            [qp.Hadamard(0), qp.PauliX(1)],
+            [qp.PauliZ(0), qp.Hadamard(1)],
+            [qp.PauliZ(0), qp.Hadamard(0)],
         ],
     )
     @pytest.mark.filterwarnings("ignore::UserWarning")
@@ -1258,23 +1253,23 @@ class TestExecution:
 
         dev = QiskitDevice(wires=5, backend=aer_backend)
 
-        pl_dev = qml.device("default.qubit", wires=5)
+        pl_dev = qp.device("default.qubit", wires=5)
 
         estimator_execute = mocker.spy(dev, "_execute_estimator")
         sampler_execute = mocker.spy(dev, "_execute_sampler")
 
-        @qml.set_shots(1024)
-        @qml.qnode(dev)
+        @qp.set_shots(1024)
+        @qp.qnode(dev)
         def circuit():
-            qml.X(0)
-            qml.Hadamard(0)
-            return qml.expval(observable[0]), qml.expval(observable[1])
+            qp.X(0)
+            qp.Hadamard(0)
+            return qp.expval(observable[0]), qp.expval(observable[1])
 
-        @qml.qnode(pl_dev)
+        @qp.qnode(pl_dev)
         def pl_circuit():
-            qml.X(0)
-            qml.Hadamard(0)
-            return qml.expval(observable[0]), qml.expval(observable[1])
+            qp.X(0)
+            qp.Hadamard(0)
+            return qp.expval(observable[0]), qp.expval(observable[1])
 
         res = circuit()
         pl_res = pl_circuit()
@@ -1290,12 +1285,12 @@ class TestExecution:
 
         dev = QiskitDevice(wires=5, backend=aer_backend)
 
-        @qml.set_shots(1024)
-        @qml.qnode(dev)
+        @qp.set_shots(1024)
+        @qp.qnode(dev)
         def circuit():
-            qml.X(0)
-            qml.Hadamard(0)
-            return qml.expval(qml.Hadamard(0))
+            qp.X(0)
+            qp.Hadamard(0)
+            return qp.expval(qp.Hadamard(0))
 
         with pytest.warns(
             UserWarning,
@@ -1305,22 +1300,22 @@ class TestExecution:
 
     @pytest.mark.parametrize("backend", [aer_backend, FakeManilaV2()])
     def test_qiskit_probability_output_format(self, backend):
-        """Test that the format and values of the Qiskit device's output for `qml.probs` is
+        """Test that the format and values of the Qiskit device's output for `qp.probs` is
         the same as pennylane's."""
 
-        dev = qml.device("default.qubit", wires=[0, 1, 2, 3, 4])
+        dev = qp.device("default.qubit", wires=[0, 1, 2, 3, 4])
         qiskit_dev = QiskitDevice(wires=[0, 1, 2, 3, 4], backend=backend)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            qml.Hadamard(0)
-            return [qml.probs(wires=[0, 1])]
+            qp.Hadamard(0)
+            return [qp.probs(wires=[0, 1])]
 
-        @qml.set_shots(1024)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(1024)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit():
-            qml.Hadamard(0)
-            return [qml.probs(wires=[0, 1])]
+            qp.Hadamard(0)
+            return [qp.probs(wires=[0, 1])]
 
         res = circuit()
         qiskit_res = qiskit_circuit()
@@ -1331,22 +1326,22 @@ class TestExecution:
     def test_sampler_output_shape(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane"""
-        dev = qml.device("default.qubit", wires=5)
+        dev = qp.device("default.qubit", wires=5)
         qiskit_dev = QiskitDevice(wires=5, backend=backend)
 
-        @qml.set_shots(1024)
-        @qml.qnode(dev)
+        @qp.set_shots(1024)
+        @qp.qnode(dev)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return [qp.sample(qp.X(0) @ qp.Y(1)), qp.sample(qp.X(0))]
 
-        @qml.set_shots(1024)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(1024)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return [qp.sample(qp.X(0) @ qp.Y(1)), qp.sample(qp.X(0))]
 
         res = circuit(np.pi / 2)
         qiskit_res = qiskit_circuit(np.pi / 2)
@@ -1357,33 +1352,33 @@ class TestExecution:
     def test_sampler_output_shape_multi_measurements(self, backend):
         """Test that the shape of the results produced from the sampler for the Qiskit device
         is consistent with Pennylane for circuits with multiple measurements"""
-        dev = qml.device("default.qubit", wires=5)
+        dev = qp.device("default.qubit", wires=5)
         qiskit_dev = QiskitDevice(wires=5, backend=backend)
 
-        @qml.set_shots(10)
-        @qml.qnode(dev)
+        @qp.set_shots(10)
+        @qp.qnode(dev)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
             return (
-                qml.sample(),
-                qml.sample(qml.Y(0)),
-                qml.expval(qml.X(1)),
-                qml.var(qml.Y(0)),
-                qml.counts(),
+                qp.sample(),
+                qp.sample(qp.Y(0)),
+                qp.expval(qp.X(1)),
+                qp.var(qp.Y(0)),
+                qp.counts(),
             )
 
-        @qml.set_shots(10)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(10)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
             return (
-                qml.sample(),
-                qml.sample(qml.Y(0)),
-                qml.expval(qml.X(1)),
-                qml.var(qml.Y(0)),
-                qml.counts(),
+                qp.sample(),
+                qp.sample(qp.Y(0)),
+                qp.expval(qp.X(1)),
+                qp.var(qp.Y(0)),
+                qp.counts(),
             )
 
         res = circuit(np.pi / 2)
@@ -1396,47 +1391,41 @@ class TestExecution:
     @pytest.mark.parametrize(
         "observable",
         [
-            lambda: [qml.expval(qml.Hadamard(0)), qml.expval(qml.Hadamard(0))],
+            lambda: [qp.expval(qp.Hadamard(0)), qp.expval(qp.Hadamard(0))],
             lambda: [
-                qml.var(qml.Hadamard(0)),
-                qml.var(qml.Hadamard(0)),
+                qp.var(qp.Hadamard(0)),
+                qp.var(qp.Hadamard(0)),
             ],
             lambda: [
-                qml.expval(qml.X(0)),
-                qml.expval(qml.Y(1)),
-                qml.expval(0.5 * qml.Y(1)),
-                qml.expval(qml.Z(0) @ qml.Z(1)),
-                qml.expval(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
-                qml.expval(
-                    qml.ops.LinearCombination(
-                        [0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.X(2)]
-                    )
+                qp.expval(qp.X(0)),
+                qp.expval(qp.Y(1)),
+                qp.expval(0.5 * qp.Y(1)),
+                qp.expval(qp.Z(0) @ qp.Z(1)),
+                qp.expval(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
+                qp.expval(
+                    qp.ops.LinearCombination([0.35, 0.46], [qp.X(0) @ qp.Z(1), qp.Z(0) @ qp.X(2)])
                 ),
-                qml.expval(
-                    qml.ops.LinearCombination(
+                qp.expval(
+                    qp.ops.LinearCombination(
                         [1.0, 2.0, 3.0],
-                        [qml.X(0), qml.X(1), qml.Z(0)],
+                        [qp.X(0), qp.X(1), qp.Z(0)],
                         grouping_type="qwc",
                     )
                 ),
             ],
             lambda: [
-                qml.expval(
-                    qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
-                )
+                qp.expval(qp.Hamiltonian([0.35, 0.46], [qp.X(0) @ qp.Z(1), qp.Z(0) @ qp.Y(2)]))
             ],
-            lambda: [qml.expval(qml.X(0) @ qml.Z(1) + qml.Z(0))],
+            lambda: [qp.expval(qp.X(0) @ qp.Z(1) + qp.Z(0))],
             pytest.param(
-                [qml.var(qml.X(0) + qml.Z(0))],
+                [qp.var(qp.X(0) + qp.Z(0))],
                 marks=pytest.mark.xfail(reason="Qiskit itself is bugged when given Sum"),
             ),
             lambda: [
-                qml.expval(qml.Hadamard(0)),
-                qml.expval(qml.Hadamard(1)),
-                qml.expval(qml.Hadamard(0) @ qml.Hadamard(1)),
-                qml.expval(
-                    qml.Hadamard(0) @ qml.Hadamard(1) + 0.5 * qml.Hadamard(1) + qml.Hadamard(0)
-                ),
+                qp.expval(qp.Hadamard(0)),
+                qp.expval(qp.Hadamard(1)),
+                qp.expval(qp.Hadamard(0) @ qp.Hadamard(1)),
+                qp.expval(qp.Hadamard(0) @ qp.Hadamard(1) + 0.5 * qp.Hadamard(1) + qp.Hadamard(0)),
             ],
         ],
     )
@@ -1444,23 +1433,23 @@ class TestExecution:
     def test_observables_that_need_split_non_commuting(self, observable):
         """Tests that observables that have non-commuting measurements are
         processed correctly when executed by the Estimator or, in the case of
-        qml.Hadamard, executed by the Sampler via expval() or var"""
+        qp.Hadamard, executed by the Sampler via expval() or var"""
         qiskit_dev = QiskitDevice(wires=3, backend=aer_backend)
 
-        @qml.set_shots(30000)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(30000)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit():
-            qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi / 3, 0)
+            qp.RX(np.pi / 3, 0)
+            qp.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qp.device("default.qubit", wires=3)
 
-        @qml.set_shots(30000)
-        @qml.qnode(dev)
+        @qp.set_shots(30000)
+        @qp.qnode(dev)
         def circuit():
-            qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi / 3, 0)
+            qp.RX(np.pi / 3, 0)
+            qp.RZ(np.pi / 3, 0)
             return observable()
 
         qiskit_res = qiskit_circuit()
@@ -1472,13 +1461,13 @@ class TestExecution:
         "observable",
         [
             pytest.param(
-                lambda: [qml.counts(qml.X(0) + qml.Y(0)), qml.counts(qml.X(0))],
+                lambda: [qp.counts(qp.X(0) + qp.Y(0)), qp.counts(qp.X(0))],
                 marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
             ),
             pytest.param(
                 lambda: [
-                    qml.counts(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
-                    qml.counts(0.5 * qml.Y(1)),
+                    qp.counts(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
+                    qp.counts(0.5 * qp.Y(1)),
                 ],
                 marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
             ),
@@ -1490,20 +1479,20 @@ class TestExecution:
         correctly when executed by the Sampler via counts()"""
         qiskit_dev = QiskitDevice(wires=3, backend=aer_backend)
 
-        @qml.set_shots(4000)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(4000)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit():
-            qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi / 3, 0)
+            qp.RX(np.pi / 3, 0)
+            qp.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qp.device("default.qubit", wires=3)
 
-        @qml.set_shots(4000)
-        @qml.qnode(dev)
+        @qp.set_shots(4000)
+        @qp.qnode(dev)
         def circuit():
-            qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi / 3, 0)
+            qp.RX(np.pi / 3, 0)
+            qp.RZ(np.pi / 3, 0)
             return observable()
 
         qiskit_res = qiskit_circuit()
@@ -1517,30 +1506,30 @@ class TestExecution:
         "observable",
         [
             pytest.param(
-                lambda: [qml.sample(qml.X(0) + qml.Y(0)), qml.sample(qml.X(0))],
+                lambda: [qp.sample(qp.X(0) + qp.Y(0)), qp.sample(qp.X(0))],
                 marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
             ),
             pytest.param(
-                lambda: [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))],
+                lambda: [qp.sample(qp.X(0) @ qp.Y(1)), qp.sample(qp.X(0))],
                 marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
             ),
             pytest.param(
                 lambda: [
-                    qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
-                    qml.sample(0.5 * qml.Y(1)),
+                    qp.sample(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
+                    qp.sample(0.5 * qp.Y(1)),
                 ],
                 marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
             ),
             pytest.param(
                 lambda: [
-                    qml.sample(qml.X(0)),
-                    qml.sample(qml.Y(1)),
-                    qml.sample(0.5 * qml.Y(1)),
-                    qml.sample(qml.Z(0) @ qml.Z(1)),
-                    qml.sample(qml.X(0) @ qml.Z(1) + 0.5 * qml.Y(1) + qml.Z(0)),
-                    qml.sample(
-                        qml.ops.LinearCombination(
-                            [0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.X(2)]
+                    qp.sample(qp.X(0)),
+                    qp.sample(qp.Y(1)),
+                    qp.sample(0.5 * qp.Y(1)),
+                    qp.sample(qp.Z(0) @ qp.Z(1)),
+                    qp.sample(qp.X(0) @ qp.Z(1) + 0.5 * qp.Y(1) + qp.Z(0)),
+                    qp.sample(
+                        qp.ops.LinearCombination(
+                            [0.35, 0.46], [qp.X(0) @ qp.Z(1), qp.Z(0) @ qp.X(2)]
                         )
                     ),
                 ],
@@ -1548,10 +1537,10 @@ class TestExecution:
             ),
             pytest.param(
                 lambda: [
-                    qml.sample(
-                        qml.ops.LinearCombination(
+                    qp.sample(
+                        qp.ops.LinearCombination(
                             [1.0, 2.0, 3.0],
-                            [qml.X(0), qml.X(1), qml.Z(0)],
+                            [qp.X(0), qp.X(1), qp.Z(0)],
                             grouping_type="qwc",
                         )
                     ),
@@ -1560,9 +1549,7 @@ class TestExecution:
             ),
             pytest.param(
                 lambda: [
-                    qml.sample(
-                        qml.Hamiltonian([0.35, 0.46], [qml.X(0) @ qml.Z(1), qml.Z(0) @ qml.Y(2)])
-                    )
+                    qp.sample(qp.Hamiltonian([0.35, 0.46], [qp.X(0) @ qp.Z(1), qp.Z(0) @ qp.Y(2)]))
                 ],
                 marks=pytest.mark.xfail(reason="Split non commuting discussion pending"),
             ),
@@ -1574,20 +1561,20 @@ class TestExecution:
         correctly when executed by the Sampler via sample()"""
         qiskit_dev = QiskitDevice(wires=3, backend=aer_backend)
 
-        @qml.set_shots(20000)
-        @qml.qnode(qiskit_dev)
+        @qp.set_shots(20000)
+        @qp.qnode(qiskit_dev)
         def qiskit_circuit():
-            qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi / 3, 0)
+            qp.RX(np.pi / 3, 0)
+            qp.RZ(np.pi / 3, 0)
             return observable()
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qp.device("default.qubit", wires=3)
 
-        @qml.set_shots(20000)
-        @qml.qnode(dev)
+        @qp.set_shots(20000)
+        @qp.qnode(dev)
         def circuit():
-            qml.RX(np.pi / 3, 0)
-            qml.RZ(np.pi / 3, 0)
+            qp.RX(np.pi / 3, 0)
+            qp.RZ(np.pi / 3, 0)
             return observable()
 
         qiskit_res = qiskit_circuit()

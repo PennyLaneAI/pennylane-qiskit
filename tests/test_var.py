@@ -16,7 +16,7 @@ This module contains tests for computing variances on PennyLane IBMQ devices.
 """
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 
 # pylint: disable=too-many-positional-arguments
 import pytest
@@ -40,12 +40,12 @@ class TestVar:
         dev = device(2)
 
         # test correct variance for <Z> of a rotated state
-        observable = qml.PauliZ(wires=[0])
+        observable = qp.PauliZ(wires=[0])
 
         dev.apply(
             [
-                qml.RX(phi, wires=[0]),
-                qml.RY(theta, wires=[0]),
+                qp.RX(phi, wires=[0]),
+                qp.RY(theta, wires=[0]),
             ],
             rotations=[*observable.diagonalizing_gates()],
         )
@@ -65,12 +65,12 @@ class TestVar:
         # test correct variance for <H> of a rotated state
         H = np.array([[4, -1 + 6j], [-1 - 6j, 2]])
 
-        observable = qml.Hermitian(H, wires=[0])
+        observable = qp.Hermitian(H, wires=[0])
 
         dev.apply(
             [
-                qml.RX(phi, wires=[0]),
-                qml.RY(theta, wires=[0]),
+                qp.RX(phi, wires=[0]),
+                qp.RY(theta, wires=[0]),
             ],
             rotations=[*observable.diagonalizing_gates()],
         )
@@ -97,15 +97,15 @@ class TestTensorVar:
     def test_paulix_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliX and PauliY works correctly"""
         dev = device(3)
-        obs = qml.PauliX(0) @ qml.PauliY(2)
+        obs = qp.PauliX(0) @ qp.PauliY(2)
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -129,15 +129,15 @@ class TestTensorVar:
     def test_pauliz_hadamard_pauliy(self, theta, phi, varphi, device, shots, tol):
         """Test that a tensor product involving PauliZ and PauliY and hadamard works correctly"""
         dev = device(3)
-        obs = qml.PauliZ(0) @ qml.Hadamard(1) @ qml.PauliY(2)
+        obs = qp.PauliZ(0) @ qp.Hadamard(1) @ qp.PauliY(2)
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )
@@ -157,7 +157,7 @@ class TestTensorVar:
         assert np.allclose(res, expected, **tol)
 
     def test_hermitian(self, theta, phi, varphi, device, shots, tol):
-        """Test that a tensor product involving qml.Hermitian works correctly"""
+        """Test that a tensor product involving qp.Hermitian works correctly"""
         dev = device(3)
 
         A = np.array(
@@ -168,15 +168,15 @@ class TestTensorVar:
                 [-5 - 2j, -5 - 4j, -4 - 3j, -6],
             ]
         )
-        obs = qml.PauliZ(0) @ qml.Hermitian(A, wires=[1, 2])
+        obs = qp.PauliZ(0) @ qp.Hermitian(A, wires=[1, 2])
 
         dev.apply(
             [
-                qml.RX(theta, wires=[0]),
-                qml.RX(phi, wires=[1]),
-                qml.RX(varphi, wires=[2]),
-                qml.CNOT(wires=[0, 1]),
-                qml.CNOT(wires=[1, 2]),
+                qp.RX(theta, wires=[0]),
+                qp.RX(phi, wires=[1]),
+                qp.RX(varphi, wires=[2]),
+                qp.CNOT(wires=[0, 1]),
+                qp.CNOT(wires=[1, 2]),
             ],
             rotations=obs.diagonalizing_gates(),
         )

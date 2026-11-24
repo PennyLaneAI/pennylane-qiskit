@@ -19,7 +19,7 @@ import itertools as it
 from functools import reduce
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pytest
 
 # pylint:disable = wrong-import-position, unnecessary-lambda
@@ -47,54 +47,54 @@ class TestLoadNoiseChannels:
         [
             (
                 noise.amplitude_damping_error(0.123, 0.0),
-                qml.AmplitudeDamping(0.123, wires="ANY"),
+                qp.AmplitudeDamping(0.123, wires="ANY"),
             ),
-            (noise.phase_damping_error(0.123), qml.PhaseDamping(0.123, wires="ANY")),
+            (noise.phase_damping_error(0.123), qp.PhaseDamping(0.123, wires="ANY")),
             (
                 noise.phase_amplitude_damping_error(0.0345, 0.0),
-                qml.AmplitudeDamping(0.0345, wires="ANY"),
+                qp.AmplitudeDamping(0.0345, wires="ANY"),
             ),
             (
                 noise.phase_amplitude_damping_error(0.0, 0.0345),
-                qml.PhaseDamping(0.0345, wires="ANY"),
+                qp.PhaseDamping(0.0345, wires="ANY"),
             ),
-            (noise.reset_error(0.02789), qml.ResetError(0.02789, 0.0, wires="ANY")),
-            (noise.reset_error(0.01364, 0.02789), qml.ResetError(0.01364, 0.02789, wires="ANY")),
+            (noise.reset_error(0.02789), qp.ResetError(0.02789, 0.0, wires="ANY")),
+            (noise.reset_error(0.01364, 0.02789), qp.ResetError(0.01364, 0.02789, wires="ANY")),
             (
                 noise.thermal_relaxation_error(0.25, 0.45, 1.0, 0.01),
-                qml.ThermalRelaxationError(0.01, 0.25, 0.45, 1.0, wires="ANY"),
+                qp.ThermalRelaxationError(0.01, 0.25, 0.45, 1.0, wires="ANY"),
             ),
             (
                 noise.thermal_relaxation_error(0.45, 0.25, 1.0, 0.01),
-                qml.ThermalRelaxationError(0.01, 0.45, 0.25, 1.0, wires="ANY"),
+                qp.ThermalRelaxationError(0.01, 0.45, 0.25, 1.0, wires="ANY"),
             ),
             (
                 noise.depolarizing_error(0.3264, 1),
-                qml.DepolarizingChannel(0.3264 * 3 / 4, wires="ANY"),
+                qp.DepolarizingChannel(0.3264 * 3 / 4, wires="ANY"),
             ),
             (
                 noise.pauli_error([("X", 0.1), ("I", 0.9)]),
-                qml.BitFlip(0.1, wires="ANY"),
+                qp.BitFlip(0.1, wires="ANY"),
             ),
             (
                 noise.pauli_error([("Y", 0.178), ("I", 0.822)]),
-                qml.PauliError("Y", 0.178, wires="ANY"),
+                qp.PauliError("Y", 0.178, wires="ANY"),
             ),
             (
-                noise.coherent_unitary_error(qml.X(0).matrix()),
-                qml.QubitChannel([qml.X(0).matrix()], wires="ANY"),
+                noise.coherent_unitary_error(qp.X(0).matrix()),
+                qp.QubitChannel([qp.X(0).matrix()], wires="ANY"),
             ),
             (
                 noise.mixed_unitary_error(
-                    [(qml.I(0).matrix(), 0.9), (qml.X(0).matrix(), 0.03), (qml.Y(0).matrix(), 0.07)]
+                    [(qp.I(0).matrix(), 0.9), (qp.X(0).matrix(), 0.03), (qp.Y(0).matrix(), 0.07)]
                 ),
-                qml.QubitChannel(
+                qp.QubitChannel(
                     [
                         np.sqrt(prob) * kraus_op(0).matrix()
                         for kraus_op, prob in [
-                            (qml.X, 0.03),
-                            (qml.Y, 0.07),
-                            (qml.I, 0.9),
+                            (qp.X, 0.03),
+                            (qp.Y, 0.07),
+                            (qp.I, 0.9),
                         ]
                     ],
                     wires="ANY",
@@ -102,14 +102,14 @@ class TestLoadNoiseChannels:
             ),
             (
                 noise.depolarizing_error(0.2174, 2),
-                qml.QubitChannel(
+                qp.QubitChannel(
                     Kraus(noise.depolarizing_error(0.2174, 2)).data,
                     wires=[0, 1],
                 ),
             ),
             (
                 noise.phase_amplitude_damping_error(0.3451, 0.2356),
-                qml.QubitChannel(
+                qp.QubitChannel(
                     np.array(
                         [
                             [[-0.97035755 + 0.0j, 0.0 + 0.0j], [0.0 + 0.0j, -0.74564448 + 0.0j]],
@@ -128,7 +128,7 @@ class TestLoadNoiseChannels:
                         [[0.0 + 0.0j, 0.58745213 + 0.0j], [0.0 + 0.0j, 0.0 + 0.0j]],
                     ],
                 ),
-                qml.QubitChannel(
+                qp.QubitChannel(
                     np.array(
                         [
                             [[-0.97035755 + 0.0j, 0.0 + 0.0j], [0.0 + 0.0j, -0.74564448 + 0.0j]],
@@ -146,7 +146,7 @@ class TestLoadNoiseChannels:
                         np.diag([-0.31622777] * 2, k=2) + np.diag([-0.31622777] * 2, k=-2),
                     ],
                 ),
-                qml.QubitChannel(
+                qp.QubitChannel(
                     [
                         np.diag([-0.9486833] * 4),
                         np.diag([-0.31622777] * 2, k=2) + np.diag([-0.31622777] * 2, k=-2),
@@ -189,24 +189,22 @@ class TestLoadNoiseChannels:
         qerror_dmap, _ = _build_noise_model_map(noise_model)
 
         pl_channels = [
-            qml.QubitChannel(
-                qml.DepolarizingChannel.compute_kraus_matrices(3 * depol1 / 4),
+            qp.QubitChannel(
+                qp.DepolarizingChannel.compute_kraus_matrices(3 * depol1 / 4),
                 wires="ANY",
             ),
-            qml.QubitChannel(
+            qp.QubitChannel(
                 [
                     np.sqrt(prob) * reduce(np.kron, prod, 1.0)
                     for prob, prod in zip(
                         [1 - 15 * depol2 / 16, *([depol2 / 16] * 15)],
-                        it.product(
-                            map(qml.matrix, [qml.I(0), qml.X(0), qml.Y(0), qml.Z(0)]), repeat=2
-                        ),
+                        it.product(map(qp.matrix, [qp.I(0), qp.X(0), qp.Y(0), qp.Z(0)]), repeat=2),
                     )
                 ],
                 wires="ANY",
             ),
-            qml.QubitChannel(
-                qml.ThermalRelaxationError.compute_kraus_matrices(
+            qp.QubitChannel(
+                qp.ThermalRelaxationError.compute_kraus_matrices(
                     exc_pop, 6.6302933312, 4.1837870638, 1.0
                 ),
                 wires="ANY",

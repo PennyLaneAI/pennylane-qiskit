@@ -27,7 +27,7 @@ from functools import wraps
 from typing import Union
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 from pennylane import CompilePipeline, transform
 from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig
@@ -55,7 +55,7 @@ QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
-@qml.transform
+@qp.transform
 def analytic_warning(tape):
     """Transform that adds a warning for circuits without shots set."""
     if not tape.shots:
@@ -126,7 +126,7 @@ def qiskit_session(device, **kwargs):
 
     .. code-block:: python
 
-        import pennylane as qml
+        import pennylane as qp
         from pennylane_qiskit import qiskit_session
         from qiskit_ibm_runtime import QiskitRuntimeService
 
@@ -135,13 +135,13 @@ def qiskit_session(device, **kwargs):
         backend = service.least_busy(simulator=False, operational=True)
 
         # initialize device
-        dev = qml.device('qiskit.remote', wires=2, backend=backend)
+        dev = qp.device('qiskit.remote', wires=2, backend=backend)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(x):
-            qml.RX(x, 0)
-            qml.CNOT([0, 1])
-            return qml.expval(qml.PauliZ(1))
+            qp.RX(x, 0)
+            qp.CNOT([0, 1])
+            return qp.expval(qp.PauliZ(1))
 
         angle = 0.1
 
@@ -159,7 +159,7 @@ def qiskit_session(device, **kwargs):
 
     .. code-block:: python
 
-        import pennylane as qml
+        import pennylane as qp
         from pennylane_qiskit import qiskit_session
         from qiskit_ibm_runtime import QiskitRuntimeService, Session
 
@@ -168,13 +168,13 @@ def qiskit_session(device, **kwargs):
         backend = service.least_busy(simulator=False, operational=True)
 
         # initialize device
-        dev = qml.device('qiskit.remote', wires=2, backend=backend, session=Session(backend=backend, max_time=30))
+        dev = qp.device('qiskit.remote', wires=2, backend=backend, session=Session(backend=backend, max_time=30))
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(x):
-            qml.RX(x, 0)
-            qml.CNOT([0, 1])
-            return qml.expval(qml.PauliZ(1))
+            qp.RX(x, 0)
+            qp.CNOT([0, 1])
+            return qp.expval(qp.PauliZ(1))
 
         angle = 0.1
 
@@ -208,23 +208,23 @@ def qiskit_session(device, **kwargs):
         device._session = existing_session
 
 
-def accepted_sample_measurement(m: qml.measurements.MeasurementProcess) -> bool:
+def accepted_sample_measurement(m: qp.measurements.MeasurementProcess) -> bool:
     """Specifies whether or not a measurement is accepted when sampling."""
 
     return isinstance(
         m,
         (
-            qml.measurements.SampleMeasurement,
-            qml.measurements.ClassicalShadowMP,
-            qml.measurements.ShadowExpvalMP,
+            qp.measurements.SampleMeasurement,
+            qp.measurements.ClassicalShadowMP,
+            qp.measurements.ShadowExpvalMP,
         ),
     )
 
 
 @transform
 def split_execution_types(
-    tape: qml.tape.QuantumTape,
-) -> tuple[Sequence[qml.tape.QuantumTape], Callable]:
+    tape: qp.tape.QuantumTape,
+) -> tuple[Sequence[qp.tape.QuantumTape], Callable]:
     """Split into separate tapes based on measurement type. Counts and sample-based measurements
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
@@ -252,7 +252,7 @@ def split_execution_types(
     if estimator:
         tapes.extend(
             [
-                qml.tape.QuantumScript(
+                qp.tape.QuantumScript(
                     tape.operations,
                     measurements=[mp for mp, i in estimator],
                     shots=tape.shots,
@@ -262,7 +262,7 @@ def split_execution_types(
     if sampler:
         tapes.extend(
             [
-                qml.tape.QuantumScript(
+                qp.tape.QuantumScript(
                     tape.operations,
                     measurements=[mp for mp, i in sampler],
                     shots=tape.shots,
@@ -426,11 +426,11 @@ class QiskitDevice(Device):
         """Reset the current job to None."""
         self._current_job = None
 
-    def stopping_condition(self, op: qml.operation.Operator) -> bool:
+    def stopping_condition(self, op: qp.operation.Operator) -> bool:
         """Specifies whether or not an Operator is accepted by QiskitDevice2."""
         return op.name in self.operations
 
-    def observable_stopping_condition(self, obs: qml.operation.Operator) -> bool:
+    def observable_stopping_condition(self, obs: qp.operation.Operator) -> bool:
         """Specifies whether or not an observable is accepted by QiskitDevice2."""
         return obs.name in self.observables
 
@@ -601,7 +601,7 @@ class QiskitDevice(Device):
     def _execute_sampler(self, circuit, session):
         """Returns the result of the execution of the circuit using the SamplerV2 Primitive.
         Note that this result has been processed respective to the MeasurementProcess given.
-        E.g. `qml.expval` returns an expectation value whereas `qml.sample()` will return the raw samples.
+        E.g. `qp.expval` returns an expectation value whereas `qp.sample()` will return the raw samples.
 
         Args:
             circuits (list[QuantumCircuit]): the circuits to be executed via SamplerV2
@@ -639,7 +639,7 @@ class QiskitDevice(Device):
     def _execute_estimator(self, circuit, session):
         """Returns the result of the execution of the circuit using the EstimatorV2 Primitive.
         Note that this result has been processed respective to the MeasurementProcess given.
-        E.g. `qml.expval` returns an expectation value whereas `qml.var` will return the variance.
+        E.g. `qp.expval` returns an expectation value whereas `qp.var` will return the variance.
 
         Args:
             circuits (list[QuantumCircuit]): the circuits to be executed via EstimatorV2

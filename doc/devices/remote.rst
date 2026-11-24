@@ -22,21 +22,21 @@ After creating an account and initializing an instance, you can connect to a bac
 
     backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<min_num_qubits>)
 
-    dev = qml.device('qiskit.remote', wires=<num_qubits_of_backend>, backend=backend)
+    dev = qp.device('qiskit.remote', wires=<num_qubits_of_backend>, backend=backend)
 
 After installing the plugin, this device can be used just like any other PennyLane device for defining and evaluating QNodes.
 For example, a simple quantum function that returns the expectation value of a measurement and depends on
-three classical input parameters can be decorated with ``qml.qnode`` as usual to construct a ``QNode``:
+three classical input parameters can be decorated with ``qp.qnode`` as usual to construct a ``QNode``:
 
 .. code-block:: python
 
-    @qml.qnode(dev)
+    @qp.qnode(dev)
     def circuit(x, y, z):
-        qml.RZ(z, wires=[0])
-        qml.RY(y, wires=[0])
-        qml.RX(x, wires=[0])
-        qml.CNOT(wires=[0, 1])
-        return qml.expval(qml.PauliZ(wires=1))
+        qp.RZ(z, wires=[0])
+        qp.RY(y, wires=[0])
+        qp.RX(x, wires=[0])
+        qp.CNOT(wires=[0, 1])
+        return qp.expval(qp.PauliZ(wires=1))
 
 You can then execute the above quantum circuit to get the expectation value of a Pauli operator.
 
@@ -55,7 +55,7 @@ The ``'qiskit.remote'`` device also supports the use of `local simulators <https
     # from qiskit_aer import AerSimulator
     # backend = AerSimulator()
 
-    dev = qml.device('qiskit.remote', wires=5, backend=backend)
+    dev = qp.device('qiskit.remote', wires=5, backend=backend)
 
 Device options
 ~~~~~~~~~~~~~~
@@ -67,7 +67,7 @@ or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, sim
 
 .. code-block:: python
 
-    dev = qml.device(
+    dev = qp.device(
         "qiskit.remote", 
         wires=5, 
         backend=backend, 
@@ -76,7 +76,7 @@ or `runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/options>`_, sim
         seed_transpiler=42
     )
     # to change options, re-initialize the device
-    dev = qml.device(
+    dev = qp.device(
         "qiskit.remote", 
         wires=5, 
         backend=backend, 
@@ -90,20 +90,20 @@ The default value of the shots argument is ``1024``. You can set the number of s
 
 .. code-block:: python
 
-    dev = qml.device("qiskit.remote", wires=5, backend=backend)
+    dev = qp.device("qiskit.remote", wires=5, backend=backend)
 
-    @qml.set_shots(4096)
-    @qml.qnode(dev)
+    @qp.set_shots(4096)
+    @qp.qnode(dev)
     def circuit(x, y, z):
-        qml.RZ(z, wires=[0])
-        qml.RY(y, wires=[0])
-        qml.RX(x, wires=[0])
-        qml.CNOT(wires=[0, 1])
-        return qml.expval(qml.PauliZ(wires=1))
+        qp.RZ(z, wires=[0])
+        qp.RY(y, wires=[0])
+        qp.RX(x, wires=[0])
+        qp.CNOT(wires=[0, 1])
+        return qp.expval(qp.PauliZ(wires=1))
     
     # Runs with 4096 shots
     circuit(0.2, 0.1, 0.3)
 
     # Runs with 10000 shots
-    new_circuit = qml.set_shots(circuit, 10_000)
+    new_circuit = qp.set_shots(circuit, 10_000)
     new_circuit(0.2, 0.1, 0.3)

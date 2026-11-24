@@ -20,7 +20,7 @@ import sys
 from functools import partial
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pytest
 import qiskit
 import qiskit_aer
@@ -60,7 +60,7 @@ class TestDeviceIntegration:
         if not is_compatible:
             pytest.skip(failure_msg)
 
-        dev = qml.device(d[0], wires=2, backend=backend)
+        dev = qp.device(d[0], wires=2, backend=backend)
         assert dev.num_wires == 2
         assert dev.shots.total_shots is None
         assert dev.short_name == d[0]
@@ -79,7 +79,7 @@ class TestDeviceIntegration:
         if backend_instance.num_qubits is None:
             pytest.skip("No qubits?")
 
-        dev = qml.device(
+        dev = qp.device(
             "qiskit.remote",
             wires=backend_instance.num_qubits,
             backend=backend_instance,
@@ -91,19 +91,19 @@ class TestDeviceIntegration:
     def test_incorrect_backend(self):
         """Test that exception is raised if name is incorrect"""
         with pytest.raises(ValueError, match="Backend 'none' does not exist"):
-            qml.device("qiskit.aer", wires=2, backend="none")
+            qp.device("qiskit.aer", wires=2, backend="none")
 
     def test_incorrect_backend_wires(self):
         """Test that exception is raised if number of wires is too large"""
         with pytest.raises(
             ValueError, match=r"Backend 'aer_simulator\_statevector' supports maximum"
         ):
-            qml.device("qiskit.aer", wires=100, method="statevector")
+            qp.device("qiskit.aer", wires=100, method="statevector")
 
     def test_args(self):
         """Test that the device requires correct arguments"""
         with pytest.raises(TypeError, match="missing 1 required positional argument"):
-            qml.device("qiskit.aer")
+            qp.device("qiskit.aer")
 
     @pytest.mark.parametrize("d", pldevices)
     @pytest.mark.parametrize("shots", [None, 8192])
@@ -118,20 +118,20 @@ class TestDeviceIntegration:
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=1, backend=backend)
+        dev = qp.device(d[0], wires=1, backend=backend)
 
         a = 0.543
         b = 0.123
         c = 0.987
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @qp.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
-            qml.BasisState(np.array([1]), wires=0)
-            qml.Hadamard(wires=0)
-            qml.Rot(x, y, z, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.BasisState(np.array([1]), wires=0)
+            qp.Hadamard(wires=0)
+            qp.Rot(x, y, z, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
@@ -145,20 +145,20 @@ class TestDeviceIntegration:
         if not is_compatible:
             pytest.skip(failure_msg)
 
-        dev = qml.device(d[0], wires=1, backend=backend)
+        dev = qp.device(d[0], wires=1, backend=backend)
 
         a = 0
         b = 0
         c = np.pi
         expected = 1
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @qp.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
-            qml.BasisState(np.array([0]), wires=0)
-            qml.Rot(x, y, z, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.BasisState(np.array([0]), wires=0)
+            qp.Rot(x, y, z, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), expected, **tol)
 
@@ -170,13 +170,13 @@ class TestDeviceIntegration:
 
         def ansatz(weights):
             weights = weights.reshape(depth, n_qubits)
-            qml.RX(weights[0][0], wires=[0])
-            qml.RZ(weights[0][1], wires=[0])
-            qml.RX(weights[1][0], wires=[0])
-            qml.RZ(weights[1][1], wires=[0])
-            return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
+            qp.RX(weights[0][0], wires=[0])
+            qp.RZ(weights[0][1], wires=[0])
+            qp.RX(weights[1][0], wires=[0])
+            qp.RZ(weights[1][1], wires=[0])
+            return qp.expval(qp.PauliZ(0) @ qp.PauliZ(1))
 
-        dev_qsk = qml.device(
+        dev_qsk = qp.device(
             "qiskit.aer",
             wires=n_qubits,
             backend="qasm_simulator",
@@ -185,32 +185,32 @@ class TestDeviceIntegration:
         weights = np.random.random((depth, n_qubits)).flatten()
 
         # Want to get expectation value and gradient
-        exp_sampled = qml.QNode(ansatz, dev_qsk, diff_method="parameter-shift")
-        qml.set_shots(exp_sampled, 1000)
-        grad_shift = qml.grad(exp_sampled, argnums=0)
+        exp_sampled = qp.QNode(ansatz, dev_qsk, diff_method="parameter-shift")
+        qp.set_shots(exp_sampled, 1000)
+        grad_shift = qp.grad(exp_sampled, argnums=0)
         exp_sampled(weights)
         grad_shift(weights)
 
     @pytest.mark.xfail(strict=True, reason="https://github.com/Qiskit/qiskit-aer/issues/2383")
     def test_four_qubit_circuit(self):
         """Tests a simple four qubit circuit."""
-        dev = qml.device("qiskit.aer", wires=4, backend="qasm_simulator")
-        dev_ref = qml.device("default.qubit")
+        dev = qp.device("qiskit.aer", wires=4, backend="qasm_simulator")
+        dev_ref = qp.device("default.qubit")
 
         def circuit():
-            qml.CNOT(wires=[2, 3])
-            qml.RY(0.1, wires=[3])
-            qml.CNOT(wires=[2, 3])
-            qml.RY(-0.1, wires=[3])
-            qml.CNOT(wires=[2, 3])
-            qml.CRZ(0.3, wires=[3, 1])
-            qml.S(3)
-            return qml.expval(qml.Z(0))
+            qp.CNOT(wires=[2, 3])
+            qp.RY(0.1, wires=[3])
+            qp.CNOT(wires=[2, 3])
+            qp.RY(-0.1, wires=[3])
+            qp.CNOT(wires=[2, 3])
+            qp.CRZ(0.3, wires=[3, 1])
+            qp.S(3)
+            return qp.expval(qp.Z(0))
 
-        qnode = qml.QNode(circuit, dev)
+        qnode = qp.QNode(circuit, dev)
         res = qnode()
-        res_ref = qml.QNode(circuit, dev_ref)
-        assert qml.math.allclose(res, res_ref)
+        res_ref = qp.QNode(circuit, dev_ref)
+        assert qp.math.allclose(res, res_ref)
 
 
 class TestKeywordArguments:
@@ -220,7 +220,7 @@ class TestKeywordArguments:
     def test_compile_backend(self, d):
         """Test that the compile backend argument is properly
         extracted"""
-        dev = qml.device(d[0], wires=2, compile_backend="test value")
+        dev = qp.device(d[0], wires=2, compile_backend="test value")
         assert dev.compile_backend == "test value"
 
     def test_noise_model_qasm_simulator(self, monkeypatch):
@@ -232,7 +232,7 @@ class TestKeywordArguments:
             m.setattr(
                 qiskit_aer.AerSimulator, "set_options", lambda *args, **kwargs: cache.append(kwargs)
             )
-            qml.device("qiskit.aer", wires=2, noise_model="test value")
+            qp.device("qiskit.aer", wires=2, noise_model="test value")
         assert cache[-1] == {"noise_model": "test value"}
 
     def test_invalid_noise_model(self):
@@ -240,11 +240,11 @@ class TestKeywordArguments:
         if the backend does not support it"""
         dev_name = pldevices[1][0]
         with pytest.raises(AttributeError, match="field noise_model is not valid for this backend"):
-            qml.device(dev_name, wires=2, noise_model="test value")
+            qp.device(dev_name, wires=2, noise_model="test value")
 
     def test_overflow_kwargs(self):
         """Test all overflow kwargs are extracted for the AerDevice"""
-        dev = qml.device("qiskit.aer", wires=2, k1="v1", k2="v2")
+        dev = qp.device("qiskit.aer", wires=2, k1="v1", k2="v2")
         assert dev.run_args["k1"] == "v1"
         assert dev.run_args["k2"] == "v2"
 
@@ -263,21 +263,21 @@ class TestLoadIntegration:
         qc = qiskit.QuantumCircuit(2)
         qc.rx(theta, 0)
 
-        my_template = qml.from_qiskit(qc)
+        my_template = qp.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=2)
+        dev = qp.device("default.qubit", wires=2)
 
         angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.0])
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def loaded_quantum_circuit(angle):
             my_template({theta: angle})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit(angle):
-            qml.RX(angle, wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(angle, wires=[0])
+            return qp.expval(qp.PauliZ(0))
 
         for x in angles:
             assert np.allclose(loaded_quantum_circuit(x), quantum_circuit(x))
@@ -285,17 +285,17 @@ class TestLoadIntegration:
     def test_load_from_qasm_string(self):
         """Test that quantum circuits can be loaded from a qasm string."""
 
-        dev = qml.device("default.qubit", wires=2)
+        dev = qp.device("default.qubit", wires=2)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def loaded_quantum_circuit():
-            qml.from_qasm(TestLoadIntegration.hadamard_qasm, measurements=[])(wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            qp.from_qasm(TestLoadIntegration.hadamard_qasm, measurements=[])(wires=[0])
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit():
-            qml.Hadamard(wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            qp.Hadamard(wires=[0])
+            return qp.expval(qp.PauliZ(0))
 
         assert np.allclose(loaded_quantum_circuit(), quantum_circuit())
 
@@ -308,19 +308,19 @@ class TestLoadIntegration:
             f.write(TestLoadIntegration.hadamard_qasm)
 
         with open(apply_hadamard, encoding="utf") as f:
-            hadamard = qml.from_qasm(f.read(), measurements=[])
+            hadamard = qp.from_qasm(f.read(), measurements=[])
 
-        dev = qml.device("default.qubit", wires=2)
+        dev = qp.device("default.qubit", wires=2)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def loaded_quantum_circuit():
             hadamard(wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit():
-            qml.Hadamard(wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            qp.Hadamard(wires=[0])
+            return qp.expval(qp.PauliZ(0))
 
         assert np.allclose(loaded_quantum_circuit(), quantum_circuit())
 
@@ -354,12 +354,12 @@ class TestPLOperations:
         def rz(theta):
             return np.cos(theta / 2) * I + 1j * np.sin(-theta / 2) * Z
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @qp.qnode(dev)
         def qubitstatevector_and_rot():
-            qml.StatePrep(state, wires=[0])
-            qml.Rot(a, b, c, wires=[0])
-            return qml.expval(qml.Identity(0))
+            qp.StatePrep(state, wires=[0])
+            qp.Rot(a, b, c, wires=[0])
+            return qp.expval(qp.Identity(0))
 
         qubitstatevector_and_rot()
 
@@ -375,11 +375,11 @@ class TestPLOperations:
         dev = state_vector_device(2)
         state = np.array([1, 0])
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @qp.qnode(dev)
         def basisstate():
-            qml.BasisState(state, wires=[0, 1])
-            return qml.expval(qml.Identity(0))
+            qp.BasisState(state, wires=[0, 1])
+            return qp.expval(qp.Identity(0))
 
         basisstate()
 
@@ -396,11 +396,11 @@ class TestPLOperations:
         dev = state_vector_device(4)
         state = np.array([0, 0, 0, 0])
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @qp.qnode(dev)
         def basisstate():
-            qml.BasisState(state, wires=[0, 1, 2, 3])
-            return qml.expval(qml.Identity(0))
+            qp.BasisState(state, wires=[0, 1, 2, 3])
+            return qp.expval(qp.Identity(0))
 
         basisstate()
 
@@ -419,12 +419,12 @@ class TestPLOperations:
 
         x = 1.23
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @qp.qnode(dev)
         def rotate_back_and_forth():
-            qml.RX(x, 0)
-            qml.adjoint(qml.RX(x, 0))
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(x, 0)
+            qp.adjoint(qp.RX(x, 0))
+            return qp.expval(qp.PauliZ(0))
 
         res = rotate_back_and_forth()
 
@@ -442,32 +442,32 @@ class TestPLTemplates:
         The main aim of the test is to check that unwrapping a single element
         tensor does not cause errors.
         """
-        dev = qml.device("qiskit.aer", wires=4)
+        dev = qp.device("qiskit.aer", wires=4)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(phi):
-            qml.templates.layers.RandomLayers(phi, wires=list(range(4)))
-            return qml.expval(qml.PauliZ(0))
+            qp.templates.layers.RandomLayers(phi, wires=list(range(4)))
+            return qp.expval(qp.PauliZ(0))
 
-        phi = qml.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
+        phi = qp.numpy.tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
 
         # Check that the jacobian executes without errors
-        qml.jacobian(circuit)(phi)
+        qp.jacobian(circuit)(phi)
 
     def test_single_gate_parameter(self, monkeypatch):
         """Test that when supplied a PennyLane tensor, a QNode passes an
         unwrapped tensor as the argument to a gate taking a single parameter"""
-        dev = qml.device("qiskit.aer", wires=4)
+        dev = qp.device("qiskit.aer", wires=4)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(phi=None):
             for y in phi:
                 for idx, x in enumerate(y):
-                    qml.RX(x, wires=idx)
-            return qml.expval(qml.PauliZ(0))
+                    qp.RX(x, wires=idx)
+            return qp.expval(qp.PauliZ(0))
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643, 2.51240058]])
-        tape = qml.workflow.construct_tape(circuit)(phi)
+        tape = qp.workflow.construct_tape(circuit)(phi)
         ops = tape.operations
         for i in range(phi.shape[1]):
             # Test each rotation applied
@@ -480,17 +480,17 @@ class TestPLTemplates:
     def test_multiple_gate_parameter(self):
         """Test that when supplied a PennyLane tensor, a QNode passes arguments
         as unwrapped tensors to a gate taking multiple parameters"""
-        dev = qml.device("qiskit.aer", wires=1)
+        dev = qp.device("qiskit.aer", wires=1)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(phi=None):
             for idx, x in enumerate(phi):
-                qml.Rot(*x, wires=idx)
-            return qml.expval(qml.PauliZ(0))
+                qp.Rot(*x, wires=idx)
+            return qp.expval(qp.PauliZ(0))
 
         phi = tensor([[0.04439891, 0.14490549, 3.29725643]])
 
-        tape = qml.workflow.construct_tape(circuit)(phi)
+        tape = qp.workflow.construct_tape(circuit)(phi)
         ops = tape.operations
         # Test the rotation applied
         assert ops[0].name == "Rot"
@@ -510,23 +510,23 @@ class TestInverses:
     def test_inverse_of_operation(self):
         """Test that the inverse of operations works as expected
         by comparing a simple circuit with default.qubit."""
-        dev = qml.device("default.qubit", wires=2)
+        dev = qp.device("default.qubit", wires=2)
 
-        dev2 = qml.device("qiskit.aer", backend="statevector_simulator", wires=2)
+        dev2 = qp.device("qiskit.aer", backend="statevector_simulator", wires=2)
 
         angles = np.array([0.53896774, 0.79503606, 0.27826503, 0.0])
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit_with_inverses(angle):
-            qml.adjoint(qml.Hadamard(0))
-            qml.adjoint(qml.RX(angle, wires=0))
-            return qml.expval(qml.PauliZ(0))
+            qp.adjoint(qp.Hadamard(0))
+            qp.adjoint(qp.RX(angle, wires=0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(dev2)
+        @qp.qnode(dev2)
         def circuit_with_inverses_default_qubit(angle):
-            qml.adjoint(qml.Hadamard(0))
-            qml.adjoint(qml.RX(angle, wires=0))
-            return qml.expval(qml.PauliZ(0))
+            qp.adjoint(qp.Hadamard(0))
+            qp.adjoint(qp.RX(angle, wires=0))
+            return qp.expval(qp.PauliZ(0))
 
         for x in angles:
             assert np.allclose(circuit_with_inverses(x), circuit_with_inverses_default_qubit(x))
@@ -543,14 +543,14 @@ class TestNoise:
         # Create a noise model where the RX operation always flips the bit
         noise_model.add_all_qubit_quantum_error(bit_flip, ["z", "rz"])
 
-        dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
+        dev = qp.device("qiskit.aer", wires=2, noise_model=noise_model)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            qml.PauliZ(wires=[0])
+            qp.PauliZ(wires=[0])
             # Add a barrier to prevent the Z gate from being optimized away
-            qml.Barrier(wires=[0])
-            return qml.expval(qml.PauliZ(wires=0))
+            qp.Barrier(wires=[0])
+            return qp.expval(qp.PauliZ(wires=0))
 
         assert circuit() == -1
 
@@ -572,7 +572,7 @@ class TestBatchExecution:
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=1, backend=backend)
+        dev = qp.device(d[0], wires=1, backend=backend)
 
         # Batch the input parameters
         batch_dim = 3
@@ -583,15 +583,15 @@ class TestBatchExecution:
         spy1 = mocker.spy(QiskitDeviceLegacy, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
-        @qml.set_shots(shots)
-        @partial(qml.batch_params, all_operations=True)
-        @qml.qnode(dev)
+        @qp.set_shots(shots)
+        @partial(qp.batch_params, all_operations=True)
+        @qp.qnode(dev)
         def circuit(x, y, z):
             """Reference QNode"""
-            qml.PauliX(0)
-            qml.Hadamard(wires=0)
-            qml.Rot(x, y, z, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.PauliX(0)
+            qp.Hadamard(wires=0)
+            qp.Rot(x, y, z, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert np.allclose(circuit(a, b, c), np.cos(a) * np.sin(b), **tol)
 
@@ -613,23 +613,23 @@ class TestBatchExecution:
         if backend not in state_backends and shots is None:
             pytest.skip("Hardware simulators do not support analytic mode")
 
-        dev = qml.device(d[0], wires=3, backend=backend)
+        dev = qp.device(d[0], wires=3, backend=backend)
 
         spy1 = mocker.spy(QiskitDeviceLegacy, "batch_execute")
         spy2 = mocker.spy(dev.backend, "run")
 
-        @qml.set_shots(shots)
-        @qml.qnode(dev, diff_method="parameter-shift")
+        @qp.set_shots(shots)
+        @qp.qnode(dev, diff_method="parameter-shift")
         def circuit(x, y):
-            qml.RX(x, wires=[0])
-            qml.RY(y, wires=[1])
-            qml.CNOT(wires=[0, 1])
-            return qml.expval(qml.PauliZ(0) @ qml.PauliX(1) @ qml.PauliZ(2))
+            qp.RX(x, wires=[0])
+            qp.RY(y, wires=[1])
+            qp.CNOT(wires=[0, 1])
+            return qp.expval(qp.PauliZ(0) @ qp.PauliX(1) @ qp.PauliZ(2))
 
-        x = qml.numpy.array(0.543, requires_grad=True)
-        y = qml.numpy.array(0.123, requires_grad=True)
+        x = qp.numpy.array(0.543, requires_grad=True)
+        y = qp.numpy.array(0.123, requires_grad=True)
 
-        res = qml.grad(circuit)(x, y)
+        res = qp.grad(circuit)(x, y)
         expected = np.array([[-np.sin(y) * np.sin(x), np.cos(y) * np.cos(x)]])
         assert np.allclose(res, expected, **tol)
 
@@ -642,18 +642,18 @@ class TestBatchExecution:
 
     def test_tracker(self):
         """Tests the device tracker with batch execution."""
-        dev = qml.device("qiskit.aer", wires=3)
+        dev = qp.device("qiskit.aer", wires=3)
 
-        @qml.set_shots(100)
-        @qml.qnode(dev, diff_method="parameter-shift")
+        @qp.set_shots(100)
+        @qp.qnode(dev, diff_method="parameter-shift")
         def circuit(x):
-            qml.RX(x, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(x, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         x = tensor(0.1, requires_grad=True)
 
-        with qml.Tracker(dev) as tracker:
-            qml.grad(circuit)(x)
+        with qp.Tracker(dev) as tracker:
+            qp.grad(circuit)(x)
 
         expected = {
             "executions": [1, 1, 1],

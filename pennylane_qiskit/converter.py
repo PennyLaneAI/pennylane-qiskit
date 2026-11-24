@@ -22,7 +22,7 @@ from functools import partial, reduce
 from typing import Any
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pennylane.ops as pennylane_ops
 from pennylane.noise.conditionals import WiresIn, _rename
 from pennylane.tape.tape import rotations_and_diagonal_measurements
@@ -94,10 +94,10 @@ QISKIT_OPERATION_MAP = {
 inv_map = {v.__name__: k for k, v in QISKIT_OPERATION_MAP.items()}
 
 dagger_map = {
-    "SdgGate": qml.S,
-    "TdgGate": qml.T,
-    "SXdgGate": qml.SX,
-    "GlobalPhaseGate": qml.GlobalPhase,
+    "SdgGate": qp.S,
+    "TdgGate": qp.T,
+    "SXdgGate": qp.SX,
+    "GlobalPhaseGate": qp.GlobalPhase,
 }
 
 referral_to_forum = (
@@ -255,7 +255,7 @@ def _extract_variable_refs(params: dict[Parameter, Any]) -> dict[Parameter, Any]
     # map qiskit parameters to PennyLane trainable parameter values
     if params is not None:
         for k, v in params.items():
-            if qml.math.requires_grad(v):
+            if qp.math.requires_grad(v):
                 # Values can be arrays of size 1, need to extract the Python scalar
                 # (this can happen e.g. when indexing into a PennyLane numpy array)
                 if isinstance(v, np.ndarray) and v.size == 1:
@@ -361,7 +361,7 @@ def _get_operation_params(instruction, unbound_params) -> list:
                         f_args.append(argument)
 
                 f_expr = p.sympify()
-                f = lambdify(f_params, f_expr, modules=qml.numpy)
+                f = lambdify(f_params, f_expr, modules=qp.numpy)
 
                 operation_params.append(f(*f_args))
             else:  # needed for qiskit<0.43.1
@@ -389,7 +389,7 @@ def map_wires(qc_wires: list, wires: list) -> dict:
     if len(qc_wires) == len(wires):
         return dict(zip(qc_wires, wires))
 
-    raise qml.exceptions.QuantumFunctionError(
+    raise qp.exceptions.QuantumFunctionError(
         f"The specified number of wires - {len(wires)} - does not match "
         "the number of wires the loaded quantum circuit acts on."
     )
@@ -451,7 +451,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         .. code-block:: python
 
             from qiskit.circuit import Parameter, QuantumCircuit
-            import pennylane as qml
+            import pennylane as qp
 
             a = Parameter("alpha")
             b = Parameter("beta")
@@ -461,7 +461,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             qc.rx(a, 0)
             qc.rx(b * c, 1)
 
-            this_function = qml.from_qiskit(qc, measurements=[qml.PauliZ(0), qml.PauliZ(1)])
+            this_function = qp.from_qiskit(qc, measurements=[qp.PauliZ(0), qp.PauliZ(1)])
 
         For the circuit above, based on ``Parameters`` with names 'alpha', 'beta' and 'gamma', all of the following are
         valid inputs to set the Parameter values for this template:
@@ -530,7 +530,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             operation_params = _get_operation_params(instruction, unbound_params)
 
             if instruction_name in dagger_map:
-                operation_class = qml.adjoint(dagger_map[instruction_name])
+                operation_class = qp.adjoint(dagger_map[instruction_name])
                 operation_args.extend(operation_params)
                 if instruction_name == "GlobalPhaseGate":
                     operation_kwargs = {}
@@ -538,7 +538,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             elif instruction_name in inv_map:
                 operation_class = getattr(pennylane_ops, inv_map[instruction_name])
                 operation_args.extend(operation_params)
-                if operation_class is qml.StatePrep:
+                if operation_class is qp.StatePrep:
                     operation_args = [np.array(operation_params)]
 
             elif isinstance(instruction, Measure):
@@ -570,8 +570,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
 
                 # Allows for queing the mid-circuit measurements
                 else:
-                    operation_class = qml.measure
-                    mid_circ_meas.append(qml.measure(wires=operation_wires))
+                    operation_class = qp.measure
+                    mid_circ_meas.append(qp.measure(wires=operation_wires))
 
                     # Allows for tracking conditional operations
                     for carg in cargs:
@@ -581,7 +581,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 try:
                     if not isinstance(instruction, (ControlFlowOp,)):
                         operation_args = [instruction.to_matrix()]
-                        operation_class = qml.QubitUnitary
+                        operation_class = qp.QubitUnitary
 
                 except (AttributeError, QiskitError):
                     warnings.warn(
@@ -593,7 +593,7 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
             # Check if it is a conditional operation or conditional instruction
             if isinstance(instruction, ControlFlowOp):
                 # Iteratively recurse over to build different branches for the condition
-                with qml.QueuingManager.stop_recording():
+                with qp.QueuingManager.stop_recording():
                     branch_funcs = [
                         partial(load(branch_inst, measurements=None), params=params, wires=wires)
                         for branch_inst in operation_params
@@ -612,9 +612,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 # length(pl_meas_conds) == len(true_fns) ==> True
                 pl_meas_conds = _process_condition(inst_cond, mid_circ_regs, instruction_name)
 
-                # Iterate over each of the conditional triplet and apply the condition via qml.cond
+                # Iterate over each of the conditional triplet and apply the condition via qp.cond
                 for pl_meas_cond, true_fn, false_fn in zip(pl_meas_conds, true_fns, false_fns):
-                    qml.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
+                    qp.cond(pl_meas_cond, true_fn, false_fn)(*operation_args, **operation_kwargs)
 
             # Check if it is not a mid-circuit measurement
             elif operation_class and not isinstance(instruction, Measure):
@@ -623,15 +623,15 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
         # Use the user-provided measurements
         # an empty iterable is treated as a user-provided measurement with no measurements to queue
         if measurements is not None:
-            if not qml.queuing.QueuingManager.active_context():
+            if not qp.queuing.QueuingManager.active_context():
                 return measurements
 
             if isinstance(measurements, Iterable):
-                return [qml.apply(meas) for meas in measurements]
+                return [qp.apply(meas) for meas in measurements]
 
-            return qml.apply(measurements)
+            return qp.apply(measurements)
 
-        return tuple(mid_circ_meas + list(map(qml.measure, terminal_meas))) or None
+        return tuple(mid_circ_meas + list(map(qp.measure, terminal_meas))) or None
 
     return _function
 
@@ -801,7 +801,7 @@ def load_pauli_op(
     pauli_op: SparsePauliOp,
     params: Any = None,
     wires: Sequence | None = None,
-) -> qml.operation.Operator:
+) -> qp.operation.Operator:
     """Loads a PennyLane ``Operator`` from a Qiskit `SparsePauliOp
     <https://docs.quantum.ibm.com/api/qiskit/qiskit.quantum_info.SparsePauliOp>`_.
 
@@ -902,7 +902,7 @@ def load_pauli_op(
     if params:
         pauli_op = pauli_op.assign_parameters(params)
 
-    op_map = {"X": qml.PauliX, "Y": qml.PauliY, "Z": qml.PauliZ, "I": qml.Identity}
+    op_map = {"X": qp.PauliX, "Y": qp.PauliY, "Z": qp.PauliZ, "I": qp.Identity}
 
     coeffs = pauli_op.coeffs
     if ParameterExpression in [type(c) for c in coeffs]:
@@ -918,16 +918,16 @@ def load_pauli_op(
         # in accordance with Qiskit wire order convention, i.e. `enumerate("XZ")` will be
         # [(0, "Z"), (1, "X")], so we don't need to reverse to match the PL convention.
         operators = [op_map[str(op)](wire_map[wire]) for wire, op in enumerate(term)]
-        pl_terms.append(qml.prod(*operators).simplify())
+        pl_terms.append(qp.prod(*operators).simplify())
 
-    return qml.dot(coeffs, pl_terms)
+    return qp.dot(coeffs, pl_terms)
 
 
 # pylint:disable=protected-access
 def _conditional_funcs(inst, operation_class, branch_funcs, ctrl_flow_type):
     """Builds the conditional functions for Controlled flows.
 
-    This method returns the arguments to be used by the ``qml.cond``
+    This method returns the arguments to be used by the ``qp.cond``
     for creating the classically controlled flow. These are the
     branches - ``true_fns`` and ``false_fns``, that contains the quantum
     functions to be applied based on the results of the condition.
@@ -995,7 +995,7 @@ def _process_condition(cond_op, mid_circ_regs, instruction_name):
             an informative warning in case processing of the condition fails.
 
     Returns:
-        pl_meas: list of corresponding mid-circuit measurements to be used in ``qml.cond``
+        pl_meas: list of corresponding mid-circuit measurements to be used in ``qp.cond``
     """
     # container for PL measurements operators
     pl_meas = []
@@ -1045,7 +1045,7 @@ def _process_switch_condition(condition, mid_circ_regs):
             to the performed PennyLane's mid-circuit measurements
 
     Returns:
-        meas_pl_ops: list of corresponding mid-circuit measurements to be used in ``qml.cond``
+        meas_pl_ops: list of corresponding mid-circuit measurements to be used in ``qp.cond``
     """
     use_switch_default = True
     # if the target is not an Expr
@@ -1094,7 +1094,7 @@ def _expr_evaluation(condition, mid_circ_regs):
             to the performed PennyLane's mid-circuit measurements
 
     Returns:
-        condition_res: corresponding mid-circuit measurements to be used in ``qml.cond``
+        condition_res: corresponding mid-circuit measurements to be used in ``qp.cond``
     """
 
     # Maps qiskit `expr` names to their mathematical logic
@@ -1166,7 +1166,7 @@ def _expr_eval_clregs(clbits, expr_func, bitwise=False):
         bitwise (bool): flag that specifies if the ``expr_func`` is performed on individual bits.
 
     Returns:
-        condition_res: corresponding mid-circuit measurements to be used in ``qml.cond``
+        condition_res: corresponding mid-circuit measurements to be used in ``qp.cond``
     """
     clreg1, clreg2 = clbits
     # Make both the bits of the same width with padding
@@ -1206,7 +1206,7 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
         bitwise (bool): flag that specifies if the ``expr_func`` is performed on individual bits.
 
     Returns:
-        condition_res: corresponding mid-circuit measurements to be used in ``qml.cond``
+        condition_res: corresponding mid-circuit measurements to be used in ``qp.cond``
     """
     [clreg1], [[clreg2]] = clbits, clvals
     # For bitwise operations, we first need a binary form for clreg2
@@ -1230,17 +1230,17 @@ def _expr_eval_clvals(clbits, clvals, expr_func, bitwise=False):
 
 def load_noise_model(
     noise_model, verbose: bool = False, decimal_places: int | None = None
-) -> qml.NoiseModel:
+) -> qp.NoiseModel:
     """Loads a PennyLane `NoiseModel <https://docs.pennylane.ai/en/stable/code/api/pennylane.NoiseModel.html>`_
     from a Qiskit `noise model <https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.NoiseModel.html>`_.
 
     Args:
         noise_model (qiskit_aer.noise.NoiseModel): a Qiskit noise model object
-        verbose (bool): when printing a ``NoiseModel``, a complete list of Kraus matrices for each ``qml.QubitChannel``
+        verbose (bool): when printing a ``NoiseModel``, a complete list of Kraus matrices for each ``qp.QubitChannel``
             is displayed with ``verbose=True``. By default, ``verbose=False`` and only the number of Kraus matrices and
             the number of qubits they act on is displayed for brevity.
         decimal_places (int | None): number of decimal places to round the elements of Kraus matrices when they are being
-            displayed for each ``qml.QubitChannel`` when ``verbose=True``.
+            displayed for each ``qp.QubitChannel`` when ``verbose=True``.
 
     Returns:
         pennylane.NoiseModel: An equivalent noise model constructed in PennyLane
@@ -1277,16 +1277,16 @@ def load_noise_model(
     for error, wires_map in qerror_dmap.items():
         conditions = []
         for wires, operations in wires_map.items():
-            cond = qml.noise.op_in(operations)
+            cond = qp.noise.op_in(operations)
             if wires != "ANY":
                 cond &= WiresIn(wires)
             conditions.append(cond)
         fcond = reduce(lambda cond1, cond2: cond1 | cond2, conditions)
 
-        noise = qml.noise.partial_wires(error)
-        if isinstance(error, qml.QubitChannel):
+        noise = qp.noise.partial_wires(error)
+        if isinstance(error, qp.QubitChannel):
             if not verbose:
-                kraus_shape = qml.math.shape(error.data)
+                kraus_shape = qp.math.shape(error.data)
                 n_kraus, n_wires = kraus_shape[0], int(np.log2(kraus_shape[1]))
                 noise = _rename(f"QubitChannel(num_kraus={n_kraus}, num_wires={n_wires})")(noise)
             elif verbose and decimal_places is not None:
@@ -1295,7 +1295,7 @@ def load_noise_model(
 
         model_map[fcond] = noise
 
-    return qml.NoiseModel(model_map)
+    return qp.NoiseModel(model_map)
 
 
 def _negate(param):

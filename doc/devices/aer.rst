@@ -10,8 +10,8 @@ You can instantiate a ``'qiskit.aer'`` device for PennyLane with:
 
 .. code-block:: python
 
-    import pennylane as qml
-    dev = qml.device('qiskit.aer', wires=2)
+    import pennylane as qp
+    dev = qp.device('qiskit.aer', wires=2)
 
 This device can then be used just like other devices for the definition and evaluation of QNodes within PennyLane.
 A simple quantum function that returns the expectation value of a measurement and depends on three classical input
@@ -19,13 +19,13 @@ parameters would look like:
 
 .. code-block:: python
 
-    @qml.qnode(dev)
+    @qp.qnode(dev)
     def circuit(x, y, z):
-        qml.RZ(z, wires=[0])
-        qml.RY(y, wires=[0])
-        qml.RX(x, wires=[0])
-        qml.CNOT(wires=[0, 1])
-        return qml.expval(qml.PauliZ(wires=1))
+        qp.RZ(z, wires=[0])
+        qp.RY(y, wires=[0])
+        qp.RX(x, wires=[0])
+        qp.CNOT(wires=[0, 1])
+        return qp.expval(qp.PauliZ(wires=1))
 
 You can then execute the circuit like any other function to get the expectation value of a Pauli 
 operator.
@@ -54,7 +54,7 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 .. code-block:: python
 
     from qiskit_aer import UnitarySimulator
-    dev = qml.device('qiskit.aer', wires=2, backend=UnitarySimulator())
+    dev = qp.device('qiskit.aer', wires=2, backend=UnitarySimulator())
 
 .. note::
 
@@ -62,7 +62,7 @@ You can change a ``'qiskit.aer'`` device's backend with the ``backend`` argument
 
     .. code-block:: python
 
-        dev = qml.device('qiskit.aer', wires=2, backend='unitary_simulator')
+        dev = qp.device('qiskit.aer', wires=2, backend='unitary_simulator')
 
     At the time of writing, this is still functional for the Aer devices. However, this will soon be 
     deprecated and may not function as intended. To ensure accurate results, we recommend passing in 
@@ -74,7 +74,7 @@ can be passed via the ``method`` keyword argument. For example
 
 .. code-block:: python
 
-    dev = qml.device("qiskit.aer", wires=2, backend=AerSimulator(), method="automatic")
+    dev = qp.device("qiskit.aer", wires=2, backend=AerSimulator(), method="automatic")
 
 Each of these methods can take different *run options*, for example to specify the numerical
 precision of the simulation.
@@ -83,7 +83,7 @@ The options are set via additional keyword arguments:
 
 .. code-block:: python
 
-    dev = qml.device(
+    dev = qp.device(
         'qiskit.aer',
         wires=2,
         backend=AerSimulator(),
@@ -107,7 +107,7 @@ from a `Qiskit tutorial <https://qiskit.github.io/qiskit-aer/tutorials/4_custom_
 
 .. code-block:: python
 
-    import pennylane as qml
+    import pennylane as qp
 
     import qiskit
     from qiskit_aer import noise
@@ -126,16 +126,16 @@ from a `Qiskit tutorial <https://qiskit.github.io/qiskit-aer/tutorials/4_custom_
     noise_model.add_all_qubit_quantum_error(error_2, ['cx'])
 
     # Create a PennyLane device
-    dev = qml.device('qiskit.aer', wires=2, noise_model=noise_model)
+    dev = qp.device('qiskit.aer', wires=2, noise_model=noise_model)
 
     # Create a PennyLane quantum node run on the device
-    @qml.qnode(dev)
+    @qp.qnode(dev)
     def circuit(x, y, z):
-        qml.RZ(z, wires=[0])
-        qml.RY(y, wires=[0])
-        qml.RX(x, wires=[0])
-        qml.CNOT(wires=[0, 1])
-        return qml.expval(qml.PauliZ(wires=1))
+        qp.RZ(z, wires=[0])
+        qp.RY(y, wires=[0])
+        qp.RX(x, wires=[0])
+        qp.CNOT(wires=[0, 1])
+        return qp.expval(qp.PauliZ(wires=1))
 
     # Result of noisy simulator
     print(circuit(0.2, 0.1, 0.3))

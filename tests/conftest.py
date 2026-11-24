@@ -18,7 +18,7 @@ This module contains some configuration for PennyLane IBMQ devices.
 import os
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pytest
 from qiskit_ibm_runtime import QiskitRuntimeService
 
@@ -158,21 +158,21 @@ def mock_device(monkeypatch):
     """A mock instance of the abstract Device class"""
 
     with monkeypatch.context() as m:
-        dev = qml.Device
+        dev = qp.Device
         m.setattr(dev, "__abstractmethods__", frozenset())
-        yield qml.Device()
+        yield qp.Device()
 
 
 @pytest.fixture(scope="function")
 def recorder():
-    return qml.queuing.AnnotatedQueue()
+    return qp.queuing.AnnotatedQueue()
 
 
 @pytest.fixture(scope="function")
 def qubit_device_single_wire():
-    return qml.device("default.qubit", wires=1)
+    return qp.device("default.qubit", wires=1)
 
 
 @pytest.fixture(scope="function")
 def qubit_device_2_wires():
-    return qml.device("default.qubit", wires=2)
+    return qp.device("default.qubit", wires=2)

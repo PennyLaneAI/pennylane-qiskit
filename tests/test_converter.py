@@ -22,7 +22,7 @@ import itertools as it
 import sys
 from typing import cast
 
-import pennylane as qml
+import pennylane as qp
 import pytest
 from pennylane import I, X, Y, Z
 from pennylane import numpy as np
@@ -119,9 +119,9 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with recorder:
-            qml.PauliZ(0)
+            qp.PauliZ(0)
             quantum_circuit(params={theta: angle})
-            qml.Hadamard(0)
+            qp.Hadamard(0)
 
         assert len(recorder.queue) == 3
         assert recorder.queue[0].name == "PauliZ"
@@ -201,11 +201,11 @@ class TestConverterQiskitToPennyLane:
 
         quantum_circuit = load(qc)
 
-        with qml.tape.QuantumTape() as tape:
+        with qp.tape.QuantumTape() as tape:
             quantum_circuit(params={a: a_val, b: b_val, c: c_val}, wires=(0,))
 
         recorded_op = tape.operations[0]
-        assert isinstance(recorded_op, qml.RX)
+        assert isinstance(recorded_op, qp.RX)
         assert recorded_op.parameters == a_val * np.cos(b_val) + c_val
 
     def test_quantum_circuit_loaded_multiple_times_with_different_arguments(self, recorder):
@@ -315,7 +315,7 @@ class TestConverterQiskitToPennyLane:
         """Tests the load method raises a ValueError, if something
         that is not a QuantumCircuit was passed."""
 
-        qc = qml.PauliZ(0)
+        qc = qp.PauliZ(0)
 
         quantum_circuit = load(qc)
 
@@ -339,7 +339,7 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with pytest.raises(
-            qml.exceptions.QuantumFunctionError,
+            qp.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(only_two_wires)} - does not match the"
             " number of wires the loaded quantum circuit acts on.",
         ):
@@ -362,7 +362,7 @@ class TestConverterQiskitToPennyLane:
         quantum_circuit = load(qc)
 
         with pytest.raises(
-            qml.exceptions.QuantumFunctionError,
+            qp.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(more_than_three_wires)} - does not match the"
             " number of wires the loaded quantum circuit acts on.",
         ):
@@ -855,7 +855,7 @@ class TestConverterUtils:
         qc_wires = [hash(q) for q in qc.qubits]
 
         with pytest.raises(
-            qml.exceptions.QuantumFunctionError,
+            qp.exceptions.QuantumFunctionError,
             match=f"The specified number of wires - {len(wires)} - does not match ",
         ):
             map_wires(qc_wires, wires)
@@ -1125,7 +1125,7 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit()
 
-        # only 2 x X, a Barrier, and 4 x H queued (not 4 x qml.measure)
+        # only 2 x X, a Barrier, and 4 x H queued (not 4 x qp.measure)
         assert len(recorder.queue) == 7
 
         assert recorder.queue[0].name == "PauliX"
@@ -1179,7 +1179,7 @@ class TestConverterQasm:
         with recorder:
             quantum_circuit(params={})
 
-        # X and CNOT queued with 4 x qml.measure
+        # X and CNOT queued with 4 x qp.measure
         assert len(recorder.queue) == 6
 
         assert recorder.queue[0].name == "PauliX"
@@ -1199,20 +1199,20 @@ class TestConverterQasm:
         qasm_string = (
             'include "qelib1.inc";' + "qreg q[2];" + "creg c[2];" + "h q[0];" + "cx q[0], q[1];"
         )
-        dev = qml.device("default.qubit")
-        measurements = [qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))]
+        dev = qp.device("default.qubit")
+        measurements = [qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliZ(1))]
         loaded_circuit = load_qasm(qasm_string, measurements=measurements)
 
         # loaded circuit with measurements
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit1():
             return loaded_circuit()
 
         # native pennylane measurements
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit2():
             load_qasm(qasm_string)()
-            return [qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))]
+            return [qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliZ(1))]
 
         assert quantum_circuit1() == quantum_circuit2()
 
@@ -1228,27 +1228,27 @@ class TestConverterQasm:
             "cx q[0], q[1];"
             "measure q -> c;"
         )
-        dev = qml.device("default.qubit")
+        dev = qp.device("default.qubit")
         loaded_circuit = load_qasm(qasm_string)
 
         # loaded circuit
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit1():
             mid_measure, _, m1 = loaded_circuit()
-            qml.cond(mid_measure == 0, qml.RX)(np.pi / 2, 0)
-            return qml.expval(mid_measure), qml.expval(m1)
+            qp.cond(mid_measure == 0, qp.RX)(np.pi / 2, 0)
+            return qp.expval(mid_measure), qp.expval(m1)
 
         # native pennylane circuit
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def quantum_circuit2():
-            qml.Hadamard(0)
-            mid_measure = qml.measure(0)
-            qml.RZ(0.24, 0)
-            qml.CNOT([0, 1])
-            qml.measure([0])
-            m1 = qml.measure([1])
-            qml.cond(mid_measure == 0, qml.RX)(np.pi / 2, 0)
-            return qml.expval(mid_measure), qml.expval(m1)
+            qp.Hadamard(0)
+            mid_measure = qp.measure(0)
+            qp.RZ(0.24, 0)
+            qp.CNOT([0, 1])
+            qp.measure([0])
+            m1 = qp.measure([1])
+            qp.cond(mid_measure == 0, qp.RX)(np.pi / 2, 0)
+            return qp.expval(mid_measure), qp.expval(m1)
 
         assert quantum_circuit1() == quantum_circuit2()
 
@@ -1264,15 +1264,15 @@ class TestConverterIntegration:
 
         quantum_circuit = load(qc)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             quantum_circuit()
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
-            qml.RZ(angle, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RZ(angle, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -1286,15 +1286,15 @@ class TestConverterIntegration:
         qc = QuantumCircuit(2)
         qc.rz(theta, [0])
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qc)({theta: angle})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
-            qml.RZ(angle, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RZ(angle, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -1308,21 +1308,21 @@ class TestConverterIntegration:
         qc.rz(theta, [0])
 
         # with params dict as arg
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit(angle):
             load(qc)({theta: angle})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         # with params dict as kwarg
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit2(angle):
             load(qc)(params={theta: angle})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_native_pennylane(angle):
-            qml.RZ(angle, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RZ(angle, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit(rotation_angle) == circuit_native_pennylane(
             rotation_angle
@@ -1345,22 +1345,22 @@ class TestConverterIntegration:
         qc.rx(phi, [0])
 
         # as args
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit(angle):
             load(qc)(rotation_angle2, angle)  # order is phi, theta (alphabetical)
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         # as kwargs
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit2(angle):
             load(qc)(theta=angle, phi=rotation_angle2)
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_native_pennylane(angle):
-            qml.RZ(angle, wires=0)
-            qml.RX(rotation_angle2, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RZ(angle, wires=0)
+            qp.RX(rotation_angle2, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit(rotation_angle1) == circuit_native_pennylane(
             rotation_angle1
@@ -1378,15 +1378,15 @@ class TestConverterIntegration:
         qc = QuantumCircuit(qreg)
         qc.initialize(prob_amplitudes, [qreg[0]])
 
-        @qml.qnode(qubit_device_single_wire)
+        @qp.qnode(qubit_device_single_wire)
         def circuit_loaded_qiskit_circuit():
             load(qc)()
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        @qml.qnode(qubit_device_single_wire)
+        @qp.qnode(qubit_device_single_wire)
         def circuit_native_pennylane():
-            qml.StatePrep(np.array(prob_amplitudes), wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            qp.StatePrep(np.array(prob_amplitudes), wires=[0])
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -1404,17 +1404,17 @@ class TestConverterIntegration:
         qc.cx(1, 2)
 
         # convert to a PennyLane circuit
-        qc_pl = qml.from_qiskit(qc)
+        qc_pl = qp.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qp.device("default.qubit", wires=3)
 
-        @qml.qnode(dev, shots=shots)
+        @qp.qnode(dev, shots=shots)
         def circuit(params):
             qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
             qc_pl(qiskit_param_mapping)
-            return qml.expval(qml.PauliX(0) @ qml.PauliY(2))
+            return qp.expval(qp.PauliX(0) @ qp.PauliY(2))
 
-        dcircuit = qml.grad(circuit, 0)
+        dcircuit = qp.grad(circuit, 0)
         res = dcircuit([theta, phi, varphi])
         expected = [
             np.cos(theta) * np.sin(phi) * np.sin(varphi),
@@ -1435,16 +1435,16 @@ class TestConverterIntegration:
         qiskit_circuit.rx(theta_param[0], 0)
         qiskit_circuit.rx(theta_param[1] * 4, 0)
 
-        pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
+        pl_circuit_loader = qp.from_qiskit(qiskit_circuit)
 
-        dev = qml.device("default.qubit", wires=1)
+        dev = qp.device("default.qubit", wires=1)
 
-        @qml.qnode(dev, shots=shots)
+        @qp.qnode(dev, shots=shots)
         def circuit(theta):
             pl_circuit_loader(params={theta_param: theta})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        have_gradient = qml.grad(circuit)(theta_val)
+        have_gradient = qp.grad(circuit)(theta_val)
         want_gradient = [-1, -4]
         assert np.allclose(have_gradient, want_gradient, **tol)
 
@@ -1468,16 +1468,16 @@ class TestConverterIntegration:
         # Apply an instruction with a parameter expression involving two parameters.
         qiskit_circuit.rx(3 * theta_param[2] + phi_param, 0)
 
-        pl_circuit_loader = qml.from_qiskit(qiskit_circuit)
+        pl_circuit_loader = qp.from_qiskit(qiskit_circuit)
 
-        dev = qml.device("default.qubit", wires=1)
+        dev = qp.device("default.qubit", wires=1)
 
-        @qml.qnode(dev, shots=shots)
+        @qp.qnode(dev, shots=shots)
         def circuit(phi, theta):
             pl_circuit_loader(params={phi_param: phi, theta_param: theta})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
-        have_phi_gradient, have_theta_gradient = qml.grad(circuit)(phi_val, theta_val)
+        have_phi_gradient, have_theta_gradient = qp.grad(circuit)(phi_val, theta_val)
         want_phi_gradient, want_theta_gradient = [-2], [-1, -2, -3]
         assert np.allclose(have_phi_gradient, want_phi_gradient, **tol)
         assert np.allclose(have_theta_gradient, want_theta_gradient, **tol)
@@ -1492,7 +1492,7 @@ class TestConverterIntegration:
         theta = 0.53
         phi = -1.23
         varphi = 0.8654
-        params = [qml.numpy.tensor(theta), qml.numpy.tensor(phi), qml.numpy.tensor(varphi)]
+        params = [qp.numpy.tensor(theta), qp.numpy.tensor(phi), qp.numpy.tensor(varphi)]
 
         qc.rx(qiskit_params[0], 0)
         qc.rx(qiskit_params[1], 1)
@@ -1501,17 +1501,17 @@ class TestConverterIntegration:
         qc.cx(1, 2)
 
         # convert to a PennyLane circuit
-        qc_pl = qml.from_qiskit(qc)
+        qc_pl = qp.from_qiskit(qc)
 
-        dev = qml.device("default.qubit", wires=3)
+        dev = qp.device("default.qubit", wires=3)
 
-        @qml.qnode(dev, shots=shots)
+        @qp.qnode(dev, shots=shots)
         def circuit(params):
             qiskit_param_mapping = dict(map(list, zip(qiskit_params, params)))
             qc_pl(qiskit_param_mapping)
-            return qml.expval(qml.PauliX(0) @ qml.PauliY(2))
+            return qp.expval(qp.PauliX(0) @ qp.PauliY(2))
 
-        dcircuit = qml.grad(circuit, 0)
+        dcircuit = qp.grad(circuit, 0)
         res = dcircuit(params)
         expected = [
             np.cos(theta) * np.sin(phi) * np.sin(varphi),
@@ -1532,12 +1532,12 @@ class TestConverterIntegration:
         qc.ry(a * b, 1)
         qc.cx(0, 1)
 
-        dev = qml.device("default.qubit", wires=2)
+        dev = qp.device("default.qubit", wires=2)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(a_val, b_val):
             load(qc)({a: a_val, b: b_val}, wires=(0, 1))
-            return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliX(1))
+            return qp.expval(qp.PauliZ(0)), qp.expval(qp.PauliX(1))
 
         x = np.array(0.1, requires_grad=True)
         y = np.array(0.2, requires_grad=True)
@@ -1548,9 +1548,9 @@ class TestConverterIntegration:
         assert np.allclose(res, res_expected)
 
         def cost(x, y):
-            return qml.math.stack(circuit(x, y))
+            return qp.math.stack(circuit(x, y))
 
-        jac = qml.jacobian(cost)(x, y)
+        jac = qp.jacobian(cost)(x, y)
 
         jac_expected = [
             [-np.sin(x + np.cos(y)), np.cos(x * y) * y],
@@ -1565,17 +1565,17 @@ class TestConverterIntegration:
         qc.h(0)
         qc.measure_all()
 
-        measurement = qml.expval(qml.PauliZ(0))
+        measurement = qp.expval(qp.PauliZ(0))
         quantum_circuit = load(qc, measurements=measurement)
 
-        @qml.qnode(qubit_device_single_wire)
+        @qp.qnode(qubit_device_single_wire)
         def circuit_loaded_qiskit_circuit():
             return quantum_circuit()
 
-        @qml.qnode(qubit_device_single_wire)
+        @qp.qnode(qubit_device_single_wire)
         def circuit_native_pennylane():
-            qml.Hadamard(0)
-            return qml.expval(qml.PauliZ(0))
+            qp.Hadamard(0)
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -1593,38 +1593,38 @@ class TestConverterIntegration:
         qc.cx(0, 1)
         qc.measure_all()
 
-        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        measurements = [qp.expval(qp.PauliZ(0)), qp.vn_entropy([1])]
         quantum_circuit = load(qc, measurements=measurements)
 
-        @qml.qnode(qml.device("default.qubit"))
+        @qp.qnode(qp.device("default.qubit"))
         def circuit_loaded_qiskit_circuit():
             return quantum_circuit()
 
-        @qml.qnode(qml.device("default.qubit"))
+        @qp.qnode(qp.device("default.qubit"))
         def circuit_native_pennylane():
-            qml.Hadamard(0)
-            m0 = qml.measure(0)
-            qml.cond(m0, qml.PauliZ)(0)
-            qml.RZ(angle, wires=0)
-            qml.CNOT([0, 1])
-            return [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+            qp.Hadamard(0)
+            m0 = qp.measure(0)
+            qp.cond(m0, qp.PauliZ)(0)
+            qp.RZ(angle, wires=0)
+            qp.CNOT([0, 1])
+            return [qp.expval(qp.PauliZ(0)), qp.vn_entropy([1])]
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
         quantum_circuit = load(qc, measurements=None)
 
-        @qml.qnode(qml.device("default.qubit"))
+        @qp.qnode(qp.device("default.qubit"))
         def circuit_loaded_qiskit_circuit2():
             meas = quantum_circuit()
-            return [qml.expval(m) for m in meas]
+            return [qp.expval(m) for m in meas]
 
-        @qml.qnode(qml.device("default.qubit"))
+        @qp.qnode(qp.device("default.qubit"))
         def circuit_native_pennylane2():
-            qml.Hadamard(0)
-            m0 = qml.measure(0)
-            qml.RZ(angle, wires=0)
-            qml.CNOT([0, 1])
-            return [qml.expval(m) for m in [m0, qml.measure(0), qml.measure(1)]]
+            qp.Hadamard(0)
+            m0 = qp.measure(0)
+            qp.RZ(angle, wires=0)
+            qp.CNOT([0, 1])
+            return [qp.expval(m) for m in [m0, qp.measure(0), qp.measure(1)]]
 
         assert circuit_loaded_qiskit_circuit2() == circuit_native_pennylane2()
 
@@ -1642,9 +1642,9 @@ class TestConverterIntegration:
 
         m1, m2 = load(qc)()
         for m, w in zip((m1, m2), (0, 1)):
-            assert isinstance(m, qml.measurements.MeasurementValue)
+            assert isinstance(m, qp.measurements.MeasurementValue)
             assert len(m.measurements) == 1
-            assert m.measurements[0].wires == qml.wires.Wires(w)
+            assert m.measurements[0].wires == qp.wires.Wires(w)
 
         qc1 = QuantumCircuit(3, 3)
         qc1.h(0)
@@ -1655,9 +1655,9 @@ class TestConverterIntegration:
 
         m1, m2 = load(qc1)()
         for m, w in zip((m1, m2), (2, 1)):
-            assert isinstance(m, qml.measurements.MeasurementValue)
+            assert isinstance(m, qp.measurements.MeasurementValue)
             assert len(m.measurements) == 1
-            assert m.measurements[0].wires == qml.wires.Wires(w)
+            assert m.measurements[0].wires == qp.wires.Wires(w)
 
 
 class TestConverterPennyLaneCircuitToQiskit:
@@ -1666,7 +1666,7 @@ class TestConverterPennyLaneCircuitToQiskit:
     def test_circuit_to_qiskit(self):
         """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
 
-        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0])])
+        qscript = QuantumScript([qp.Hadamard(1), qp.CNOT([1, 0])])
         qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
 
         operation_names = [instruction.operation.name for instruction in qc.data]
@@ -1676,7 +1676,7 @@ class TestConverterPennyLaneCircuitToQiskit:
     def test_globalphase_to_qiskit(self):
         """Test GlobalPhase is properly handled."""
 
-        qscript = QuantumScript([qml.RZ(0.5, wires=0), qml.GlobalPhase(0.5)])
+        qscript = QuantumScript([qp.RZ(0.5, wires=0), qp.GlobalPhase(0.5)])
         qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
         operation_names = [instruction.operation.name for instruction in qc.data]
         assert operation_names == ["rz", "global_phase"]
@@ -1686,7 +1686,7 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that a simple PennyLane circuit is converted to the expected Qiskit circuit"""
         angle = 1.2
 
-        qscript = QuantumScript([qml.Hadamard(1), qml.CNOT([1, 0]), qml.RX(angle, 2)])
+        qscript = QuantumScript([qp.Hadamard(1), qp.CNOT([1, 0]), qp.RX(angle, 2)])
         qc = circuit_to_qiskit(qscript, len(qscript.wires), diagonalize=False, measure=False)
 
         operation_names = [instruction.operation.name for instruction in qc.data]
@@ -1695,7 +1695,7 @@ class TestConverterPennyLaneCircuitToQiskit:
         assert operation_names == ["h", "cx", "rx"]
         assert operation_params == [[], [], [angle]]
 
-    @pytest.mark.parametrize("operations", [[], [qml.PauliX(0), qml.PauliY(1)], [qml.Hadamard(0)]])
+    @pytest.mark.parametrize("operations", [[], [qp.PauliX(0), qp.PauliY(1)], [qp.Hadamard(0)]])
     @pytest.mark.parametrize("register_size", [2, 5])
     def test_circuit_to_qiskit_register_size(self, operations, register_size):
         """Test that the regsiter_size determines the shape of the Qiskit
@@ -1711,7 +1711,7 @@ class TestConverterPennyLaneCircuitToQiskit:
 
     @pytest.mark.parametrize(
         "operations, final_op_name",
-        [([qml.PauliX(0), qml.PauliY(1)], "y"), ([[qml.CNOT([0, 1]), qml.Hadamard(1)], "h"])],
+        [([qp.PauliX(0), qp.PauliY(1)], "y"), ([[qp.CNOT([0, 1]), qp.Hadamard(1)], "h"])],
     )
     @pytest.mark.parametrize("measure", [True, False])
     def test_circuit_to_qiskit_measure_kwarg(self, operations, final_op_name, measure):
@@ -1728,9 +1728,9 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that diagonalizing gates are included in the circuit if diagonalize=True"""
 
         qscript = QuantumScript(
-            [qml.Hadamard(1), qml.CNOT([1, 0])], measurements=[qml.expval(qml.PauliY(1))]
+            [qp.Hadamard(1), qp.CNOT([1, 0])], measurements=[qp.expval(qp.PauliY(1))]
         )
-        assert qscript.diagonalizing_gates == [qml.PauliZ(1), qml.S(1), qml.Hadamard(1)]
+        assert qscript.diagonalizing_gates == [qp.PauliZ(1), qp.S(1), qp.Hadamard(1)]
 
         qc = circuit_to_qiskit(qscript, 2, diagonalize=diagonalize, measure=True)
 
@@ -1752,8 +1752,8 @@ class TestConverterPennyLaneCircuitToQiskit:
         """Test that diagonalizing gates work for circuits with
         measurements on overlapping wires"""
 
-        measurements = [qml.sample(qml.X(0) @ qml.Y(1)), qml.sample(qml.X(0))]
-        tape = qml.tape.QuantumScript(measurements=measurements)
+        measurements = [qp.sample(qp.X(0) @ qp.Y(1)), qp.sample(qp.X(0))]
+        tape = qp.tape.QuantumScript(measurements=measurements)
 
         qc = circuit_to_qiskit(tape, 2, diagonalize=True, measure=True)
 
@@ -1777,7 +1777,7 @@ class TestConverterGatePennyLaneToQiskit:
         """Test that a non-parameteric operation is correctly converted to a
         Qiskit circuit with a single operation"""
 
-        op = qml.PauliX(0)
+        op = qp.PauliX(0)
 
         qc = operation_to_qiskit(op, QuantumRegister(1))
         ops = [instruction.operation.name for instruction in qc.data]
@@ -1791,7 +1791,7 @@ class TestConverterGatePennyLaneToQiskit:
         """Test that a parameteric operation is correctly converted to a
         Qiskit circuit with a single operation"""
 
-        op = qml.RX(1.23, 2)
+        op = qp.RX(1.23, 2)
 
         qc = operation_to_qiskit(op, QuantumRegister(3))
         ops = [instruction.operation.name for instruction in qc.data]
@@ -1809,7 +1809,7 @@ class TestConverterGatePennyLaneToQiskit:
         """Test that an operation with multiple wires is correctly converted to a
         Qiskit circuit with a single operation"""
 
-        op = qml.CNOT(op_wires)
+        op = qp.CNOT(op_wires)
 
         qc = operation_to_qiskit(op, QuantumRegister(5))
         ops = [instruction.operation.name for instruction in qc.data]
@@ -1822,10 +1822,8 @@ class TestConverterGatePennyLaneToQiskit:
     @pytest.mark.parametrize(
         "op",
         [
-            qml.QubitUnitary(
-                [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], wires=[0, 1]
-            ),
-            qml.StatePrep(np.array([1, 0, 0, 0]), wires=[0, 1]),
+            qp.QubitUnitary([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], wires=[0, 1]),
+            qp.StatePrep(np.array([1, 0, 0, 0]), wires=[0, 1]),
         ],
     )
     def test_state_prep_ops_have_reversed_register(self, op):
@@ -1845,7 +1843,7 @@ class TestConverterGatePennyLaneToQiskit:
 
         creg = ClassicalRegister(3)
 
-        op = qml.RX(1.23, 2)
+        op = qp.RX(1.23, 2)
 
         qc1 = operation_to_qiskit(op, QuantumRegister(3), creg=creg)
         qc2 = operation_to_qiskit(op, QuantumRegister(3), creg=None)
@@ -1867,14 +1865,14 @@ class TestConverterGatePennyLaneToQiskit:
 
 # pylint:disable=too-few-public-methods
 class TestConverterUtilsPennyLaneToQiskit:
-    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize("measurement_type", [qp.expval, qp.var])
     @pytest.mark.parametrize(
         "operator, expected",
         [
-            (qml.X(0), SparsePauliOp("IIIIX")),
-            (qml.I(1), SparsePauliOp("IIIII")),
+            (qp.X(0), SparsePauliOp("IIIIX")),
+            (qp.I(1), SparsePauliOp("IIIII")),
             (Y(0), SparsePauliOp("IIIIY")),
-            (qml.PauliZ(0), SparsePauliOp("IIIIZ")),
+            (qp.PauliZ(0), SparsePauliOp("IIIIZ")),
             (
                 X(0) + I(0) + 2 * Y(1) + I(1),
                 SparsePauliOp("IIIIX")
@@ -1883,46 +1881,46 @@ class TestConverterUtilsPennyLaneToQiskit:
                 + SparsePauliOp("IIIII"),
             ),
             (
-                qml.X(0) + qml.X(0) + qml.Y(1) + qml.Z(2),
+                qp.X(0) + qp.X(0) + qp.Y(1) + qp.Z(2),
                 SparsePauliOp("IIIIX")
                 + SparsePauliOp("IIIIX")
                 + SparsePauliOp("IIIYI")
                 + SparsePauliOp("IIZII"),
             ),
             (
-                qml.sum(X(0) + X(0) + Y(1) + Z(2)),
+                qp.sum(X(0) + X(0) + Y(1) + Z(2)),
                 SparsePauliOp("IIIIX")
                 + SparsePauliOp("IIIIX")
                 + SparsePauliOp("IIIYI")
                 + SparsePauliOp("IIZII"),
             ),
             (
-                (qml.X(0) + 2 * qml.Y(1)),
+                (qp.X(0) + 2 * qp.Y(1)),
                 SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI"),
             ),
             (
-                qml.sum(X(0) + qml.s_prod(2, Y(1))),
+                qp.sum(X(0) + qp.s_prod(2, Y(1))),
                 SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIYI"),
             ),
-            (qml.X(0) + qml.Y(0), SparsePauliOp("IIIIX") + SparsePauliOp("IIIIY")),
+            (qp.X(0) + qp.Y(0), SparsePauliOp("IIIIX") + SparsePauliOp("IIIIY")),
             (
-                0.5 * X(0) + 3 * (X(2) + qml.PauliY(1)),
+                0.5 * X(0) + 3 * (X(2) + qp.PauliY(1)),
                 0.5 * SparsePauliOp("IIIIX")
                 + 3 * (SparsePauliOp("IIXII") + SparsePauliOp("IIIYI")),
             ),
             (
-                0.5 * X(0) + 0.5 * qml.Y(0) - 1.5 * qml.X(0) - 0.5 * qml.Y(0),
+                0.5 * X(0) + 0.5 * qp.Y(0) - 1.5 * qp.X(0) - 0.5 * qp.Y(0),
                 0.5 * SparsePauliOp("IIIIX")
                 + 0.5 * SparsePauliOp("IIIIY")
                 - 1.5 * SparsePauliOp("IIIIX")
                 - 0.5 * SparsePauliOp("IIIIY"),
             ),
             (
-                qml.ops.LinearCombination(
+                qp.ops.LinearCombination(
                     [1, 3, 4],
                     [X(3) @ Y(2), Y(4) - X(2), Z(2) * 3],
                 )
-                + qml.X(4),
+                + qp.X(4),
                 1 * SparsePauliOp("IXIII") @ SparsePauliOp("IIYII")
                 + 3 * (SparsePauliOp("YIIII") - SparsePauliOp("IIXII"))
                 + 3 * 4 * SparsePauliOp("IIZII")
@@ -1942,7 +1940,7 @@ class TestConverterUtilsPennyLaneToQiskit:
         assert len(pauli_op_list) == register_size
         assert pauli_op.equiv(expected.simplify())
 
-    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize("measurement_type", [qp.expval, qp.var])
     @pytest.mark.parametrize(
         "operator, expected",
         [
@@ -1984,28 +1982,28 @@ class TestConverterUtilsPennyLaneToQiskit:
         assert len(pauli_op_list) == register_size
         assert pauli_op.equiv(expected.simplify())
 
-    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize("measurement_type", [qp.expval, qp.var])
     @pytest.mark.parametrize(
         "hamiltonian, expected",
         [
             (
-                qml.Hamiltonian([1, 2], [qml.X(0), qml.X(1)]),
+                qp.Hamiltonian([1, 2], [qp.X(0), qp.X(1)]),
                 SparsePauliOp(["IIIIX", "IIIXI"], [1, 2]),
             ),
             (
-                qml.Hamiltonian([3, -2], [qml.X(0), qml.X(0)]),
+                qp.Hamiltonian([3, -2], [qp.X(0), qp.X(0)]),
                 SparsePauliOp(["IIIIX", "IIIIX"], [3, -2]),
             ),
             (
-                qml.Hamiltonian([-3, 3, 0.5, 5], [qml.X(0), qml.X(0), qml.Z(1), qml.Y(2)]),
+                qp.Hamiltonian([-3, 3, 0.5, 5], [qp.X(0), qp.X(0), qp.Z(1), qp.Y(2)]),
                 SparsePauliOp(["IIIIX", "IIIIX", "IIIZI", "IIYII"], [-3, 3, 0.5, 5]),
             ),
             (
-                qml.Hamiltonian([1], [qml.X(0)]) + 2 * qml.Z(0) @ qml.Z(1),
+                qp.Hamiltonian([1], [qp.X(0)]) + 2 * qp.Z(0) @ qp.Z(1),
                 SparsePauliOp("IIIIX") + 2 * SparsePauliOp("IIIIZ") @ SparsePauliOp("IIIZI"),
             ),
             (
-                qml.Hamiltonian([1], [qml.X(0) @ Y(2)]) - 3 * qml.Z(4) @ qml.Z(1),
+                qp.Hamiltonian([1], [qp.X(0) @ Y(2)]) - 3 * qp.Z(4) @ qp.Z(1),
                 (SparsePauliOp("IIIIX") @ SparsePauliOp("IIYII"))
                 - 3 * SparsePauliOp("ZIIII") @ SparsePauliOp("IIIZI"),
             ),
@@ -2026,11 +2024,11 @@ class TestConverterUtilsPennyLaneToQiskit:
         assert len(pauli_op_list) == register_size
         assert pauli_op.equiv(expected.simplify())
 
-    @pytest.mark.parametrize("measurement_type", [qml.expval, qml.var])
+    @pytest.mark.parametrize("measurement_type", [qp.expval, qp.var])
     def test_mp_to_pauli_error_for_no_pauli_rep(self, measurement_type):
         """Tests that an error is raised when mp_to_pauli is given an operator that does not have a pauli representation"""
 
-        obs = measurement_type(qml.X(0) @ qml.Hadamard(2))
+        obs = measurement_type(qp.X(0) @ qp.Hadamard(2))
 
         assert not obs.obs.pauli_rep
         with pytest.raises(ValueError, match="The operator"):
@@ -2071,22 +2069,22 @@ class TestControlOpIntegration:
         qc.cx(0, 1)
         qc.measure_all()
 
-        dev = qml.device("default.qubit")
+        dev = qp.device("default.qubit")
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def loaded_qiskit_circuit():
             meas = load(qc)()
-            return [qml.expval(m) for m in meas]
+            return [qp.expval(m) for m in meas]
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def built_pl_circuit():
 
-            qml.Hadamard(0)
-            qml.CNOT([0, 1])
-            m0 = qml.measure(0)
-            qml.Hadamard(0)
-            qml.CNOT([0, 1])
-            m1 = qml.measure(0)
+            qp.Hadamard(0)
+            qp.CNOT([0, 1])
+            m0 = qp.measure(0)
+            qp.Hadamard(0)
+            qp.CNOT([0, 1])
+            m1 = qp.measure(0)
 
             condition = {
                 "clbit": m0 == 0,
@@ -2097,21 +2095,21 @@ class TestControlOpIntegration:
             }
 
             def ansatz_true():
-                qml.PauliX(wires=0)
+                qp.PauliX(wires=0)
 
             def ansatz_false():
-                qml.Hadamard(wires=0)
-                qml.PauliZ(wires=2)
+                qp.Hadamard(wires=0)
+                qp.PauliZ(wires=2)
 
-            qml.cond(condition[cond_type], ansatz_true, ansatz_false)()
+            qp.cond(condition[cond_type], ansatz_true, ansatz_false)()
 
-            qml.RZ(0.24, wires=0)
-            qml.CNOT([0, 1])
-            qml.Barrier([0, 1, 2])
-            return [qml.expval(m) for m in [m0, m1, qml.measure(0), qml.measure(1), qml.measure(2)]]
+            qp.RZ(0.24, wires=0)
+            qp.CNOT([0, 1])
+            qp.Barrier([0, 1, 2])
+            return [qp.expval(m) for m in [m0, m1, qp.measure(0), qp.measure(1), qp.measure(2)]]
 
-        loaded_qiskit_circuit_tape = qml.workflow.construct_tape(loaded_qiskit_circuit)()
-        built_pl_circuit_tape = qml.workflow.construct_tape(built_pl_circuit)()
+        loaded_qiskit_circuit_tape = qp.workflow.construct_tape(loaded_qiskit_circuit)()
+        built_pl_circuit_tape = qp.workflow.construct_tape(built_pl_circuit)()
 
         assert loaded_qiskit_circuit() == built_pl_circuit()
         assert len(loaded_qiskit_circuit_tape.operations) == len(built_pl_circuit_tape.operations)
@@ -2120,10 +2118,10 @@ class TestControlOpIntegration:
         ):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
-            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
-                assert qml.equal(op1.base, op2.base) and op1.meas_val.wires == op2.meas_val.wires
+            elif isinstance(op1, qp.ops.Conditional) or isinstance(op2, qp.ops.Conditional):
+                assert qp.equal(op1.base, op2.base) and op1.meas_val.wires == op2.meas_val.wires
             else:
-                assert qml.equal(op1, op2)
+                assert qp.equal(op1, op2)
 
     # pylint: disable=too-many-statements
     @pytest.mark.parametrize("cond_type", ["clbit", "clreg", "expr1", "expr2", "expr3"])
@@ -2161,49 +2159,49 @@ class TestControlOpIntegration:
                 qc.x(2)
         qc.measure_all()
 
-        dev = qml.device("default.qubit", seed=24)
-        qiskit_circuit = load(qc, measurements=[qml.expval(qml.PauliZ(0) @ qml.PauliY(1))])
+        dev = qp.device("default.qubit", seed=24)
+        qiskit_circuit = load(qc, measurements=[qp.expval(qp.PauliZ(0) @ qp.PauliY(1))])
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def loaded_qiskit_circuit():
             return qiskit_circuit()
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def built_pl_circuit():
-            qml.RX(0.12, 0)
-            qml.RX(0.24, 1)
-            qml.RX(0.36, 2)
-            m0 = qml.measure(0)
-            m1 = qml.measure(1)
-            m2 = qml.measure(2)
+            qp.RX(0.12, 0)
+            qp.RX(0.24, 1)
+            qp.RX(0.36, 2)
+            m0 = qp.measure(0)
+            m1 = qp.measure(1)
+            m2 = qp.measure(2)
 
-            qml.Hadamard(3)
-            qml.CNOT([3, 4])
-            m3 = qml.measure(3)
-            m4 = qml.measure(4)
+            qp.Hadamard(3)
+            qp.CNOT([3, 4])
+            m3 = qp.measure(3)
+            m4 = qp.measure(4)
 
             mint1 = m0 + 2 * m1 + 4 * m2
             mint2 = m3 + 2 * m4
             if cond_type in ["clbit", "expr2"]:
-                qml.cond(m0 == 0, qml.PauliX)([0])
-                qml.cond(m0 == 1, qml.PauliX)([1])
+                qp.cond(m0 == 0, qp.PauliX)([0])
+                qp.cond(m0 == 1, qp.PauliX)([1])
             elif cond_type == "clreg":
-                qml.cond(mint1 == 0, qml.PauliX)([0])
-                qml.cond(mint1 == 1, qml.PauliX)([1])
-                qml.cond((mint1 != 0) & (mint1 != 1), qml.PauliX)([2])
+                qp.cond(mint1 == 0, qp.PauliX)([0])
+                qp.cond(mint1 == 1, qp.PauliX)([1])
+                qp.cond((mint1 != 0) & (mint1 != 1), qp.PauliX)([2])
             elif cond_type == "expr1":
-                qml.cond(mint1 >= 2, qml.PauliX)([0])
-                qml.cond(mint1 < 2, qml.PauliX)([1])
+                qp.cond(mint1 >= 2, qp.PauliX)([0])
+                qp.cond(mint1 < 2, qp.PauliX)([1])
             elif cond_type == "expr3":
-                qml.cond(mint1 <= mint2, qml.PauliX)([0])
-                qml.cond(mint1 > mint2, qml.PauliX)([1])
+                qp.cond(mint1 <= mint2, qp.PauliX)([0])
+                qp.cond(mint1 > mint2, qp.PauliX)([1])
 
-            qml.Barrier([0, 1, 2, 3, 4])
+            qp.Barrier([0, 1, 2, 3, 4])
 
-            return qml.expval(qml.PauliZ(0) @ qml.PauliY(1))
+            return qp.expval(qp.PauliZ(0) @ qp.PauliY(1))
 
-        loaded_qiskit_circuit_tape = qml.workflow.construct_tape(loaded_qiskit_circuit)()
-        built_pl_circuit_tape = qml.workflow.construct_tape(built_pl_circuit)()
+        loaded_qiskit_circuit_tape = qp.workflow.construct_tape(loaded_qiskit_circuit)()
+        built_pl_circuit_tape = qp.workflow.construct_tape(built_pl_circuit)()
         assert loaded_qiskit_circuit() == built_pl_circuit()
         assert len(loaded_qiskit_circuit_tape.operations) == len(built_pl_circuit_tape.operations)
         for op1, op2 in zip(
@@ -2211,12 +2209,12 @@ class TestControlOpIntegration:
         ):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
-            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
-                assert qml.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
+            elif isinstance(op1, qp.ops.Conditional) or isinstance(op2, qp.ops.Conditional):
+                assert qp.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
                     op2.meas_val.wires
                 )
             else:
-                assert qml.equal(op1, op2)
+                assert qp.equal(op1, op2)
 
     def test_warning_for_non_accessible_classical_info(self):
         """Tests a UserWarning is raised if we do not have access to classical info."""
@@ -2229,17 +2227,17 @@ class TestControlOpIntegration:
         qc.cx(0, 1)
         qc.measure_all()
 
-        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        measurements = [qp.expval(qp.PauliZ(0)), qp.vn_entropy([1])]
         quantum_circuit = load(qc, measurements=measurements)
 
         with pytest.warns(UserWarning):
             quantum_circuit()
 
     def test_direct_qnode_ui(self):
-        """Test the UI where the loaded function is passed directly to qml.QNode
+        """Test the UI where the loaded function is passed directly to qp.QNode
         along with a device"""
 
-        dev = qml.device("default.qubit")
+        dev = qp.device("default.qubit")
         angle = Parameter("angle")
 
         qc = QuantumCircuit(2, 2)
@@ -2248,17 +2246,17 @@ class TestControlOpIntegration:
         qc.rx(angle, [1])
         qc.cz(0, 1)
 
-        measurements = [qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])]
+        measurements = [qp.expval(qp.PauliZ(0)), qp.vn_entropy([1])]
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit_native_pennylane(angle):
-            qml.RX(angle, wires=0)
-            qml.measure(0)
-            qml.RX(angle, wires=1)
-            qml.CZ([0, 1])
-            return qml.expval(qml.PauliZ(0)), qml.vn_entropy([1])
+            qp.RX(angle, wires=0)
+            qp.measure(0)
+            qp.RX(angle, wires=1)
+            qp.CZ([0, 1])
+            return qp.expval(qp.PauliZ(0)), qp.vn_entropy([1])
 
-        qnode = qml.QNode(load(qc, measurements), dev)
+        qnode = qp.QNode(load(qc, measurements), dev)
 
         assert np.allclose(qnode(0.543), circuit_native_pennylane(0.543))
 
@@ -2281,39 +2279,39 @@ class TestControlOpIntegration:
         with qc.if_test((1, 1)):
             qc.x(2)
 
-        dev = qml.device("default.qubit")
+        dev = qp.device("default.qubit")
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def qk_circuit():
-            qml.from_qiskit(qc)()
-            return qml.expval(qml.PauliZ(0))
+            qp.from_qiskit(qc)()
+            return qp.expval(qp.PauliZ(0))
 
         # pylint: disable=unused-variable
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def pl_circuit():
-            qml.RX(0.9, [0])
-            qml.Hadamard([1])
-            qml.CNOT([1, 2])
-            qml.CNOT([0, 1])
-            qml.Hadamard([0])
-            m0 = qml.measure(0)
-            m1 = qml.measure(1)
-            qml.cond(m1 == 1, qml.PauliX)(wires=[2])
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(0.9, [0])
+            qp.Hadamard([1])
+            qp.CNOT([1, 2])
+            qp.CNOT([0, 1])
+            qp.Hadamard([0])
+            m0 = qp.measure(0)
+            m1 = qp.measure(1)
+            qp.cond(m1 == 1, qp.PauliX)(wires=[2])
+            return qp.expval(qp.PauliZ(0))
 
-        qk_circuit_tape = qml.workflow.construct_tape(qk_circuit)()
-        pl_circuit_tape = qml.workflow.construct_tape(pl_circuit)()
+        qk_circuit_tape = qp.workflow.construct_tape(qk_circuit)()
+        pl_circuit_tape = qp.workflow.construct_tape(pl_circuit)()
         assert qk_circuit() == pl_circuit()
         assert len(qk_circuit_tape.operations) == len(pl_circuit_tape.operations)
         for op1, op2 in zip(qk_circuit_tape.operations, pl_circuit_tape.operations):
             if isinstance(op1, MidMeasureMP) or isinstance(op2, MidMeasureMP):
                 assert op1.wires == op2.wires
-            elif isinstance(op1, qml.ops.Conditional) or isinstance(op2, qml.ops.Conditional):
-                assert qml.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
+            elif isinstance(op1, qp.ops.Conditional) or isinstance(op2, qp.ops.Conditional):
+                assert qp.equal(op1.base, op2.base) and sorted(op1.meas_val.wires) == sorted(
                     op2.meas_val.wires
                 )
             else:
-                assert qml.equal(op1, op2)
+                assert qp.equal(op1, op2)
 
     def test_measurement_are_not_discriminated(self):
         """Test the all measurements are considered mid-circuit measurements when no terminal measurements are given"""
@@ -2329,13 +2327,13 @@ class TestControlOpIntegration:
             qc.x(2)
 
         m0, m1 = load(qc)()
-        w0, w1 = qml.wires.Wires([0]), qml.wires.Wires([1])
-        assert isinstance(m0, qml.measurements.MeasurementValue) and m0.wires == w0
-        assert isinstance(m1, qml.measurements.MeasurementValue) and m1.wires == w1
+        w0, w1 = qp.wires.Wires([0]), qp.wires.Wires([1])
+        assert isinstance(m0, qp.measurements.MeasurementValue) and m0.wires == w0
+        assert isinstance(m1, qp.measurements.MeasurementValue) and m1.wires == w1
 
-        m2 = load(qc, measurements=qml.expval(qml.PauliZ(2)))()
-        w2 = qml.wires.Wires([2])
-        assert isinstance(m2, qml.measurements.ExpectationMP) and m2.wires == w2
+        m2 = load(qc, measurements=qp.expval(qp.PauliZ(2)))()
+        w2 = qp.wires.Wires([2])
+        assert isinstance(m2, qp.measurements.ExpectationMP) and m2.wires == w2
 
 
 class TestPassingParameters:
@@ -2348,12 +2346,12 @@ class TestPassingParameters:
         qc.ry(theta[1], [0])
         qc.rz(theta[2], [0])
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(0.4, wires=0)
+            qp.RY(0.5, wires=0)
+            qp.RZ(0.3, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         return theta, qc, circuit_native_pennylane
 
@@ -2368,12 +2366,12 @@ class TestPassingParameters:
         qc.ry(a, [0])
         qc.rz(b, [0])
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_native_pennylane():
-            qml.RX(0.4, wires=0)
-            qml.RY(0.5, wires=0)
-            qml.RZ(0.3, wires=0)
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(0.4, wires=0)
+            qp.RY(0.5, wires=0)
+            qp.RZ(0.3, wires=0)
+            return qp.expval(qp.PauliZ(0))
 
         return qc, circuit_native_pennylane
 
@@ -2383,10 +2381,10 @@ class TestPassingParameters:
 
         qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qc)(0.5, 0.3, 0.4)  # a, b, c (alphabetical) rather than order used in qc
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -2396,10 +2394,10 @@ class TestPassingParameters:
 
         qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qc)(a=0.5, b=0.3, c=0.4)
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -2409,10 +2407,10 @@ class TestPassingParameters:
 
         qc, circuit_native_pennylane = self._get_parameter_test_circuit(qubit_device_2_wires)
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qc)(0.3, a=0.5, c=0.4)
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -2424,10 +2422,10 @@ class TestPassingParameters:
             qubit_device_2_wires
         )
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qiskit_circuit)({theta: [0.4, 0.5, 0.3]})
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -2439,10 +2437,10 @@ class TestPassingParameters:
             qubit_device_2_wires
         )
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qiskit_circuit)([0.4, 0.5, 0.3])
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -2455,10 +2453,10 @@ class TestPassingParameters:
             qubit_device_2_wires
         )
 
-        @qml.qnode(qubit_device_2_wires)
+        @qp.qnode(qubit_device_2_wires)
         def circuit_loaded_qiskit_circuit():
             load(qiskit_circuit)(v=[0.4, 0.5, 0.3])
-            return qml.expval(qml.PauliZ(0))
+            return qp.expval(qp.PauliZ(0))
 
         assert circuit_loaded_qiskit_circuit() == circuit_native_pennylane()
 
@@ -2471,17 +2469,17 @@ class TestLoadPauliOp:
         [
             (
                 SparsePauliOp("I"),
-                qml.Identity(wires=0),
+                qp.Identity(wires=0),
             ),
             (
                 SparsePauliOp("XYZ"),
-                qml.prod(qml.PauliZ(wires=0), qml.PauliY(wires=1), qml.PauliX(wires=2)),
+                qp.prod(qp.PauliZ(wires=0), qp.PauliY(wires=1), qp.PauliX(wires=2)),
             ),
             (
                 SparsePauliOp(["XY", "ZX"]),
-                qml.sum(
-                    qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0)),
-                    qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0)),
+                qp.sum(
+                    qp.prod(qp.PauliX(wires=1), qp.PauliY(wires=0)),
+                    qp.prod(qp.PauliZ(wires=1), qp.PauliX(wires=0)),
                 ),
             ),
         ],
@@ -2491,20 +2489,20 @@ class TestLoadPauliOp:
         coefficients.
         """
         have_op = load_pauli_op(pauli_op)
-        assert qml.equal(have_op, want_op)
+        assert qp.equal(have_op, want_op)
 
     @pytest.mark.parametrize(
         "pauli_op, want_op",
         [
             (
                 SparsePauliOp("I", coeffs=[2]),
-                qml.s_prod(2, qml.Identity(wires=0)),
+                qp.s_prod(2, qp.Identity(wires=0)),
             ),
             (
                 SparsePauliOp(["XY", "ZX"], coeffs=[3, 7]),
-                qml.sum(
-                    qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
-                    qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+                qp.sum(
+                    qp.s_prod(3, qp.prod(qp.PauliX(wires=1), qp.PauliY(wires=0))),
+                    qp.s_prod(7, qp.prod(qp.PauliZ(wires=1), qp.PauliX(wires=0))),
                 ),
             ),
         ],
@@ -2514,7 +2512,7 @@ class TestLoadPauliOp:
         coefficient values.
         """
         have_op = load_pauli_op(pauli_op)
-        assert qml.equal(have_op, want_op)
+        assert qp.equal(have_op, want_op)
 
     def test_convert_with_parameter_coefficients(self):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator by assigning values
@@ -2524,11 +2522,11 @@ class TestLoadPauliOp:
         pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
         have_op = load_pauli_op(pauli_op, params={a: 3, b: 7})
-        want_op = qml.sum(
-            qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
-            qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+        want_op = qp.sum(
+            qp.s_prod(3, qp.prod(qp.PauliX(wires=1), qp.PauliY(wires=0))),
+            qp.s_prod(7, qp.prod(qp.PauliZ(wires=1), qp.PauliX(wires=0))),
         )
-        assert qml.equal(have_op, want_op)
+        assert qp.equal(have_op, want_op)
 
     def test_convert_too_few_coefficients(self):
         """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
@@ -2549,11 +2547,11 @@ class TestLoadPauliOp:
         pauli_op = SparsePauliOp(["XY", "ZX"], coeffs=[a, b])
 
         have_op = load_pauli_op(pauli_op, params={a: 3, b: 7, c: 9})
-        want_op = qml.sum(
-            qml.s_prod(3, qml.prod(qml.PauliX(wires=1), qml.PauliY(wires=0))),
-            qml.s_prod(7, qml.prod(qml.PauliZ(wires=1), qml.PauliX(wires=0))),
+        want_op = qp.sum(
+            qp.s_prod(3, qp.prod(qp.PauliX(wires=1), qp.PauliY(wires=0))),
+            qp.s_prod(7, qp.prod(qp.PauliZ(wires=1), qp.PauliX(wires=0))),
         )
-        assert qml.equal(have_op, want_op)
+        assert qp.equal(have_op, want_op)
 
     @pytest.mark.parametrize(
         "pauli_op, wires, want_op",
@@ -2561,14 +2559,14 @@ class TestLoadPauliOp:
             (
                 SparsePauliOp("XYZ"),
                 "ABC",
-                qml.prod(qml.PauliZ(wires="A"), qml.PauliY(wires="B"), qml.PauliX(wires="C")),
+                qp.prod(qp.PauliZ(wires="A"), qp.PauliY(wires="B"), qp.PauliX(wires="C")),
             ),
             (
                 SparsePauliOp(["XY", "ZX"]),
                 [1, 0],
-                qml.sum(
-                    qml.prod(qml.PauliX(wires=0), qml.PauliY(wires=1)),
-                    qml.prod(qml.PauliZ(wires=0), qml.PauliX(wires=1)),
+                qp.sum(
+                    qp.prod(qp.PauliX(wires=0), qp.PauliY(wires=1)),
+                    qp.prod(qp.PauliZ(wires=0), qp.PauliX(wires=1)),
                 ),
             ),
         ],
@@ -2576,7 +2574,7 @@ class TestLoadPauliOp:
     def test_convert_with_wires(self, pauli_op, wires, want_op):
         """Tests that a SparsePauliOp can be converted into a PennyLane operator with custom wires."""
         have_op = load_pauli_op(pauli_op, wires=wires)
-        assert qml.equal(have_op, want_op)
+        assert qp.equal(have_op, want_op)
 
     def test_convert_with_too_few_wires(self):
         """Tests that a RuntimeError is raised if an attempt is made to convert a SparsePauliOp into
@@ -2637,37 +2635,37 @@ class TestLoadNoiseModel:
 
         pl_model_map = {
             op_in("CNOT")
-            & wires_in([0, 1]): qml.QubitChannel(
+            & wires_in([0, 1]): qp.QubitChannel(
                 Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
                 wires="ANY",
             ),
             op_in("Identity")
-            & wires_in(0): qml.ThermalRelaxationError(
+            & wires_in(0): qp.ThermalRelaxationError(
                 pe=0.0, t1=3012.4484977654, t2=3516.8757664521, tg=1.0, wires="ANY"
             ),
             op_in("Identity")
-            & wires_in(1): qml.ThermalRelaxationError(
+            & wires_in(1): qp.ThermalRelaxationError(
                 pe=0.0, t1=3135.7677876495, t2=3327.6164130642, tg=1.0, wires="ANY"
             ),
             op_in("SX")
-            & wires_in(0): qml.ThermalRelaxationError(
+            & wires_in(0): qp.ThermalRelaxationError(
                 pe=0.0, t1=4331.5087867281, t2=5056.8095340207, tg=1.0, wires="ANY"
             ),
             op_in("SX")
-            & wires_in(1): qml.ThermalRelaxationError(
+            & wires_in(1): qp.ThermalRelaxationError(
                 pe=0.0, t1=2718.6952247608, t2=2885.0270379233, tg=1.0, wires="ANY"
             ),
             op_in("PauliX")
-            & wires_in(0): qml.ThermalRelaxationError(
+            & wires_in(0): qp.ThermalRelaxationError(
                 pe=0.0, t1=2721.2824719589, t2=3176.95468865, tg=1.0, wires="ANY"
             ),
             op_in("PauliX")
-            & wires_in(1): qml.ThermalRelaxationError(
+            & wires_in(1): qp.ThermalRelaxationError(
                 pe=0.0, t1=2520.0690896181, t2=2674.2488068467, tg=1.0, wires="ANY"
             ),
         }
 
-        pl_noise_model = qml.NoiseModel(
+        pl_noise_model = qp.NoiseModel(
             {fcond: partial_wires(noise) for fcond, noise in pl_model_map.items()}
         )
 
@@ -2682,7 +2680,7 @@ class TestLoadNoiseModel:
             num_wires = int(np.log2(ref_kraus[0].shape[0]))
             test_wires = list(range(num_wires))
             qk_op = qk_v(test_wires)
-            assert isinstance(qk_op, qml.QubitChannel)
+            assert isinstance(qk_op, qp.QubitChannel)
 
             choi_mat1 = self._kraus_to_choi(qk_op.data)
             choi_mat2 = self._kraus_to_choi(ref_kraus)
@@ -2704,7 +2702,7 @@ class TestLoadNoiseModel:
         noise_model.add_all_qubit_quantum_error(error_2, ["cx"])
         loaded_noise_model = load_noise_model(noise_model, verbose=verbose, decimal_places=decimal)
 
-        pauli_mats1 = list(map(qml.matrix, [qml.I(0), qml.X(0), qml.Y(0), qml.Z(0)]))
+        pauli_mats1 = list(map(qp.matrix, [qp.I(0), qp.X(0), qp.Y(0), qp.Z(0)]))
         pauli_mats2 = list(
             ft.reduce(np.kron, prod, 1.0) for prod in it.product(pauli_mats1, repeat=2)
         )
@@ -2717,11 +2715,11 @@ class TestLoadNoiseModel:
             prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2, strict=True)
         ]
 
-        c0 = qml.noise.op_in([qml.RZ, qml.RY])
-        c1 = qml.noise.op_in(qml.CNOT)
-        n0 = qml.noise.partial_wires(qml.QubitChannel(kraus_ops1, wires=[0]))
-        n1 = qml.noise.partial_wires(qml.QubitChannel(kraus_ops2, wires=[0, 1]))
-        pl_noise_model = qml.NoiseModel({c0: n0, c1: n1})
+        c0 = qp.noise.op_in([qp.RZ, qp.RY])
+        c1 = qp.noise.op_in(qp.CNOT)
+        n0 = qp.noise.partial_wires(qp.QubitChannel(kraus_ops1, wires=[0]))
+        n1 = qp.noise.partial_wires(qp.QubitChannel(kraus_ops2, wires=[0, 1]))
+        pl_noise_model = qp.NoiseModel({c0: n0, c1: n1})
         num_wires_list = [1, 2]  # n0 is 1-qubit, n1 is 2-qubit
 
         for (pl_k, pl_v), (qk_k, qk_v), num_wires in zip(
