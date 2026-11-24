@@ -16,7 +16,7 @@ This module contains tests for applying operations on PennyLane IBMQ devices.
 """
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 
 # pylint: disable=too-many-positional-arguments
 import pytest
@@ -86,23 +86,23 @@ isingzz = lambda phi: np.array(
 
 
 single_qubit_operations = [
-    qml.Identity,
-    qml.PauliX,
-    qml.PauliY,
-    qml.PauliZ,
-    qml.Hadamard,
-    qml.S,
-    qml.T,
-    qml.SX,
-    qml.adjoint(qml.T),
-    qml.adjoint(qml.S),
-    qml.adjoint(qml.SX),
+    qp.Identity,
+    qp.PauliX,
+    qp.PauliY,
+    qp.PauliZ,
+    qp.Hadamard,
+    qp.S,
+    qp.T,
+    qp.SX,
+    qp.adjoint(qp.T),
+    qp.adjoint(qp.S),
+    qp.adjoint(qp.SX),
 ]
 
-single_qubit_operations_param = [qml.PhaseShift, qml.RX, qml.RY, qml.RZ]
-two_qubit = [qml.CNOT, qml.SWAP, qml.CZ, qml.ISWAP]
-two_qubit_param = [qml.CRZ, qml.IsingXX, qml.IsingYY, qml.IsingZZ]
-three_qubit = [qml.Toffoli, qml.CSWAP]
+single_qubit_operations_param = [qp.PhaseShift, qp.RX, qp.RY, qp.RZ]
+two_qubit = [qp.CNOT, qp.SWAP, qp.CZ, qp.ISWAP]
+two_qubit_param = [qp.CRZ, qp.IsingXX, qp.IsingYY, qp.IsingZZ]
+three_qubit = [qp.Toffoli, qp.CSWAP]
 
 
 @pytest.mark.parametrize("shots", [None])
@@ -116,7 +116,7 @@ class TestAnalyticApply:
         dev = device(1)
         state = init_state(1)
 
-        dev.apply([qml.StatePrep(state, wires=[0])])
+        dev.apply([qp.StatePrep(state, wires=[0])])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(state) ** 2
@@ -130,7 +130,7 @@ class TestAnalyticApply:
         state = init_state(1)
         applied_operation = operation(wires=[0])
 
-        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
 
@@ -146,7 +146,7 @@ class TestAnalyticApply:
         state = init_state(1)
         applied_operation = operation(theta, wires=[0])
 
-        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -157,9 +157,9 @@ class TestAnalyticApply:
 
         dev = device(1)
         state = init_state(1)
-        applied_operation = qml.GlobalPhase(0.5)
+        applied_operation = qp.GlobalPhase(0.5)
 
-        dev.apply([qml.StatePrep(state, wires=[0]), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=[0]), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix(wire_order=dev.wires) @ state) ** 2
@@ -175,7 +175,7 @@ class TestAnalyticApply:
 
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -191,7 +191,7 @@ class TestAnalyticApply:
         wires = [0, 1]
         applied_operation = operation(theta, wires=wires)
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -205,7 +205,7 @@ class TestAnalyticApply:
         state = init_state(3)
         applied_operation = operation(wires=[0, 1, 2])
 
-        dev.apply([qml.StatePrep(state, wires=[0, 1, 2]), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=[0, 1, 2]), applied_operation])
 
         res = np.abs(dev.state) ** 2
         expected = np.abs(applied_operation.matrix() @ state) ** 2
@@ -224,10 +224,10 @@ class TestStateApplyUnitarySimulator:
         state = init_state(1)
 
         with pytest.raises(
-            qml.exceptions.DeviceError,
+            qp.exceptions.DeviceError,
             match="The StatePrep operation is not supported on the unitary simulator backend",
         ):
-            dev.apply([qml.StatePrep(state, wires=[0])])
+            dev.apply([qp.StatePrep(state, wires=[0])])
 
 
 @pytest.mark.parametrize("shots", [8192])
@@ -243,7 +243,7 @@ class TestNonAnalyticApply:
         state = init_state(1)
         wires = [0]
 
-        dev.apply([qml.StatePrep(state, wires=wires)])
+        dev.apply([qp.StatePrep(state, wires=wires)])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -258,7 +258,7 @@ class TestNonAnalyticApply:
         wires = [0, 1]
 
         with pytest.raises(ValueError, match=r"State must be of length 4"):
-            dev.apply([qml.StatePrep(state, wires=wires)])
+            dev.apply([qp.StatePrep(state, wires=wires)])
 
     @pytest.mark.parametrize("mat", [U, U2])
     def test_qubit_unitary(self, init_state, device, mat, tol):
@@ -269,7 +269,7 @@ class TestNonAnalyticApply:
         state = init_state(N)
         wires = list(range(N))
 
-        dev.apply([qml.StatePrep(state, wires=wires), qml.QubitUnitary(mat, wires=wires)])
+        dev.apply([qp.StatePrep(state, wires=wires), qp.QubitUnitary(mat, wires=wires)])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -283,7 +283,7 @@ class TestNonAnalyticApply:
         state = np.array([[0, 123.432], [-0.432, 023.4]])
 
         with pytest.raises(ValueError, match=r"Input unitary must be of shape"):
-            dev.apply([qml.QubitUnitary(state, wires=[0, 1])])
+            dev.apply([qp.QubitUnitary(state, wires=[0, 1])])
 
     @pytest.mark.parametrize("operation", single_qubit_operations)
     def test_single_qubit_operations_no_parameters(self, init_state, device, operation, tol):
@@ -294,7 +294,7 @@ class TestNonAnalyticApply:
         wires = [0]
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -311,7 +311,7 @@ class TestNonAnalyticApply:
         wires = [0]
         applied_operation = operation(theta, wires=wires)
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -328,7 +328,7 @@ class TestNonAnalyticApply:
 
         applied_operation = operation(wires=wires)
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -346,7 +346,7 @@ class TestNonAnalyticApply:
 
         applied_operation = operation(theta, wires=wires)
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)
@@ -362,7 +362,7 @@ class TestNonAnalyticApply:
         applied_operation = operation(wires=[0, 1, 2])
         wires = [0, 1, 2]
 
-        dev.apply([qml.StatePrep(state, wires=wires), applied_operation])
+        dev.apply([qp.StatePrep(state, wires=wires), applied_operation])
         dev._samples = dev.generate_samples()
 
         res = np.fromiter(dev.probability(), dtype=np.float64)

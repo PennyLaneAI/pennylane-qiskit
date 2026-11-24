@@ -41,8 +41,8 @@ For example, the ``'qiskit.aer'`` device with two wires is called like this:
 
 .. code-block:: python
 
-    import pennylane as qml
-    dev = qml.device('qiskit.aer', wires=2)
+    import pennylane as qp
+    dev = qp.device('qiskit.aer', wires=2)
 
 
 Backends
@@ -58,7 +58,7 @@ a simulator backend can be defined as follows:
 
     from qiskit_aer import UnitarySimulator
 
-    dev = qml.device('qiskit.aer', wires=<num_qubits>, backend=UnitarySimulator())
+    dev = qp.device('qiskit.aer', wires=<num_qubits>, backend=UnitarySimulator())
 
 .. note::
 
@@ -85,7 +85,7 @@ an account and initializing an instance, you can connect to a backend like so:
 
     backend = service.least_busy(operational=True, simulator=False, min_num_qubits=<min_num_qubits>)
 
-    dev = qml.device('qiskit.remote', wires=<num_qubits_of_backend>, backend=backend)
+    dev = qp.device('qiskit.remote', wires=<num_qubits_of_backend>, backend=backend)
 
 Tutorials
 ~~~~~~~~~

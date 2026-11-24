@@ -18,7 +18,7 @@ This module contains tests qiskit devices for PennyLane IBMQ devices.
 from unittest.mock import Mock
 
 import numpy as np
-import pennylane as qml
+import pennylane as qp
 import pytest
 from qiskit.providers import BackendV2
 from qiskit_aer import noise
@@ -83,18 +83,18 @@ class TestSupportForV2:
 
     def test_mocked_backend(self):
         """Test that device initializes with no error mocked"""
-        dev = qml.device("qiskit.aer", wires=10, backend=backend)
+        dev = qp.device("qiskit.aer", wires=10, backend=backend)
         assert dev._backend == backend
 
     def test_fake_manila(self):
         """Test that device initializes with no error with V2 backends by Qiskit"""
-        dev = qml.device("qiskit.aer", wires=5, backend=FakeManilaV2())
+        dev = qp.device("qiskit.aer", wires=5, backend=FakeManilaV2())
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return qml.sample(qml.PauliZ(0))
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return qp.sample(qp.PauliZ(0))
 
         res = circuit(np.pi / 2)
         assert isinstance(res, np.ndarray)
@@ -139,12 +139,12 @@ class TestAnalyticWarningHWSimulator:
         """Tests that a warning is raised if the analytic attribute is true on
         hardware simulators when calculating the expectation"""
 
-        dev = qml.device("qiskit.aer", backend="aer_simulator", wires=2)
+        dev = qp.device("qiskit.aer", backend="aer_simulator", wires=2)
 
-        @qml.qnode(dev, shots=None)
+        @qp.qnode(dev, shots=None)
         def circuit():
-            qml.RX(np.pi / 2, wires=[0])
-            return qml.expval(qml.PauliZ(0))
+            qp.RX(np.pi / 2, wires=[0])
+            return qp.expval(qp.PauliZ(0))
 
         with pytest.warns(
             UserWarning,
@@ -163,7 +163,7 @@ class TestAnalyticWarningHWSimulator:
         """Tests that no warning is raised if the analytic attribute is true on
         statevector simulators when calculating the expectation"""
 
-        _ = qml.device("qiskit.aer", backend="aer_simulator", method=method, wires=2)
+        _ = qp.device("qiskit.aer", backend="aer_simulator", method=method, wires=2)
 
         # These simulators are being deprecated. Warnings are raised in Qiskit <1.1
         assert len(recwarn) == 0
@@ -181,10 +181,10 @@ class TestAerBackendOptions:
         # Create a noise model where the RX operation always flips the bit
         noise_model.add_all_qubit_quantum_error(bit_flip, ["rx"])
 
-        dev = qml.device("qiskit.aer", wires=2, noise_model=noise_model)
+        dev = qp.device("qiskit.aer", wires=2, noise_model=noise_model)
         assert dev.backend.options.get("noise_model") is not None
 
-        dev2 = qml.device("qiskit.aer", wires=2)
+        dev2 = qp.device("qiskit.aer", wires=2)
         assert dev2.backend.options.get("noise_model") is None
 
 
@@ -197,15 +197,15 @@ class TestExecutionAtOptimizationLevels:
         """Test circuit to detect layout problems in the circuit and observables."""
 
         fakebackend = FakeManilaV2()
-        dev = qml.device(
+        dev = qp.device(
             "qiskit.remote", wires=5, backend=fakebackend, optimization_level=optimization_level
         )
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def circuit():
-            qml.Hadamard(2)
-            qml.CNOT([1, 4])
-            return qml.expval(qml.PauliX(2))
+            qp.Hadamard(2)
+            qp.CNOT([1, 4])
+            return qp.expval(qp.PauliX(2))
 
         res = circuit()
         assert np.allclose(res, 1.0, atol=0.2)
@@ -215,13 +215,13 @@ class TestExecutionAtOptimizationLevels:
 class TestBatchExecution:
     """Tests for the batch_execute method."""
 
-    with qml.tape.QuantumTape() as tape1:
-        qml.PauliX(wires=0)
-        _ = qml.expval(qml.PauliZ(wires=0)), qml.expval(qml.PauliZ(wires=1))
+    with qp.tape.QuantumTape() as tape1:
+        qp.PauliX(wires=0)
+        _ = qp.expval(qp.PauliZ(wires=0)), qp.expval(qp.PauliZ(wires=1))
 
-    with qml.tape.QuantumTape() as tape2:
-        qml.PauliX(wires=0)
-        qml.expval(qml.PauliZ(wires=0))
+    with qp.tape.QuantumTape() as tape2:
+        qp.PauliX(wires=0)
+        qp.expval(qp.PauliZ(wires=0))
 
     @pytest.mark.parametrize("n_tapes", [1, 2, 3])
     def test_calls_to_execute(self, device, n_tapes, mocker):
@@ -267,7 +267,7 @@ class TestBatchExecution:
         assert len(res) == 2
         assert isinstance(res[0], tuple)
         assert len(res[0]) == 2
-        assert np.allclose(qml.math.stack(res[0]), tape1_expected, atol=0)
+        assert np.allclose(qp.math.stack(res[0]), tape1_expected, atol=0)
 
         assert isinstance(res[1], np.ndarray)
         assert np.allclose(res[1], tape2_expected, atol=0)
@@ -287,7 +287,7 @@ class TestBatchExecution:
         empty tapes."""
         dev = device(2)
 
-        empty_tape = qml.tape.QuantumTape()
+        empty_tape = qp.tape.QuantumTape()
         tapes = [empty_tape] * 3
         res = dev.batch_execute(tapes)
 
@@ -308,12 +308,12 @@ class TestBatchExecution:
         """Tests that the barriers are accounted for during conversion."""
         dev = device(2)
 
-        @qml.qnode(dev)
+        @qp.qnode(dev)
         def barrier_func():
-            qml.Barrier([0, 1])
-            return qml.state()
+            qp.Barrier([0, 1])
+            return qp.state()
 
         res = barrier_func()
-        tape = qml.workflow.construct_tape(barrier_func)()
-        assert tape.operations[0] == qml.Barrier([0, 1])
+        tape = qp.workflow.construct_tape(barrier_func)()
+        assert tape.operations[0] == qp.Barrier([0, 1])
         assert np.allclose(res, dev.batch_execute([tape]), atol=0)

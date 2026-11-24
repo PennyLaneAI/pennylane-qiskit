@@ -54,18 +54,18 @@ class RemoteDevice(QiskitDevice):
 
     .. code-block:: python
 
-        import pennylane as qml
+        import pennylane as qp
         from qiskit_ibm_runtime import QiskitRuntimeService
 
         service = QiskitRuntimeService()
         backend = service.least_busy(n_qubits=127, simulator=False, operational=True)
-        dev = qml.device("qiskit.remote", wires=127, backend=backend)
+        dev = qp.device("qiskit.remote", wires=127, backend=backend)
 
-        @qml.qnode(dev, shots=1024)
+        @qp.qnode(dev, shots=1024)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return qml.expval(qml.PauliZ(1))
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return qp.expval(qp.PauliZ(1))
 
     >>> circuit(np.pi/3)
     0.529296875
@@ -75,17 +75,17 @@ class RemoteDevice(QiskitDevice):
 
     .. code-block:: python
 
-        import pennylane as qml
+        import pennylane as qp
         from qiskit_aer import AerSimulator
 
         backend = AerSimulator()
-        dev = qml.device("qiskit.remote", wires=5, backend=backend)
+        dev = qp.device("qiskit.remote", wires=5, backend=backend)
 
-        @qml.qnode(dev, shots=1024)
+        @qp.qnode(dev, shots=1024)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return qml.expval(qml.PauliZ(1))
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return qp.expval(qp.PauliZ(1))
 
     >>> circuit(np.pi/3)
     0.49755859375
@@ -96,18 +96,18 @@ class RemoteDevice(QiskitDevice):
 
     .. code-block:: python
 
-        dev = qml.device("qiskit.remote", wires=5, backend=backend)
+        dev = qp.device("qiskit.remote", wires=5, backend=backend)
 
-        @qml.qnode(dev, shots=2)
+        @qp.qnode(dev, shots=2)
         def circuit(x):
-            qml.RX(x, wires=[0])
-            qml.CNOT(wires=[0, 1])
-            return qml.sample(qml.PauliZ(1))
+            qp.RX(x, wires=[0])
+            qp.CNOT(wires=[0, 1])
+            return qp.sample(qp.PauliZ(1))
 
     >>> circuit(np.pi/3) # this will run with 2 shots
     array([-1.,  1.])
 
-    >>> new_circuit = qml.set_shots(circuit, 5)
+    >>> new_circuit = qp.set_shots(circuit, 5)
     >>> new_circuit(np.pi/3) # this will run with 5 shots
     array([-1., -1.,  1.,  1.,  1.])
 
@@ -124,11 +124,11 @@ class RemoteDevice(QiskitDevice):
 
     .. code-block:: python
 
-        import pennylane as qml
+        import pennylane as qp
         from qiskit_ibm_runtime.fake_provider import FakeManilaV2
 
         backend = FakeManilaV2()
-        dev = qml.device(
+        dev = qp.device(
             "qiskit.remote",
             wires=5,
             backend=backend,
@@ -137,7 +137,7 @@ class RemoteDevice(QiskitDevice):
             seed_transpiler=42,
         )
         # to change options, re-initialize the device
-        dev = qml.device(
+        dev = qp.device(
             "qiskit.remote",
             wires=5,
             backend=backend,
