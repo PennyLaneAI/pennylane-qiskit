@@ -20,6 +20,10 @@
 
 ### Breaking changes 💔
 
+* Removed `load_noise_model` and the `qiskit_noise` entry point, since PennyLane is removing
+  `NoiseModel` and the `pennylane.noise` module.
+  [(#731)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/731)
+
 * Support for Python 3.11 has been removed.
   [(#716)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/716)
 
@@ -37,6 +41,7 @@
 This release contains contributions from (in alphabetical order):
 
 Runor Agbaire
+Yushao Chen
 Marcus Edwards
 Daniel Haag
 

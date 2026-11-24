@@ -17,5 +17,5 @@ from ._version import __version__
 from .aer import AerDevice
 from .basic_sim import BasicSimulatorDevice
 from .remote import RemoteDevice
-from .converter import load, load_pauli_op, load_qasm, load_qasm_from_file, load_noise_model
+from .converter import load, load_pauli_op, load_qasm, load_qasm_from_file
 from .qiskit_device import qiskit_session
