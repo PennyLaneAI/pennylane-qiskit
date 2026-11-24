@@ -431,7 +431,7 @@ class QiskitDeviceLegacy(QubitDevice, abc.ABC):
         r"""Compiles multiple circuits one after the other.
 
         Args:
-            circuits (list[.tapes.QuantumTape]): the circuits to be compiled
+            circuits (list[.core.QuantumScript]): the circuits to be compiled
 
         Returns:
              list[QuantumCircuit]: the list of compiled circuits

@@ -29,6 +29,7 @@ from typing import Union
 import numpy as np
 import pennylane as qp
 from pennylane import CompilePipeline, transform
+from pennylane.core import QuantumScript
 from pennylane.devices import Device
 from pennylane.devices.execution_config import ExecutionConfig
 from pennylane.devices.modifiers.simulator_tracking import simulator_tracking
@@ -39,7 +40,6 @@ from pennylane.devices.preprocess import (
     validate_observables,
 )
 from pennylane.measurements import ExpectationMP, VarianceMP
-from pennylane.tape import QuantumScript, QuantumTape
 from pennylane.transforms import broadcast_expand, split_non_commuting
 from pennylane.typing import Result, ResultBatch
 from qiskit.compiler import transpile
@@ -50,8 +50,8 @@ from qiskit_ibm_runtime import Session
 from ._version import __version__
 from .converter import QISKIT_OPERATION_MAP, circuit_to_qiskit, mp_to_pauli
 
-QuantumTapeBatch = Sequence[QuantumTape]
-QuantumTape_or_Batch = Union[QuantumTape, QuantumTapeBatch]
+QuantumScriptBatch = Sequence[QuantumScript]
+QuantumScript_or_Batch = Union[QuantumScript, QuantumScriptBatch]
 Result_or_ResultBatch = Union[Result, ResultBatch]
 
 
@@ -223,8 +223,8 @@ def accepted_sample_measurement(m: qp.measurements.MeasurementProcess) -> bool:
 
 @transform
 def split_execution_types(
-    tape: qp.tape.QuantumTape,
-) -> tuple[Sequence[qp.tape.QuantumTape], Callable]:
+    tape: QuantumScript,
+) -> tuple[QuantumScriptBatch, Callable]:
     """Split into separate tapes based on measurement type. Counts and sample-based measurements
     will use the Qiskit Sampler. ExpectationValue and Variance will use the Estimator, except
     when the measured observable does not have a `pauli_rep`. In that case, the Sampler will be
@@ -252,7 +252,7 @@ def split_execution_types(
     if estimator:
         tapes.extend(
             [
-                qp.tape.QuantumScript(
+                QuantumScript(
                     tape.operations,
                     measurements=[mp for mp, i in estimator],
                     shots=tape.shots,
@@ -262,7 +262,7 @@ def split_execution_types(
     if sampler:
         tapes.extend(
             [
-                qp.tape.QuantumScript(
+                QuantumScript(
                     tape.operations,
                     measurements=[mp for mp, i in sampler],
                     shots=tape.shots,
@@ -445,7 +445,7 @@ class QiskitDevice(Device):
                 parameters needed to fully describe the execution.
 
         Returns:
-            CompilePipeline, ExecutionConfig: A compile pipeline that when called returns QuantumTapes that the device
+            CompilePipeline, ExecutionConfig: A compile pipeline that when called returns QuantumScripts that the device
             can natively execute as well as a postprocessing function to be called after execution, and a configuration with
             unset specifications filled in.
 
@@ -572,7 +572,7 @@ class QiskitDevice(Device):
     # pylint: disable=unused-argument
     def execute(
         self,
-        circuits: QuantumTape_or_Batch,
+        circuits: QuantumScript_or_Batch,
         execution_config: ExecutionConfig | None = None,
     ) -> Result_or_ResultBatch:
         """Execute a circuit or a batch of circuits and turn it into results."""

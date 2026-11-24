@@ -24,8 +24,8 @@ import pennylane as qp
 import pytest
 from flaky import flaky
 from pennylane import numpy as pnp
+from pennylane.core import QuantumScript
 from pennylane.exceptions import PennyLaneDeprecationWarning
-from pennylane.tape.qscript import QuantumScript
 from pydantic_core import ValidationError
 from qiskit import QuantumCircuit, transpile
 
@@ -743,7 +743,7 @@ class TestTrackerFunctionality:
         dev = qp.device("default.qubit", wires=1)
         qiskit_dev = QiskitDevice(wires=1, backend=AerSimulator())
 
-        tape = qp.tape.QuantumTape([qp.S(0)], [qp.expval(qp.X(0))], shots=10000)
+        tape = QuantumScript([qp.S(0)], [qp.expval(qp.X(0))], shots=10000)
         with qiskit_dev.tracker:
             qiskit_out = qiskit_dev.execute(tape)
 
