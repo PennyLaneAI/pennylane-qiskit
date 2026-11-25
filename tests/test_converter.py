@@ -15,9 +15,6 @@ r"""
 This module contains tests for converting circuits for PennyLane IBMQ devices.
 """
 
-import functools as ft
-import itertools as it
-
 # pylint: disable=too-many-positional-arguments
 import sys
 from typing import cast
@@ -27,7 +24,6 @@ import pytest
 from pennylane import I, X, Y, Z
 from pennylane import numpy as np
 from pennylane.measurements import MidMeasureMP
-from pennylane.noise import op_in, partial_wires, wires_in
 from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -37,14 +33,12 @@ from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.quantum_info import SparsePauliOp
-from qiskit.quantum_info.operators.channel import Kraus
 
 from pennylane_qiskit.converter import (
     _check_parameter_bound,
     _format_params_dict,
     circuit_to_qiskit,
     load,
-    load_noise_model,
     load_pauli_op,
     load_qasm,
     load_qasm_from_file,
@@ -2605,139 +2599,3 @@ class TestLoadPauliOp:
         match = "The operator 123 is not a valid Qiskit SparsePauliOp."
         with pytest.raises(ValueError, match=match):
             load_pauli_op(123)
-
-
-# pylint:disable = import-outside-toplevel, too-few-public-methods
-class TestLoadNoiseModel:
-    """Tests for :func:`load_noise_models()` function."""
-
-    @staticmethod
-    def _kraus_to_choi(krau_mats, optimize=False) -> np.ndarray:
-        r"""Transforms Kraus representation of a channel to its Choi representation."""
-        kraus_vecs = np.array([kraus.ravel(order="F") for kraus in krau_mats])
-        return np.einsum("ij,ik->jk", kraus_vecs, kraus_vecs.conj(), optimize=optimize)
-
-    def test_build_noise_model(self):
-        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel from a given Qiskit noise model"""
-        from qiskit.providers.fake_provider import GenericBackendV2
-        from qiskit.transpiler import InstructionProperties
-        from qiskit_aer import noise
-
-        backend = GenericBackendV2(num_qubits=2, seed=7, coupling_map=[[0, 1]])
-        backend.target.update_instruction_properties(
-            "reset", (0,), InstructionProperties(duration=0)
-        )
-        backend.target.update_instruction_properties(
-            "reset", (1,), InstructionProperties(duration=0)
-        )
-        noise_model = noise.NoiseModel.from_backend(backend)
-        loaded_noise_model = load_noise_model(noise_model)
-
-        pl_model_map = {
-            op_in("CNOT")
-            & wires_in([0, 1]): qp.QubitChannel(
-                Kraus(noise_model._local_quantum_errors["cx"][(0, 1)]).data,
-                wires="ANY",
-            ),
-            op_in("Identity")
-            & wires_in(0): qp.ThermalRelaxationError(
-                pe=0.0, t1=3012.4484977654, t2=3516.8757664521, tg=1.0, wires="ANY"
-            ),
-            op_in("Identity")
-            & wires_in(1): qp.ThermalRelaxationError(
-                pe=0.0, t1=3135.7677876495, t2=3327.6164130642, tg=1.0, wires="ANY"
-            ),
-            op_in("SX")
-            & wires_in(0): qp.ThermalRelaxationError(
-                pe=0.0, t1=4331.5087867281, t2=5056.8095340207, tg=1.0, wires="ANY"
-            ),
-            op_in("SX")
-            & wires_in(1): qp.ThermalRelaxationError(
-                pe=0.0, t1=2718.6952247608, t2=2885.0270379233, tg=1.0, wires="ANY"
-            ),
-            op_in("PauliX")
-            & wires_in(0): qp.ThermalRelaxationError(
-                pe=0.0, t1=2721.2824719589, t2=3176.95468865, tg=1.0, wires="ANY"
-            ),
-            op_in("PauliX")
-            & wires_in(1): qp.ThermalRelaxationError(
-                pe=0.0, t1=2520.0690896181, t2=2674.2488068467, tg=1.0, wires="ANY"
-            ),
-        }
-
-        pl_noise_model = qp.NoiseModel(
-            {fcond: partial_wires(noise) for fcond, noise in pl_model_map.items()}
-        )
-
-        for (pl_k, _), (qk_k, qk_v), noise_op in zip(
-            pl_noise_model.model_map.items(),
-            loaded_noise_model.model_map.items(),
-            pl_model_map.values(),
-            strict=True,
-        ):
-            assert repr(pl_k) == repr(qk_k)
-            ref_kraus = noise_op.compute_kraus_matrices(*noise_op.data)
-            num_wires = int(np.log2(ref_kraus[0].shape[0]))
-            test_wires = list(range(num_wires))
-            qk_op = qk_v(test_wires)
-            assert isinstance(qk_op, qp.QubitChannel)
-
-            choi_mat1 = self._kraus_to_choi(qk_op.data)
-            choi_mat2 = self._kraus_to_choi(ref_kraus)
-            assert np.allclose(choi_mat1, choi_mat2)
-
-    @pytest.mark.parametrize(
-        "verbose, decimal",
-        [(True, 8), (False, None)],
-    )
-    def test_build_noise_model_with_args(self, verbose, decimal):
-        """Tests that ``load_quantum_noise`` constructs a correct PennyLane NoiseModel with args"""
-        from qiskit_aer import noise
-
-        error_1 = noise.depolarizing_error(0.001, 1)
-        error_2 = noise.depolarizing_error(0.01, 2)
-
-        noise_model = noise.NoiseModel()
-        noise_model.add_all_qubit_quantum_error(error_1, ["rz", "ry"])
-        noise_model.add_all_qubit_quantum_error(error_2, ["cx"])
-        loaded_noise_model = load_noise_model(noise_model, verbose=verbose, decimal_places=decimal)
-
-        pauli_mats1 = list(map(qp.matrix, [qp.I(0), qp.X(0), qp.Y(0), qp.Z(0)]))
-        pauli_mats2 = list(
-            ft.reduce(np.kron, prod, 1.0) for prod in it.product(pauli_mats1, repeat=2)
-        )
-        pauli_prob1 = np.sqrt(error_1.probabilities)
-        pauli_prob2 = np.sqrt(error_2.probabilities)
-        kraus_ops1 = [
-            prob * kraus_op for prob, kraus_op in zip(pauli_prob1, pauli_mats1, strict=True)
-        ]
-        kraus_ops2 = [
-            prob * kraus_op for prob, kraus_op in zip(pauli_prob2, pauli_mats2, strict=True)
-        ]
-
-        c0 = qp.noise.op_in([qp.RZ, qp.RY])
-        c1 = qp.noise.op_in(qp.CNOT)
-        n0 = qp.noise.partial_wires(qp.QubitChannel(kraus_ops1, wires=[0]))
-        n1 = qp.noise.partial_wires(qp.QubitChannel(kraus_ops2, wires=[0, 1]))
-        pl_noise_model = qp.NoiseModel({c0: n0, c1: n1})
-        num_wires_list = [1, 2]  # n0 is 1-qubit, n1 is 2-qubit
-
-        for (pl_k, pl_v), (qk_k, qk_v), num_wires in zip(
-            pl_noise_model.model_map.items(),
-            loaded_noise_model.model_map.items(),
-            num_wires_list,
-            strict=True,
-        ):
-            assert repr(pl_k) == repr(qk_k)
-            test_wires = list(range(num_wires))
-
-            pl_data = np.array(pl_v(test_wires).data)
-            if verbose:
-                choi_mat1 = self._kraus_to_choi(qk_v(test_wires).data)
-                choi_mat2 = self._kraus_to_choi(pl_data)
-                assert np.allclose(choi_mat1, choi_mat2)
-            else:
-                num_kraus, num_wires = pl_data.shape[0], int(np.log2(pl_data.shape[1]))
-                assert (
-                    qk_v.__name__ == f"QubitChannel(num_kraus={num_kraus}, num_wires={num_wires})"
-                )
