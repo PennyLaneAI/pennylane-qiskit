@@ -20,6 +20,7 @@ from unittest.mock import Mock
 import numpy as np
 import pennylane as qp
 import pytest
+from pennylane.core import QuantumScript
 from qiskit.providers import BackendV2
 from qiskit_aer import noise
 from qiskit_ibm_runtime.fake_provider import FakeManilaV2
@@ -215,13 +216,17 @@ class TestExecutionAtOptimizationLevels:
 class TestBatchExecution:
     """Tests for the batch_execute method."""
 
-    with qp.tape.QuantumTape() as tape1:
+    with qp.core.AnnotatedQueue() as queue1:
         qp.PauliX(wires=0)
         _ = qp.expval(qp.PauliZ(wires=0)), qp.expval(qp.PauliZ(wires=1))
 
-    with qp.tape.QuantumTape() as tape2:
+    tape1 = QuantumScript.from_queue(queue1)
+
+    with qp.core.AnnotatedQueue() as queue2:
         qp.PauliX(wires=0)
         qp.expval(qp.PauliZ(wires=0))
+
+    tape2 = QuantumScript.from_queue(queue2)
 
     @pytest.mark.parametrize("n_tapes", [1, 2, 3])
     def test_calls_to_execute(self, device, n_tapes, mocker):
@@ -287,7 +292,7 @@ class TestBatchExecution:
         empty tapes."""
         dev = device(2)
 
-        empty_tape = qp.tape.QuantumTape()
+        empty_tape = QuantumScript()
         tapes = [empty_tape] * 3
         res = dev.batch_execute(tapes)
 

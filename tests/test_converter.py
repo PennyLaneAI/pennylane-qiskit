@@ -23,8 +23,8 @@ import pennylane as qp
 import pytest
 from pennylane import I, X, Y, Z
 from pennylane import numpy as np
+from pennylane.core import QuantumScript
 from pennylane.measurements import MidMeasureMP
-from pennylane.tape.qscript import QuantumScript
 from pennylane.wires import Wires
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
@@ -195,9 +195,10 @@ class TestConverterQiskitToPennyLane:
 
         quantum_circuit = load(qc)
 
-        with qp.tape.QuantumTape() as tape:
+        with qp.core.AnnotatedQueue() as queue:
             quantum_circuit(params={a: a_val, b: b_val, c: c_val}, wires=(0,))
 
+        tape = QuantumScript.from_queue(queue)
         recorded_op = tape.operations[0]
         assert isinstance(recorded_op, qp.RX)
         assert recorded_op.parameters == a_val * np.cos(b_val) + c_val
@@ -1747,7 +1748,7 @@ class TestConverterPennyLaneCircuitToQiskit:
         measurements on overlapping wires"""
 
         measurements = [qp.sample(qp.X(0) @ qp.Y(1)), qp.sample(qp.X(0))]
-        tape = qp.tape.QuantumScript(measurements=measurements)
+        tape = QuantumScript(measurements=measurements)
 
         qc = circuit_to_qiskit(tape, 2, diagonalize=True, measure=True)
 
