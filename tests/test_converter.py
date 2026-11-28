@@ -32,7 +32,7 @@ from qiskit.circuit import library as lib
 from qiskit.circuit.classical import expr
 from qiskit.circuit.library import DraperQFTAdder
 from qiskit.circuit.parametervector import ParameterVectorElement
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp, random_unitary
 
 from pennylane_qiskit.converter import (
     _check_parameter_bound,
@@ -752,7 +752,36 @@ class TestConverterGatesQiskitToPennyLane:
         assert recorder.queue[0].name == "QubitUnitary"
         assert len(recorder.queue[0].parameters) == 1
         assert np.array_equal(recorder.queue[0].parameters[0], lib.CSGate().to_matrix())
-        assert recorder.queue[0].wires == Wires([0, 1])
+        # Qiskit matrices are little-endian, so the wires are reversed for QubitUnitary
+        assert recorder.queue[0].wires == Wires([1, 0])
+
+    @pytest.mark.parametrize(
+        "gate, qubits",
+        [
+            (lib.CUGate(0.3, 0.7, 1.1, 0.4), [0, 1]),
+            (lib.CUGate(0.3, 0.7, 1.1, 0.4), [2, 0]),
+            (lib.CU3Gate(0.3, 0.7, 1.1), [0, 1]),
+            (lib.CSXGate(), [1, 2]),
+            (lib.CSGate(), [0, 2]),
+            (lib.RCCXGate(), [0, 1, 2]),
+            (lib.RCCXGate(), [2, 0, 1]),
+            (lib.RC3XGate(), [0, 1, 2, 3]),
+            (lib.UnitaryGate(random_unitary(4, seed=7)), [0, 1]),
+            (lib.UnitaryGate(random_unitary(8, seed=8)), [2, 0, 1]),
+        ],
+    )
+    def test_qubit_unitary_matches_qiskit_operator(self, gate, qubits):
+        """Tests that instructions loaded as QubitUnitary keep their control and target
+        qubits, i.e. the loaded circuit implements the same operator as the Qiskit circuit."""
+        num_qubits = 4 if len(qubits) == 4 else 3
+        qc = QuantumCircuit(num_qubits)
+        qc.append(gate, qubits)
+
+        loaded = load(qc)
+        # Qiskit orders basis states little-endian, so compare on reversed wires
+        pl_matrix = qp.matrix(loaded, wire_order=list(reversed(range(num_qubits))))()
+
+        assert np.allclose(pl_matrix, Operator(qc).data)
 
 
 class TestCheckParameterBound:
