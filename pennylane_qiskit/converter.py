@@ -103,6 +103,13 @@ referral_to_forum = (
 )
 
 
+def _reverse_wires_for_qiskit_matrix(wires):
+    """Qiskit matrices are little-endian (the first qubit is the least significant bit), while
+    ``qp.QubitUnitary`` treats its first wire as the most significant one. Applying a Qiskit
+    matrix on the reversed wires gives the same operator as the original instruction."""
+    return list(reversed(wires))
+
+
 def _check_parameter_bound(
     param: Parameter,
     unbound_params: dict[Parameter | ParameterVector, Any],
@@ -537,6 +544,8 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                 operation_args.extend(operation_params)
                 if operation_class is qp.StatePrep:
                     operation_args = [np.array(operation_params)]
+                if operation_class is qp.QubitUnitary:
+                    operation_kwargs["wires"] = _reverse_wires_for_qiskit_matrix(operation_wires)
 
             elif isinstance(instruction, Measure):
                 # Store the current operation wires and registers
@@ -579,6 +588,9 @@ def load(quantum_circuit: QuantumCircuit, measurements=None):
                     if not isinstance(instruction, (ControlFlowOp,)):
                         operation_args = [instruction.to_matrix()]
                         operation_class = qp.QubitUnitary
+                        operation_kwargs["wires"] = _reverse_wires_for_qiskit_matrix(
+                            operation_wires
+                        )
 
                 except (AttributeError, QiskitError):
                     warnings.warn(

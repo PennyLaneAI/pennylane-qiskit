@@ -36,6 +36,11 @@
 * Fixed conversion of Qiskit `GlobalPhaseGate` to PennyLane when `GlobalPhase` does not accept `wires`.
   [(#724)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/724)
 
+* Fixed `load`/`from_qiskit` swapping control and target qubits for instructions that are converted
+  to `QubitUnitary`, such as `CUGate`, `CU3Gate`, `CSXGate`, `RCCXGate`, `RC3XGate` and `UnitaryGate`.
+  Qiskit matrices are little-endian, so they are now applied on the reversed wires.
+  [(#XXX)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/XXX)
+
 ### Contributors ✍️
 
 This release contains contributions from (in alphabetical order):
@@ -43,6 +48,7 @@ This release contains contributions from (in alphabetical order):
 Runor Agbaire
 Yushao Chen
 Marcus Edwards
+Sümeyye Nur Esin
 Daniel Haag
 
 ---
