@@ -39,7 +39,7 @@
 * Fixed `load`/`from_qiskit` swapping control and target qubits for instructions that are converted
   to `QubitUnitary`, such as `CUGate`, `CU3Gate`, `CSXGate`, `RCCXGate`, `RC3XGate` and `UnitaryGate`.
   Qiskit matrices are little-endian, so they are now applied on the reversed wires.
-  [(#XXX)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/XXX)
+  [(#734)](https://github.com/PennyLaneAI/pennylane-qiskit/pull/734)
 
 ### Contributors ✍️
 
